@@ -1,3 +1,4 @@
+[![](https://jitpack.io/v/Hapag-Lloyd/oversigt.svg)](https://jitpack.io/#Hapag-Lloyd/oversigt)
 # Oversigt
 Oversigt is a configurable dashboard software.  
 It is able to serve several dashboards simultaneously and change the dashboards' configuration at runtime and without restarting the server.
