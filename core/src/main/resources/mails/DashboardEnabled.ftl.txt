@@ -1,0 +1,8 @@
+Hi ${recipient.name},
+
+The dashboard '${dashboard.title}' has been enabled.
+
+You're enabled to configure the dashboard. Please visit ${hostname}/${dashboard.id}/config to customize it to your needs.
+
+Kind regards,
+Oversigt

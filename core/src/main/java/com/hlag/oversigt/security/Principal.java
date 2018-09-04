@@ -1,0 +1,129 @@
+package com.hlag.oversigt.security;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+public class Principal implements java.security.Principal {
+	private static final Map<String, Principal> principals = Collections.synchronizedMap(new WeakHashMap<>());
+
+	static Optional<Principal> getPrincipal(String username) {
+		return Optional.ofNullable(principals.get(username));
+	}
+
+	/**Gets the principal with the given username from the given {@link Authenticator}.
+	 * @param authenticator the {@link Authenticator} to use for reading the principal information
+	 * @param username the name of the {@link Principal} to read
+	 * @return the read {@link Principal} object. This method does not return <code>null</code>.
+	 * @throws NoSuchElementException if the principal could not be loaded.
+	 */
+	public static Principal loadPrincipal(Authenticator authenticator, String username) {
+		principals.computeIfAbsent(username, name -> {
+			Principal principal = authenticator.readPrincipal(name);
+			authenticator.reloadRoles(name);
+			return principal;
+		});
+		return getPrincipal(username).get();
+	}
+
+	private final String distinguishedName;
+	private final String username;
+	private final String name;
+	private final String email;
+
+	private final Set<Role> roles = new HashSet<>();
+
+	// TODO make private and use cached principals
+	Principal(String username, Set<Role> roles) {
+		this(username, username, username, username + "@example.com", roles);
+	}
+
+	Principal(String distinguishedName, String username, String name, String email, Set<Role> roles) {
+		this.distinguishedName = distinguishedName;
+		this.username = username;
+		this.name = name;
+		this.email = email;
+		this.roles.addAll(roles);
+
+		principals.put(username, this);
+	}
+
+	synchronized void changeRoles(Collection<Role> newRoles) {
+		this.roles.clear();
+		this.roles.addAll(newRoles);
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	String getDistinguishedName() {
+		return distinguishedName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public Set<Role> getRoles() {
+		return Collections.unmodifiableSet(roles);
+	}
+
+	public synchronized boolean hasRole(Role role) {
+		while (role != null) {
+			if (roles.contains(role)) {
+				return true;
+			} else {
+				role = role.getParent();
+			}
+		}
+		return false;
+	}
+
+	public boolean hasRole(String roleName) {
+		Optional<Roles> roles = Roles.maybeFromString(roleName);
+		if (roles.isPresent()) {
+			return hasRole(roles.get().getRole());
+		} else {
+			String[] parts = roleName.toLowerCase().split("\\.", 3);
+			if (parts.length == 3) {
+				switch (parts[0]) {
+					case "dashboard":
+						switch (parts[2]) {
+							case "owner":
+								return hasRole(Role.DASHBOARD_OWNER.getDashboardSpecificRole(parts[1]));
+							case "editor":
+								return hasRole(Role.DASHBOARD_EDITOR.getDashboardSpecificRole(parts[1]));
+							default:
+								// unknown part
+								return false;
+						}
+					default:
+						// unknown part
+						return false;
+				}
+			} else {
+				// does not fit current role names
+				return false;
+			}
+		}
+	}
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+	}
+}

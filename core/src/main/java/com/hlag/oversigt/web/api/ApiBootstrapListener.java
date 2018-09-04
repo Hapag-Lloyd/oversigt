@@ -1,0 +1,219 @@
+package com.hlag.oversigt.web.api;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.servlet.ServletContext;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+
+import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
+import org.jboss.resteasy.util.FindAnnotation;
+
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Module;
+import com.google.inject.matcher.Matchers;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.web.resources.Authentication;
+
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextListener {
+	@Override
+	protected List<? extends Module> getModules(ServletContext context) {
+		return Arrays.asList(new ApiModule());
+	}
+
+	private static class ApiModule extends AbstractModule {
+		@Override
+		protected void configure() {
+			List<Class<? extends Annotation>> annotations = Arrays.asList(io.swagger.annotations.Api.class,
+					javax.ws.rs.ext.Provider.class);
+			Predicate<Class<?>> predicate = clazz -> annotations.stream()
+					.filter(clazz::isAnnotationPresent)
+					.findAny()
+					.isPresent();
+			// TODO Create possibility to register more packages to scan
+			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());
+			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());
+
+			ApiValidationInterceptor interceptor = new ApiValidationInterceptor();
+			binder().requestInjection(interceptor);
+			binder().bindInterceptor(Matchers.annotatedWith(Path.class),
+					Matchers.annotatedWith(GET.class)
+							.or(Matchers.annotatedWith(POST.class))
+							.or(Matchers.annotatedWith(PUT.class))
+							.or(Matchers.annotatedWith(DELETE.class))
+							.or(Matchers.annotatedWith(HEAD.class))
+							.or(Matchers.annotatedWith(OPTIONS.class)),
+					interceptor);
+		}
+	}
+
+	@Override
+	protected void withInjector(Injector injector) {
+		processInjector(injector, this::checkClassMethods);
+	}
+
+	private void checkClassMethods(Class<?> clazz) {
+		if (clazz.isAnnotationPresent(Path.class)) {
+			checkMethodWithPath(clazz.getAnnotation(Path.class).value(), "Class " + clazz.getName() + " ");
+		}
+		for (Method method : clazz.getDeclaredMethods()) {
+			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(method), //
+					GET.class,
+					PUT.class,
+					POST.class,
+					DELETE.class,
+					HEAD.class,
+					OPTIONS.class)) {
+				checkMethod(method);
+			}
+			if (method.isAnnotationPresent(Path.class)) {
+				checkMethodWithPath(method.getAnnotation(Path.class).value(), "Method " + method + " ");
+			}
+		}
+	}
+
+	private void checkMethodWithPath(String originalPath, String message) {
+		String path = originalPath.replaceAll("\\{[^\\}]*?\\}", "");
+		Arrays.asList(CaseFormat.values()).forEach(cf -> checkCaseFormatOnMethodWithPath(path, cf, message));
+	}
+
+	private void checkCaseFormatOnMethodWithPath(String before, CaseFormat from, String message) {
+		String after = from.converterTo(CaseFormat.LOWER_HYPHEN).convert(before);
+		if (!before.equals(after)) {
+			error(message + "does not follow the path guide line. The Path must be in lower-hypen format: " + after
+					+ " instead of " + before);
+		}
+	}
+
+	private void checkMethod(Method method) {
+		ApiOperation operation = method.getAnnotation(ApiOperation.class);
+		Objects.requireNonNull(operation, message(method, "must use @ApiOperation", false));
+		verify(!Strings.isNullOrEmpty(operation.value()),
+				method,
+				"must expose a short description using @ApiOperation.value()",
+				false);
+
+		ApiResponses responses = method.getAnnotation(ApiResponses.class);
+		Objects.requireNonNull(responses, message(method, "must declare response codes using @ApiResponses", false));
+		verify(responses.value().length > 0,
+				method,
+				"must declare at least one response code using @ApiResponses and @ApiResponse",
+				false);
+
+		if (method.isAnnotationPresent(RolesAllowed.class)) {
+			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),
+					message(method,
+							"must declare @" + JwtSecured.class.getSimpleName() + " as it has @"
+									+ RolesAllowed.class.getSimpleName() + " declared.",
+							false));
+		}
+
+		if (method.getDeclaringClass().isAnnotationPresent(RolesAllowed.class)
+				&& !method.isAnnotationPresent(PermitAll.class)) {
+			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),
+					message(method,
+							"must declare @" + JwtSecured.class.getSimpleName() + " as it has @"
+									+ RolesAllowed.class.getSimpleName() + " declared.",
+							false));
+		}
+
+		if (method.isAnnotationPresent(JwtSecured.class)) {
+			checkSecuredMethod(method);
+		}
+	}
+
+	private void checkSecuredMethod(Method method) {
+		ApiOperation operation = method.getAnnotation(ApiOperation.class);
+		String message = "or its declaring class must declare exactly one authorization in @ApiOperation: "
+				+ ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION;
+		Authorization[] authorizations = operation.authorizations();
+		Authorization[] classAuthorizations = Optional.ofNullable(method//
+				.getDeclaringClass()//
+				.getAnnotation(io.swagger.annotations.Api.class))//
+				.map(io.swagger.annotations.Api::authorizations)
+				.orElse(null);
+		if (authorizations == null || Strings.isNullOrEmpty(authorizations[0].value())) {
+			authorizations = classAuthorizations;
+		} else if (classAuthorizations != null && classAuthorizations.length == 1
+				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(classAuthorizations[0].value())) {
+			error(method, "contains the same authorization like its declaring class. Remove one.", true);
+		}
+		Objects.requireNonNull(authorizations, message(method, message, true));
+		verify(authorizations.length == 1
+				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(authorizations[0].value()),
+				method,
+				message,
+				true);
+	}
+
+	private static String message(Method method, String message, boolean secured) {
+		return "The " + (secured ? "@" + JwtSecured.class.getSimpleName() + " annotated" : "") + " method "
+				+ method.getName() + " in class " + method.getDeclaringClass().getName() + " " + message;
+	}
+
+	private static void error(Method method, String message, boolean secured) {
+		error(message(method, message, secured));
+	}
+
+	private static void error(String message) {
+		throw new ApiBootstrapException(message);
+	}
+
+	private static void verify(boolean check, Method method, String message, boolean secured) {
+		if (!check) {
+			error(method, message, secured);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@SafeVarargs
+	private static boolean hasAnnotations(Annotation[] annotations, Class<? extends Annotation>... classes) {
+		for (@SuppressWarnings("rawtypes")
+		Class clazz : classes) {
+			if (FindAnnotation.findAnnotation(annotations, clazz) != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void processInjector(final Injector injector, Consumer<Class<?>> consumer) {
+		for (final Key<?> key : injector.getBindings().keySet()) {
+			final Type type = key.getTypeLiteral().getRawType();
+			if (type instanceof Class) {
+				consumer.accept((Class<?>) type);
+			}
+		}
+	}
+
+	private static class ApiBootstrapException extends RuntimeException {
+		private static final long serialVersionUID = 7618319300693716653L;
+
+		public ApiBootstrapException(String message) {
+			super(message);
+		}
+	}
+}

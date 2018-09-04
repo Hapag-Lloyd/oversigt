@@ -1,0 +1,28 @@
+<#ftl output_format="HTML">
+<#import "layout.ftl.html" as layout>
+<@layout.dashboardLayout "${title}">
+
+<div class="gridster">
+	<ul id="widgetList">
+		<#list widgets as widget>
+			<#if widget.enabled>
+				<li data-id="${widget.id}" data-col="${widget.posX}" data-row="${widget.posY}" data-sizex="${widget.sizeX}" data-sizey="${widget.sizeY}">
+					<div
+						class="${widget.type} ${widget.displayClass}"
+						data-id="${widget.eventSourceInstance.id}" 
+						data-view="${widget.view}"  
+						data-title="${widget.title}"
+						<#if widget.displayStyle != "">style="${widget.displayStyle}" </#if>
+						<#list widget.eventSourceInstance.descriptor.dataItems as di>
+							<#if widget.hasWidgetDataForDashboard(di)>data-${di.name}="${widget.getWidgetDataForDashboard(di)}" </#if>
+						</#list>
+						>
+					</div>
+					<div class="mover editor"></div>
+					<!-- <button type="button" title="Configure widget ${widget.name}" class="btn btn-primary editor" onclick="loadModal(${widget.id});return false;">configure</button> -->
+				</li>
+			</#if>
+		</#list>
+	</ul>
+</div>
+</@layout.dashboardLayout>

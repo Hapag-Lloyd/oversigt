@@ -1,0 +1,51 @@
+.editor {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 0;
+	z-index: 9;
+	transition: opacity 1s;
+}
+.mover {
+	left:0;
+	height:1em;
+	background-color:rgba(128,128,128,0.6);
+	cursor:move;
+}
+.hide-mouse .editor {
+	opacity:0.0;
+}
+.gs-w:hover > .editor {
+	display: block;
+}
+.modal {
+	background-color: rgba(0, 0, 0, 0.4);
+	display: none;
+	bottom: 0;
+	left: 0;
+	position: fixed;
+	right: 0;
+	top: 0;
+	z-index: 10;
+}
+.modal-content {
+	background-color: #fefefe;
+	box-sizing: border-box;
+	color: #000000;
+	height: 70%;
+	margin: 10%;
+	overflow: auto;
+	padding: 20px;
+	width: 80%;
+}
+.close {
+	color: #aaaaaa;
+	cursor: pointer;
+	float: right;
+	font-size: 140%;
+	font-weight: bold;
+}
+.close:hover {
+	color: #000000;
+	text-decoration: none;
+}

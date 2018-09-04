@@ -1,0 +1,73 @@
+<#ftl output_format="HTML">
+<#import "../configuration_layout.ftl.html" as layout>
+<@layout.ConfigurationLayout "Add Event Source" "server.dashboard.owner">
+
+<div class="row">
+	<div class="col-md-8 col-sm-8 col-xs-12">
+		<h2>Create Event Source</h2>
+	</div>
+
+	<div class="col-md-4 col-sm-4 col-xs-12" style="margin-top:20px">
+		<form>
+			<label class="sr-only" for="search">Filter</label>
+			<div class="input-group">
+				<input type="text" class="form-control input-search" name="newEventSourceSearch" id="newEventSourceSearch" placeholder="Filter Event Sources">
+				<span class="input-group-addon group-icon">
+					<span class="glyphicon glyphicon-search" ></span>
+				</span>
+			</div>
+		</form>
+	</div>
+</div>
+
+<form method="POST" action="?">
+	<input type="hidden" name="action" value="newEventSourceInstance" />
+	
+	<div class="grid" id="newEventSourceSearchListGrid" data-masonry='{ "columnWidth": 5, "itemSelector": ".grid-item" , "gutter": 0}'>
+		<#list availableEventSourceKeys as availableEventSourceKey>
+			<#assign info=dashboardManager.getEventSourceDescriptor(availableEventSourceKey)>
+	  		<div class="col-md-3 grid-item">
+	    		<span class="thumbnail">
+	      			<img src="${preview.apply(availableEventSourceKey)}" alt="Preview">
+	      			<h4>${availableEventSourceKey.displayName}</h4>
+	      			<p>${(info.description)!""}</p>
+	      			<hr class="line">
+	      			<div class="clearfix">
+	      				<div >
+	      					<button class="btn btn-primary right" name="eventSourceName" value="${availableEventSourceKey.key}">Create Event Source</button>
+	      				</div>
+	      			</div>
+	    		</span>
+	  		</div>
+	  	</#list>
+	</div>
+	
+	<!-- <ul class="list-inline" id="newEventSourceSearchList">
+		<#list availableEventSourceKeys as availableEventSourceKey>
+			<li>
+				<button class="btn btn-link" name="eventSourceName" value="${availableEventSourceKey.key}">${availableEventSourceKey.displayName}</button>
+			</li>
+		</#list>
+	</ul> -->
+	
+</form>
+
+<script type="text/javascript" src="/assets/config/masonry.pkgd.min.js"></script>
+<script type="text/javascript" src="/assets/config/imagesloaded.pkgd.min.js"></script>
+<script type="text/javascript">
+	// init Masonry
+	var $grid = $('.grid').masonry({
+	  // options...
+	});
+	// layout Masonry after each image loads
+	$grid.imagesLoaded().progress( function() {
+	  $grid.masonry('layout');
+	});
+	
+	$(document).ready(function(){
+		//installFilterSearch('#newEventSourceSearch', '#newEventSourceSearchList>li', function(e){return e.text();});
+		installFilterSearch('#newEventSourceSearch', '#newEventSourceSearchListGrid>div.grid-item', null, function(){$grid.masonry('layout');});
+	});
+</script>
+
+</@layout.ConfigurationLayout>

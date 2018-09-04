@@ -1,0 +1,18 @@
+<included>
+	<appender name="special" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>log/special.log</file>
+	    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">        
+	        <!-- daily rollover -->
+	        <fileNamePattern>log/special.%d{"yyyy-MM-dd", UTC}.log</fileNamePattern>
+	        <maxHistory>30</maxHistory>
+	    </rollingPolicy>
+	    <encoder>
+			<pattern>%date{"yyyy-MM-dd HH:mm:ss.SSS", UTC} %logger{36} - %msg%n</pattern>
+	    </encoder>
+	</appender>	
+
+	<!-- logger only for special purposes -->
+	<logger name="special" level="OFF" additivity="false">
+		<appender-ref ref="special" />
+	</logger>
+</included>

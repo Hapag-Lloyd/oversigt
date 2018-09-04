@@ -1,0 +1,78 @@
+{
+	"debug": true,
+	"hostname": "https://dashboard",
+	"listeners": [
+		{
+			"port": 80
+		},
+		{
+			"port": 443,
+			"ssl": {
+				"keystore": "ssl_keystore.jks",
+				"keystorePassword": "oversigt",
+				"keystoreEntryPassword": "oversigt",
+				"truststore": "ssl_truststore.jks",
+				"truststorePassword": "oversigt"
+			}
+		}
+	],
+	"api": {
+		"jwtSecretBase64": "2e35939482304c0aafdb774c4a4ab754"
+	},
+	"security": {
+		"serverAdmins": [
+			"user1"
+		],
+		"users": {
+			"user1": "password",
+			"user2": "password"
+		},
+		"ldap": {
+			"url": "",
+			"baseDn": "",
+			"uidAttribute": "",
+			"bindUser": "",
+			"bindPassword": ""
+		},
+		"session": {
+			"timeout": 30,
+			"maxCount": -1,
+			"expireOldestUnusedSessionOnMax": false,
+			"statisticsEnabled": true,
+			"cookieConfig": {
+				
+			}
+		}
+	},
+	"mail": {
+		"hostname": "smtp.server.com",
+		"port": 587,
+		"startTls": true,
+		"username": "",
+		"password": "",
+		"senderAddress": "noreply@oversigt.com"
+	},
+	"eventManager": {
+		"rateLimit": 10,
+		"discardEventsAfter": "PT1H"
+	},
+	"templateNumberFormat": "0",
+	"database": {
+		"sqlDialect": "com.hlag.oversigt.storage.SqliteDialect",
+		"location": "data/dashboard.db",
+		"name": "",
+		"username": "",
+		"password": ""
+	},
+	"eventSources": {
+		"packages": [
+			"com.hlag.oversigt.model"
+		],
+		"addonFolders": [
+			"addons"
+		]
+	},
+	"jira": {
+		"socketTimeout": 120
+	}
+}

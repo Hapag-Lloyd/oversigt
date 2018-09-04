@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<groups xmlns="http://www.isdc.ro/wro">
+
+    <group name="dashing">
+        <js>classpath:statics/dashing/jquery.js</js>
+        <js>classpath:statics/dashing/batman.js</js>
+        <js>classpath:statics/dashing/*.js</js>
+        <js>classpath:statics/dashing/*.coffee</js>
+    </group>
+
+    <group name="hlag">
+        <js>classpath:statics/hlag/**.js</js>
+        <css>classpath:statics/hlag/**.scss</css>
+    </group>
+    
+    <group name="bootstrap">
+    	<js>classpath:statics/bootstrap/js/bootstrap.min.js</js>
+    	<css>classpath:statics/bootstrap/css/bootstrap.min.css</css>
+    	<css>classpath:statics/bootstrap/css/bootstrap-theme.min.css</css>
+    </group>
+
+    <group name="moment">
+        <js>classpath:statics/moment/moment.js</js>
+        <js>classpath:statics/moment/moment-timezone-with-data.js</js>
+        <js>classpath:statics/moment/moment-locale-en-gb.js</js>
+        <js>classpath:statics/moment/moment-locale-de.js</js>
+    </group>
+
+    <group name="widgets">
+        <js>classpath:statics/widgets/**.coffee</js>
+        <js>classpath:statics/widgets/**.js</js>
+        <css>classpath:statics/widgets/**.css</css>
+        <css>classpath:statics/widgets/**.scss</css>
+    </group>
+
+    <group name="assets">
+        <js>classpath:statics/assets/javascripts/**.js</js>
+        <js>classpath:statics/assets/javascripts/dashing.gridster.coffee</js>
+
+        <css>classpath:statics/assets/stylesheets/*.css</css>
+        <css>classpath:statics/assets/stylesheets/application.scss</css>
+    </group>
+
+    <group name="application">
+        <group-ref>dashing</group-ref>
+        <group-ref>moment</group-ref>
+        <group-ref>assets</group-ref>
+        <group-ref>widgets</group-ref>
+        <group-ref>hlag</group-ref>
+
+        <js>classpath:statics/assets/javascripts/application.coffee</js>
+    </group>
+</groups>

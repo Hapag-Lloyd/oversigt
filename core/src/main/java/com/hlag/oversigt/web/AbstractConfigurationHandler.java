@@ -1,0 +1,466 @@
+package com.hlag.oversigt.web;
+
+import static com.hlag.oversigt.util.HttpUtils.badRequest;
+import static com.hlag.oversigt.util.HttpUtils.doNonBlocking;
+import static com.hlag.oversigt.util.HttpUtils.forbidden;
+import static com.hlag.oversigt.util.HttpUtils.getFormData;
+import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
+import static com.hlag.oversigt.util.HttpUtils.notFound;
+import static com.hlag.oversigt.util.HttpUtils.query;
+import static com.hlag.oversigt.util.HttpUtils.reloadWithGet;
+import static com.hlag.oversigt.util.Utils.map;
+import static io.undertow.util.Methods.GET;
+import static io.undertow.util.Methods.POST;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import com.google.common.io.Resources;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.security.NeedsRole;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.security.Roles;
+import com.hlag.oversigt.util.HttpUtils;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.Tuple;
+import com.hlag.oversigt.util.Utils;
+
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData;
+import io.undertow.server.handlers.form.FormData.FormValue;
+import io.undertow.util.Headers;
+import io.undertow.util.StatusCodes;
+
+public class AbstractConfigurationHandler implements HttpHandler {
+	private static final Map<Class<?>, Logger> LOGGERS = Collections.synchronizedMap(new HashMap<>());
+
+	protected final Logger getLogger() {
+		return LOGGERS.computeIfAbsent(getClass(), LoggerFactory::getLogger);
+	}
+
+	protected static void logChange(HttpServerExchange exchange, String string, Object... objects) {
+		String username = getPrincipal(exchange).map(Principal::getUsername).orElse("%unknown%");
+		Utils.logChange(username, string, objects);
+	}
+
+	private static final Pattern PAGE_NUMBER_PATTERN = Pattern.compile("^(?:[0-9]+_)?(.+)$");
+	private static final Pattern CONFIG_LAYOUT_PATTERN = Pattern
+			.compile("<@layout\\.ConfigurationLayout\\s+\"([^\"]*)\"(?:\\s+\"([^\"]*)\")?>");
+
+	private static PageInfo getPageInfo(String path) {
+		String filename = Paths.get(path).getFileName().toString();
+		if (filename.toLowerCase().startsWith("page_")) {
+			filename = filename.substring("page_".length());
+		}
+		if (filename.toLowerCase().endsWith(".ftl.html")) {
+			filename = filename.substring(0, filename.length() - ".ftl.html".length());
+		}
+		Tuple<String, String> info = getConfigPatternInfo(path);
+		Matcher m = PAGE_NUMBER_PATTERN.matcher(filename);
+		m.find();
+		return new PageInfo(m.group(1), path, info.getFirst(), info.getSecond());
+	}
+
+	private static Tuple<String, String> getConfigPatternInfo(String filename) {
+		try {
+			String content = readContentString(filename);
+			Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
+			if (matcher.find()) {
+				return new Tuple<>(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
+			} else {
+				return new Tuple<>(filename, null);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**Checks if the given url points to a resource in the current class path and if so loads the resource as string with UTF-8 encoding
+	 * @param urlPath the path to the resource to load
+	 * @return the resource content interpreted as string with UTF-8 encoding
+	 * @throws IOException if reading the resource fails
+	 */
+	private static String readContentString(String urlPath) throws IOException {
+		URL url = Resources.getResource(urlPath);
+		Preconditions.checkNotNull(url, "Unable to read bytes: %s", urlPath);
+		return IOUtils.toString(url, Charsets.UTF_8);
+	}
+
+	@Inject
+	private Configuration templateConfiguration;
+	@Inject
+	private JsonUtils json;
+	@Inject
+	private DashboardController dashboardController;
+	@Inject
+	@Named("debug")
+	private boolean debug;
+
+	private final Map<String, PageInfo> pages = new LinkedHashMap<>();
+
+	protected AbstractConfigurationHandler(String path, String[] filenames) {
+		getLogger()
+				.info("Initializing configuration handler for path: " + path + " with " + filenames.length + " pages");
+		for (String filename : filenames) {
+			PageInfo pi = getPageInfo(path + filename);
+			pages.put(pi.getName(), pi);
+		}
+	}
+
+	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
+		return null;
+	}
+
+	private Map<String, Object> getExtendedModel(HttpServerExchange exchange, String page) {
+		Map<String, Object> model = getModel(exchange, page);
+		if (model == null) {
+			model = new HashMap<>();
+		}
+		Optional<Principal> principal = getPrincipal(exchange);
+		model.putAll(map(//
+				"principal",
+				principal.orElse(null),
+				"menuItems",
+				this.pages.entrySet()
+						.stream()
+						.filter(p -> principal.map(p.getValue()::isAllowedFor).orElse(false))
+						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
+						.toArray(), //
+				"activeMenuItem",
+				page,
+				"formUrl",
+				"?"));
+		return model;
+	}
+
+	protected final Optional<Dashboard> maybeGetDashboard(HttpServerExchange exchange) {
+		return query(exchange, "dashboard").map(dashboardController::getDashboard);
+	}
+
+	protected final Dashboard getDashboard(HttpServerExchange exchange) {
+		return maybeGetDashboard(exchange).get();
+	}
+
+	protected final void printException(HttpServerExchange exchange, Throwable throwable) {
+		LoggerFactory.getLogger(getClass()).error("Unable to serve request", throwable);
+		exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+		StringBuilder sb = new StringBuilder();
+		sb.append("<html>");
+		sb.append("<head><title>500 - Internal Server Error</title></head>");
+		sb.append("<body>");
+		sb.append("<h1>500 <small>Internal Server Error</small></h1><div>");
+		if (!debug) {
+			sb.append(
+					"<p>An error occurred while executing the current request. Details can be found in the log file.</p>");
+		} else {
+			sb.append("<p>An error occurred while executing the current request.</p>");
+			sb.append("<pre>").append(Throwables.getStackTraceAsString(throwable)).append("</pre>");
+		}
+		sb.append("</div></body>");
+		sb.append("</html>");
+		exchange.getResponseSender().send(sb.toString());
+	}
+
+	@Override
+	public void handleRequest(HttpServerExchange exchange) throws Exception {
+		try {
+			if (GET.equals(exchange.getRequestMethod())) {
+				doNonBlocking(this::handleRequestGet, exchange);
+			} else if (POST.equals(exchange.getRequestMethod())) {
+				doNonBlocking(this::handleRequestPost, exchange);
+			} else {
+				exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
+			}
+		} catch (Exception e) {
+			printException(exchange, e);
+		}
+	}
+
+	protected String getPreferredInitialPage() {
+		return null;
+	}
+
+	private String getInitialPage(Collection<String> availablePages) {
+		String preferred = getPreferredInitialPage();
+		if (preferred != null && availablePages.contains(preferred)) {
+			return preferred;
+		} else {
+			return availablePages.iterator().next();
+		}
+	}
+
+	protected String getTemplateName(HttpServerExchange exchange, PageInfo pi) {
+		return pi.filename;
+	}
+
+	protected String getContentType(HttpServerExchange exchange, PageInfo pi) {
+		return "text/html";
+	}
+
+	private void handleRequestGet(HttpServerExchange exchange) throws Exception {
+		String page = query(exchange, "page").orElse(null);
+		if (Strings.isNullOrEmpty(page)) {
+			String url = exchange.getRequestURI();
+			while (url.endsWith("/")) {
+				url = url.substring(0, url.length() - 1);
+			}
+			url += "/" + getInitialPage(this.pages.keySet());
+			HttpUtils.redirect(exchange, url, false, true);
+			return;
+		}
+		if (!Strings.isNullOrEmpty(page)) {
+			if (this.pages.containsKey(page)) {
+				final PageInfo pi = this.pages.get(page);
+				if (pi.needsPrincipal() && !getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
+					forbidden(exchange);
+					return;
+				}
+				try {
+					String templateFilename = getTemplateName(exchange, pi);
+					Template template = templateConfiguration.getTemplate(templateFilename);
+					StringWriter writer = new StringWriter();
+					template.process(getExtendedModel(exchange, page), writer);
+					String content = writer.toString();
+					exchange.setStatusCode(StatusCodes.OK);
+					exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, getContentType(exchange, pi));
+					exchange.getResponseSender().send(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
+					exchange.endExchange();
+				} catch (Exception e) {
+					getLogger().error("Unable to write page from template", e);
+					printException(exchange, e);
+					exchange.endExchange();
+				}
+			} else {
+				notFound(exchange, "Page '" + page + "' not found");
+			}
+		} else {
+			HttpUtils.redirect(exchange,
+					exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(),
+					false,
+					true);
+		}
+	}
+
+	protected boolean isAjax(FormData data) {
+		return Optional//
+				.ofNullable(data.getFirst("ajax"))//
+				.map(FormValue::getValue)//
+				.map(Boolean::parseBoolean)//
+				.orElse(false);
+	}
+
+	private Method getMethod(String name, Object... objects) {
+		try {
+			if (objects == null) {
+				objects = new Object[0];
+			}
+			Class<?>[] classes = new Class<?>[objects.length];
+			for (int i = 0; i < objects.length; ++i) {
+				classes[i] = objects[i].getClass();
+			}
+			//			classes[classes.length - 1] = FormData.class;
+			return getClass().getDeclaredMethod("doAction_" + name, classes);
+		} catch (Exception ignore) {
+			return null;
+		}
+	}
+
+	protected void handleRequestPost(HttpServerExchange exchange) throws IOException {
+		final FormData formData = getFormData(exchange);
+		final Optional<String> action = Optional.ofNullable(formData.getFirst("action")).map(FormValue::getValue);
+
+		try {
+			if (action.isPresent()) {
+				Method method = getMethod(action.get(), exchange, formData);
+				if (method != null) {
+					if (method.isAnnotationPresent(NeedsRole.class)) {
+						NeedsRole needsRole = method.getAnnotation(NeedsRole.class);
+						boolean proceed = false;
+						if (!needsRole.dashboard()) {
+							proceed = getPrincipal(exchange)//
+									.map(p -> p.hasRole(needsRole.role().getRole()))//
+									.orElse(false);
+						} else {
+							proceed = getPrincipal(exchange)//
+									.map(p -> p.hasRole(needsRole.role().getRole().getDashboardSpecificRole(
+											getDashboard(exchange).getId())))//
+									.orElse(false);
+						}
+						if (!proceed) {
+							forbidden(exchange);
+							return;
+						}
+					}
+					Object object = method.invoke(this, exchange, formData);
+					if (!exchange.isComplete()) {
+						if (object == null) {
+							object = new ActionResponse();
+						}
+						if (object instanceof ActionResponse) {
+							ActionResponse response = (ActionResponse) object;
+							if (response.doNoAction) {
+								// nothing
+							} else if (response.doGetRedirect) {
+								reloadWithGet(exchange);
+								return;
+							} else if (response.jsonObject != null) {
+								exchange.setStatusCode(
+										response.statusCode != null ? response.statusCode : StatusCodes.OK);
+								exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+								exchange.getResponseSender().send(json.toJson(response.jsonObject));
+								exchange.endExchange();
+								return;
+							} else if (response.redirect != null) {
+								HttpUtils.redirect(exchange, response.redirect, false, true);
+								return;
+							} else {
+								throw new RuntimeException("Unknown action!");
+							}
+						} else {
+							throw new RuntimeException("Unknown return type");
+						}
+					}
+				} else {
+					badRequest(exchange, "Action '" + action.get() + "' not found.");
+					return;
+				}
+			} else {
+				badRequest(exchange, "No action found");
+				return;
+			}
+		} catch (Throwable e) {
+			printException(exchange, e);
+			return;
+		}
+	}
+
+	protected static class ActionResponse {
+		private final boolean doGetRedirect;
+		private final boolean doNoAction;
+		private final Integer statusCode;
+		private final Object jsonObject;
+		private final String redirect;
+
+		private ActionResponse() {
+			this(false, true, null, null, null);
+		}
+
+		private ActionResponse(boolean doGetRedirect,
+				boolean doNoAction,
+				Integer statusCode,
+				Object jsonObject,
+				String redirect) {
+			this.doGetRedirect = doGetRedirect;
+			this.doNoAction = doNoAction;
+			this.statusCode = statusCode;
+			this.jsonObject = jsonObject;
+			this.redirect = redirect;
+		}
+
+	}
+
+	protected static ActionResponse ok() {
+		return doGetRedirect();
+	}
+
+	protected static ActionResponse serverError(String text) {
+		return new ActionResponse(false, false, StatusCodes.INTERNAL_SERVER_ERROR, text, null);
+	}
+
+	protected static ActionResponse doGetRedirect() {
+		return new ActionResponse(true, false, null, null, null);
+	}
+
+	protected static ActionResponse okJson(Object object) {
+		return new ActionResponse(false, false, StatusCodes.OK, object, null);
+	}
+
+	protected static ActionResponse redirect(String url) {
+		return new ActionResponse(false, false, null, null, url);
+	}
+
+	protected static class PageInfo implements Comparable<PageInfo> {
+		private final String name;
+		private final String filename;
+		private final String title;
+		private final Role neededRole;
+
+		PageInfo(String name, String filename, String title, String neededRole) {
+			this(name, filename, title, Roles.maybeFromString(neededRole).map(Roles::getRole).orElse(null));
+		}
+
+		PageInfo(String name, String filename, String title, Role neededRole) {
+			this.name = Objects.requireNonNull(name);
+			this.filename = Objects.requireNonNull(filename);
+			this.title = Objects.requireNonNull(title);
+			this.neededRole = neededRole;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (filename == null ? 0 : filename.hashCode());
+			result = prime * result + (name == null ? 0 : name.hashCode());
+			result = prime * result + (title == null ? 0 : title.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (other instanceof PageInfo) {
+				PageInfo that = (PageInfo) other;
+				return this.name.equals(that.name) //
+						&& this.filename.equals(that.filename) //
+						&& this.title.equals(that.title);
+			}
+			return false;
+		}
+
+		@Override
+		public int compareTo(PageInfo that) {
+			return this.filename.compareTo(that.filename);
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public boolean isAllowedFor(Principal principal) {
+			return !needsPrincipal() || principal != null && principal.hasRole(neededRole);
+		}
+
+		public boolean needsPrincipal() {
+			return neededRole != null;
+		}
+	}
+}

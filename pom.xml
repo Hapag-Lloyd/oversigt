@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<name>Oversigt</name>
+	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+
+	<groupId>com.hlag.oversigt</groupId>
+	<artifactId>oversigt</artifactId>
+	<version>0.5</version>
+	<packaging>pom</packaging>
+	
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
+
+	<organization>
+		<name>Hapag-Lloyd AG</name>
+		<url>https://www.hapag-lloyd.com/</url>
+	</organization>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<modules>
+		<module>core</module>
+	</modules>
+</project>

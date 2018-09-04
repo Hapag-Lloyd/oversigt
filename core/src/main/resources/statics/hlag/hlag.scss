@@ -1,0 +1,184 @@
+/**
+ * Global styles
+ */
+
+* {
+	cursor: default;
+}
+body {
+	-moz-user-select: -moz-none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+	font-family: "Segoe UI", Sans-Serif;
+	user-select: none;
+}
+h1 {
+	margin-top: 12px;
+	opacity: 0.7;
+}
+h1:empty {
+	display: none;
+}
+h2 {
+  text-transform: none;
+}
+.gridster {
+	transform-origin: center top;
+	width: 1910px !important;
+	
+	> ul {
+		width: 1910px !important;
+	}
+}
+.gs-w {
+	overflow: hidden;
+}
+.hide-mouse, .hide-mouse * {
+	cursor: none;
+}
+#save-gridster {
+	display: block;
+	
+	&.hide {
+		display: none !important;
+	}
+}
+#saving-instructions {
+	height: auto;
+	padding-bottom: 10px;
+	width: auto;
+}
+#saving-instructions textarea {
+	height: 100px;
+	white-space: pre;
+}
+.updated-at {
+	display: none;
+}
+.widget {
+	bottom: 0;
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
+	vertical-align: top;
+}
+
+.gs-w > .widget > .eventSourceError {
+	display: none;
+}
+
+.gs-w.error > .widget > .eventSourceError {
+	display: block;
+	background: red;
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	text-align: left;
+	color: white;
+	z-index: 99999;
+	font-family: Consolas;
+	font-size: 85%;
+}
+
+.gs-w.error {
+	z-index: 99999;
+	box-shadow: 0 0 50px 5px red;
+}
+
+.gs-w.error > .widget {
+	background-color: red;
+}
+
+/**
+ * Widget classes
+ */
+
+.widget-hl-bar-chart {
+	 .category {
+		.description, > .title {
+			color: #333333;
+			font-size: 85%;
+		}
+	}
+}
+.widget-image {
+	.image {
+		background-position: center;
+		background-repeat: no-repeat;
+		bottom: 0;
+		left: 0;
+		position: absolute;
+		right: 0;
+		top: 0;
+	}
+}
+.widget-pie-chart {
+	.title {
+		top: 0;
+	}
+}
+.widget-progress-bars {
+	padding: 0;
+	position: absolute;
+}
+.widget-remote-reload {
+	display: none;
+}
+.widget-rickshawgraph {
+	.rickshaw_graph {
+		height: 100% !important;
+		
+		> svg {
+			height: 100%;
+		}
+		.label {
+			opacity: 0.7;
+		}
+	} 
+	
+	.value {
+		opacity: 0.5;
+	}
+}
+
+/**
+ * Widget instances
+ */
+
+.widget.CpuUsageGraphEventSource {
+	.value::after {
+		content: "%";
+	}
+}
+.widget.JiraPieChartEventSource {
+	background-color: rgb(31, 56, 100);
+	
+	.canvas-holder {
+		top: 50px !important;
+	}
+}
+.widget.ExchangeTasksEventSource {
+	.value {
+		font-weight: normal;
+		opacity: 0.7;
+	}
+}
+.widget.NewsEventSource {
+	background-color: #9c4274;
+	
+	.label {
+		display: inline-block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: 490px;
+	}
+	.value {
+		font-weight: normal;
+		opacity: 0.7;
+	}
+}

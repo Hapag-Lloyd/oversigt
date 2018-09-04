@@ -1,0 +1,57 @@
+<#ftl output_format="HTML">
+<#import "../roles.ftl.html" as roles>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+<#if !dashboard.exists> 
+<title>Dashboard ${dashboard.title}</title>
+<#else>
+<title>${dashboard.title}</title>
+</#if>
+
+<link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/assets/bootstrap/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/assets/config/cover.css">
+</head>
+
+<body>
+	<div class="site-wrapper">
+		<div class="site-wrapper-inner">
+			<div class="cover-container">
+				<div class="inner cover">
+					<h1 class="cover-heading">Dashboard <b>${dashboard.title}</b></h1>
+					<#if !dashboard.exists>
+						<p class="lead">The dashboard <b>${dashboard.title}</b> does not exist yet. Feel free to create it!</p>
+						<p class="lead">
+							<form method="POST">
+								<button style="font-size: 2em" class="btn btn-lg btn-default" type="submit" name="action" value="create">Create It</button>
+							</form>
+						</p>
+					<#else>
+						<#if !roles.hasRole(principal,"server.admin")>
+							<p class="lead">The dashboard <b>${dashboard.title}</b> exists... it's just not yet enabled. Please come back later!</p>
+						<#else>
+							<p class="lead">The dashboard <b>${dashboard.title}</b> already exists but it's not yet enabled. As you're a server admin, you can do this.</p>
+							<p class="lead">
+								<form method="POST">
+									<button style="font-size: 2em" class="btn btn-lg btn-default" type="submit" name="action" value="enable">Enable It</button>
+									<button style="font-size: 2em" class="btn btn-lg btn-default" type="submit" name="action" value="delete">Delete It</button>
+								</form>
+							</p>
+						</#if>
+					</#if>
+				</div> <!-- inner cover -->
+			</div> <!-- cover-container -->
+		</div> <!-- site-wrapper-inner -->
+	</div> <!-- site-wrapper -->
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="/assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+</html>

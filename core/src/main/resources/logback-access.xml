@@ -1,0 +1,18 @@
+<included>
+	<appender name="access" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>log/access.log</file>
+	    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">        
+	        <!-- daily rollover -->
+	        <fileNamePattern>log/access.%d{"yyyy-MM-dd", UTC}.log</fileNamePattern>
+	        <maxHistory>30</maxHistory>
+	    </rollingPolicy>
+	    <encoder>
+	        <pattern>%msg%n</pattern>
+	    </encoder>
+	</appender>	
+	
+	<!-- logger only for access log of the web server -->
+	<logger name="access" level="ALL" additivity="false">
+		<appender-ref ref="access" />
+	</logger>
+</included>

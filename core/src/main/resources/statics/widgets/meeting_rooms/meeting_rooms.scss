@@ -1,0 +1,90 @@
+// ----------------------------------------------------------------------------
+// Sass declarations
+// ----------------------------------------------------------------------------
+$background-color: rgb(255, 192, 0);
+$value-color: rgb(50, 63, 79);
+
+$title-color: rgba(50, 63, 79,0.7);
+$label-color: rgb(50, 63, 79);
+$moreinfo-color: rgba(255, 255, 255, 0.7);
+
+// ----------------------------------------------------------------------------
+// Widget-list styles
+// ----------------------------------------------------------------------------
+.widget-meeting-rooms {
+
+	background-color: $background-color;
+	vertical-align: middle;
+
+	.tableMeetingRooms {
+		display: table;
+  		margin-bottom: 10px;
+		width: 100%;
+		
+		li {
+			display: table-row;
+			
+			span {
+				display: table-cell;
+				padding-bottom: 3px;
+			}
+		}
+	}
+
+	.title {
+		// color: $title-color;
+	}
+
+	ol, ul {
+		// color: $label-color;
+	}
+
+	ol {
+		list-style-position: inside;
+	}
+
+	li {
+		margin-bottom: 5px;
+	}
+
+	.list-nostyle {
+		list-style: none;
+	}
+
+	.name {
+		text-align: left;
+		// color: $label-color;
+		font-weight: bold;
+		padding-left: 10px;
+	}
+
+	.number {
+		text-align: left;
+		width: 1%;
+		// color: $label-color;
+		font-size: 75%;
+		opacity: 0.7;
+	}
+	
+	.status {
+		text-align: right;
+		// color: $value-color;
+		padding-right: 10px;
+	}
+	
+	.occupied {
+		opacity: 0.7;
+		.name {
+			font-weight: normal;
+		}
+	}
+
+	.updated-at {
+		color: rgba(0, 0, 0, 0.3);
+	}
+
+	.more-info {
+		color: $moreinfo-color;
+	}
+
+}

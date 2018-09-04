@@ -1,0 +1,9 @@
+<#function hasRole principal roleName>
+	<#return principal.hasRole(roleName)>
+</#function>
+
+<#macro ifHasRole principal roleName>
+	<#if hasRole(principal, roleName)>
+		<#nested>
+	</#if>
+</#macro>

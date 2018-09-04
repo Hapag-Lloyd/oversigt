@@ -1,0 +1,11 @@
+<h1 class="title" data-bind="title"></h1>
+
+<ul class="tableMeetingRooms">
+  <li data-foreach-item="items" data-bind-class="item.clazz">
+  	<span class="name" data-bind="item.name"></span>
+  	<span class="number" data-bind="item.number"></span>
+  	<span class="status" data-bind="item.status"></span>
+  </li>
+</ul>
+
+<p class="more-info" data-bind="moreinfo"></p>

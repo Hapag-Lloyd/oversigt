@@ -1,0 +1,38 @@
+# leave all classpath and project handling to Maven 
+# ==> do not checkin Eclipse .project and .classpath files
+.project
+.classpath
+.factorypath
+.externalToolBuilders
+
+# leave all Eclipse settings locally
+# Users must checkin a settings file explicitly to share it's content via version control
+# e.g. org.eclipse.jdt.ui.prefs, org.eclipse.jdt.core.prefs
+.settings
+
+# do not checkin build tool specific files
+.mvn
+.gradle
+
+# do not check-in generated java sources
+*_.java
+.apt_generated
+
+# do not check-in binaries
+target/
+build/
+bin/
+*.class
+
+# do not checkin folders named workspace
+workspace
+
+# do not check-in generated web deployment descriptors
+*/WebContent/WEB-INF/web.xml
+*/src/main/webapp/META-INF/MANIFEST.MF
+
+# do not check-in other generated files
+rebel.xml
+
+# clearcase migration
+.copyarea.db

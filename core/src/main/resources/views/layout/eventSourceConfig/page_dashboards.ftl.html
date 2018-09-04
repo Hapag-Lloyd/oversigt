@@ -1,0 +1,53 @@
+<#ftl output_format="HTML">
+<#import "../configuration_layout.ftl.html" as layout>
+<#import "../roles.ftl.html" as roles>
+
+<@layout.ConfigurationLayout "Dashboards">
+
+<div class="row">
+	<div class="col-md-8 col-sm-8 col-xs-12">
+		<h2>Dashboards</h2>
+	</div>
+
+	<div class="col-md-4 col-sm-4 col-xs-12" style="margin-top:20px">
+		<form>
+			<label class="sr-only" for="search">Filter</label>
+			<div class="input-group">
+				<input type="text" class="form-control input-search" name="dashboardSearch" id="dashboardSearch" placeholder="Filter dashboards">
+				<span class="input-group-addon group-icon">
+					<span class="glyphicon glyphicon-search" ></span>
+				</span>
+			</div>
+		</form>
+	</div>
+</div>
+
+<div class="panel panel-default">
+	<div class="list-group">
+		<div id="dashboardSearchList">
+			<#list dashboardIds as did>
+			<div class="list-group-item">
+				<form method="POST" style="margin-bottom:0px;">
+					<input type="hidden" name="dashboardId" value="${did}" />
+					<a class="btn dashboardLink" href="/${did}" target="_blank">${did}</a>
+					<div class="btn-group pull-right">
+						<a class="btn btn-default" href="/${did}/config" target="_blank">Configure</a>
+						<button class="btn btn-default" data-type="reload" name="action" value="reloadDashboard" type="submit">Reload</button>
+						<#if roles.hasRole(principal,"server.admin")>
+							<button class="btn btn-warning" data-type="delete" name="action" value="deleteDashboard" type="submit" onclick="if(!confirm('Dou you really want to delete dashboard \'${did}\'?'))return false;">Delete</button>
+						</#if>
+					</div>
+				</form>
+			</div>
+			</#list>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	$(document).ready(function(){
+		installFilterSearch('#dashboardSearch', '#dashboardSearchList>div', '.dashboardLink');
+	});
+</script>
+
+</@layout.ConfigurationLayout>

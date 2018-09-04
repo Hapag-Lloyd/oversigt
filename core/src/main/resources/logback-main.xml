@@ -1,0 +1,33 @@
+<included>
+	<!-- <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%date{"HH:mm:ss.SSS", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender> -->
+
+	<appender name="file-out" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>log/oversigt.log</file>
+	    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">        
+	        <!-- daily rollover -->
+	        <fileNamePattern>log/oversigt.%d{"yyyy-MM-dd", UTC}.log</fileNamePattern>
+	        <maxHistory>30</maxHistory>
+	    </rollingPolicy>
+	    <encoder>
+	        <pattern>%date{"HH:mm:ss.SSS", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+	    </encoder>
+	</appender>
+	
+	<!-- default logger -->
+	<root level="WARN">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="file-out" />
+	</root>
+
+	<!-- settings for some internal loggers -->
+	<logger name="com.hlag.oversigt.core" level="DEBUG" />
+	<logger name="com.hlag.oversigt.core.OversigtEventSender" level="INFO"/>
+	<logger name="com.hlag.oversigt.model" level="INFO"/>
+	
+	<logger name="ro.isdc.wro" level="ERROR" />
+
+</included>

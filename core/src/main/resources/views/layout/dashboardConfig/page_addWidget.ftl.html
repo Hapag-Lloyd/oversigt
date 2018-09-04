@@ -1,0 +1,61 @@
+<#ftl output_format="HTML">
+<#import "../configuration_layout.ftl.html" as layout>
+<@layout.ConfigurationLayout "Add Widget" "server.dashboard.editor">
+
+<div class="row">
+	<div class="col-md-8 col-sm-8 col-xs-12">
+		<h2>Add Widget</h2>
+	</div>
+
+	<div class="col-md-4 col-sm-4 col-xs-12" style="margin-top:20px">
+		<form>
+			<label class="sr-only" for="search">Filter</label>
+			<div class="input-group">
+				<input type="text" class="form-control input-search" name="addWidgetSearch" id="addWidgetSearch" placeholder="Filter Widgets">
+				<span class="input-group-addon group-icon">
+					<span class="glyphicon glyphicon-search" ></span>
+				</span>
+			</div>
+		</form>
+	</div>
+</div>
+
+<form method="POST">
+	<input type="hidden" name="action" value="addWidget" />
+
+	<div class="grid" id="addWidgetSearchListGrid" data-masonry='{ "columnWidth": 5, "itemSelector": ".grid-item" , "gutter": 0}'>
+		<#list dashboardManager.eventSourceInstances as instance>
+	  		<div class="col-md-3 grid-item">
+	    		<span class="thumbnail">
+	      			<img src="${preview.apply(instance)}" alt="Preview">
+	      			<h4>${instance.name}</h4>
+	      			<p>${instance.descriptor.description!""}</p>
+	      			<hr class="line">
+	      			<div class="clearfix">
+	      				<div >
+	      					<button class="btn btn-primary right" name="eventSourceId" value="${instance.id}">Create Widget</button>
+	      				</div>
+	      			</div>
+	    		</span>
+	  		</div>
+	  	</#list>
+	</div>
+</form>
+<script type="text/javascript" src="/assets/config/masonry.pkgd.min.js"></script>
+<script type="text/javascript" src="/assets/config/imagesloaded.pkgd.min.js"></script>
+<script type="text/javascript">
+	// init Masonry
+	var $grid = $('.grid').masonry({
+	  // options...
+	});
+	// layout Masonry after each image loads
+	$grid.imagesLoaded().progress( function() {
+	  $grid.masonry('layout');
+	});
+
+	$(document).ready(function(){
+		installFilterSearch('#addWidgetSearch', '#addWidgetSearchListGrid>div.grid-item', null, function(){$grid.masonry('layout');});
+	});
+</script>
+<!-- <h2>Import Widget Configuration</h2> -->
+</@layout.ConfigurationLayout>

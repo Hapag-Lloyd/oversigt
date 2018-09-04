@@ -1,0 +1,14 @@
+<table>
+	<tr>
+		<td class="category" data-foreach-category="categories">
+			<div class="series" data-foreach-serie="category.series"
+				data-bind-style="serie.style"
+				data-bind-test="serie.style"></div>
+			<h3 class="title" data-bind="category.title"></h3>
+			<h3 class="description" data-bind="category.description"></h3>
+		</td>
+	</tr>
+</table>
+
+<h1 class="title" data-bind="title"></h1>
+<h2 class="value" data-bind="value"></h2>

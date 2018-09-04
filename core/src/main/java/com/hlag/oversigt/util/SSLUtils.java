@@ -1,0 +1,137 @@
+package com.hlag.oversigt.util;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import com.google.common.io.Resources;
+
+public final class SSLUtils {
+	private SSLUtils() {
+	}
+
+	public static SSLContext createSSLContext(SSLConfiguration config) {
+		try {
+			return createSSLContext_unsafe(config);
+		} catch (UnrecoverableKeyException | KeyManagementException | KeyStoreException | NoSuchAlgorithmException
+				| CertificateException | IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static SSLContext createSSLContext_unsafe(SSLConfiguration config) throws UnrecoverableKeyException,
+			KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+		URL keystoreUrl = Resources.getResource(config.keystore);
+		URL truststoreUrl = Resources.getResource(config.truststore);
+		KeyStore keystore = loadKeyStore(keystoreUrl, config.keystorePassword);
+		KeyStore truststore = loadKeyStore(truststoreUrl, config.truststorePassword);
+		return createSSLContext(keystore, config.keystoreEntryPassword, truststore);
+	}
+
+	private static SSLContext createSSLContext(final KeyStore keyStore,
+			String keyEntryPassword,
+			final KeyStore trustStore)
+			throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		keyManagerFactory.init(keyStore, keyEntryPassword.toCharArray());
+		KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+
+		TrustManagerFactory trustManagerFactory = TrustManagerFactory
+				.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		trustManagerFactory.init(trustStore);
+		TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
+		SSLContext sslContext;
+		sslContext = SSLContext.getInstance("TLS");
+		sslContext.init(keyManagers, trustManagers, null);
+
+		return sslContext;
+	}
+
+	private static KeyStore loadKeyStore(URL url, String password)
+			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+		try (InputStream stream = new BufferedInputStream(url.openStream())) {
+			KeyStore keystore = KeyStore.getInstance("JKS");
+			keystore.load(stream, password.toCharArray());
+			return keystore;
+		}
+	}
+
+	public static class SSLConfiguration {
+		private final String keystore;
+		private final String truststore;
+		private final String keystorePassword;
+		private final String truststorePassword;
+		private final String keystoreEntryPassword;
+
+		public SSLConfiguration(String keystore,
+				String truststore,
+				String keystorePassword,
+				String truststorePassword,
+				String keystoreEntryPassword) {
+			this.keystore = keystore;
+			this.truststore = truststore;
+			this.keystorePassword = keystorePassword;
+			this.truststorePassword = truststorePassword;
+			this.keystoreEntryPassword = keystoreEntryPassword;
+		}
+
+		public SSLContext createSSLContext() {
+			return SSLUtils.createSSLContext(this);
+		}
+	}
+
+	private static final Map<String, SSLContext> sslContexts = Collections.synchronizedMap(new HashMap<>());
+
+	private static SSLContext getSslContext(String id) {
+		return sslContexts.computeIfAbsent(id, x -> createSslContext());
+	}
+
+	private static SSLContext createSslContext() {
+		try {
+			SSLContext sslContext = SSLContext.getInstance("SSL");
+
+			TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+				@Override
+				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+
+				@Override
+				public void checkClientTrusted(X509Certificate[] certs, String authType) {
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] certs, String authType) {
+				}
+			} };
+			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+			return sslContext;
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException("Unable to create SSLContext", e);
+		}
+	}
+
+	public static SSLSocketFactory getNonCheckingSSLSocketFactory(String id) {
+		return getSslContext(id).getSocketFactory();
+	}
+}

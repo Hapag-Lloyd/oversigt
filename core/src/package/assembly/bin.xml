@@ -1,0 +1,91 @@
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+
+	<id>bin</id>
+	<baseDirectory>/</baseDirectory>
+	<formats>
+		<format>zip</format>
+		<!-- <format>tar</format> -->
+	</formats>
+	<fileSets>
+		<!-- Add application binaries to ZIP file -->
+		<fileSet>
+			<directory>${project.build.directory}</directory>
+			<outputDirectory>bin</outputDirectory>
+			<includes>
+				<include>*application.jar</include>
+			</includes>
+		</fileSet>
+		<!-- Add dependencies to ZIP file -->
+		<fileSet>
+			<directory>${project.build.directory}/dependency</directory>
+			<outputDirectory>lib</outputDirectory>
+			<includes>
+				<include>*.jar</include>
+			</includes>
+		</fileSet>
+		<!-- Add classpath list to dependencies -->
+		<fileSet>
+			<directory>${project.build.directory}</directory>
+			<outputDirectory>lib</outputDirectory>
+			<includes>
+				<include>classpath</include>
+			</includes>
+		</fileSet>
+		<!-- Put a launcher to the ZIP file so everybody can start the application -->
+		<fileSet>
+			<directory>${project.build.directory}</directory>
+			<outputDirectory></outputDirectory>
+			<includes>
+				<include>*launcher.jar</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/src/launcher/resources</directory>
+			<outputDirectory></outputDirectory>
+			<includes>
+				<include>start.sh</include>
+				<include>stop.sh</include>
+			</includes>
+		</fileSet>
+		<!-- Add all needed resources -->
+		<fileSet>
+			<directory>${project.basedir}/src/main/resources</directory>
+			<outputDirectory>res</outputDirectory>
+		</fileSet>
+		<!-- Prepare a directory for user data -->
+		<fileSet>
+			<directory>.</directory>
+			<outputDirectory>data</outputDirectory>
+			<excludes>
+				<exclude>*/**</exclude>
+			</excludes>
+		</fileSet>
+		<!-- Prepare a directory for user JARs -->
+		<fileSet>
+			<directory>${project.basedir}/lib-user</directory>
+			<outputDirectory>lib-user</outputDirectory>
+			<includes>
+				<include>*.md</include>
+			</includes>
+		</fileSet>
+		<!-- Create an empty directory for addons -->
+		<fileSet>
+			<directory>${project.basedir}/addons</directory>
+			<outputDirectory>addons</outputDirectory>
+			<includes>
+				<include>*.md</include>
+			</includes>
+		</fileSet>
+		<!-- Prepare a directory for log files -->
+		<fileSet>
+			<directory>.</directory>
+			<outputDirectory>log</outputDirectory>
+			<excludes>
+				<exclude>*/**</exclude>
+			</excludes>
+		</fileSet>
+	</fileSets>
+</assembly>

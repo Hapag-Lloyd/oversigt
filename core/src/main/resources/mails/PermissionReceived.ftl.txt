@@ -1,0 +1,6 @@
+Hi ${recipient.name},
+
+You just got new permissions! You now have the role ${role} in the dashboard ${dashboard.title} (${hostname}/${dashboard.id}). Have fun!
+
+Kind regards,
+Oversigt

@@ -1,0 +1,338 @@
+form.nonEditable .editable {
+	display: none;
+}
+
+form.editable .nonEditable {
+	display: none;
+}
+
+form .show-on-hover {
+	visibility: hidden;
+}
+
+form:hover .show-on-hover {
+	visibility: visible;
+}
+
+h4 {
+	font-weight: 600;
+}
+
+p {
+	font-size: 12px;
+	margin-top: 5px;
+}
+
+.right {
+	float: right;
+}
+
+.thumbnail {
+	/*opacity:0.70;*/
+	-webkit-transition: all 0.5s;
+	transition: all 0.5s;
+}
+
+.thumbnail:hover {
+	/*opacity:1.00;*/
+	box-shadow: 0px 0px 10px #4bc6ff;
+}
+
+.controls .form-control.hlag-form-control-suggestions ~ select {
+	display: none;
+	height: 150px;
+	position: absolute;
+	top: 34px;
+	z-index: 3;
+}
+
+input
+.hlag-form-control-suggestions
+:not
+ 
+(
+.fixed-value
+ 
+)
+{
+border-top-right-radius
+:
+ 
+4
+px
+ 
+!
+important
+;
+
+	
+border-bottom-right-radius
+:
+ 
+4
+px
+ 
+!
+important
+;
+
+
+}
+.line {
+	margin-bottom: 5px;
+}
+
+@media screen and (max-width: 770px) {
+	.right {
+		float: left;
+		width: 100%;
+	}
+}
+
+/* Duration Picker */
+/*
+.durationpicker-container {
+    background-color: white;
+    display: inline-block;
+    width: auto;
+}
+
+.durationpicker-innercontainer {
+    display: inline-block;
+    width: auto;
+    padding-right: 5px;
+}
+
+.durationpicker-duration {
+    width: 50px;
+    display: inline-block;
+    border: none;
+    padding-left: 10%;
+    text-align: right;
+}
+
+.durationpicker-label {
+    display: inline-block;
+}
+
+.durationpicker-container.form-control {
+	border-radius: 4px;
+	width: 100%;	
+}
+*/
+
+/* fix big select boxes */
+.bootstrap-select .dropdown-menu {
+	max-height: 350px !important;
+}
+
+.bootstrap-select>button:focus, .bootstrap-select.open>button {
+	border-color: #66afe9;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px
+		rgba(102, 175, 233, .6);
+	outline: 0 none;
+}
+
+/* badgebox checkboxes */
+/* Hiding the checkbox, but allowing it to be focused */
+.badgebox {
+	opacity: 0;
+}
+/*.badgebox::after
+{
+    content: "no ";
+}
+.badgebox:checked::after
+{
+    content: "yes ";
+}*/
+.badgebox+.badge {
+	/* Move the check mark away when unchecked */
+	text-indent: -999999px;
+	/* Makes the badge's width stay the same checked and unchecked */
+	width: 27px;
+}
+
+.badgebox:focus+.badge {
+	/* Set something to make the badge looks focused */
+	/* This really depends on the application, in my case it was: */
+	/* Adding a light border */
+	box-shadow: inset 0px 0px 5px;
+	/* Taking the difference out of the padding */
+}
+
+.badgebox:checked+.badge {
+	/* Move the check mark back when checked */
+	text-indent: 0;
+}
+
+/* customize the json editor */
+span.help-block {
+	clear: left;
+}
+
+div.jsoneditor h3 {
+	font-size: 0;
+	margin-top: 0;
+}
+
+div.jsoneditor label {
+	font-weight: normal;
+	padding-top: 0 !important;
+}
+
+div.jsoneditor .row {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+div.jsoneditor .form-group {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+div.jsoneditor .row>div {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+div.jsoneditor .row>div ~div>div {
+	/* spacing between editors in one row */
+	padding-left: 0.5em;
+}
+
+div.jsoneditor>div>div.well { /* space after button row */
+	padding-bottom: 9px !important;
+	margin-bottom: 0;
+}
+
+div.jsoneditor button { /* more pretty buttons */
+	height: 2.5em;
+	padding: 1px 5px;
+	font-size: 12px;
+	line-height: 1.3;
+	border-radius: 3px;
+}
+
+div.jsoneditor .form-group ~div ~.btn-group button {
+	margin-bottom: 10px;
+}
+
+div.jsoneditor>div>h3>span {
+	display: none;
+}
+
+div.jsoneditor>div>h3>div.btn-group {
+	margin-left: 0px !important;
+}
+
+div.jsoneditor span.select2 {
+	width: 100% !important;
+}
+
+div.jsoneditor div.tabs.list-group, div.jsoneditor div.tabs.list-group+div>div.well
+	{
+	margin-bottom: 2px;
+}
+
+div.jsoneditor table {
+	width: 100% !important;
+}
+
+div.jsoneditor table, div.jsoneditor table th, div.jsoneditor table td,
+	div.jsoneditor table tr, div.jsoneditor table thead, div.jsoneditor table row
+	{
+	border: none;
+}
+
+div.jsoneditor table td:last-child, div.jsoneditor table th:last-child {
+	white-space: nowrap;
+	width: 0;
+}
+
+div.jsoneditor table td:last-child button {
+	float: none;
+}
+
+div.jsoneditor table, div.jsoneditor table+div.btn-group {
+	margin-bottom: 5px;
+}
+
+div.jsoneditor table td, div.jsoneditor table th {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 0px;
+	padding-right: 4px;
+}
+
+/* customize the syntax highlighting */
+div.editor.syntaxhighlighting {
+	height: 15em;
+	margin-bottom: 0px;
+	border: 1px solid #ccc;
+	margin: auto;
+}
+
+div.ace_focus {
+	border-color: #66afe9 !important;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px
+		rgba(102, 175, 233, .6);
+	outline: 0 none;
+}
+
+/** custom checkboxes **/
+input.checkboxOne[type=checkbox] {
+	visibility: hidden;
+}
+/* Create the slider bar */
+div.checkboxOne {
+	width: 38px;
+	height: 14px;
+	background: #ccc;
+	position: relative;
+	border-radius: 3px;
+	margin-top: 9px;
+}
+
+.checkboxOne input[type=checkbox]::after {
+	content: "enabled";
+}
+/* Create the slider from the label */
+.checkboxOne label {
+	display: block;
+	width: 25px;
+	height: 20px;
+	border-radius: 10px;
+	transition: all .5s ease;
+	cursor: pointer;
+	position: absolute;
+	top: -3px;
+	left: 15px;
+	background: #555;
+}
+/* Move the slider in the correct position if the checkbox is clicked */
+.checkboxOne input[type=checkbox]:checked+label {
+	left: -3px;
+}
+
+.checkboxOne input[type=checkbox]+label+div {
+	display: inline-block;
+	top: -5px;
+	left: 2.5em;
+	position: relative;
+}
+
+.checkboxOne input[type=checkbox]:checked+label+div {
+	top: -25px;
+	left: 3.5em;
+}
+
+.checkboxOne input[type=checkbox]+label+div::before {
+	content: "no";
+	color: #d9534f;
+}
+
+.checkboxOne input[type=checkbox]:checked+label+div::before {
+	content: "yes";
+	color: #419641;
+}

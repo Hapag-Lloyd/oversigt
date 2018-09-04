@@ -1,0 +1,229 @@
+package com.hlag.oversigt.storage;
+
+import static java.util.stream.Collectors.joining;
+
+import java.time.Duration;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class SqliteDialect implements SqlDialect {
+
+	@Override
+	public String getDriverClassName() {
+		return "org.sqlite.JDBC";
+	}
+
+	@Override
+	public String getJdbcConnectionUrl(String location, String schemaName, String username, String password) {
+		return "jdbc:sqlite:" + location;
+	}
+
+	@Override
+	public String select(String tableName,
+			Collection<String> select,
+			Collection<String> where,
+			String columnIn,
+			boolean notIn,
+			long inValues) {
+		String sql = "SELECT ";
+		if (select != null && !select.isEmpty()) {
+			sql += select.stream().collect(Collectors.joining(","));
+		} else {
+			sql += "*";
+		}
+		sql += " FROM " + tableName;
+		if (where != null && !where.isEmpty() || columnIn != null && inValues > 0) {
+			sql += " WHERE ";
+			boolean needAnd = false;
+			if (where != null && !where.isEmpty()) {
+				sql += where.stream().map(s -> s + "=?").collect(Collectors.joining(" AND "));
+				needAnd = true;
+			}
+			if (columnIn != null && inValues > 0) {
+				if (needAnd) {
+					sql += " AND ";
+				}
+				if (notIn) {
+					sql += " NOT ";
+				}
+				sql += columnIn + " IN (" + Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(","))
+						+ ")";
+			}
+		} else if (inValues == -1) {
+			sql += " WHERE 1!=1 -- IN values are not set\n";
+		}
+		return sql.trim();
+	}
+
+	@Override
+	public String selectithOneLike(String tableName,
+			Collection<String> select,
+			Collection<String> columnsToCheck,
+			String columnWithLike) {
+		String sql = "SELECT ";
+		if (select != null && !select.isEmpty()) {
+			sql += select.stream().collect(Collectors.joining(","));
+		} else {
+			sql += "*";
+		}
+		sql += " FROM " + tableName;
+		sql += " WHERE ";
+		if (!columnsToCheck.isEmpty()) {
+			sql += columnsToCheck.stream().map(s -> s + "=?").collect(Collectors.joining(",", "", " AND "));
+		}
+		sql += columnWithLike + " LIKE ?";
+		return sql;
+	}
+
+	@Override
+	public String insert(String tableName, Collection<String> columns) {
+		String sql = "INSERT INTO " + tableName + " (";
+		sql += columns.stream().collect(joining(","));
+		sql += ") VALUES (";
+		sql += columns.stream().map(s -> "?").collect(joining(","));
+		sql += ")";
+		return sql;
+	}
+
+	@Override
+	public String update(String tableName, Collection<String> valueNames, Collection<String> whereNames) {
+		String sql = "UPDATE " + tableName + " SET ";
+		sql += valueNames.stream().map(k -> k + "=?").collect(joining(","));
+		sql += " WHERE ";
+		sql += whereNames.stream().map(s -> s + "=?").collect(joining(" AND "));
+		return sql;
+	}
+
+	@Override
+	public String delete(String tableName, Collection<String> whereNames) {
+		String sql = "DELETE FROM " + tableName + " WHERE ";
+		sql += whereNames//
+				.stream()//
+				.map(k -> k + " = ? ")//
+				.collect(Collectors.joining(" AND "));
+		return sql;
+	}
+
+	@Override
+	public String delete(String tableName, Collection<String> where, String columnIn, boolean notIn, long inValues) {
+		String sql = "DELETE FROM " + tableName;
+		if (where != null && !where.isEmpty() || columnIn != null && inValues > 0) {
+			sql += " WHERE ";
+			boolean needAnd = false;
+			if (where != null && !where.isEmpty()) {
+				sql += where.stream().map(s -> s + "=?").collect(Collectors.joining(" AND "));
+				needAnd = true;
+			}
+			if (columnIn != null && inValues > 0) {
+				if (needAnd) {
+					sql += " AND ";
+				}
+				if (notIn) {
+					sql += " NOT ";
+				}
+				sql += columnIn + " IN (" + Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(","))
+						+ ")";
+			}
+		}
+		return sql;
+	}
+
+	@Override
+	public String createTable(String name, ColumnOptions... columns) {
+		String sql = "CREATE TABLE " + name + " (";
+		long pkColumnCount = Stream.of(columns).filter(c -> c.primaryKey).count();
+		boolean hasUnique = Stream.of(columns).filter(c -> c.unique).findAny().isPresent();
+		sql += Stream//
+				.of(columns)//
+				.map(c -> getColumnDefinition(c, pkColumnCount == 1))//
+				.collect(Collectors.joining(","));
+		if (pkColumnCount > 1) {
+			sql += ", PRIMARY KEY (" + Stream//
+					.of(columns)//
+					.filter(c -> c.primaryKey)//
+					.map(c -> c.name)//
+					.collect(Collectors.joining(",")) //
+					+ ")";
+		}
+		if (hasUnique) {
+			sql += ", UNIQUE (" + Stream//
+					.of(columns)//
+					.filter(c -> c.unique)//
+					.map(c -> c.name)//
+					.collect(Collectors.joining(",")) //
+					+ ")";
+		}
+		sql += ")";
+		return sql;
+	}
+
+	@Override
+	public String alterTableAddColumn(String tableName, ColumnOptions option) {
+		String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + option.name + " " + getTypeName(option.type);
+		if (!option.nullable) {
+			sql += " NOT NULL";
+		}
+		if (option.defaultValue != null) {
+			sql += " DEFAULT ";
+			if (option.defaultValue instanceof String) {
+				sql += "'" + option.defaultValue + "'";
+			} else {
+				sql += option.defaultValue;
+			}
+		}
+		return sql;
+	}
+
+	@Override
+	public String alterTableDropColumn(String tableName, String columnName) {
+		throw new RuntimeException("DROP COLUMN is not supported by SQLite");
+		//return "ALTER TABLE " + tableName + " DROP COLUMN " + columnName;
+	}
+
+	@Override
+	public Object convertValue(Object object) {
+		if (object instanceof Boolean) {
+			return (Boolean) object ? 1 : 0;
+		} else if (object instanceof Duration) {
+			return ((Duration) object).getSeconds();
+		} else {
+			return object;
+		}
+	}
+
+	private String getColumnDefinition(ColumnOptions column, boolean withPrimaryKey) {
+		String sql = column.name + " " + getTypeName(column.type);
+		if (withPrimaryKey && column.primaryKey) {
+			sql += " PRIMARY KEY";
+		}
+		if (column.autoincrement) {
+			sql += " AUTOINCREMENT";
+		}
+		if (column.nullable) {
+			sql += " NULL";
+		} else {
+			sql += " NOT NULL";
+		}
+		return sql;
+	}
+
+	private String getTypeName(ColumnType type) {
+		switch (type) {
+			case Text:
+				return "TEXT";
+			case Float:
+				return "REAL";
+			case Integer:
+				return "INTEGER";
+			case BigInteger:
+				return "BIGINT";
+			case Timestamp:
+				return "TIMESTAMP";
+			case Boolean:
+				return "INTEGER(1)";
+			default:
+				throw new RuntimeException("Unknown column type: " + type.name());
+		}
+	}
+}

@@ -1,0 +1,36 @@
+.widget-hl-bar-chart {
+	/*background-color: #12b0c5;*/
+	background-color: rgb(55, 86, 35);
+	
+	table {
+		height: 100%;
+		top: 0;
+		
+		.category {
+			position: relative;
+			
+			> .description {
+				bottom: 15px;
+				opacity: 0.7;
+			}
+			> .series {
+				bottom: 0;
+			}
+			> .title {
+				bottom: 45px;
+			}
+		}
+	}
+	
+	table, .category > * {
+		left: 0;
+		position: absolute;
+		right: 0;
+	}
+	
+	> .title, > .value {
+		opacity: 0.7;
+		position: relative;
+		z-index: 99;
+	}
+}

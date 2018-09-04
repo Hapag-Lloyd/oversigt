@@ -1,0 +1,9 @@
+<#ftl output_format="HTML">
+<#import "email_base.ftl" as email>
+<@email.email>
+<p style="Margin-top: 20px; Margin-bottom: 0;">Hi ${recipient.name},</p>
+<p style="Margin-top: 30px; Margin-bottom: 0;">The dashboard <a href="${hostname}/${dashboard.id}">${dashboard.title}</a> has been enabled.</p>
+<p style="Margin-top: 20px; Margin-bottom: 0;">You're enabled to configure the dashboard. Please visit <a href="${hostname}/${dashboard.id}/config">${hostname}/${dashboard.id}/config</a> to customize it to your needs.</p>
+<p style="Margin-top: 30px; Margin-bottom: 0;">Kind regards,</p>
+<p style="Margin-top: 20px; Margin-bottom: 0;">Oversigt</p>
+</@email.email>

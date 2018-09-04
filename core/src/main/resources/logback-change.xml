@@ -1,0 +1,25 @@
+<included>
+	<!-- <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%date{"HH:mm:ss.SSS", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender> -->
+
+	<appender name="change" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	    <file>log/change.log</file>
+	    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">        
+	        <!-- daily rollover -->
+	        <fileNamePattern>log/change.%d{"yyyy-MM-dd", UTC}.log</fileNamePattern>
+	        <maxHistory>30</maxHistory>
+	    </rollingPolicy>
+	    <encoder>
+	        <pattern>%date{"HH:mm:ss.SSS", UTC} [%thread] %msg%n</pattern>
+	    </encoder>
+	</appender>	
+	
+	<!-- logger only for configuration changes -->
+	<logger name="change" level="ALL" additivity="false">
+		<appender-ref ref="change" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+</included>

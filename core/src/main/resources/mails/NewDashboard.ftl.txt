@@ -1,0 +1,10 @@
+Hi ${recipient.name},
+
+The user ${dashboard.owner} created a new dashboard. As you are a server administrator you can enable or delete it.
+
+Please visit the following link to do what you have to do: ${hostname}/${dashboard.id}/create/create
+
+But remember: With great power comes great responsibility!
+
+Kind regards,
+Oversigt

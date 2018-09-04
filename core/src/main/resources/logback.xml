@@ -1,0 +1,15 @@
+<configuration debug="true">
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%date{"HH:mm:ss.SSS", UTC} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<include optional="false" resource="logback-main.xml" />
+	<include optional="false" resource="logback-change.xml" />
+	<include optional="false" resource="logback-access.xml" />
+	<include optional="false" resource="logback-db.xml" />
+	<include optional="false" resource="logback-special.xml" />
+	
+	<include optional="true" resource="logback-custom.xml" />
+</configuration>

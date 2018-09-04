@@ -1,0 +1,10 @@
+<#ftl output_format="HTML">
+<#import "email_base.ftl" as email>
+<@email.email>
+<p style="Margin-top: 20px; Margin-bottom: 0;">Hi ${recipient.name},</p>
+<p style="Margin-top: 30px; Margin-bottom: 0;">The user <strong>${dashboard.owner}</strong> created a new dashboard. As you are a server administrator you can enable or delete it.</p>
+<p style="Margin-top: 20px; Margin-bottom: 0;">Please visit the following link to do what you have to do: <a href="${hostname}/${dashboard.id}/create/create">${hostname}/${dashboard.id}/create/create</a></p>
+<p style="Margin-top: 20px; Margin-bottom: 0;">But remember: With great power comes great responsibility!</p>
+<p style="Margin-top: 30px; Margin-bottom: 0;">Kind regards,</p>
+<p style="Margin-top: 20px; Margin-bottom: 0;">Oversigt</p>
+</@email.email>
