@@ -38,5 +38,3 @@ Oversigt contains several built-in connectors able to connect to a variaty of so
 ## History
 We forked Jashing somewhen in 2016 and then extremely modified the configuration part of the project. Jashing as well as also Dashing itself are only able to serve dashboards configured by files existing on the server. Oversigt wants to create a dashboard software that can be configured by a simple web interface without needing to restart servers.  
 One goal of the Oversigt software is to serve many dashboards from one single server while running only one instance of the server software. Every data should only be gathered once and then spread to all dashboards displaying this data while every dashboard should be able to customize its view of the data without interrupting others.
-
-
