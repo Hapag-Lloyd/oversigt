@@ -39,7 +39,7 @@ rebel.xml
 
 
 # Oversigt specific
-/log/
-/data/
+/log/*.log
+/data/*.db
 /lib-user/*.jar
 /addons/*.jar

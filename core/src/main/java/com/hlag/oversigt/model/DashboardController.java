@@ -139,6 +139,7 @@ public class DashboardController {
 		dashboards.putAll(storage//
 				.loadDashboards()
 				.stream()
+				.peek(db -> LOGGER.info("Loading dashboard: {} ({})", db.getId(), db.getTitle()))
 				.peek(db -> db.getModifiableWidgets()//
 						.addAll(storage.loadWidgetDatas(db, this::getEventSourceInstance)))
 				.collect(toMap(Dashboard::getId, Function.identity())));
