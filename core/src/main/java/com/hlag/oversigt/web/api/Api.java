@@ -24,7 +24,7 @@ import io.swagger.annotations.Tag;
 		tags = { //
 				@Tag(name = "Authentication", description = "Everything around authentication"), //
 				@Tag(name = "Dashboard", description = "Control dashboards"), //
-				@Tag(name = "Widget", description = "Control widgets"), //
+				@Tag(name = "Dashboard-Widget", description = "Control widgets"), //
 				@Tag(name = "EventSource", description = "Control event sources"), //
 				@Tag(name = "SerializableValue", description = "Control serializable values"), //
 				@Tag(name = "System", description = "General system functions") //
