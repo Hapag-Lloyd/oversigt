@@ -261,11 +261,11 @@ public class DashboardWidgetResource {
 	public static class WidgetInfo {
 		@NotNull
 		@Positive
-		private int id = -1;
+		private final int id;
 		@NotBlank
 		@NotNull
-		private String name;
-		private String view;
+		private final String name;
+		private final String view;
 
 		public WidgetInfo(Widget widget) {
 			this(widget.getId(), widget.getName(), widget.getView());
@@ -297,6 +297,8 @@ public class DashboardWidgetResource {
 		@NotBlank
 		@NotNull
 		private final String eventSourceInstanceId;
+		@NotNull
+		private final String type;
 		@NotBlank
 		@NotNull
 		private final String title;
@@ -333,19 +335,20 @@ public class DashboardWidgetResource {
 		private final Map<@NotBlank String, @NotBlank String> data;
 
 		WidgetDetails(Widget widget) {
-			this(widget.getId(), widget.getEventSourceInstance().getId(), widget.getTitle(), widget.getName(),
-					widget.getView(), widget.isEnabled(), widget.getPosX(), widget.getPosY(), widget.getSizeX(),
-					widget.getSizeY(), widget.getBackgroundColor(), widget.getStyle(),
+			this(widget.getId(), widget.getEventSourceInstance().getId(), widget.getType(), widget.getTitle(),
+					widget.getName(), widget.getView(), widget.isEnabled(), widget.getPosX(), widget.getPosY(),
+					widget.getSizeX(), widget.getSizeY(), widget.getBackgroundColor(), widget.getStyle(),
 					EventSourceInstanceResource.getValueMap(
 							widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
 							widget::getWidgetData, widget::hasWidgetData, true));
 		}
 
-		WidgetDetails(int id, String eventSourceInstanceId, String title, String name, String view, boolean enabled,
-				int posX, int posY, int sizeX, int sizeY, Color backgroundColor, String style,
+		WidgetDetails(int id, String eventSourceInstanceId, String type, String title, String name, String view,
+				boolean enabled, int posX, int posY, int sizeX, int sizeY, Color backgroundColor, String style,
 				Map<String, String> data) {
 			this.id = id;
 			this.eventSourceInstanceId = eventSourceInstanceId;
+			this.type = type;
 			this.title = title;
 			this.name = name;
 			this.view = view;
@@ -365,6 +368,10 @@ public class DashboardWidgetResource {
 
 		public String getEventSourceInstanceId() {
 			return eventSourceInstanceId;
+		}
+
+		public String getType() {
+			return type;
 		}
 
 		public String getTitle() {
