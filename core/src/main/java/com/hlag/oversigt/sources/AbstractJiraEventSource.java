@@ -1,8 +1,6 @@
 package com.hlag.oversigt.sources;
 
 import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,16 +22,15 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.RestClientException;
 import com.atlassian.jira.rest.client.api.domain.BasicComponent;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.IssueField;
 import com.atlassian.jira.rest.client.api.domain.User;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.hlag.oversigt.connect.jira.JiraClientException;
+import com.hlag.oversigt.connect.jira.SynchronizedJiraClient;
 import com.hlag.oversigt.core.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
@@ -45,8 +42,6 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.Utils;
 
 public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
-	private JiraRestClient jiraClient = null;
-
 	private ServerConnection jiraConnection = ServerConnection.EMPTY;
 	private Credentials jiraCredentials = Credentials.EMPTY;
 	private String query = "";
@@ -59,44 +54,15 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 	@Override
 	protected void shutDown() throws Exception {
-		stopJiraClient();
 		super.shutDown();
-	}
-
-	private void stopJiraClient() {
-		try {
-			jiraClient.close();
-		} catch (Exception ignore) {
-		}
-		jiraClient = null;
-	}
-
-	private JiraRestClient getJiraClient() throws JiraClientException {
-		if (jiraClient == null) {
-			if (getJiraConnection() != ServerConnection.EMPTY) {
-				try {
-					jiraClient = new AsynchronousJiraRestClientFactory().createWithBasicHttpAuthentication(
-							new URI(getJiraConnection().getUrl()),
-							getJiraCredentials().getUsername(),
-							getJiraCredentials().getPassword());
-				} catch (URISyntaxException e) {
-					throw new JiraClientException("Unable to create JIRA connection", e);
-				}
-			} else {
-				throw new JiraClientException("No hostname for JIRA configured");
-			}
-		}
-		return jiraClient;
 	}
 
 	protected Map<DisplayOption, Set<Issue>> getJiraTickets() {
 		// List all issues as defined by JQL query
-		List<Issue> issues = null;
+		final List<Issue> issues;
 		try {
-			issues = Lists.newArrayList(
-					getJiraClient().getSearchClient().searchJql(getQuery(), 500, 0, null).get().getIssues());
+			issues = SynchronizedJiraClient.getInstance(getJiraConnection(), getJiraCredentials()).search(getQuery());
 		} catch (Exception e) {
-			stopJiraClient();
 			return handleException(e);
 		}
 
@@ -431,25 +397,5 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		ALL,
 		UNKNOWN_ONLY,
 		NONE;
-	}
-
-	private static class JiraClientException extends Exception {
-		private static final long serialVersionUID = -5097282801844376304L;
-
-		private JiraClientException(String message) {
-			super(message);
-		}
-
-		private JiraClientException(String message, Exception cause) {
-			super(message, cause);
-		}
-	}
-
-	public static class JiraLoginException extends RuntimeException {
-		private static final long serialVersionUID = 741461577765682488L;
-
-		private JiraLoginException(Throwable cause) {
-			super("Unable to log in", cause);
-		}
 	}
 }
