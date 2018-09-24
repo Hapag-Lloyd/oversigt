@@ -50,6 +50,14 @@ public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 			return valueStyle;
 		}
 
+		public void setLabelStyle(final String labelStyle) {
+			this.labelStyle = labelStyle;
+		}
+
+		public void setValueStyle(final String valueStyle) {
+			this.valueStyle = valueStyle;
+		}
+
 		@Override
 		public String toString() {
 			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
