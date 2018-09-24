@@ -29,8 +29,9 @@ public class TextProcessor {
 	private TextProcessor() {
 	}
 
-	public void registerFunction(String name, Function<String, String> function) {
+	public TextProcessor registerFunction(String name, Function<String, String> function) {
 		processors.put(name, function);
+		return this;
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
@@ -41,9 +42,13 @@ public class TextProcessor {
 		return this;
 	}
 
-	public TextProcessor registerJsonpathFunction(String json) {
-		registerFunction("jsonpath", jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
-		return this;
+	public TextProcessor registerJsonPathFunction(String json) {
+		return registerFunction("jsonpath",
+				jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
+	}
+
+	public TextProcessor registerRegularExpressionFunction(final String value) {
+		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
 	}
 
 	public String process(String string) {

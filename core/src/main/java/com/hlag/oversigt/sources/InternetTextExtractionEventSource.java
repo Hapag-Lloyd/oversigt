@@ -115,7 +115,8 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 			String result = TextProcessor//
 					.create()
 					.registerDatetimeFunctions()
-					.registerJsonpathFunction(downloadedContent)
+					.registerJsonPathFunction(downloadedContent)
+					.registerRegularExpressionFunction(downloadedContent)
 					.process(condition)
 					.trim();
 			try {
@@ -137,7 +138,8 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 			return TextProcessor//
 					.create()
 					.registerDatetimeFunctions()
-					.registerJsonpathFunction(downloadedContent)
+					.registerJsonPathFunction(downloadedContent)
+					.registerRegularExpressionFunction(downloadedContent)
 					.process(format);
 		}
 	}
