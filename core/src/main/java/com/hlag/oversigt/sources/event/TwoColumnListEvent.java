@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
 public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
-	public TwoColumnListEvent(List<ListEventItem<T>> items) {
+	public TwoColumnListEvent(List<? extends ListEventItem<T>> items) {
 		super(items);
 	}
 
