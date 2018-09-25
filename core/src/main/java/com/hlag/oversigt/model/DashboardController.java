@@ -283,7 +283,7 @@ public class DashboardController {
 						.collect(toList());
 		LOGGER.info("Loaded {} EventSources from package {}",
 				descriptorsFromClasses_.size(),
-				packagesToScan.stream().map(Object::toString).collect(joining(", ")));
+				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
 
 		LOGGER.debug("Scanning addon folders for EventSources...");
 		URL[] jarFileUrls = addonFolders.stream()
