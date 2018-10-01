@@ -13,11 +13,14 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Service;
@@ -66,8 +70,8 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.core.EventSource;
-import com.hlag.oversigt.core.OversigtEvent;
 import com.hlag.oversigt.core.EventSource.NOP;
+import com.hlag.oversigt.core.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.core.eventsource.annotation.EventId;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
@@ -1002,7 +1006,24 @@ public class DashboardController {
 	}
 
 	private List<EventSourceDescriptor> loadMultipleEventSourcesFromFileSystem(URI uri) {
-		Path path = Paths.get(uri);
+		final Path path;
+		if ("jar".equalsIgnoreCase(uri.getScheme())) {
+			String uriString = uri.toString();
+			List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
+			FileSystem fileSystem;
+			try {
+				fileSystem = FileSystems.newFileSystem(URI.create(jarPathParts.get(0)), new HashMap<>());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+			if (jarPathParts.size() == 2) {
+				path = fileSystem.getPath(jarPathParts.get(1));
+			} else {
+				throw new RuntimeException("Unable to interpret path: " + uri);
+			}
+		} else {
+			path = Paths.get(uri);
+		}
 		try {
 			return Utils.closedPath(Files.list(path))
 					.filter(Files::isDirectory)
