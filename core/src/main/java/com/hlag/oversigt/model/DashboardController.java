@@ -342,24 +342,17 @@ public class DashboardController {
 
 		// load event sources without class
 		LOGGER.debug("Scanning file system for EventSources...");
-//		URI uri;
-//		try {
-//			uri = getClass().getResource("/statics/widgets").toURI();
-//		} catch (URISyntaxException e) {
-//			throw new RuntimeException(e);
-//		}
-//		List<EventSourceDescriptor> descriptorsFromFileSystem = loadMultipleEventSourcesFromFileSystem(uri);
-		List<EventSourceDescriptor> descriptorsFromFileSystem = loadMultipleEventSourceFromResources();
-		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem.size());
+		List<EventSourceDescriptor> descriptorsFromFileSystem_ = loadMultipleEventSourceFromResources();
+		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem_.size());
 
 		// add properties from views into class' event sources
-		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromFileSystem
+		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromFileSystem_
 			.stream()
 			.filter(EventSourceDescriptor::isStandAlone)
 			.collect(toList());
 
 		for (EventSourceDescriptor dfc : descriptorsJavaBased) {
-			EventSourceDescriptor descriptorForView = descriptorsFromFileSystem
+			EventSourceDescriptor descriptorForView = descriptorsFromFileSystem_
 				.stream()
 				.filter(d -> d.getView().equals(dfc.getView()))
 				.findAny()
