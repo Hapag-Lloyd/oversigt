@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1065,19 +1066,25 @@ public class DashboardController {
 		if ("jar".equalsIgnoreCase(uri.getScheme())) {
 			String uriString = uri.toString();
 			List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
-			FileSystem fileSystem;
-			try {
-				fileSystem = FileSystems.newFileSystem(URI.create(jarPathParts.get(0)), new HashMap<>());
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
 			if (jarPathParts.size() == 2) {
-				return fileSystem.getPath(jarPathParts.get(1));
+				return getFileSystem(URI.create(jarPathParts.get(0))).getPath(jarPathParts.get(1));
 			} else {
 				throw new RuntimeException("Unable to interpret path: " + uri);
 			}
 		} else {
 			return Paths.get(uri);
+		}
+	}
+
+	private static FileSystem getFileSystem(URI uri) {
+		try {
+			return FileSystems.getFileSystem(uri);
+		} catch (FileSystemNotFoundException e) {
+			try {
+				return FileSystems.newFileSystem(uri, Collections.emptyMap());
+			} catch (IOException e1) {
+				throw new UncheckedIOException(e1);
+			}
 		}
 	}
 
