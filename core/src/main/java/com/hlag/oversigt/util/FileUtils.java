@@ -125,7 +125,6 @@ public class FileUtils {
 
 	private static Stream<Path> listResourcesFromDirectory(String filename) {
 		final Path directory = Paths.get(filename);
-		final Path here = Paths.get(".").toAbsolutePath();
 		try {
 			return closedPath(Files.walk(directory));
 		} catch (IOException e) {
