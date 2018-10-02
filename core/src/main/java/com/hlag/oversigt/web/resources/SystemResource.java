@@ -38,7 +38,7 @@ import com.google.inject.name.Named;
 import com.hlag.oversigt.core.OversigtEvent;
 import com.hlag.oversigt.core.OversigtEventSender;
 import com.hlag.oversigt.security.Role;
-import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -96,7 +96,7 @@ public class SystemResource {
 	)
 	@NoChangeLog
 	public List<String> listLogFiles() throws IOException {
-		return Utils.closedPath(Files.list(Paths.get("log")))//
+		return FileUtils.closedPath(Files.list(Paths.get("log")))//
 				.map(java.nio.file.Path::getFileName)
 				.map(Object::toString)
 				.collect(Collectors.toList());

@@ -1,10 +1,5 @@
 package com.hlag.oversigt.util;
 
-import static com.hlag.oversigt.util.SneakyException.sneakc;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -33,7 +28,6 @@ import com.google.common.base.Strings;
 import com.hlag.oversigt.security.Principal;
 
 public class Utils {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
 
 	public static void logDebug(Logger logger, String format, Object... objects) {
@@ -209,26 +203,6 @@ public class Utils {
 		}
 	}
 
-	public static Stream<Path> closedPath(Stream<Path> stream) {
-		try (Stream<Path> paths = stream) {
-			return paths.collect(Collectors.toList()).stream();
-		}
-	}
-
-	public static void deleteFolderOnExit(Path root) {
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteFolder(root), "DeleteOnExit:" + root.toString()));
-	}
-
-	public static void deleteFolder(Path root) {
-		try {
-			LOGGER.info("Deleting folder [{}]", root.toAbsolutePath().toString());
-			Files.walk(root)//
-					.sorted(Comparator.reverseOrder())
-					.forEach(sneakc(Files::deleteIfExists));
-		} catch (IOException e) {
-			throw new SneakyException(e);
-		}
-	}
 
 	public static <T> Map<String, T> removePasswords(Map<String, T> map, T empty) {
 		Iterator<Entry<String, T>> it = map.entrySet().iterator();

@@ -13,15 +13,10 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,7 +58,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
@@ -86,6 +80,7 @@ import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.event.ReloadEvent;
 import com.hlag.oversigt.storage.Storage;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SimpleReadWriteLock;
 import com.hlag.oversigt.util.SneakyException;
@@ -1046,47 +1041,15 @@ public class DashboardController {
 			.stream()
 			.filter(rs -> rs.startsWith("statics/widgets"))
 			.map(Resources::getResource)
-			.map(DashboardController::getURI)
-			.map(DashboardController::getPath)
+			.map(FileUtils::getURI)
+			.map(FileUtils::getPath)
 			.map(Path::getParent)
 			.map(this::loadEventSourceFromPath)
 			.filter(Utils::isNotNull)
 			.collect(toList());
 	}
 
-	private static URI getURI(URL url) {
-		try {
-			return url.toURI();
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
-	private static Path getPath(URI uri) {
-		if ("jar".equalsIgnoreCase(uri.getScheme())) {
-			String uriString = uri.toString();
-			List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
-			if (jarPathParts.size() == 2) {
-				return getFileSystem(URI.create(jarPathParts.get(0))).getPath(jarPathParts.get(1));
-			} else {
-				throw new RuntimeException("Unable to interpret path: " + uri);
-			}
-		} else {
-			return Paths.get(uri);
-		}
-	}
-
-	private static FileSystem getFileSystem(URI uri) {
-		try {
-			return FileSystems.getFileSystem(uri);
-		} catch (FileSystemNotFoundException e) {
-			try {
-				return FileSystems.newFileSystem(uri, Collections.emptyMap());
-			} catch (IOException e1) {
-				throw new UncheckedIOException(e1);
-			}
-		}
-	}
 
 	private EventSourceDescriptor loadEventSourceFromPath(Path folder) {
 		try {
