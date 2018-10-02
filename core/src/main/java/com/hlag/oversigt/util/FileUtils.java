@@ -18,14 +18,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
 public class FileUtils {
@@ -92,20 +95,20 @@ public class FileUtils {
 	public static Stream<Path> listResourcesFromClasspath() {
 		return getClasspathEntries()//
 			.stream()
+			.map(Paths::get)
 			.flatMap(FileUtils::listResources);
 	}
 
-	private static Stream<Path> listResources(String classpathEntry) {
-		if (classpathEntry.toLowerCase().endsWith(".jar") //
-				|| classpathEntry.toLowerCase().endsWith(".zip")) {
-			return listResourcesFromZip(classpathEntry);
+	private static Stream<Path> listResources(Path classpathEntry) {
+		if (classpathEntry.toString().toLowerCase().endsWith(".jar") //
+				|| classpathEntry.toString().toLowerCase().endsWith(".zip")) {
+			return listResourcesFromJar(classpathEntry).stream();
 		} else {
 			return listResourcesFromDirectory(classpathEntry);
 		}
 	}
 
-	private static Stream<Path> listResourcesFromZip(String filename) {
-		Path zip = Paths.get(filename);
+	private static List<Path> listResourcesFromJar(Path zip) {
 		final String uriString = "jar:" + zip.toUri().toString();
 
 		FileSystem fileSystem = getFileSystem(URI.create(uriString));
@@ -114,17 +117,29 @@ public class FileUtils {
 			JarEntry entry = null;
 			while ((entry = jis.getNextJarEntry()) != null) {
 				paths.add(fileSystem.getPath(entry.getName()));
+			}
 
+			Optional<String> classpath = Optional
+				.of(jis)
+				.map(JarInputStream::getManifest)
+				.map(Manifest::getMainAttributes)
+				.map(ma -> ma.getValue("Class-Path"));
+			if (classpath.isPresent()) {
+				List<String> entries = Splitter.on(CharMatcher.whitespace()).omitEmptyStrings().splitToList(classpath.get());
+				entries//
+					.stream()
+					.map(zip.getParent()::resolve)
+					.filter(Files::exists)
+					.forEach(FileUtils::listResourcesFromJar);
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 
-		return paths.stream();
+		return paths;
 	}
 
-	private static Stream<Path> listResourcesFromDirectory(String filename) {
-		final Path directory = Paths.get(filename);
+	private static Stream<Path> listResourcesFromDirectory(Path directory) {
 		try {
 			return closedPath(Files.walk(directory));
 		} catch (IOException e) {
