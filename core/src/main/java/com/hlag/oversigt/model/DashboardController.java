@@ -51,8 +51,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -60,7 +58,6 @@ import org.springframework.beans.BeanUtils;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
-import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
@@ -1034,22 +1031,22 @@ public class DashboardController {
 		}
 	}
 
+	private static boolean filterWidgets(Path path) {
+		String filename = path.getFileName().toString();
+		String fullpath = path.toString();
+		return filename.toLowerCase().endsWith(".html")
+				&& (fullpath.contains("statics/widgets/") || fullpath.contains("statics\\widgets\\"));
+	}
+
 	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources() {
-		Reflections reflections = new Reflections("", new ResourcesScanner());
-		return reflections
-			.getResources(name -> name.endsWith(".html"))
-			.stream()
-			.filter(rs -> rs.startsWith("statics/widgets"))
-			.map(Resources::getResource)
-			.map(FileUtils::getURI)
-			.map(FileUtils::getPath)
+		return FileUtils
+			.listResourcesFromClasspath()
+			.filter(DashboardController::filterWidgets)
 			.map(Path::getParent)
 			.map(this::loadEventSourceFromPath)
 			.filter(Utils::isNotNull)
 			.collect(toList());
 	}
-
-
 
 	private EventSourceDescriptor loadEventSourceFromPath(Path folder) {
 		try {
