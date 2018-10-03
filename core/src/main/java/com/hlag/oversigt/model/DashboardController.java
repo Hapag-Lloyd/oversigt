@@ -1040,7 +1040,7 @@ public class DashboardController {
 
 	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources() {
 		return FileUtils
-			.listResourcesFromClasspath()
+			.streamResourcesFromClasspath()
 			.filter(DashboardController::filterWidgets)
 			.map(Path::getParent)
 			.map(this::loadEventSourceFromPath)

@@ -34,11 +34,11 @@ import com.google.common.base.Splitter;
 public class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
 
-	public static Stream<Path> closedPath(Stream<Path> stream) {
+	public static Stream<Path> closedPathStream(Stream<Path> stream) {
 		try (Stream<Path> paths = stream) {
 			return paths//
-				.collect(Collectors.toList())
-				.stream();
+					.collect(Collectors.toList())
+					.stream();
 		}
 	}
 
@@ -49,10 +49,9 @@ public class FileUtils {
 	public static void deleteFolder(Path root) {
 		try {
 			LOGGER.info("Deleting folder [{}]", root.toAbsolutePath().toString());
-			Files
-				.walk(root)//
-				.sorted(Comparator.reverseOrder())
-				.forEach(sneakc(Files::deleteIfExists));
+			Files.walk(root)//
+					.sorted(Comparator.reverseOrder())
+					.forEach(sneakc(Files::deleteIfExists));
 		} catch (IOException e) {
 			throw new SneakyException(e);
 		}
@@ -62,7 +61,7 @@ public class FileUtils {
 		try {
 			return url.toURI();
 		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
+			throw new SneakyException(e);
 		}
 	}
 
@@ -92,19 +91,28 @@ public class FileUtils {
 		}
 	}
 
-	public static Stream<Path> listResourcesFromClasspath() {
+	public static Stream<Path> streamResourcesFromClasspath() {
 		return getClasspathEntries()//
-			.stream()
-			.map(Paths::get)
-			.flatMap(FileUtils::listResources);
+				.stream()
+				.map(Paths::get)
+				.flatMap(FileUtils::streamResources);
 	}
 
-	private static Stream<Path> listResources(Path classpathEntry) {
-		if (classpathEntry.toString().toLowerCase().endsWith(".jar") //
-				|| classpathEntry.toString().toLowerCase().endsWith(".zip")) {
-			return listResourcesFromJar(classpathEntry).stream();
+	private static Stream<Path> streamResources(Path classpathEntry) {
+		if (Files.isRegularFile(classpathEntry)) {
+			Optional<String> extension = getExtension(classpathEntry);
+			if (extension.isPresent()) {
+				switch (extension.get().toLowerCase()) {
+					case "jar":
+					case "zip":
+						return listResourcesFromJar(classpathEntry).stream();
+					default:
+						// nothing
+				}
+			}
+			throw new RuntimeException("Unable to handle file for resource scanning: " + classpathEntry);
 		} else {
-			return listResourcesFromDirectory(classpathEntry);
+			return streamResourcesFromDirectory(classpathEntry);
 		}
 	}
 
@@ -119,18 +127,18 @@ public class FileUtils {
 				paths.add(fileSystem.getPath(entry.getName()));
 			}
 
-			Optional<String> classpath = Optional
-				.of(jis)
-				.map(JarInputStream::getManifest)
-				.map(Manifest::getMainAttributes)
-				.map(ma -> ma.getValue("Class-Path"));
+			Optional<String> classpath = Optional.of(jis)
+					.map(JarInputStream::getManifest)
+					.map(Manifest::getMainAttributes)
+					.map(ma -> ma.getValue("Class-Path"));
 			if (classpath.isPresent()) {
-				List<String> entries = Splitter.on(CharMatcher.whitespace()).omitEmptyStrings().splitToList(classpath.get());
-				entries//
-					.stream()
-					.map(zip.getParent()::resolve)
-					.filter(Files::exists)
-					.forEach(FileUtils::listResourcesFromJar);
+				List<String> entries = Splitter.on(CharMatcher.whitespace())
+						.omitEmptyStrings()
+						.splitToList(classpath.get());
+				entries.stream()
+						.map(zip.getParent()::resolve)
+						.filter(Files::exists)
+						.forEach(FileUtils::listResourcesFromJar);
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -139,19 +147,29 @@ public class FileUtils {
 		return paths;
 	}
 
-	private static Stream<Path> listResourcesFromDirectory(Path directory) {
+	private static Stream<Path> streamResourcesFromDirectory(Path directory) {
 		try {
-			return closedPath(Files.walk(directory));
+			return closedPathStream(Files.walk(directory));
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
 	private static List<String> getClasspathEntries() {
-		return Splitter//
-			.on(File.pathSeparatorChar)
-			.omitEmptyStrings()
-			.trimResults()
-			.splitToList(System.getProperty("java.class.path"));
+		return Splitter.on(File.pathSeparatorChar)
+				.omitEmptyStrings()
+				.trimResults()
+				.splitToList(System.getProperty("java.class.path"));
+	}
+
+	public static Optional<String> getExtension(Path path) {
+		if (Files.isRegularFile(path)) {
+			String name = path.getFileName().toString();
+			int lastIndex = name.lastIndexOf('.');
+			if (lastIndex >= 0) {
+				return Optional.of(name.substring(lastIndex + 1));
+			}
+		}
+		return Optional.empty();
 	}
 }

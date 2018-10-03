@@ -96,7 +96,7 @@ public class SystemResource {
 	)
 	@NoChangeLog
 	public List<String> listLogFiles() throws IOException {
-		return FileUtils.closedPath(Files.list(Paths.get("log")))//
+		return FileUtils.closedPathStream(Files.list(Paths.get("log")))//
 				.map(java.nio.file.Path::getFileName)
 				.map(Object::toString)
 				.collect(Collectors.toList());
