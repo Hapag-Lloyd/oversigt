@@ -19,6 +19,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -133,8 +134,7 @@ public class DashboardWidgetResource {
 		}
 
 		return created(URI.create(uri.getAbsolutePath() + "/" + widget.getId()))//
-				.entity(new WidgetDetails(widget))
-				.build();
+				.entity(new WidgetDetails(widget, false)).build();
 	}
 
 	@GET
@@ -148,14 +148,15 @@ public class DashboardWidgetResource {
 	@PermitAll
 	@NoChangeLog
 	public Response readWidget(@PathParam("dashboardId") @NotNull String dashboardId,
-			@PathParam("id") @Positive int widgetId) {
+			@PathParam("id") @Positive int widgetId,
+			@QueryParam("showAllProperties") @DefaultValue("true") @ApiParam(defaultValue = "true", value = "false to show only properties defined for this specific widget. true to additionally show all properties inherited from the underlaying event source.") boolean all) {
 		Dashboard dashboard = controller.getDashboard(dashboardId);
 		if (dashboard == null) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		try {
-			return ok(new WidgetDetails(dashboard.getWidget(widgetId))).build();
+			return ok(new WidgetDetails(dashboard.getWidget(widgetId), all)).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist in this dashboard");
 		}
@@ -228,7 +229,7 @@ public class DashboardWidgetResource {
 		}
 
 		controller.updateWidget(newWidget);
-		return ok(new WidgetDetails(newWidget)).build();
+		return ok(new WidgetDetails(newWidget, false)).build();
 	}
 
 	@DELETE
@@ -334,13 +335,14 @@ public class DashboardWidgetResource {
 		@NotNull
 		private final Map<@NotBlank String, @NotBlank String> data;
 
-		WidgetDetails(Widget widget) {
+		WidgetDetails(Widget widget, boolean showAllDatas) {
 			this(widget.getId(), widget.getEventSourceInstance().getId(), widget.getType(), widget.getTitle(),
 					widget.getName(), widget.getView(), widget.isEnabled(), widget.getPosX(), widget.getPosY(),
 					widget.getSizeX(), widget.getSizeY(), widget.getBackgroundColor(), widget.getStyle(),
 					EventSourceInstanceResource.getValueMap(
 							widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
-							widget::getWidgetData, widget::hasWidgetData, true));
+							showAllDatas ? widget::getWidgetDataForDashboard : widget::getWidgetData,
+							showAllDatas ? widget::hasWidgetDataForDashboard : widget::hasWidgetData, true));
 		}
 
 		WidgetDetails(int id, String eventSourceInstanceId, String type, String title, String name, String view,
