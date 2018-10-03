@@ -13,14 +13,10 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,17 +51,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
-import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
@@ -85,6 +77,7 @@ import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.event.ReloadEvent;
 import com.hlag.oversigt.storage.Storage;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SimpleReadWriteLock;
 import com.hlag.oversigt.util.SneakyException;
@@ -342,24 +335,17 @@ public class DashboardController {
 
 		// load event sources without class
 		LOGGER.debug("Scanning file system for EventSources...");
-//		URI uri;
-//		try {
-//			uri = getClass().getResource("/statics/widgets").toURI();
-//		} catch (URISyntaxException e) {
-//			throw new RuntimeException(e);
-//		}
-//		List<EventSourceDescriptor> descriptorsFromFileSystem = loadMultipleEventSourcesFromFileSystem(uri);
-		List<EventSourceDescriptor> descriptorsFromFileSystem = loadMultipleEventSourceFromResources();
-		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem.size());
+		List<EventSourceDescriptor> descriptorsFromFileSystem_ = loadMultipleEventSourceFromResources();
+		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem_.size());
 
 		// add properties from views into class' event sources
-		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromFileSystem
+		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromFileSystem_
 			.stream()
 			.filter(EventSourceDescriptor::isStandAlone)
 			.collect(toList());
 
 		for (EventSourceDescriptor dfc : descriptorsJavaBased) {
-			EventSourceDescriptor descriptorForView = descriptorsFromFileSystem
+			EventSourceDescriptor descriptorForView = descriptorsFromFileSystem_
 				.stream()
 				.filter(d -> d.getView().equals(dfc.getView()))
 				.findAny()
@@ -1045,47 +1031,21 @@ public class DashboardController {
 		}
 	}
 
+	private static boolean filterWidgets(Path path) {
+		String filename = path.getFileName().toString();
+		String fullpath = path.toString();
+		return filename.toLowerCase().endsWith(".html")
+				&& (fullpath.contains("statics/widgets/") || fullpath.contains("statics\\widgets\\"));
+	}
+
 	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources() {
-		Reflections reflections = new Reflections("", new ResourcesScanner());
-		return reflections
-			.getResources(name -> name.endsWith(".html"))
-			.stream()
-			.filter(rs -> rs.startsWith("statics/widgets"))
-			.map(Resources::getResource)
-			.map(DashboardController::getURI)
-			.map(DashboardController::getPath)
+		return FileUtils
+			.listResourcesFromClasspath()
+			.filter(DashboardController::filterWidgets)
 			.map(Path::getParent)
 			.map(this::loadEventSourceFromPath)
 			.filter(Utils::isNotNull)
 			.collect(toList());
-	}
-
-	private static URI getURI(URL url) {
-		try {
-			return url.toURI();
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private static Path getPath(URI uri) {
-		if ("jar".equalsIgnoreCase(uri.getScheme())) {
-			String uriString = uri.toString();
-			List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
-			FileSystem fileSystem;
-			try {
-				fileSystem = FileSystems.newFileSystem(URI.create(jarPathParts.get(0)), new HashMap<>());
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
-			if (jarPathParts.size() == 2) {
-				return fileSystem.getPath(jarPathParts.get(1));
-			} else {
-				throw new RuntimeException("Unable to interpret path: " + uri);
-			}
-		} else {
-			return Paths.get(uri);
-		}
 	}
 
 	private EventSourceDescriptor loadEventSourceFromPath(Path folder) {

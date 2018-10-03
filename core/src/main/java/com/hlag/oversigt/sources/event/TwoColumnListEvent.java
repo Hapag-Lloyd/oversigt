@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
 public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
-	public TwoColumnListEvent(List<ListEventItem<T>> items) {
+	public TwoColumnListEvent(List<? extends ListEventItem<T>> items) {
 		super(items);
 	}
 
@@ -48,6 +48,14 @@ public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 
 		public String getValueStyle() {
 			return valueStyle;
+		}
+
+		public void setLabelStyle(final String labelStyle) {
+			this.labelStyle = labelStyle;
+		}
+
+		public void setValueStyle(final String valueStyle) {
+			this.valueStyle = valueStyle;
 		}
 
 		@Override

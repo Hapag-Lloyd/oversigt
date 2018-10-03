@@ -13,7 +13,8 @@ import com.google.inject.Inject;
 import com.jayway.jsonpath.Configuration;
 
 public class TextProcessor {
-	private static final Pattern PATTERN_DATA_REPLACEMENT = Pattern.compile("\\$\\{([a-z]+)(:[^\\}]+)?\\}");
+	private static final Pattern PATTERN_DATA_REPLACEMENT = Pattern
+			.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
 
 	@Inject
 	private static Configuration JSON_PATH_CONFIGURATION;
@@ -29,8 +30,9 @@ public class TextProcessor {
 	private TextProcessor() {
 	}
 
-	public void registerFunction(String name, Function<String, String> function) {
+	public TextProcessor registerFunction(String name, Function<String, String> function) {
 		processors.put(name, function);
+		return this;
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
@@ -41,9 +43,13 @@ public class TextProcessor {
 		return this;
 	}
 
-	public TextProcessor registerJsonpathFunction(String json) {
-		registerFunction("jsonpath", jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
-		return this;
+	public TextProcessor registerJsonPathFunction(String json) {
+		return registerFunction("jsonpath",
+				jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
+	}
+
+	public TextProcessor registerRegularExpressionFunction(final String value) {
+		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
 	}
 
 	public String process(String string) {
@@ -52,12 +58,9 @@ public class TextProcessor {
 			String target = mainMatcher.group();
 			String replacement;
 
-			String processorName = mainMatcher.group(1);
+			String processorName = mainMatcher.group("processor");
 			if (processors.containsKey(processorName)) {
-				String input = mainMatcher.group(2);
-				if (input != null) {
-					input = input.substring(1);
-				}
+				String input = mainMatcher.group("input");
 				replacement = processors.get(processorName).apply(input);
 			} else {
 				throw new RuntimeException("Data replacement '" + mainMatcher.group(1) + "' is unknown.");
