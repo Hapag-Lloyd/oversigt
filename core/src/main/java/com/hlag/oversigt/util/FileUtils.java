@@ -136,7 +136,7 @@ public class FileUtils {
 						.omitEmptyStrings()
 						.splitToList(classpath.get());
 				entries.stream()
-						.map(zip.getParent()::resolve)
+						.map(zip.toAbsolutePath().getParent()::resolve)
 						.filter(Files::exists)
 						.forEach(FileUtils::listResourcesFromJar);
 			}
