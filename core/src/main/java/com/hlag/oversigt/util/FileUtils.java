@@ -1,6 +1,7 @@
 package com.hlag.oversigt.util;
 
 import static com.hlag.oversigt.util.SneakyException.sneakc;
+import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -127,18 +129,24 @@ public class FileUtils {
 				paths.add(fileSystem.getPath(entry.getName()));
 			}
 
-			Optional<String> classpath = Optional.of(jis)
-					.map(JarInputStream::getManifest)
-					.map(Manifest::getMainAttributes)
-					.map(ma -> ma.getValue("Class-Path"));
+			Optional<String> classpath = Optional
+				.of(jis)
+				.map(JarInputStream::getManifest)
+				.map(Manifest::getMainAttributes)
+				.map(ma -> ma.getValue("Class-Path"));
 			if (classpath.isPresent()) {
-				List<String> entries = Splitter.on(CharMatcher.whitespace())
-						.omitEmptyStrings()
-						.splitToList(classpath.get());
-				entries.stream()
-						.map(zip.toAbsolutePath().getParent()::resolve)
-						.filter(Files::exists)
-						.forEach(FileUtils::listResourcesFromJar);
+				List<String> jarClasspathEntries = Splitter//
+					.on(CharMatcher.whitespace())
+					.omitEmptyStrings()
+					.splitToList(classpath.get());
+				List<Path> jarResources = jarClasspathEntries
+					.stream()
+					.map(zip.toAbsolutePath().getParent()::resolve)
+					.filter(Files::exists)
+					.map(FileUtils::listResourcesFromJar)
+					.flatMap(Collection::stream)
+					.collect(toList());
+				paths.addAll(jarResources);
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
@@ -156,10 +164,11 @@ public class FileUtils {
 	}
 
 	private static List<String> getClasspathEntries() {
-		return Splitter.on(File.pathSeparatorChar)
-				.omitEmptyStrings()
-				.trimResults()
-				.splitToList(System.getProperty("java.class.path"));
+		return Splitter
+			.on(File.pathSeparatorChar)
+			.omitEmptyStrings()
+			.trimResults()
+			.splitToList(System.getProperty("java.class.path"));
 	}
 
 	public static Optional<String> getExtension(Path path) {
