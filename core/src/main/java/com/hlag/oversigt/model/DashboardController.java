@@ -45,6 +45,7 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotBlank;
@@ -290,7 +291,10 @@ public class DashboardController {
 		}
 	}
 
-	public void loadEventSourceDescriptors(Collection<Package> packagesToScan, Collection<Path> addonFolders) {
+	public void loadEventSourceDescriptors(
+			Collection<Package> packagesToScan,
+			Collection<Path> addonFolders,
+			Collection<String> widgetsPaths) {
 		// load event sources from classes
 		LOGGER.debug("Scanning classpath for EventSources...");
 		List<EventSourceDescriptor> descriptorsFromClasses_ = //
@@ -335,7 +339,7 @@ public class DashboardController {
 
 		// load event sources without class
 		LOGGER.debug("Scanning file system for EventSources...");
-		List<EventSourceDescriptor> descriptorsFromFileSystem_ = loadMultipleEventSourceFromResources();
+		List<EventSourceDescriptor> descriptorsFromFileSystem_ = loadMultipleEventSourceFromResources(widgetsPaths);
 		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem_.size());
 
 		// add properties from views into class' event sources
@@ -350,8 +354,11 @@ public class DashboardController {
 				.filter(d -> d.getView().equals(dfc.getView()))
 				.findAny()
 				.get();
-			descriptorForView.getDataItems().stream().filter(di -> !dfc.getDataItemsToHide().contains(di.getName())).forEach(
-				dfc::addDataItem);
+			descriptorForView
+				.getDataItems()
+				.stream()
+				.filter(di -> !dfc.getDataItemsToHide().contains(di.getName()))
+				.forEach(dfc::addDataItem);
 		}
 
 		// Done
@@ -478,8 +485,10 @@ public class DashboardController {
 	private void adoptDefaultEventSourceProperties(EventSourceInstance instance, EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
 		Service service = createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
-		instance.getDescriptor().getProperties().forEach(
-			SneakyException.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
+		instance
+			.getDescriptor()
+			.getProperties()
+			.forEach(SneakyException.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
 	}
 
 	String getValueString(EventSourceProperty property, final Object value) {
@@ -531,10 +540,18 @@ public class DashboardController {
 			if (instance.getDescriptor().getServiceClass() != null) {
 				adoptDefaultEventSourceProperties(instance, instance.getDescriptor());
 			}
-			instance.getDescriptor().getProperties().stream().filter(p -> propertyStrings.containsKey(p.getName())).forEach(
-				p -> instance.setPropertyString(p, propertyStrings.get(p.getName())));
-			instance.getDescriptor().getDataItems().stream().filter(p -> dataItemStrings.containsKey(p.getName())).forEach(
-				p -> instance.setPropertyString(p, dataItemStrings.get(p.getName())));
+			instance
+				.getDescriptor()
+				.getProperties()
+				.stream()
+				.filter(p -> propertyStrings.containsKey(p.getName()))
+				.forEach(p -> instance.setPropertyString(p, propertyStrings.get(p.getName())));
+			instance
+				.getDescriptor()
+				.getDataItems()
+				.stream()
+				.filter(p -> dataItemStrings.containsKey(p.getName()))
+				.forEach(p -> instance.setPropertyString(p, dataItemStrings.get(p.getName())));
 
 			return instance;
 		} catch (Exception e) {
@@ -664,8 +681,10 @@ public class DashboardController {
 	}
 
 	public ZonedDateTime getLastRun(EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance)).map(ScheduledEventSource::getLastRun).orElse(
-			null);
+		return Optional
+			.ofNullable((ScheduledEventSource<?>) getService(instance))
+			.map(ScheduledEventSource::getLastRun)
+			.orElse(null);
 	}
 
 	public ZonedDateTime getLastSuccessfulRun(EventSourceInstance instance) {
@@ -1031,17 +1050,22 @@ public class DashboardController {
 		}
 	}
 
-	private static boolean filterWidgets(Path path) {
-		String filename = path.getFileName().toString();
-		String fullpath = path.toString();
-		return filename.toLowerCase().endsWith(".html")
-				&& (fullpath.contains("statics/widgets/") || fullpath.contains("statics\\widgets\\"));
-	}
+	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources(Collection<String> widgetsPaths) {
+		Collection<String> allowedPaths = widgetsPaths
+			.stream()
+			.flatMap(wp -> Stream.of(wp.replace('\\', '/'), wp.replace('/', '\\')))
+			.collect(toSet());
 
-	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources() {
+		Predicate<Path> allowedPathsFilter = path -> {
+			String filename = path.getFileName().toString();
+			String fullpath = path.toString();
+			return filename.toLowerCase().endsWith(".html") //
+					&& allowedPaths.stream().anyMatch(fullpath::contains);
+		};
+
 		return FileUtils
 			.streamResourcesFromClasspath()
-			.filter(DashboardController::filterWidgets)
+			.filter(allowedPathsFilter)
 			.map(Path::getParent)
 			.map(this::loadEventSourceFromPath)
 			.filter(Utils::isNotNull)

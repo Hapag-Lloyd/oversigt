@@ -70,6 +70,10 @@
 		],
 		"addonFolders": [
 			"addons"
+		],
+		"widgetsPaths": [
+			"statics/widgets/",
+			"statics/widgets_hl/"
 		]
 	},
 	"jira": {
