@@ -205,7 +205,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	}
 
 	private String getLastLogLines(int amount) {
-		Path logFilePath = Paths.get("log", "dashboard.log");
+		Path logFilePath = Paths.get("log", "oversigt.log");
 
 		try (ReversedLinesFileReader rlfr = new ReversedLinesFileReader(logFilePath.toFile(), 4096, Charsets.UTF_8)) {
 			Deque<String> lines = new LinkedList<>();
