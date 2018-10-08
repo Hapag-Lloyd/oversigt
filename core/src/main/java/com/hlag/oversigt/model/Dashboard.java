@@ -70,7 +70,7 @@ public class Dashboard {
 	private String owner = null;
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private Set<@NotBlank @UserId String> editors = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+	private Set<@NotBlank /* @UserId */ String> editors = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
@@ -85,18 +85,9 @@ public class Dashboard {
 		this.enabled = enabled;
 	}
 
-	public Dashboard(String id,
-			String title,
-			boolean enabled,
-			int screenWidth,
-			int screenHeight,
-			int columns,
-			Color backgroundColor,
-			DashboardColorScheme colorScheme,
-			Color foregroundColorStart,
-			Color foregroundColorEnd,
-			String owner,
-			Collection<String> editors) {
+	public Dashboard(String id, String title, boolean enabled, int screenWidth, int screenHeight, int columns,
+			Color backgroundColor, DashboardColorScheme colorScheme, Color foregroundColorStart,
+			Color foregroundColorEnd, String owner, Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;
