@@ -126,6 +126,7 @@ public class OversigtServer extends AbstractIdleService {
 	private final Application restApiApplication;
 
 	private final Path[] addonFolders;
+	private final String[] widgetsPaths;
 
 	@Inject
 	private SessionManager sessionManager;
@@ -161,7 +162,8 @@ public class OversigtServer extends AbstractIdleService {
 			DashboardController dashboardController,
 			Application restApiApplication,
 			@Named("additionalPackages") String[] additionalPackages,
-			@Named("addonFolders") Path[] addonFolders) {
+			@Named("addonFolders") Path[] addonFolders,
+			@Named("widgetsPaths") String[] widgetsPaths) {
 		this.listeners = listeners;
 		this.eventBus = eventBus;
 		this.sender = sender;
@@ -175,6 +177,7 @@ public class OversigtServer extends AbstractIdleService {
 		this.dashboardController = dashboardController;
 		this.restApiApplication = restApiApplication;
 		this.addonFolders = addonFolders;
+		this.widgetsPaths = widgetsPaths;
 
 		// Configure listeners
 		if (listeners.isEmpty()) {
@@ -207,8 +210,11 @@ public class OversigtServer extends AbstractIdleService {
 	@Override
 	protected void startUp() throws Exception {
 		LOGGER.info("Loading event source descriptors");
-		dashboardController.loadEventSourceDescriptors(Arrays.asList(MotivationEventSource.class.getPackage()),
-				Arrays.asList(addonFolders));
+		dashboardController
+			.loadEventSourceDescriptors(//
+				Arrays.asList(MotivationEventSource.class.getPackage()),
+				Arrays.asList(addonFolders),
+				Arrays.asList(widgetsPaths));
 		LOGGER.info("Loading event source instances");
 		dashboardController.loadEventSourceInstances();
 		LOGGER.info("Loading dashboards");

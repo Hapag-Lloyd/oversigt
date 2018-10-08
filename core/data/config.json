@@ -1,6 +1,6 @@
 {
 	"debug": true,
-	"hostname": "https://dashboard",
+	"hostname": "http://localhost",
 	"listeners": [
 		{
 			"port": 80
@@ -66,7 +66,7 @@
 	},
 	"eventSources": {
 		"packages": [
-			"com.hlag.oversigt.model"
+			"com.hlag.oversigt.sources"
 		],
 		"addonFolders": [
 			"addons"

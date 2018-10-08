@@ -215,6 +215,7 @@ public class Dashboard {
 		return getEditors().contains(username);
 	}
 
+	@JsonIgnore
 	public Collection<Widget> getWidgets() {
 		return Collections.unmodifiableCollection(widgets);
 	}

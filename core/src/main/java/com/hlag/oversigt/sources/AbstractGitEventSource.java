@@ -38,15 +38,14 @@ import org.eclipse.jgit.transport.CredentialItem.InformationalMessage;
 import org.eclipse.jgit.transport.CredentialItem.Password;
 import org.eclipse.jgit.transport.CredentialItem.Username;
 import org.eclipse.jgit.transport.CredentialItem.YesNoType;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.URIish;
 
 import com.hlag.oversigt.core.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.LazyInitializedReference;
-import com.hlag.oversigt.util.Utils;
-
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.URIish;
 
 public abstract class AbstractGitEventSource<E extends OversigtEvent> extends AbstractSslAwareEventSource<E> {
 	private String repositoryUrl;
@@ -176,7 +175,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		getLogger().info("Creating remote repository [{}] ", repositoryUrl);
 		// Create temp-directory
 		final Path tempDir = Files.createTempDirectory("oversigt-temp-git");
-		Utils.deleteFolderOnExit(tempDir);
+		FileUtils.deleteFolderOnExit(tempDir);
 
 		// Clone repo to temp dir
 		getLogger().debug("Start cloning");

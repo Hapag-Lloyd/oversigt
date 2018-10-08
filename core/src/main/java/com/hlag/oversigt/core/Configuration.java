@@ -1,5 +1,7 @@
 package com.hlag.oversigt.core;
 
+import static com.hlag.oversigt.util.TypeUtils.createArray;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -9,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,8 +23,8 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.LdapAuthenticator;
-import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.security.LdapAuthenticator.LdapConfiguration;
+import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.SSLConfiguration;
@@ -38,12 +41,14 @@ import io.undertow.server.session.SessionManager;
  *
  * @author avarabyeu
  */
-class Configuration {
+public class Configuration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
 	private static void bind(Binder binder, String name, Object value) {
-		binder.bindConstant().annotatedWith(Names.named(name)).to(
-				Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
+		binder
+			.bindConstant()
+			.annotatedWith(Names.named(name))
+			.to(Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
 	}
 
 	private boolean debug = false;
@@ -66,8 +71,7 @@ class Configuration {
 		bind(binder, "api.secret.base64", api.jwtSecretBase64);
 		bind(binder, "api.ttl", api.jwtTimeToLive);
 		bind(binder, "rateLimit", eventManager.rateLimit);
-		binder.bind(Duration.class).annotatedWith(Names.named("discardEventsAfter")).toInstance(
-				eventManager.discardEventsAfter);
+		binder.bind(Duration.class).annotatedWith(Names.named("discardEventsAfter")).toInstance(eventManager.discardEventsAfter);
 		bind(binder, "templateNumberFormat", templateNumberFormat);
 		bind(binder, "databaseLocation", database.location);
 		bind(binder, "databaseName", database.name);
@@ -77,14 +81,10 @@ class Configuration {
 		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {
 		}).annotatedWith(Names.named("listeners")).toInstance(listeners);
 		bind(binder, "jiraSocketTimeout", jira.socketTimeout);
-		binder.bind(String[].class).annotatedWith(Names.named("additionalPackages")).toInstance(
-				eventSources.packages != null ? eventSources.packages : new String[0]);
-		binder.bind(Path[].class)
-				.annotatedWith(Names.named("addonFolders"))
-				.toInstance(Arrays.stream(eventSources.addonFolders != null ? eventSources.addonFolders : new String[0])
-						.map(Paths::get)
-						.collect(Collectors.toList())
-						.toArray(new Path[0]));
+		bindNamedArray(binder, String[].class, "additionalPackages", eventSources.packages);
+		bindNamedArray(binder, Path[].class, "addonFolders", Paths::get, eventSources.addonFolders);
+		bindNamedArray(binder, String[].class, "widgetsPaths", eventSources.widgetsPaths);
+		
 
 		// Mail Settings
 		bind(binder, "mailSenderHost", mail.hostname);
@@ -121,13 +121,38 @@ class Configuration {
 		binder.bind(SessionManager.class).toProvider(() -> provideSessionManager(security.session)).asEagerSingleton();
 		binder.bind(SessionConfig.class).toInstance(security.session.cookieConfig);
 	}
+	private static void bindNamedArray(
+			Binder binder,
+			Class<String[]> targetClass,
+			String name,
+			String[] input) {
+		bindNamedArray(binder, targetClass, name, Function.identity(), input);
+	}
+	@SuppressWarnings("unchecked")
+	private static <T> void bindNamedArray(
+			Binder binder,
+			Class<T[]> targetClass,
+			String name,
+			Function<String, T> converter,
+			String[] input) {
+		binder
+			.bind(targetClass)
+			.annotatedWith(Names.named(name))
+			.toInstance(
+				(T[]) Arrays
+					.stream(input != null ? input : new String[0])
+					.map(converter)
+					.collect(Collectors.toList())
+					.toArray(createArray(targetClass.getComponentType(), 0)));
+	}
 
 	private SessionManager provideSessionManager(SessionConfiguration sc) {
-		InMemorySessionManager sm = new InMemorySessionManager(new SecureRandomSessionIdGenerator(),
-				"SESSION_MANAGER",
-				sc.maxCount,
-				sc.expireOldestUnusedSessionOnMax,
-				sc.statisticsEnabled);
+		InMemorySessionManager sm = new InMemorySessionManager(
+			new SecureRandomSessionIdGenerator(),
+			"SESSION_MANAGER",
+			sc.maxCount,
+			sc.expireOldestUnusedSessionOnMax,
+			sc.statisticsEnabled);
 		sm.setDefaultSessionTimeout(sc.timeout * 60);
 		return sm;
 	}
@@ -185,6 +210,7 @@ class Configuration {
 	private static class EventSourceConfiguration {
 		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };
 		private String[] addonFolders = new String[0];
+		private String[] widgetsPaths = new String[] { "statics/widgets/" };
 	}
 
 	private static class JiraConfiguration {

@@ -4,6 +4,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -410,6 +411,11 @@ public class TypeUtils {
 			clazz = clazz.getSuperclass();
 		}
 		return i;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T[] createArray(Class<T> clazz,int length) {
+		return (T[]) Array.newInstance(clazz, length);
 	}
 
 	public static boolean isDebug() {

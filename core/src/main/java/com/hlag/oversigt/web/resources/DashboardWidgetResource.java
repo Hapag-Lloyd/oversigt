@@ -4,8 +4,8 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -19,6 +19,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -27,6 +28,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -70,37 +72,42 @@ public class DashboardWidgetResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@PermitAll
 	@NoChangeLog
-	public Response listWidgets(@PathParam("dashboardId") @NotNull String dashboardId,
+	public Response listWidgets(@Context SecurityContext secu, @PathParam("dashboardId") @NotNull String dashboardId,
 			@QueryParam("containing") @ApiParam(required = false, value = "Only show widgets containing this text") String containing) {
 		Dashboard dashboard = controller.getDashboard(dashboardId);
 		if (dashboard == null) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
-		Predicate<Widget> filter = w -> true;
-		if (!Strings.isNullOrEmpty(containing)) {
+		final Predicate<Widget> filterName;
+		if (Strings.isNullOrEmpty(containing)) {
+			filterName = w -> true;
+		} else {
 			String lower = containing.trim().toLowerCase();
-			filter = w -> w.getName().toLowerCase().contains(lower) //
+			filterName = w -> w.getName().toLowerCase().contains(lower) //
 					|| w.getTitle().toLowerCase().contains(lower)
 					|| w.getBackgroundColor().getHexColor().toLowerCase().contains(lower)
 					|| w.getStyle().toLowerCase().contains(lower) || w.getType().toLowerCase().contains(lower)
 					|| w.getView().toLowerCase().contains(lower)
-					|| w.getEventSourceInstance()
-							.getDescriptor()
-							.getDataItems()
-							.stream()
-							.filter(w::hasWidgetData)
-							.map(w::getWidgetData)
-							.map(String::toLowerCase)
-							.anyMatch(s -> s.contains(lower));
+					|| w.getEventSourceInstance().getDescriptor().getDataItems().stream().filter(w::hasWidgetData)
+							.map(w::getWidgetData).map(String::toLowerCase).anyMatch(s -> s.contains(lower));
 			;
 		}
 
+		final Predicate<Widget> filterSecu;
+		if (secu.getUserPrincipal() != null) {
+			filterSecu = w -> true;
+		} else {
+			filterSecu = Widget::isEnabled;
+		}
+
 		return ok(dashboard.getWidgets()//
-				.stream()
-				.filter(filter)
-				.map(WidgetInfo::new)
-				.toArray()).build();
+				.stream()//
+				.filter(filterName)//
+				.filter(filterSecu)//
+				.map(WidgetInfo::new)//
+				.toArray())//
+						.build();
 	}
 
 	@POST
@@ -127,8 +134,7 @@ public class DashboardWidgetResource {
 		}
 
 		return created(URI.create(uri.getAbsolutePath() + "/" + widget.getId()))//
-				.entity(new WidgetDetails(widget))
-				.build();
+				.entity(new WidgetDetails(widget, false)).build();
 	}
 
 	@GET
@@ -142,14 +148,15 @@ public class DashboardWidgetResource {
 	@PermitAll
 	@NoChangeLog
 	public Response readWidget(@PathParam("dashboardId") @NotNull String dashboardId,
-			@PathParam("id") @Positive int widgetId) {
+			@PathParam("id") @Positive int widgetId,
+			@QueryParam("showAllProperties") @DefaultValue("true") @ApiParam(defaultValue = "true", value = "false to show only properties defined for this specific widget. true to additionally show all properties inherited from the underlaying event source.") boolean all) {
 		Dashboard dashboard = controller.getDashboard(dashboardId);
 		if (dashboard == null) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		try {
-			return ok(new WidgetDetails(dashboard.getWidget(widgetId))).build();
+			return ok(new WidgetDetails(dashboard.getWidget(widgetId), all)).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist in this dashboard");
 		}
@@ -222,7 +229,7 @@ public class DashboardWidgetResource {
 		}
 
 		controller.updateWidget(newWidget);
-		return ok(new WidgetDetails(newWidget)).build();
+		return ok(new WidgetDetails(newWidget, false)).build();
 	}
 
 	@DELETE
@@ -255,14 +262,14 @@ public class DashboardWidgetResource {
 	public static class WidgetInfo {
 		@NotNull
 		@Positive
-		private int id = -1;
+		private final int id;
 		@NotBlank
 		@NotNull
-		private String name;
-		private String view;
+		private final String name;
+		private final String view;
 
 		public WidgetInfo(Widget widget) {
-			this(widget.getId(), widget.getName(), widget.getEventSourceInstance().getDescriptor().getView());
+			this(widget.getId(), widget.getName(), widget.getView());
 		}
 
 		public WidgetInfo(int id, String name, String view) {
@@ -287,78 +294,66 @@ public class DashboardWidgetResource {
 	public static class WidgetDetails {
 		@NotNull
 		@Positive
-		private int id = -1;
+		private final int id;
 		@NotBlank
 		@NotNull
-		private String eventSourceInstanceId;
+		private final String eventSourceInstanceId;
+		@NotNull
+		private final String type;
 		@NotBlank
 		@NotNull
-		private String title;
+		private final String title;
 		@NotBlank
 		@NotNull
-		private String name;
+		private final String name;
+		@NotNull
+		@NotBlank
+		private final String view;
 
 		@NotNull
-		private boolean enabled = false;
+		private final boolean enabled;
 		@NotNull
 		@PositiveOrZero
-		private int posX = 1;
+		private final int posX;
 		@NotNull
 		@PositiveOrZero
-		private int posY = 1;
+		private final int posY;
 		@NotNull
 		@Min(1)
 		@Positive
-		private int sizeX = 3;
+		private final int sizeX;
 		@NotNull
 		@Min(1)
 		@Positive
-		private int sizeY = 3;
+		private final int sizeY;
 		@NotNull
-		private Color backgroundColor = Color.random();
+		private final Color backgroundColor;
 
 		@NotNull
-		private String style = "";
+		private final String style;
 
 		@NotNull
-		private Map<@NotBlank String, @NotBlank String> data = new HashMap<>();
+		private final Map<@NotBlank String, @NotBlank String> data;
 
-		WidgetDetails(Widget widget) {
-			this(
-				widget.getId(),
-				widget.getEventSourceInstance().getId(),
-				widget.getTitle(),
-				widget.getName(),
-				widget.isEnabled(),
-				widget.getPosX(),
-				widget.getPosY(),
-				widget.getSizeX(),
-				widget.getSizeY(),
-				widget.getBackgroundColor(),
-				widget.getStyle(),
-				EventSourceInstanceResource.getValueMap(
-						widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
-						widget::getWidgetData,
-						widget::hasWidgetData,
-						true));
+		WidgetDetails(Widget widget, boolean showAllDatas) {
+			this(widget.getId(), widget.getEventSourceInstance().getId(), widget.getType(), widget.getTitle(),
+					widget.getName(), widget.getView(), widget.isEnabled(), widget.getPosX(), widget.getPosY(),
+					widget.getSizeX(), widget.getSizeY(), widget.getBackgroundColor(), widget.getStyle(),
+					EventSourceInstanceResource.getValueMap(
+							widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
+							showAllDatas ? widget::getWidgetDataForDashboard : widget::getWidgetData,
+							showAllDatas ? widget::hasWidgetDataForDashboard : widget::hasWidgetData, true));
 		}
 
-		WidgetDetails(int id,
-				String eventSourceInstanceId,
-				String title,
-				String name,
-				boolean enabled,
-				int posX,
-				int posY,
-				int sizeX,
-				int sizeY,
-				Color backgroundColor,
-				String style,
+		WidgetDetails(int id, String eventSourceInstanceId, String type, String title, String name, String view,
+				boolean enabled, int posX, int posY, int sizeX, int sizeY, Color backgroundColor, String style,
 				Map<String, String> data) {
 			this.id = id;
 			this.eventSourceInstanceId = eventSourceInstanceId;
+			this.type = type;
 			this.title = title;
 			this.name = name;
+			this.view = view;
 			this.enabled = enabled;
 			this.posX = posX;
 			this.posY = posY;
@@ -366,7 +361,7 @@ public class DashboardWidgetResource {
 			this.sizeY = sizeY;
 			this.backgroundColor = backgroundColor;
 			this.style = style;
-			this.data = data;
+			this.data = new LinkedHashMap<>(data);
 		}
 
 		public int getId() {
@@ -377,12 +372,20 @@ public class DashboardWidgetResource {
 			return eventSourceInstanceId;
 		}
 
+		public String getType() {
+			return type;
+		}
+
 		public String getTitle() {
 			return title;
 		}
 
 		public String getName() {
 			return name;
+		}
+
+		public String getView() {
+			return view;
 		}
 
 		public boolean isEnabled() {

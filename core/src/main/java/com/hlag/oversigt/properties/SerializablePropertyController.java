@@ -11,6 +11,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.storage.Storage;
@@ -22,6 +25,8 @@ import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissing
 
 @Singleton
 public class SerializablePropertyController {
+	private static final Logger LOGGER = LoggerFactory.getLogger(SerializablePropertyController.class);
+
 	private final Map<String, Class<SerializableProperty>> namesToClasses;
 	private final Map<Class<? extends SerializableProperty>, SerializableProperty> classToEmpty = new HashMap<>();
 
@@ -37,6 +42,7 @@ public class SerializablePropertyController {
 		namesToClasses = TypeUtils.findClasses(getClass().getPackage(), SerializableProperty.class)
 				.peek(c -> classToEmpty.put(c, createEmptyItem(c)))
 				.collect(Collectors.toMap(Class::getSimpleName, Function.identity()));
+		LOGGER.info("Loaded serializable property classes: {}", namesToClasses.keySet().toString());
 
 		properties.putAll(namesToClasses//
 				.values()
