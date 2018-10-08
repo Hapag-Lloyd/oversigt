@@ -41,7 +41,7 @@ public class StartOptions {
 	private boolean startEventSources = false;
 
 	@Option(name = "--delete", usage = "delete event sources from database where the event source class does not exist any more", handler = BooleanOptionHandler.class, required = false)
-	private boolean deleteNonExistingEventSourceFromDatabase;
+	private boolean deleteNonExistingEventSourceFromDatabase = false;
 
 	@Option(name = "--ldapBindPassword", required = false)
 	private String ldapBindPasswordFallback = "";
