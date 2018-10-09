@@ -62,14 +62,13 @@ public class Dashboard {
 	@JsonPropertyDescription("The second color for the selected color scheme")
 	private Color foregroundColorEnd = Color.parse("#AAAAAA");
 
-	// TODO: @UserId
 	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private final Set<@NotBlank /* @UserId */ String> owners = Collections
+	private final Set<@NotBlank /* TODO @UserId */ String> owners = Collections
 			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private final Set<@NotBlank /* @UserId */ String> editors = Collections
+	private final Set<@NotBlank /* TODO @UserId */ String> editors = Collections
 			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
 
 	@JsonIgnore
@@ -78,18 +77,16 @@ public class Dashboard {
 	Dashboard() {
 	}
 
-	public Dashboard(String id, String owners, boolean enabled) {
+	public Dashboard(String id, String owner, boolean enabled) {
 		this.id = id;
 		this.title = id;
-		this.owners.add(owners);
+		this.owners.add(owner);
 		this.enabled = enabled;
 	}
 
 	public Dashboard(String id, String title, boolean enabled, int screenWidth, int screenHeight, int columns,
 			Color backgroundColor, DashboardColorScheme colorScheme, Color foregroundColorStart,
-			Color foregroundColorEnd,
-			Collection<String> owners,
-			Collection<String> editors) {
+			Color foregroundColorEnd, Collection<String> owners, Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;
@@ -193,7 +190,9 @@ public class Dashboard {
 	}
 
 	public Set<String> getOwners() {
-		return owners;
+		synchronized (owners) {
+			return owners;
+		}
 	}
 
 	public void setOwners(Collection<String> owners) {
@@ -204,7 +203,9 @@ public class Dashboard {
 	}
 
 	public Set<String> getEditors() {
-		return editors;
+		synchronized (editors) {
+			return editors;
+		}
 	}
 
 	public void setEditors(Collection<String> editors) {
