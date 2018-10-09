@@ -4,13 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.hlag.oversigt</groupId>
+		<groupId>com.github.Hapag-Lloyd</groupId>
 		<artifactId>oversigt</artifactId>
 		<version>0.6-SNAPSHOT</version>
 	</parent>
 
 	<name>Oversigt-core</name>
-
 	<artifactId>oversigt-core</artifactId>
 
 	<properties>
@@ -135,7 +134,7 @@
 			<version>0.9.0</version>
 		</dependency>
 
-		<!-- String similiarity -->
+		<!-- String similarity -->
 		<dependency>
 			<groupId>info.debatty</groupId>
 			<artifactId>java-string-similarity</artifactId>
@@ -294,48 +293,10 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
-				<executions>
-					<execution>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>src/launcher/java</source>
-								<source>src/launcher/resources</source>
-							</sources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.4</version>
 				<executions>
 					<execution>
-						<id>launcher</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-							<classifier>launcher</classifier>
-							<includes>
-								<include>com/hlag/oversigt/launcher/**/*</include>
-							</includes>
-							<archive>
-								<manifest>
-									<mainClass>com.hlag.oversigt.launcher.OversigtLauncher</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-					</execution>
-					<execution>
-						<id>application</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
@@ -345,9 +306,6 @@
 							<includes>
 								<include>**/*.class</include>
 							</includes>
-							<excludes>
-								<exclude>com/hlag/oversigt/launcher/**/*</exclude>
-							</excludes>
 							<archive>
 								<manifest>
 									<addClasspath>true</addClasspath>
@@ -401,9 +359,10 @@
 					<recompressZippedFiles>true</recompressZippedFiles>
 				</configuration>
 				<executions>
+					<!-- Used for inheritance merges -->
 					<execution>
-						<id>make-assembly</id> <!-- this is used for inheritance merges -->
-						<phase>package</phase> <!-- append to the packaging phase. -->
+						<id>make-assembly</id>
+						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
@@ -412,5 +371,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
