@@ -2,7 +2,6 @@ package com.hlag.oversigt.model;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
-import com.hlag.oversigt.validate.UserId;
 
 public class Dashboard {
 	static final int TILE_DISTANCE = 6;
@@ -64,13 +62,15 @@ public class Dashboard {
 	@JsonPropertyDescription("The second color for the selected color scheme")
 	private Color foregroundColorEnd = Color.parse("#AAAAAA");
 
-	@NotBlank
-	@UserId
+	// TODO: @UserId
+	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private String owner = null;
+	private final Set<@NotBlank /* @UserId */ String> owners = Collections
+			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private Set<@NotBlank /* @UserId */ String> editors = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+	private final Set<@NotBlank /* @UserId */ String> editors = Collections
+			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
@@ -78,16 +78,18 @@ public class Dashboard {
 	Dashboard() {
 	}
 
-	public Dashboard(String id, String owner, boolean enabled) {
+	public Dashboard(String id, String owners, boolean enabled) {
 		this.id = id;
 		this.title = id;
-		this.owner = owner;
+		this.owners.add(owners);
 		this.enabled = enabled;
 	}
 
 	public Dashboard(String id, String title, boolean enabled, int screenWidth, int screenHeight, int columns,
 			Color backgroundColor, DashboardColorScheme colorScheme, Color foregroundColorStart,
-			Color foregroundColorEnd, String owner, Collection<String> editors) {
+			Color foregroundColorEnd,
+			Collection<String> owners,
+			Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;
@@ -98,8 +100,8 @@ public class Dashboard {
 		this.colorScheme = colorScheme;
 		this.foregroundColorStart = foregroundColorStart;
 		this.foregroundColorEnd = foregroundColorEnd;
-		this.owner = owner;
-		this.editors = new HashSet<>(editors);
+		this.owners.addAll(owners);
+		this.editors.addAll(editors);
 	}
 
 	public String getId() {
@@ -190,16 +192,26 @@ public class Dashboard {
 		this.foregroundColorEnd = Color.parse(foregroundColorEnd);
 	}
 
-	public String getOwner() {
-		return owner;
+	public Set<String> getOwners() {
+		return owners;
 	}
 
-	public void setOwner(String owner) {
-		this.owner = owner;
+	public void setOwners(Collection<String> owners) {
+		synchronized (this.owners) {
+			this.owners.clear();
+			this.owners.addAll(owners);
+		}
 	}
 
 	public Set<String> getEditors() {
 		return editors;
+	}
+
+	public void setEditors(Collection<String> editors) {
+		synchronized (this.editors) {
+			this.editors.clear();
+			this.editors.addAll(editors);
+		}
 	}
 
 	public boolean isEditor(String username) {

@@ -1,14 +1,10 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
-import static com.hlag.oversigt.util.HttpUtils.maybeParam;
-import static com.hlag.oversigt.util.HttpUtils.param;
-import static com.hlag.oversigt.util.HttpUtils.query;
+import static com.hlag.oversigt.util.HttpUtils.*;
 import static com.hlag.oversigt.util.Utils.map;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +12,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Strings;
+import com.google.common.base.Splitter;
 import com.google.common.eventbus.EventBus;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -45,6 +42,7 @@ import io.undertow.server.handlers.form.FormData;
 
 @Singleton
 public class DashboardConfigurationHandler extends AbstractConfigurationHandler {
+
 	private final Authenticator authenticator;
 	private final MailSender mailSender;
 	@Inject
@@ -94,17 +92,15 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Dashboard dashboard = getDashboard(exchange);
 		switch (page) {
 			case "addWidget":
-				return map("dashboard",
+				return map(
+						"dashboard",
 						dashboard,
 						"dashboardManager",
 						dashboardController,
 						"preview",
 						(Function<EventSourceInstance, String>) k -> ImageUtil.getPreviewImageUrl(k.getDescriptor()));
 			case "configureWidgets":
-				return map("dashboard",
-						dashboard,
-						"addColorCssToWidgets",
-						DashboardDesign.isAddColorCssToWidgets(dashboard));
+				return map("dashboard", dashboard, "addColorCssToWidgets", DashboardDesign.isAddColorCssToWidgets(dashboard));
 			case "settings":
 				return map("dashboard", dashboard);
 			default:
@@ -116,8 +112,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	protected ActionResponse doAction_addWidget(HttpServerExchange exchange, FormData formData) {
 		String eventSourceInstance = param(formData, "eventSourceId");
 		Widget widget = dashboardController.createWidgetForDashboard(getDashboard(exchange), eventSourceInstance);
-		//getDashboard(exchange).addWidget(storage, eventSource);
-		logChange(exchange,
+		// getDashboard(exchange).addWidget(storage, eventSource);
+		logChange(
+				exchange,
 				"Dashboard %s: add Widget: %s (%s)",
 				getDashboard(exchange).getId(),
 				widget.getId(),
@@ -136,8 +133,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		widget.setPosY(Integer.parseInt(param(formData, "widget.posy")));
 		widget.setSizeX(Integer.parseInt(param(formData, "widget.sizex")));
 		widget.setSizeY(Integer.parseInt(param(formData, "widget.sizey")));
-		widget.setBackgroundColor(Color
-				.parse(maybeParam(formData, "widget.backgroundColor").orElse(widget.getBackgroundColor().toString())));
+		widget.setBackgroundColor(
+				Color.parse(maybeParam(formData, "widget.backgroundColor").orElse(widget.getBackgroundColor().toString())));
 		widget.setStyle(param(formData, "widget.style"));
 		// Read Data
 		List<String> parameters = new ArrayList<>();
@@ -153,8 +150,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		parameters//
 				.stream()//
 				.filter(s -> s.startsWith(WIDGET_DATA))//
-				.forEach(s -> widget.setWidgetData(getProperty.apply(widget, s.substring(WIDGET_DATA.length())),
-						param(formData, s)));
+				.forEach(
+						s -> widget
+								.setWidgetData(getProperty.apply(widget, s.substring(WIDGET_DATA.length())), param(formData, s)));
 		// save
 		dashboardController.updateWidget(widget);
 		logChange(exchange, "Dashboard %s: Update widget %s", dashboard.getId(), widget.getId());
@@ -199,7 +197,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Dashboard dashboard = getDashboard(exchange);
 		Widget widget = dashboard.getWidget(widgetId);
 		dashboardController.deleteWidget(widget);
-		logChange(exchange,
+		logChange(
+				exchange,
 				"Dashboard %s: Delete widget %s (%s)",
 				dashboard.getId(),
 				widget.getId(),
@@ -261,7 +260,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Widget widget = dashboard.getWidget(widgetId);
 		widget.setEnabled(enabled);
 		dashboardController.updateWidget(widget);
-		logChange(exchange,
+		logChange(
+				exchange,
 				"Dashboard %s: widget %s set enabled to %s",
 				dashboard.getId(),
 				widget.getId(),
@@ -272,85 +272,79 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_checkUsername(HttpServerExchange exchange, FormData formData) {
-		return okJson(maybeParam(formData, "username")//
-				.map(authenticator::isUsernameValid)//
-				.orElse(false));
+		return okJson(
+				maybeParam(formData, "username")//
+						.map(authenticator::isUsernameValid)//
+						.orElse(false));
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER, dashboard = true)
-	protected ActionResponse doAction_setOwner(HttpServerExchange exchange, FormData formData) {
-		Optional<String> newOwner = maybeParam(formData, "username");
+	protected ActionResponse doAction_setOwners(HttpServerExchange exchange, FormData formData) {
+		Optional<List<String>> newOwners = maybeParam(formData, "usernames")//
+				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
+				.map(ArrayList<String>::new);
 
-		if (newOwner.isPresent() && authenticator.isUsernameValid(newOwner.get())) {
+		if (newOwners.isPresent() && newOwners.get().stream().allMatch(authenticator::isUsernameValid)) {
 			Dashboard dashboard = getDashboard(exchange);
-			String oldOwner = dashboard.getOwner();
+			Set<String> oldOwners = new HashSet<>(dashboard.getOwners());
 
-			// change owner
-			dashboard.setOwner(newOwner.get());
+			// change owners
+			dashboard.setOwners(newOwners.get());
 			dashboardController.updateDashboard(dashboard);
 
-			logChange(exchange, "Dashboard %s: Set owner to %s", dashboard.getId(), dashboard.getOwner());
+			logChange(exchange, "Dashboard %s: Set owners to %s", dashboard.getId(), dashboard.getOwners());
 
 			// reload roles
-			authenticator.reloadRoles(oldOwner);
-			authenticator.reloadRoles(dashboard.getOwner());
+			oldOwners.forEach(authenticator::reloadRoles);
+			dashboard.getOwners().forEach(authenticator::reloadRoles);
 
-			if (!oldOwner.equals(dashboard.getOwner())) {
-				mailSender.sendPermissionsReceived(getPrincipal(exchange).get(),
-						dashboard.getOwner(),
-						Roles.DASHBOARD_OWNER,
-						dashboard);
+			// inform users
+			Set<String> usersToInform = new HashSet<>(dashboard.getOwners());
+			usersToInform.removeAll(oldOwners);
+
+			if (!newOwners.get().isEmpty()) {
+				mailSender
+						.sendPermissionsReceived(getPrincipal(exchange).get(), usersToInform, Roles.DASHBOARD_OWNER, dashboard);
+				return okJson(dashboard.getEditors().stream().collect(Collectors.joining(",")));
 			}
 
-			return okJson(newOwner.get());
-		} else {
-			return okJson(false);
+			return okJson(true);
 		}
+		return okJson(false);
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_setEditors(HttpServerExchange exchange, FormData formData) {
 		Optional<List<String>> newEditors = maybeParam(formData, "usernames")//
-				.map(s -> s.split("[,\\s]+"))
-				.map(Arrays::asList)
+				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
 				.map(ArrayList<String>::new);
 
-		if (newEditors.isPresent() && newEditors.get().size() == 1 && Strings.isNullOrEmpty(newEditors.get().get(0))) {
-			newEditors.get().clear();
-		}
-
-		if (newEditors.isPresent()
-				&& newEditors.get().stream().filter(authenticator::isUsernameValid).count() == newEditors.get().size()) {
+		if (newEditors.isPresent() && newEditors.get().stream().allMatch(authenticator::isUsernameValid)) {
 			Dashboard dashboard = getDashboard(exchange);
-
-			Set<String> usersToInform = new HashSet<>(newEditors.get());
-			usersToInform.removeAll(dashboard.getEditors());
-
-			// find editors to reload their roles
-			Set<String> editorsToReload = new HashSet<>(dashboard.getEditors());
-			editorsToReload.addAll(newEditors.get());
-			// kann hier noch verbessert werden, so dass nur die leute neu geladen werden, bei denen sich wirklich was ändert... war ich zu faul...
+			Set<String> oldEditors = new HashSet<>(dashboard.getEditors());
 
 			// change editors
-			dashboard.getEditors().addAll(newEditors.get());
-			dashboard.getEditors().retainAll(newEditors.get());
+			dashboard.setEditors(newEditors.get());
 			dashboardController.updateDashboard(dashboard);
-			logChange(exchange, "Dashboard %s: Set editors to %s", dashboard.getId(), dashboard.getEditors());
-			// update old and new editors roles
-			editorsToReload.forEach(authenticator::reloadRoles);
 
-			mailSender.sendPermissionsReceived(getPrincipal(exchange).get(),
-					usersToInform,
-					Roles.DASHBOARD_EDITOR,
-					dashboard);
+			logChange(exchange, "Dashboard %s: Set editors to %s", dashboard.getId(), dashboard.getEditors());
+
+			// reload roles
+			oldEditors.forEach(authenticator::reloadRoles);
+			dashboard.getEditors().forEach(authenticator::reloadRoles);
+
+			// inform users
+			Set<String> usersToInform = new HashSet<>(dashboard.getEditors());
+			usersToInform.removeAll(oldEditors);
 
 			if (!newEditors.get().isEmpty()) {
+				mailSender
+						.sendPermissionsReceived(getPrincipal(exchange).get(), usersToInform, Roles.DASHBOARD_EDITOR, dashboard);
 				return okJson(dashboard.getEditors().stream().collect(Collectors.joining(",")));
-			} else {
-				return okJson(true);
 			}
-		} else {
-			return okJson(false);
+
+			return okJson(true);
 		}
+		return okJson(false);
 	}
 }

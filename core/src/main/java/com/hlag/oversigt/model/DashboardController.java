@@ -2,10 +2,8 @@ package com.hlag.oversigt.model;
 
 import static com.hlag.oversigt.util.Utils.not;
 import static com.hlag.oversigt.util.Utils.toList;
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.*;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -190,8 +188,6 @@ public class DashboardController {
 			return false;
 		}
 		copyProperties(dashboard, originalDashboard);
-		originalDashboard.getEditors().clear();
-		originalDashboard.getEditors().addAll(dashboard.getEditors());
 		storage.persistDashboard(originalDashboard);
 		return true;
 	}

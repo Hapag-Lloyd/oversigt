@@ -1,11 +1,8 @@
 package com.hlag.oversigt.web.resources;
 
-import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
-import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
-import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static com.hlag.oversigt.web.api.ErrorResponse.*;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.*;
 
 import java.net.URI;
 import java.util.List;
@@ -168,7 +165,7 @@ public class DashboardResource {
 		}
 
 		// if the owner has changed the user needs to be at least dashboard owner
-		if (!newDashboardData.getOwner().equals(dashboard.getOwner())
+		if (!newDashboardData.getOwners().equals(dashboard.getOwners())
 				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName())) {
 			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
 		}
