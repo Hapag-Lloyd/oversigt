@@ -1,8 +1,7 @@
 package com.hlag.oversigt.storage;
 
 import static com.hlag.oversigt.util.StringUtils.list;
-import static com.hlag.oversigt.util.Utils.is;
-import static com.hlag.oversigt.util.Utils.map;
+import static com.hlag.oversigt.util.Utils.*;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -320,7 +319,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 				"FOREGROUND_COLOR_END",
 				dashboard.getForegroundColorEnd().getHexColor(),
 				"OWNER",
-				dashboard.getOwner(),
+				dashboard.getOwners().stream().collect(Collectors.joining(",", ",", ",")),
 				"EDITOR",
 				dashboard.getEditors().stream().collect(Collectors.joining(",", ",", ",")),
 				"ENABLED",
@@ -364,7 +363,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 		DashboardColorScheme colorScheme = DashboardColorScheme.fromString((String) data.get("COLOR_SCHEME"));
 		Color foregroundColorStart = Color.parse((String) data.get("FOREGROUND_COLOR_START"));
 		Color foregroundColorEnd = Color.parse((String) data.get("FOREGROUND_COLOR_END"));
-		String owner = (String) data.get("OWNER");
+		Collection<String> owners = list((String) data.get("OWNER"));
 		Collection<String> editors = list((String) data.get("EDITOR"));
 
 		return new Dashboard(id,
@@ -377,7 +376,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 				colorScheme,
 				foregroundColorStart,
 				foregroundColorEnd,
-				owner,
+				owners,
 				editors);
 	}
 

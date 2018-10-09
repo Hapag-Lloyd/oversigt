@@ -1,7 +1,6 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
-import static com.hlag.oversigt.util.HttpUtils.query;
+import static com.hlag.oversigt.util.HttpUtils.*;
 import static com.hlag.oversigt.util.Utils.map;
 
 import java.util.Map;
@@ -85,7 +84,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 			if (!dashboard.isEnabled()) {
 				dashboard.setEnabled(true);
 				dashboardController.updateDashboard(dashboard);
-				authenticator.reloadRoles(dashboard.getOwner());
+				dashboard.getOwners().forEach(authenticator::reloadRoles);
 				mailSender.sendDashboardEnabled(getPrincipal(exchange).get(), dashboard);
 				logChange(exchange, "Enabled dashboard %s", dashboard.getId());
 			}
@@ -101,7 +100,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		if (maybeDashboard.isPresent()) {
 			Dashboard dashboard = maybeDashboard.get();
 			dashboardController.deleteDashboard(dashboard);
-			authenticator.reloadRoles(dashboard.getOwner());
+			dashboard.getOwners().forEach(authenticator::reloadRoles);
 			logChange(exchange, "Deleted dashboard %s", dashboard.getId());
 			return redirect("/" + dashboard.getId());
 		} else {

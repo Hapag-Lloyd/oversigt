@@ -1,7 +1,6 @@
 package com.hlag.oversigt.util;
 
-import static com.hlag.oversigt.util.Utils.logChange;
-import static com.hlag.oversigt.util.Utils.map;
+import static com.hlag.oversigt.util.Utils.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -129,7 +128,7 @@ public class MailSender {
 			String templatePath,
 			Map<String, Object> model) {
 		List<String> involved = new ArrayList<>();
-		involved.add(dashboard.getOwner());
+		involved.addAll(dashboard.getOwners());
 		involved.addAll(dashboard.getEditors());
 		model.put("dashboard", dashboard);
 		sendMailToUserIds(sender, involved, subject, title, templatePath, model);
