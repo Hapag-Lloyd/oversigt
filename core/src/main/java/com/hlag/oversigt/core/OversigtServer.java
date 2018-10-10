@@ -12,6 +12,7 @@ import static io.undertow.servlet.Servlets.servlet;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.RateLimiter;
@@ -50,8 +52,10 @@ import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.MotivationEventSource;
+import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.Utils;
 import com.hlag.oversigt.web.DashboardConfigurationHandler;
 import com.hlag.oversigt.web.DashboardCreationHandler;
 import com.hlag.oversigt.web.EventSourceConfigurationHandler;
@@ -73,7 +77,6 @@ import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
-import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.server.handlers.sse.ServerSentEventHandler;
 import io.undertow.server.session.SessionAttachmentHandler;
@@ -187,12 +190,15 @@ public class OversigtServer extends AbstractIdleService {
 		addListener(new Listener() {
 			@Override
 			public void running() {
-				LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
-						server.getListenerInfo()
-								.stream()
-								.map(li -> (InetSocketAddress) li.getAddress())
-								.mapToInt(InetSocketAddress::getPort)
-								.toArray());
+				LOGGER
+					.info(
+						"Embedded Oversigt server has started and is listening on port(s) {}",
+						server
+							.getListenerInfo()
+							.stream()
+							.map(li -> (InetSocketAddress) li.getAddress())
+							.mapToInt(InetSocketAddress::getPort)
+							.toArray());
 			}
 
 			@Override
@@ -222,16 +228,17 @@ public class OversigtServer extends AbstractIdleService {
 
 		LOGGER.info("Configuring web server");
 		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
-			Optional<Dashboard> dashboard = Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
-					.map(Deque::getFirst)
-					.map(dashboardController::getDashboard);
+			Optional<Dashboard> dashboard = Optional
+				.ofNullable(connection.getQueryParameters().get("dashboard"))//
+				.map(Deque::getFirst)
+				.map(dashboardController::getDashboard);
 			dashboard.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
-			rateLimit.map(RateLimiter::create)
-					.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
-			logInfo(LOGGER,
-					"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
-					dashboard.map(Dashboard::getId).orElse(""),
-					rateLimit.orElse(-1L));
+			rateLimit.map(RateLimiter::create).ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
+			logInfo(
+				LOGGER,
+				"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
+				dashboard.map(Dashboard::getId).orElse(""),
+				rateLimit.orElse(-1L));
 			eventBus.post(connection);
 		});
 
@@ -239,8 +246,7 @@ public class OversigtServer extends AbstractIdleService {
 			@Subscribe
 			@Override
 			public void accept(OversigtEvent event) {
-				sseHandler.getConnections().stream().forEach(
-						connection -> sender.sendEventToConnection(event, connection));
+				sseHandler.getConnections().stream().forEach(connection -> sender.sendEventToConnection(event, connection));
 			}
 		});
 
@@ -250,64 +256,67 @@ public class OversigtServer extends AbstractIdleService {
 
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers//
-				.routing()//
-				// dashboard handling
-				.get("/{dashboard}", this::serveDashboard)//
-				.get("/events", sseHandler)//
-				.get("/views/{widget}", this::serveWidget)//
-				// get events from outside
-				.post("/widgets/{widget}", this::handleForeignEvents)
-				// dashboard configuration
-				.get("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.get("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
-				.get("/{dashboard}/create", securedDashboardCreationHandler)//
-				.post("/{dashboard}/create", securedDashboardCreationHandler)//
-				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
-				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
-				// server configuration
-				.get("/config", securedEventSourceConfigurationHandler)//
-				.post("/config", securedEventSourceConfigurationHandler)//
-				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				.post("/config/{page}", securedEventSourceConfigurationHandler)//
-				// JSON Schema output
-				.get("/schema/{class}", withLogin(this::serveJsonSchema))
-				// session handling
-				.get("/logout", withSession(this::doLogout))//
-				// default handler
-				.get("/", this::redirectToWelcomePage)
-				.get("/welcome", welcomeHandler)
-				.get("/welcome/{page}", welcomeHandler);
+			.routing()//
+			// dashboard handling
+			.get("/{dashboard}", this::serveDashboard)//
+			.get("/events", sseHandler)//
+			.get("/views/{widget}", this::serveWidget)//
+			// get events from outside
+			.post("/widgets/{widget}", this::handleForeignEvents)
+			// dashboard configuration
+			.get("/{dashboard}/config", securedDashboardConfigurationHandler)//
+			.post("/{dashboard}/config", securedDashboardConfigurationHandler)//
+			.get("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
+			.post("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
+			.get("/{dashboard}/create", securedDashboardCreationHandler)//
+			.post("/{dashboard}/create", securedDashboardCreationHandler)//
+			.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
+			.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
+			// server configuration
+			.get("/config", securedEventSourceConfigurationHandler)//
+			.post("/config", securedEventSourceConfigurationHandler)//
+			.get("/config/{page}", securedEventSourceConfigurationHandler)//
+			.post("/config/{page}", securedEventSourceConfigurationHandler)//
+			// JSON Schema output
+			.get("/schema/{class}", withLogin(this::serveJsonSchema))
+			// session handling
+			.get("/logout", withSession(this::doLogout))//
+			// default handler
+			.get("/", this::redirectToWelcomePage)
+			.get("/welcome", welcomeHandler)
+			.get("/welcome/{page}", welcomeHandler);
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers//
-				.path(routingHandler)//
-				.addPrefixPath("/assets", createAssetsHandler())
-				.addPrefixPath("/compiled", createAggregationHandler())
-				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
-				.addPrefixPath(MAPPING_API, createApiHandler());
+			.path(routingHandler)//
+			.addPrefixPath("/assets", createAssetsHandler())
+			.addPrefixPath("/compiled", createAggregationHandler())
+			.addPrefixPath("/api/swagger", createSwaggerUiHandler())
+			.addPrefixPath(MAPPING_API, createApiHandler());
 
 		// Create Handler for compressing content
-		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
+		final EncodingHandler encodingHandler = new EncodingHandler(
+			new ContentEncodingRepository()//
 				.addEncodingHandler("gzip", new GzipEncodingProvider(), 50, Predicates.maxContentSize(5))//
 				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(10)))//
-						.setNext(rootHandler);
+					.setNext(rootHandler);
 
 		Logger accessLogger = LoggerFactory.getLogger("access");
-		final AccessLogHandler accessHandler = new AccessLogHandler(encodingHandler,
-				message -> accessLogger.info(message),
-				"combined",
-				OversigtServer.class.getClassLoader());
+		final AccessLogHandler accessHandler = new AccessLogHandler(
+			encodingHandler,
+			message -> accessLogger.info(message),
+			"combined",
+			OversigtServer.class.getClassLoader());
 
 		Builder builder = Undertow.builder();
-		listeners.stream()//
-				.filter(not(HttpListenerConfiguration::isSsl))
-				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
-		listeners.stream()//
-				.filter(HttpListenerConfiguration::isSsl)
-				.forEach(c -> builder
-						.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
+		listeners
+			.stream()//
+			.filter(not(HttpListenerConfiguration::isSsl))
+			.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
+		listeners
+			.stream()//
+			.filter(HttpListenerConfiguration::isSsl)
+			.forEach(c -> builder.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
 		server = builder.setHandler(accessHandler).build();
 
 		LOGGER.info("Starting web server");
@@ -348,8 +357,7 @@ public class OversigtServer extends AbstractIdleService {
 			if (SerializableProperty.class.isAssignableFrom(clazz)) {
 				exchange.setStatusCode(StatusCodes.OK);
 				exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-				exchange.getResponseSender()
-						.send(ByteBuffer.wrap(json.toJsonSchema(clazz).getBytes(StandardCharsets.UTF_8)));
+				exchange.getResponseSender().send(ByteBuffer.wrap(json.toJsonSchema(clazz).getBytes(StandardCharsets.UTF_8)));
 				exchange.endExchange();
 			} else {
 				HttpUtils.notFound(exchange);
@@ -366,8 +374,9 @@ public class OversigtServer extends AbstractIdleService {
 	private void serveWidget(HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.SEE_OTHER);
 		String widgetName = exchange.getQueryParameters().get("widget").getFirst();
-		exchange.getResponseHeaders().put(Headers.LOCATION,
-				"/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
+		exchange
+			.getResponseHeaders()
+			.put(Headers.LOCATION, "/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
 		exchange.endExchange();
 	}
 
@@ -391,19 +400,21 @@ public class OversigtServer extends AbstractIdleService {
 					// redirect to config page in order to create new dashboard
 					redirect(exchange, "/" + dashboardId + "/create", false, true);
 				} else {
-					String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
-							map("title",
-									dashboard.getTitle(),
-									"columns",
-									dashboard.getColumns(),
-									"backgroundColor",
-									dashboard.getBackgroundColor().getHexColor(),
-									"computedTileWidth",
-									dashboard.getComputedTileWidth(),
-									"computedTileHeight",
-									dashboard.getComputedTileHeight(),
-									"widgets",
-									dashboard.getWidgets()));
+					String html = processTemplate(
+						"/views/layout/dashboard/instance.ftl.html",
+						map(
+							"title",
+							dashboard.getTitle(),
+							"columns",
+							dashboard.getColumns(),
+							"backgroundColor",
+							dashboard.getBackgroundColor().getHexColor(),
+							"computedTileWidth",
+							dashboard.getComputedTileWidth(),
+							"computedTileHeight",
+							dashboard.getComputedTileHeight(),
+							"widgets",
+							dashboard.getWidgets()));
 					exchange.getResponseSender().send(html);
 				}
 			} else {
@@ -436,32 +447,55 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private HttpHandler createAssetsHandler() {
-		return Handlers
-				.resource(new ClassPathResourceManager(Thread.currentThread().getContextClassLoader(), "statics"));
+		return Handlers.resource(new ClassPathResourceManager("statics") {
+			@Override
+			protected URL getResourceUrl(String realPath) {
+				if (realPath.startsWith("statics/widgets/")) {
+					final String end = realPath.substring("statics/widgets/".length());
+					return Arrays
+						.stream(widgetsPaths)
+						.map(s -> s + end)
+						.map(OversigtServer::getResourceUrl)
+						.filter(Utils::isNotNull)
+						.findFirst()
+						.orElse(null);
+				}
+				return null;
+			}
+		});
+	}
+
+	private static URL getResourceUrl(String path) {
+		try {
+			return Resources.getResource(path);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 
 	private HttpHandler createSwaggerUiHandler() {
-		return Handlers.resource(new ClassPathResourceManager(Thread.currentThread().getContextClassLoader(),
-				"swagger/swagger-ui/3.8.0"));
+		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
 
 	/**
-	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts compilation and saas processing Wro4j uses
-	 * Servlet API so we make fake Servlet Deployment here to emulate servlet-based environment
+	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts compilation and saas
+	 * processing Wro4j uses Servlet API so we make fake Servlet Deployment here to emulate
+	 * servlet-based environment
 	 *
 	 * @return Static resources handler
 	 */
 	private HttpHandler createAggregationHandler() throws ServletException {
-		DeploymentInfo deploymentInfo = Servlets.deployment()
-				.setClassLoader(OversigtServer.class.getClassLoader())
-				.setContextPath("/")
-				.setDeploymentName("oversigt")
-				.addFilterUrlMapping("wro4j", "/*", DispatcherType.REQUEST)
-				.addFilter(Servlets.filter("wro4j", ConfigurableWroFilter.class, () -> {
-					ConfigurableWroFilter filter = new ConfigurableWroFilter();
-					filter.setWroManagerFactory(new WroManagerFactory());
-					return new ImmediateInstanceHandle<>(filter);
-				}));
+		DeploymentInfo deploymentInfo = Servlets
+			.deployment()
+			.setClassLoader(OversigtServer.class.getClassLoader())
+			.setContextPath("/")
+			.setDeploymentName("oversigt")
+			.addFilterUrlMapping("wro4j", "/*", DispatcherType.REQUEST)
+			.addFilter(Servlets.filter("wro4j", ConfigurableWroFilter.class, () -> {
+				ConfigurableWroFilter filter = new ConfigurableWroFilter();
+				filter.setWroManagerFactory(new WroManagerFactory());
+				return new ImmediateInstanceHandle<>(filter);
+			}));
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 		return manager.start();
@@ -477,8 +511,7 @@ public class OversigtServer extends AbstractIdleService {
 		deploymentInfo.setDeploymentName("oversigt-api");
 		deploymentInfo.setContextPath(MAPPING_API);
 		deploymentInfo.addListener(listener(org.jboss.weld.environment.servlet.Listener.class));
-		deploymentInfo
-				.addListener(listener(ApiBootstrapListener.class, createInstanceFactory(ApiBootstrapListener.class)));
+		deploymentInfo.addListener(listener(ApiBootstrapListener.class, createInstanceFactory(ApiBootstrapListener.class)));
 
 		DeploymentManager manager = defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
@@ -501,16 +534,16 @@ public class OversigtServer extends AbstractIdleService {
 			prefix = mapping.substring(0, mapping.length() - 2);
 		}
 		ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServlet30Dispatcher.class)//
-				.setAsyncSupported(true)
-				.setLoadOnStartup(1)
-				.addMapping(mapping);
+			.setAsyncSupported(true)
+			.setLoadOnStartup(1)
+			.addMapping(mapping);
 		if (prefix != null) {
 			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
 		}
 
 		return new DeploymentInfo()//
-				.addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
-				.addServlet(resteasyServlet);
+			.addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
+			.addServlet(resteasyServlet);
 	}
 
 	@Override
