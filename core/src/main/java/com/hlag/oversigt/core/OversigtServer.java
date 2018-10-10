@@ -459,8 +459,9 @@ public class OversigtServer extends AbstractIdleService {
 						.filter(Utils::isNotNull)
 						.findFirst()
 						.orElse(null);
+				}else {
+					return super.getResourceUrl(realPath);
 				}
-				return null;
 			}
 		});
 	}
