@@ -1,7 +1,9 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.*;
+import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
+import static com.hlag.oversigt.util.HttpUtils.query;
 import static com.hlag.oversigt.util.Utils.map;
+import static com.hlag.oversigt.web.ActionResponse.redirect;
 
 import java.util.Map;
 import java.util.Optional;
@@ -23,14 +25,13 @@ import io.undertow.server.handlers.form.FormData;
 
 @Singleton
 public class DashboardCreationHandler extends AbstractConfigurationHandler {
-	private final DashboardController dashboardController;
 	private final Authenticator authenticator;
 	private final MailSender mailSender;
 
 	@Inject
-	public DashboardCreationHandler(DashboardController dashboardController, Authenticator authenticator, MailSender mailSender) {
-		super("views/layout/dashboardCreate/", new String[] { "page_create.ftl.html" });
-		this.dashboardController = dashboardController;
+	public DashboardCreationHandler(DashboardController dashboardController, Authenticator authenticator,
+			MailSender mailSender) {
+		super(dashboardController, "views/layout/dashboardCreate/", new String[] { "page_create.ftl.html" });
 		this.authenticator = authenticator;
 		this.mailSender = mailSender;
 	}
@@ -62,8 +63,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		if (!maybeDashboard.isPresent()) {
 			String dashboardId = query(exchange, "dashboard").get();
 			Principal principal = getPrincipal(exchange).get();
-			Dashboard dashboard = dashboardController
-					.createDashboard(dashboardId, principal, principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
+			Dashboard dashboard = getDashboardController().createDashboard(dashboardId, principal,
+					principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
 			logChange(exchange, "Created dashboard %s - enabled: %s", dashboard.getId(), dashboard.isEnabled());
 			if (dashboard.isEnabled()) {
 				return redirect("/" + dashboard.getId() + "/config");
@@ -83,7 +84,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 			Dashboard dashboard = maybeDashboard.get();
 			if (!dashboard.isEnabled()) {
 				dashboard.setEnabled(true);
-				dashboardController.updateDashboard(dashboard);
+				getDashboardController().updateDashboard(dashboard);
 				dashboard.getOwners().forEach(authenticator::reloadRoles);
 				mailSender.sendDashboardEnabled(getPrincipal(exchange).get(), dashboard);
 				logChange(exchange, "Enabled dashboard %s", dashboard.getId());
@@ -99,7 +100,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (maybeDashboard.isPresent()) {
 			Dashboard dashboard = maybeDashboard.get();
-			dashboardController.deleteDashboard(dashboard);
+			getDashboardController().deleteDashboard(dashboard);
 			dashboard.getOwners().forEach(authenticator::reloadRoles);
 			logChange(exchange, "Deleted dashboard %s", dashboard.getId());
 			return redirect("/" + dashboard.getId());

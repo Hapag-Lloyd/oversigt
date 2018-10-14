@@ -104,7 +104,10 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 	}
 
-	/**Checks if the given url points to a resource in the current class path and if so loads the resource as string with UTF-8 encoding
+	/**
+	 * Checks if the given url points to a resource in the current class path and if
+	 * so loads the resource as string with UTF-8 encoding
+	 *
 	 * @param urlPath the path to the resource to load
 	 * @return the resource content interpreted as string with UTF-8 encoding
 	 * @throws IOException if reading the resource fails
@@ -119,21 +122,25 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	private Configuration templateConfiguration;
 	@Inject
 	private JsonUtils json;
-	@Inject
-	private DashboardController dashboardController;
+	private final DashboardController dashboardController;
 	@Inject
 	@Named("debug")
 	private boolean debug;
 
 	private final Map<String, PageInfo> pages = new LinkedHashMap<>();
 
-	protected AbstractConfigurationHandler(String path, String[] filenames) {
+	protected AbstractConfigurationHandler(DashboardController dashboardController, String path, String[] filenames) {
+		this.dashboardController = dashboardController;
 		getLogger()
 				.info("Initializing configuration handler for path: " + path + " with " + filenames.length + " pages");
 		for (String filename : filenames) {
 			PageInfo pi = getPageInfo(path + filename);
 			pages.put(pi.getName(), pi);
 		}
+	}
+
+	protected DashboardController getDashboardController() {
+		return dashboardController;
 	}
 
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
@@ -147,18 +154,13 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 		Optional<Principal> principal = getPrincipal(exchange);
 		model.putAll(map(//
-				"principal",
-				principal.orElse(null),
-				"menuItems",
+				"principal", principal.orElse(null), "menuItems",
 				this.pages.entrySet()
 						.stream()
 						.filter(p -> principal.map(p.getValue()::isAllowedFor).orElse(false))
 						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
 						.toArray(), //
-				"activeMenuItem",
-				page,
-				"formUrl",
-				"?"));
+				"activeMenuItem", page, "formUrl", "?"));
 		return model;
 	}
 
@@ -263,9 +265,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				notFound(exchange, "Page '" + page + "' not found");
 			}
 		} else {
-			HttpUtils.redirect(exchange,
-					exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(),
-					false,
+			HttpUtils.redirect(exchange, exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(), false,
 					true);
 		}
 	}
@@ -287,7 +287,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 			for (int i = 0; i < objects.length; ++i) {
 				classes[i] = objects[i].getClass();
 			}
-			//			classes[classes.length - 1] = FormData.class;
+			// classes[classes.length - 1] = FormData.class;
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
 		} catch (Exception ignore) {
 			return null;
@@ -311,8 +311,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 									.orElse(false);
 						} else {
 							proceed = getPrincipal(exchange)//
-									.map(p -> p.hasRole(needsRole.role().getRole().getDashboardSpecificRole(
-											getDashboard(exchange).getId())))//
+									.map(p -> p.hasRole(needsRole.role()
+											.getRole()
+											.getDashboardSpecificRole(getDashboard(exchange).getId())))//
 									.orElse(false);
 						}
 						if (!proceed) {
@@ -327,20 +328,20 @@ public class AbstractConfigurationHandler implements HttpHandler {
 						}
 						if (object instanceof ActionResponse) {
 							ActionResponse response = (ActionResponse) object;
-							if (response.doNoAction) {
+							if (response.isDoNoAction()) {
 								// nothing
-							} else if (response.doGetRedirect) {
+							} else if (response.isDoGetRedirect()) {
 								reloadWithGet(exchange);
 								return;
-							} else if (response.jsonObject != null) {
+							} else if (response.getJsonObject() != null) {
 								exchange.setStatusCode(
-										response.statusCode != null ? response.statusCode : StatusCodes.OK);
+										response.getStatusCode() != null ? response.getStatusCode() : StatusCodes.OK);
 								exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-								exchange.getResponseSender().send(json.toJson(response.jsonObject));
+								exchange.getResponseSender().send(json.toJson(response.getJsonObject()));
 								exchange.endExchange();
 								return;
-							} else if (response.redirect != null) {
-								HttpUtils.redirect(exchange, response.redirect, false, true);
+							} else if (response.getRedirect() != null) {
+								HttpUtils.redirect(exchange, response.getRedirect(), false, true);
 								return;
 							} else {
 								throw new RuntimeException("Unknown action!");
@@ -361,51 +362,6 @@ public class AbstractConfigurationHandler implements HttpHandler {
 			printException(exchange, e);
 			return;
 		}
-	}
-
-	protected static class ActionResponse {
-		private final boolean doGetRedirect;
-		private final boolean doNoAction;
-		private final Integer statusCode;
-		private final Object jsonObject;
-		private final String redirect;
-
-		private ActionResponse() {
-			this(false, true, null, null, null);
-		}
-
-		private ActionResponse(boolean doGetRedirect,
-				boolean doNoAction,
-				Integer statusCode,
-				Object jsonObject,
-				String redirect) {
-			this.doGetRedirect = doGetRedirect;
-			this.doNoAction = doNoAction;
-			this.statusCode = statusCode;
-			this.jsonObject = jsonObject;
-			this.redirect = redirect;
-		}
-
-	}
-
-	protected static ActionResponse ok() {
-		return doGetRedirect();
-	}
-
-	protected static ActionResponse serverError(String text) {
-		return new ActionResponse(false, false, StatusCodes.INTERNAL_SERVER_ERROR, text, null);
-	}
-
-	protected static ActionResponse doGetRedirect() {
-		return new ActionResponse(true, false, null, null, null);
-	}
-
-	protected static ActionResponse okJson(Object object) {
-		return new ActionResponse(false, false, StatusCodes.OK, object, null);
-	}
-
-	protected static ActionResponse redirect(String url) {
-		return new ActionResponse(false, false, null, null, url);
 	}
 
 	protected static class PageInfo implements Comparable<PageInfo> {
