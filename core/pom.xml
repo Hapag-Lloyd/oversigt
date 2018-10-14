@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.github.Hapag-Lloyd</groupId>
+		<groupId>com.hlag.oversigt</groupId>
 		<artifactId>oversigt</artifactId>
 		<version>0.6-SNAPSHOT</version>
 	</parent>

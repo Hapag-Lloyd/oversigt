@@ -1,5 +1,10 @@
 package com.hlag.oversigt.properties;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.hlag.oversigt.util.SneakyException;
+
 public class ServerConnection extends SerializableProperty {
 	public static final ServerConnection EMPTY = new ServerConnection(0, "", "");
 
@@ -13,5 +18,21 @@ public class ServerConnection extends SerializableProperty {
 
 	public String getUrl() {
 		return url;
+	}
+	
+	private URL createUrl() {
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			throw new SneakyException(e);
+		}
+	}
+	
+	public String extractHostname() {
+		return createUrl().getHost();
+	}
+	
+	public int extractPort() {
+		return createUrl().getPort();
 	}
 }

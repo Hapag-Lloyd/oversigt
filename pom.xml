@@ -6,7 +6,7 @@
 	<name>Oversigt</name>
 	<url>http://github.com/Hapag-Lloyd/oversigt</url>
 
-	<groupId>com.github.Hapag-Lloyd</groupId>
+	<groupId>com.hlag.oversigt</groupId>
 	<artifactId>oversigt</artifactId>
 	<version>0.6-SNAPSHOT</version>
 	<packaging>pom</packaging>
