@@ -39,9 +39,11 @@ import io.undertow.server.handlers.form.FormData;
 @RunWith(MockitoJUnitRunner.class)
 public class DashboardConfigurationHandlerTest {
 	private static final Set<String> VALID_USERNAMES = new HashSet<>(Arrays.asList("USER1", "USER2"));
-	private static final Dashboard VALID_DASHBOARD = new Dashboard("TEST", "TEST", true, 1920, 1080, 15, Color.Black,
-			DashboardColorScheme.COLORED, Color.White, Color.LightGray, Arrays.asList("USER1"),
-			Collections.emptyList());
+
+	private static Dashboard createValidDashboard() {
+		return new Dashboard("TEST", "TEST", true, 1920, 1080, 15, Color.Black, DashboardColorScheme.COLORED,
+				Color.White, Color.LightGray, Arrays.asList("USER1"), Collections.emptyList());
+	}
 
 	@Mock
 	private Authenticator authenticator;
@@ -64,8 +66,6 @@ public class DashboardConfigurationHandlerTest {
 	public void setup() throws IOException {
 		when(authenticator.isUsernameValid(Mockito.anyString())).thenReturn(false);
 		VALID_USERNAMES.forEach(s -> when(authenticator.isUsernameValid(s)).thenReturn(true));
-
-		when(dashboardController.getDashboard(VALID_DASHBOARD.getId())).thenReturn(VALID_DASHBOARD);
 
 		Principal principal = Mockito.mock(Principal.class);
 		when(httpServerExchangeHelper.getPrincipal(Mockito.any())).thenReturn(Optional.of(principal));
@@ -109,10 +109,14 @@ public class DashboardConfigurationHandlerTest {
 	@Test
 	public void shouldSendMailToUser_whenSettingOwners_givenValidAdditionalOwner() {
 		// given
+		final Dashboard dashboard = createValidDashboard();
 		final ActionResponse expected = ActionResponse.okJson("USER1,USER2");
-		final HttpServerExchange exchange = createHttpExchangeWithQueryParameters("dashboard", VALID_DASHBOARD.getId());
+		final HttpServerExchange exchange = createHttpExchangeWithQueryParameters("dashboard", dashboard.getId());
 		final FormData formData = createFormData("usernames", "USER1,USER2");
 		final Set<String> expectedMailSet = new HashSet<>(Arrays.asList("USER2"));
+		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1", "USER2"));
+
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
 
 		// then
 		ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
@@ -121,7 +125,33 @@ public class DashboardConfigurationHandlerTest {
 
 		// that
 		assertThat(result).isEqualToComparingFieldByField(expected);
-		assertThat(addressCaptor.getValue()).size().isEqualTo(1);
+		assertThat(dashboard.getOwners()).isEqualTo(expectedListOfOwners);
+		assertThat(dashboard.getEditors()).isEmpty();
+		assertThat(addressCaptor.getValue()).isEqualTo(expectedMailSet);
+	}
+
+	@Test
+	public void shouldSendMailToUser_whenSettingEditors_givenValidAdditionalEditor() {
+		// given
+		final Dashboard dashboard = createValidDashboard();
+		final ActionResponse expected = ActionResponse.okJson("USER1,USER2");
+		final HttpServerExchange exchange = createHttpExchangeWithQueryParameters("dashboard", dashboard.getId());
+		final FormData formData = createFormData("usernames", "USER1,USER2");
+		final Set<String> expectedMailSet = new HashSet<>(Arrays.asList("USER1", "USER2"));
+		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1"));
+		final Set<String> expectedListOfEditors = new HashSet<>(Arrays.asList("USER1", "USER2"));
+
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
+
+		// then
+		ActionResponse result = dashboardConfigurationHandler.doAction_setEditors(exchange, formData);
+		Mockito.verify(mailSender)
+				.sendPermissionsReceived(Mockito.any(), addressCaptor.capture(), Mockito.any(), Mockito.any());
+
+		// that
+		assertThat(result).isEqualToComparingFieldByField(expected);
+		assertThat(dashboard.getOwners()).isEqualTo(expectedListOfOwners);
+		assertThat(dashboard.getEditors()).isEqualTo(expectedListOfEditors);
 		assertThat(addressCaptor.getValue()).isEqualTo(expectedMailSet);
 	}
 
