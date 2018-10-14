@@ -21,6 +21,8 @@
 		<wro.version>1.8.0</wro.version>
 		<resteasy.version>3.1.4.Final</resteasy.version>
 		<weld.version>2.4.1.Final</weld.version>
+
+		<powermock.version>1.7.0</powermock.version>
 	</properties>
 
 	<dependencies>
@@ -269,6 +271,18 @@
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
 			<version>3.11.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>${powermock.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
