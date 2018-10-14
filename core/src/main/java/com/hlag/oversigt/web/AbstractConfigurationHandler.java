@@ -1,12 +1,8 @@
 package com.hlag.oversigt.web;
 
 import static com.hlag.oversigt.util.HttpUtils.badRequest;
-import static com.hlag.oversigt.util.HttpUtils.doNonBlocking;
 import static com.hlag.oversigt.util.HttpUtils.forbidden;
-import static com.hlag.oversigt.util.HttpUtils.getFormData;
-import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
 import static com.hlag.oversigt.util.HttpUtils.notFound;
-import static com.hlag.oversigt.util.HttpUtils.query;
 import static com.hlag.oversigt.util.HttpUtils.reloadWithGet;
 import static com.hlag.oversigt.util.Utils.map;
 import static io.undertow.util.Methods.GET;
@@ -67,8 +63,8 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return LOGGERS.computeIfAbsent(getClass(), LoggerFactory::getLogger);
 	}
 
-	protected static void logChange(HttpServerExchange exchange, String string, Object... objects) {
-		String username = getPrincipal(exchange).map(Principal::getUsername).orElse("%unknown%");
+	protected void logChange(HttpServerExchange exchange, String string, Object... objects) {
+		String username = getHelper().getPrincipal(exchange).map(Principal::getUsername).orElse("%unknown%");
 		Utils.logChange(username, string, objects);
 	}
 
@@ -123,14 +119,17 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	@Inject
 	private JsonUtils json;
 	private final DashboardController dashboardController;
+	private final HttpServerExchangeHandler exchangeHelper;
 	@Inject
 	@Named("debug")
 	private boolean debug;
 
 	private final Map<String, PageInfo> pages = new LinkedHashMap<>();
 
-	protected AbstractConfigurationHandler(DashboardController dashboardController, String path, String[] filenames) {
+	protected AbstractConfigurationHandler(DashboardController dashboardController,
+			HttpServerExchangeHandler exchangeHelper, String path, String[] filenames) {
 		this.dashboardController = dashboardController;
+		this.exchangeHelper = exchangeHelper;
 		getLogger()
 				.info("Initializing configuration handler for path: " + path + " with " + filenames.length + " pages");
 		for (String filename : filenames) {
@@ -143,6 +142,10 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return dashboardController;
 	}
 
+	public HttpServerExchangeHandler getHelper() {
+		return exchangeHelper;
+	}
+
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
 		return null;
 	}
@@ -152,7 +155,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		if (model == null) {
 			model = new HashMap<>();
 		}
-		Optional<Principal> principal = getPrincipal(exchange);
+		Optional<Principal> principal = exchangeHelper.getPrincipal(exchange);
 		model.putAll(map(//
 				"principal", principal.orElse(null), "menuItems",
 				this.pages.entrySet()
@@ -165,7 +168,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	protected final Optional<Dashboard> maybeGetDashboard(HttpServerExchange exchange) {
-		return query(exchange, "dashboard").map(dashboardController::getDashboard);
+		return exchangeHelper.query(exchange, "dashboard").map(dashboardController::getDashboard);
 	}
 
 	protected final Dashboard getDashboard(HttpServerExchange exchange) {
@@ -196,9 +199,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		try {
 			if (GET.equals(exchange.getRequestMethod())) {
-				doNonBlocking(this::handleRequestGet, exchange);
+				exchangeHelper.doNonBlocking(this::handleRequestGet, exchange);
 			} else if (POST.equals(exchange.getRequestMethod())) {
-				doNonBlocking(this::handleRequestPost, exchange);
+				exchangeHelper.doNonBlocking(this::handleRequestPost, exchange);
 			} else {
 				exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
 			}
@@ -229,7 +232,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	private void handleRequestGet(HttpServerExchange exchange) throws Exception {
-		String page = query(exchange, "page").orElse(null);
+		String page = exchangeHelper.query(exchange, "page").orElse(null);
 		if (Strings.isNullOrEmpty(page)) {
 			String url = exchange.getRequestURI();
 			while (url.endsWith("/")) {
@@ -242,7 +245,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		if (!Strings.isNullOrEmpty(page)) {
 			if (this.pages.containsKey(page)) {
 				final PageInfo pi = this.pages.get(page);
-				if (pi.needsPrincipal() && !getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
+				if (pi.needsPrincipal() && !exchangeHelper.getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
 					forbidden(exchange);
 					return;
 				}
@@ -295,7 +298,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	protected void handleRequestPost(HttpServerExchange exchange) throws IOException {
-		final FormData formData = getFormData(exchange);
+		final FormData formData = exchangeHelper.getFormData(exchange);
 		final Optional<String> action = Optional.ofNullable(formData.getFirst("action")).map(FormValue::getValue);
 
 		try {
@@ -306,11 +309,11 @@ public class AbstractConfigurationHandler implements HttpHandler {
 						NeedsRole needsRole = method.getAnnotation(NeedsRole.class);
 						boolean proceed = false;
 						if (!needsRole.dashboard()) {
-							proceed = getPrincipal(exchange)//
+							proceed = exchangeHelper.getPrincipal(exchange)//
 									.map(p -> p.hasRole(needsRole.role().getRole()))//
 									.orElse(false);
 						} else {
-							proceed = getPrincipal(exchange)//
+							proceed = exchangeHelper.getPrincipal(exchange)//
 									.map(p -> p.hasRole(needsRole.role()
 											.getRole()
 											.getDashboardSpecificRole(getDashboard(exchange).getId())))//

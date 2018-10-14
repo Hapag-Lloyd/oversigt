@@ -16,8 +16,8 @@ import io.undertow.server.HttpServerExchange;
 @Singleton
 public class WelcomeHandler extends AbstractConfigurationHandler {
 	@Inject
-	public WelcomeHandler(DashboardController dashboardController) {
-		super(dashboardController, "views/layout/root/", new String[] { "page_welcome.ftl.html" });
+	public WelcomeHandler(DashboardController dashboardController, HttpServerExchangeHandler exchangeHelper) {
+		super(dashboardController, exchangeHelper, "views/layout/root/", new String[] { "page_welcome.ftl.html" });
 	}
 
 	@Override

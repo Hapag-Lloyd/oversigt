@@ -61,4 +61,19 @@ class ActionResponse {
 	public boolean isDoNoAction() {
 		return doNoAction;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(getStatusCode()).append(" ").append("\n");
+		if (getRedirect() != null) {
+			sb.append("Location: ").append(getRedirect()).append("\n");
+		}
+		if (getJsonObject() != null) {
+			sb.append("\n").append(getJsonObject().toString());
+		}
+
+		return sb.toString();
+	}
 }

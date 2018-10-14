@@ -6,14 +6,19 @@ import static com.hlag.oversigt.test.UndertowHelper.createHttpExchangeWithQueryP
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -24,6 +29,7 @@ import com.hlag.oversigt.model.DashboardColorScheme;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.MailSender;
 
@@ -39,24 +45,37 @@ public class DashboardConfigurationHandlerTest {
 
 	@Mock
 	private Authenticator authenticator;
-
 	@Mock
 	private DashboardController dashboardController;
-
+	@Mock
+	private HttpServerExchangeHandler httpServerExchangeHelper;
 	@Mock
 	private JsonUtils json;
-
 	@Mock
 	private MailSender mailSender;
+
+	@Captor
+	private ArgumentCaptor<Collection<String>> addressCaptor;
+
 	@InjectMocks
 	private DashboardConfigurationHandler dashboardConfigurationHandler;
 
 	@Before
-	public void setup() {
+	public void setup() throws IOException {
 		when(authenticator.isUsernameValid(Mockito.anyString())).thenReturn(false);
 		VALID_USERNAMES.forEach(s -> when(authenticator.isUsernameValid(s)).thenReturn(true));
 
 		when(dashboardController.getDashboard(VALID_DASHBOARD.getId())).thenReturn(VALID_DASHBOARD);
+
+		Principal principal = Mockito.mock(Principal.class);
+		when(httpServerExchangeHelper.getPrincipal(Mockito.any())).thenReturn(Optional.of(principal));
+		// when(httpServerExchangeHelper.getFormData(Mockito.any())).thenCallRealMethod();
+		// when(httpServerExchangeHelper.param(Mockito.any(),
+		// Mockito.anyString())).thenCallRealMethod();
+		when(httpServerExchangeHelper.maybeParam(Mockito.any(), Mockito.anyString())).thenCallRealMethod();
+		when(httpServerExchangeHelper.query(Mockito.any(), Mockito.anyString())).thenCallRealMethod();
+		// when(httpServerExchangeHelper.query(Mockito.any(), Mockito.anyString(),
+		// Mockito.any(), Mockito.any())) .thenCallRealMethod();
 	}
 
 	@Test
@@ -87,22 +106,23 @@ public class DashboardConfigurationHandlerTest {
 		assertThat(result).isEqualToComparingFieldByField(expected);
 	}
 
-	private void setupOwnerCheck() {
-
-	}
-
 	@Test
 	public void shouldSendMailToUser_whenSettingOwners_givenValidAdditionalOwner() {
 		// given
-		ActionResponse expected = ActionResponse.okJson(true);
+		final ActionResponse expected = ActionResponse.okJson("USER1,USER2");
 		final HttpServerExchange exchange = createHttpExchangeWithQueryParameters("dashboard", VALID_DASHBOARD.getId());
-		FormData formData = createFormData("usernames", "USER1,USER2");
+		final FormData formData = createFormData("usernames", "USER1,USER2");
+		final Set<String> expectedMailSet = new HashSet<>(Arrays.asList("USER2"));
 
 		// then
 		ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
+		Mockito.verify(mailSender)
+				.sendPermissionsReceived(Mockito.any(), addressCaptor.capture(), Mockito.any(), Mockito.any());
 
 		// that
 		assertThat(result).isEqualToComparingFieldByField(expected);
+		assertThat(addressCaptor.getValue()).size().isEqualTo(1);
+		assertThat(addressCaptor.getValue()).isEqualTo(expectedMailSet);
 	}
 
 //	@Test

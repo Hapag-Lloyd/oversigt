@@ -1,7 +1,5 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
-import static com.hlag.oversigt.util.HttpUtils.query;
 import static com.hlag.oversigt.util.Utils.map;
 import static com.hlag.oversigt.web.ActionResponse.redirect;
 
@@ -29,9 +27,10 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	private final MailSender mailSender;
 
 	@Inject
-	public DashboardCreationHandler(DashboardController dashboardController, Authenticator authenticator,
-			MailSender mailSender) {
-		super(dashboardController, "views/layout/dashboardCreate/", new String[] { "page_create.ftl.html" });
+	public DashboardCreationHandler(DashboardController dashboardController, HttpServerExchangeHandler exchangeHelper,
+			Authenticator authenticator, MailSender mailSender) {
+		super(dashboardController, exchangeHelper, "views/layout/dashboardCreate/",
+				new String[] { "page_create.ftl.html" });
 		this.authenticator = authenticator;
 		this.mailSender = mailSender;
 	}
@@ -40,7 +39,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (maybeDashboard.map(Dashboard::isEnabled).orElse(false)) {
-			HttpUtils.redirect(exchange, "/" + query(exchange, "dashboard").get() + "/config", false, true);
+			HttpUtils.redirect(exchange, "/" + getHelper().query(exchange, "dashboard").get() + "/config", false, true);
 		} else {
 			super.handleRequest(exchange);
 		}
@@ -49,7 +48,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	@Override
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
 		Optional<Dashboard> dashboard = maybeGetDashboard(exchange);
-		String title = dashboard.map(Dashboard::getTitle).orElse(query(exchange, "dashboard").get());
+		String title = dashboard.map(Dashboard::getTitle).orElse(getHelper().query(exchange, "dashboard").get());
 		switch (page) {
 			case "create":
 				return map("dashboard", map("title", title, "exists", dashboard.isPresent()));
@@ -61,15 +60,15 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	protected ActionResponse doAction_create(HttpServerExchange exchange, FormData formData) {
 		Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (!maybeDashboard.isPresent()) {
-			String dashboardId = query(exchange, "dashboard").get();
-			Principal principal = getPrincipal(exchange).get();
+			String dashboardId = getHelper().query(exchange, "dashboard").get();
+			Principal principal = getHelper().getPrincipal(exchange).get();
 			Dashboard dashboard = getDashboardController().createDashboard(dashboardId, principal,
 					principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
 			logChange(exchange, "Created dashboard %s - enabled: %s", dashboard.getId(), dashboard.isEnabled());
 			if (dashboard.isEnabled()) {
 				return redirect("/" + dashboard.getId() + "/config");
 			} else {
-				mailSender.sendNewDashboard(getPrincipal(exchange).get(), dashboard);
+				mailSender.sendNewDashboard(getHelper().getPrincipal(exchange).get(), dashboard);
 				return redirect("/" + dashboard.getId() + "/create/create");
 			}
 		} else {
@@ -86,7 +85,7 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 				dashboard.setEnabled(true);
 				getDashboardController().updateDashboard(dashboard);
 				dashboard.getOwners().forEach(authenticator::reloadRoles);
-				mailSender.sendDashboardEnabled(getPrincipal(exchange).get(), dashboard);
+				mailSender.sendDashboardEnabled(getHelper().getPrincipal(exchange).get(), dashboard);
 				logChange(exchange, "Enabled dashboard %s", dashboard.getId());
 			}
 			return redirect("/" + dashboard.getId() + "/config");
