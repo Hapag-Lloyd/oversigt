@@ -1,10 +1,5 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.doNonBlocking;
-import static com.hlag.oversigt.util.HttpUtils.getFormData;
-import static com.hlag.oversigt.util.HttpUtils.getOrCreateSession;
-import static com.hlag.oversigt.util.HttpUtils.param;
-import static com.hlag.oversigt.util.HttpUtils.query;
 import static com.hlag.oversigt.util.Utils.map;
 import static io.undertow.util.Methods.GET;
 import static io.undertow.util.Methods.POST;
@@ -45,13 +40,16 @@ public class LoginHandler implements HttpHandler {
 
 	private final Configuration templateConfiguration;
 	private final Authenticator authenticator;
+	private final HttpServerExchangeHandler exchangeHelper;
 
 	private List<String> availableImages = new ArrayList<>();
 
 	@Inject
-	public LoginHandler(Configuration templateConfiguration, Authenticator authenticator) {
+	public LoginHandler(Configuration templateConfiguration, Authenticator authenticator,
+			HttpServerExchangeHandler exchangeHelper) {
 		this.templateConfiguration = templateConfiguration;
 		this.authenticator = authenticator;
+		this.exchangeHelper = exchangeHelper;
 
 		for (int i = 1;; ++i) {
 			try {
@@ -75,16 +73,16 @@ public class LoginHandler implements HttpHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		if (GET.equals(exchange.getRequestMethod())) {
-			doNonBlocking(this::doGet, exchange);
+			exchangeHelper.doNonBlocking(this::doGet, exchange);
 		} else if (POST.equals(exchange.getRequestMethod())) {
-			doNonBlocking(this::doPost, exchange);
+			exchangeHelper.doNonBlocking(this::doPost, exchange);
 		} else {
 			exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
 		}
 	}
 
 	private void doGet(HttpServerExchange exchange) throws Exception {
-		Optional<String> message = query(exchange, "message");
+		Optional<String> message = exchangeHelper.query(exchange, "message");
 
 		StringWriter writer = new StringWriter();
 		String backgroundImage = availableImages.get((int) (Math.random() * availableImages.size()));
@@ -103,16 +101,16 @@ public class LoginHandler implements HttpHandler {
 	}
 
 	private void doPost(HttpServerExchange exchange) throws Exception {
-		FormData formData = getFormData(exchange);
-		String action = param(formData, "action");
+		FormData formData = exchangeHelper.getFormData(exchange);
+		String action = exchangeHelper.param(formData, "action");
 
 		if ("login".equals(action)) {
-			String username = param(formData, "username");
-			String password = param(formData, "password");
+			String username = exchangeHelper.param(formData, "username");
+			String password = exchangeHelper.param(formData, "password");
 
 			Principal user = authenticator.login(username, password);
 			if (user != null) {
-				Session session = getOrCreateSession(exchange);
+				Session session = exchangeHelper.getOrCreateSession(exchange);
 				session.setAttribute("PRINCIPAL", user);
 				CHANGE_LOGGER.info("User logged in: " + user.getUsername());
 				HttpUtils.redirect(exchange, exchange.getRequestURI(), true, true);

@@ -1,7 +1,9 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.*;
 import static com.hlag.oversigt.util.Utils.map;
+import static com.hlag.oversigt.web.ActionResponse.ok;
+import static com.hlag.oversigt.web.ActionResponse.okJson;
+import static com.hlag.oversigt.web.ActionResponse.redirect;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -45,18 +47,17 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	private final Authenticator authenticator;
 	private final MailSender mailSender;
-	@Inject
-	private DashboardController dashboardController;
 	private final JsonUtils json;
 
 	private static final Type TYPE_POSITIONS_MAP = new TypeToken<Map<String, Map<String, String>>>() {
 	}.getType();
 
 	@Inject
-	public DashboardConfigurationHandler(Authenticator authenticator, MailSender mailSender, JsonUtils json) {
-		super(
-			"views/layout/dashboardConfig/",
-			new String[] { "page_addWidget.ftl.html", "page_configureWidgets.ftl.html", "page_settings.ftl.html" });
+	public DashboardConfigurationHandler(DashboardController dashboardController,
+			HttpServerExchangeHandler exchangeHelper, Authenticator authenticator, MailSender mailSender,
+			JsonUtils json) {
+		super(dashboardController, exchangeHelper, "views/layout/dashboardConfig/",
+				new String[] { "page_addWidget.ftl.html", "page_configureWidgets.ftl.html", "page_settings.ftl.html" });
 		this.authenticator = authenticator;
 		this.mailSender = mailSender;
 		this.json = json;
@@ -66,7 +67,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (maybeDashboard.map(d -> !d.isEnabled()).orElse(true)) {
-			HttpUtils.redirect(exchange, "/" + query(exchange, "dashboard").get() + "/create", false, true);
+			HttpUtils.redirect(exchange, "/" + getHelper().query(exchange, "dashboard").get() + "/create", false, true);
 		} else {
 			super.handleRequest(exchange);
 		}
@@ -81,7 +82,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	private EventBus eventBus;
 
 	private void triggerDashboardReload(Dashboard... dashboards) {
-		// we only need to send this event if there are dashboards that should be reloaded
+		// we only need to send this event if there are dashboards that should be
+		// reloaded
 		if (dashboards.length > 0) {
 			eventBus.post(new ReloadEvent(Stream.of(dashboards).map(Dashboard::getId).collect(Collectors.toList())));
 		}
@@ -92,15 +94,11 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Dashboard dashboard = getDashboard(exchange);
 		switch (page) {
 			case "addWidget":
-				return map(
-						"dashboard",
-						dashboard,
-						"dashboardManager",
-						dashboardController,
-						"preview",
+				return map("dashboard", dashboard, "dashboardManager", getDashboardController(), "preview",
 						(Function<EventSourceInstance, String>) k -> ImageUtil.getPreviewImageUrl(k.getDescriptor()));
 			case "configureWidgets":
-				return map("dashboard", dashboard, "addColorCssToWidgets", DashboardDesign.isAddColorCssToWidgets(dashboard));
+				return map("dashboard", dashboard, "addColorCssToWidgets",
+						DashboardDesign.isAddColorCssToWidgets(dashboard));
 			case "settings":
 				return map("dashboard", dashboard);
 			default:
@@ -110,14 +108,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_addWidget(HttpServerExchange exchange, FormData formData) {
-		String eventSourceInstance = param(formData, "eventSourceId");
-		Widget widget = dashboardController.createWidgetForDashboard(getDashboard(exchange), eventSourceInstance);
+		String eventSourceInstance = getHelper().param(formData, "eventSourceId");
+		Widget widget = getDashboardController().createWidgetForDashboard(getDashboard(exchange), eventSourceInstance);
 		// getDashboard(exchange).addWidget(storage, eventSource);
-		logChange(
-				exchange,
-				"Dashboard %s: add Widget: %s (%s)",
-				getDashboard(exchange).getId(),
-				widget.getId(),
+		logChange(exchange, "Dashboard %s: add Widget: %s (%s)", getDashboard(exchange).getId(), widget.getId(),
 				widget.getEventSourceInstance().getId());
 		return redirect("configureWidgets#widget" + widget.getId());
 	}
@@ -125,17 +119,17 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_updateWidget(HttpServerExchange exchange, FormData formData) {
 		final Dashboard dashboard = getDashboard(exchange);
-		int widgetId = Integer.parseInt(param(formData, "widget.id"));
+		int widgetId = Integer.parseInt(getHelper().param(formData, "widget.id"));
 		Widget widget = dashboard.getWidget(widgetId);
-		widget.setName(param(formData, "widget.name"));
-		widget.setTitle(param(formData, "widget.title"));
-		widget.setPosX(Integer.parseInt(param(formData, "widget.posx")));
-		widget.setPosY(Integer.parseInt(param(formData, "widget.posy")));
-		widget.setSizeX(Integer.parseInt(param(formData, "widget.sizex")));
-		widget.setSizeY(Integer.parseInt(param(formData, "widget.sizey")));
-		widget.setBackgroundColor(
-				Color.parse(maybeParam(formData, "widget.backgroundColor").orElse(widget.getBackgroundColor().toString())));
-		widget.setStyle(param(formData, "widget.style"));
+		widget.setName(getHelper().param(formData, "widget.name"));
+		widget.setTitle(getHelper().param(formData, "widget.title"));
+		widget.setPosX(Integer.parseInt(getHelper().param(formData, "widget.posx")));
+		widget.setPosY(Integer.parseInt(getHelper().param(formData, "widget.posy")));
+		widget.setSizeX(Integer.parseInt(getHelper().param(formData, "widget.sizex")));
+		widget.setSizeY(Integer.parseInt(getHelper().param(formData, "widget.sizey")));
+		widget.setBackgroundColor(Color.parse(getHelper().maybeParam(formData, "widget.backgroundColor")
+				.orElse(widget.getBackgroundColor().toString())));
+		widget.setStyle(getHelper().param(formData, "widget.style"));
 		// Read Data
 		List<String> parameters = new ArrayList<>();
 		formData.forEach(parameters::add);
@@ -150,11 +144,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		parameters//
 				.stream()//
 				.filter(s -> s.startsWith(WIDGET_DATA))//
-				.forEach(
-						s -> widget
-								.setWidgetData(getProperty.apply(widget, s.substring(WIDGET_DATA.length())), param(formData, s)));
+				.forEach(s -> widget.setWidgetData(getProperty.apply(widget, s.substring(WIDGET_DATA.length())),
+						getHelper().param(formData, s)));
 		// save
-		dashboardController.updateWidget(widget);
+		getDashboardController().updateWidget(widget);
 		logChange(exchange, "Dashboard %s: Update widget %s", dashboard.getId(), widget.getId());
 		triggerDashboardReload(dashboard);
 		return ok();
@@ -182,7 +175,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 				widget.setPosY(py);
 				widget.setSizeX(sx);
 				widget.setSizeY(sy);
-				dashboardController.updateWidget(widget);
+				getDashboardController().updateWidget(widget);
 			}
 		});
 		logChange(exchange, "Dashboard %s: Update widget positions", dashboard.getId());
@@ -193,15 +186,11 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_deleteWidget(HttpServerExchange exchange, FormData formData) {
-		int widgetId = Integer.parseInt(param(formData, "widget.id"));
+		int widgetId = Integer.parseInt(getHelper().param(formData, "widget.id"));
 		Dashboard dashboard = getDashboard(exchange);
 		Widget widget = dashboard.getWidget(widgetId);
-		dashboardController.deleteWidget(widget);
-		logChange(
-				exchange,
-				"Dashboard %s: Delete widget %s (%s)",
-				dashboard.getId(),
-				widget.getId(),
+		getDashboardController().deleteWidget(widget);
+		logChange(exchange, "Dashboard %s: Delete widget %s (%s)", dashboard.getId(), widget.getId(),
 				widget.getEventSourceInstance().getId());
 		return ok();
 	}
@@ -225,7 +214,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		dashboard.setColorScheme(colorScheme);
 		dashboard.setForegroundColorStart(foregroundColorStart);
 		dashboard.setForegroundColorEnd(foregroundColorEnd);
-		dashboardController.updateDashboard(dashboard);
+		getDashboardController().updateDashboard(dashboard);
 		logChange(exchange, "Update dashboard %s", dashboard.getId());
 		triggerDashboardReload(dashboard);
 		return ok();
@@ -234,7 +223,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_deleteDashboard(HttpServerExchange exchange, FormData formData) {
 		Dashboard dashboard = getDashboard(exchange);
-		dashboardController.deleteDashboard(dashboard);
+		getDashboardController().deleteDashboard(dashboard);
 		logChange(exchange, "Delete dashboard %s", dashboard.getId());
 		return redirect("/" + dashboard.getId() + "/create");
 	}
@@ -246,25 +235,20 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_enableWidget(HttpServerExchange exchange, FormData formData) {
-
-		return enableDisableWidget(exchange, Integer.parseInt(param(formData, "widget.id")), true);
+		return enableDisableWidget(exchange, Integer.parseInt(getHelper().param(formData, "widget.id")), true);
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_disableWidget(HttpServerExchange exchange, FormData formData) {
-		return enableDisableWidget(exchange, Integer.parseInt(param(formData, "widget.id")), false);
+		return enableDisableWidget(exchange, Integer.parseInt(getHelper().param(formData, "widget.id")), false);
 	}
 
 	private ActionResponse enableDisableWidget(HttpServerExchange exchange, int widgetId, boolean enabled) {
 		Dashboard dashboard = getDashboard(exchange);
 		Widget widget = dashboard.getWidget(widgetId);
 		widget.setEnabled(enabled);
-		dashboardController.updateWidget(widget);
-		logChange(
-				exchange,
-				"Dashboard %s: widget %s set enabled to %s",
-				dashboard.getId(),
-				widget.getId(),
+		getDashboardController().updateWidget(widget);
+		logChange(exchange, "Dashboard %s: widget %s set enabled to %s", dashboard.getId(), widget.getId(),
 				widget.isEnabled());
 		triggerDashboardReload(dashboard);
 		return ok();
@@ -272,15 +256,14 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_checkUsername(HttpServerExchange exchange, FormData formData) {
-		return okJson(
-				maybeParam(formData, "username")//
-						.map(authenticator::isUsernameValid)//
-						.orElse(false));
+		return okJson(getHelper().maybeParam(formData, "username")//
+				.map(authenticator::isUsernameValid)//
+				.orElse(false));
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER, dashboard = true)
 	protected ActionResponse doAction_setOwners(HttpServerExchange exchange, FormData formData) {
-		Optional<List<String>> newOwners = maybeParam(formData, "usernames")//
+		Optional<List<String>> newOwners = getHelper().maybeParam(formData, "usernames")//
 				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
 				.map(ArrayList<String>::new);
 
@@ -290,7 +273,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 			// change owners
 			dashboard.setOwners(newOwners.get());
-			dashboardController.updateDashboard(dashboard);
+			getDashboardController().updateDashboard(dashboard);
 
 			logChange(exchange, "Dashboard %s: Set owners to %s", dashboard.getId(), dashboard.getOwners());
 
@@ -303,9 +286,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			usersToInform.removeAll(oldOwners);
 
 			if (!newOwners.get().isEmpty()) {
-				mailSender
-						.sendPermissionsReceived(getPrincipal(exchange).get(), usersToInform, Roles.DASHBOARD_OWNER, dashboard);
-				return okJson(dashboard.getEditors().stream().collect(Collectors.joining(",")));
+				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(), usersToInform,
+						Roles.DASHBOARD_OWNER, dashboard);
+				return okJson(dashboard.getOwners().stream().collect(Collectors.joining(",")));
 			}
 
 			return okJson(true);
@@ -315,7 +298,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_setEditors(HttpServerExchange exchange, FormData formData) {
-		Optional<List<String>> newEditors = maybeParam(formData, "usernames")//
+		Optional<List<String>> newEditors = getHelper().maybeParam(formData, "usernames")//
 				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
 				.map(ArrayList<String>::new);
 
@@ -325,7 +308,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 			// change editors
 			dashboard.setEditors(newEditors.get());
-			dashboardController.updateDashboard(dashboard);
+			getDashboardController().updateDashboard(dashboard);
 
 			logChange(exchange, "Dashboard %s: Set editors to %s", dashboard.getId(), dashboard.getEditors());
 
@@ -338,8 +321,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			usersToInform.removeAll(oldEditors);
 
 			if (!newEditors.get().isEmpty()) {
-				mailSender
-						.sendPermissionsReceived(getPrincipal(exchange).get(), usersToInform, Roles.DASHBOARD_EDITOR, dashboard);
+				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(), usersToInform,
+						Roles.DASHBOARD_EDITOR, dashboard);
 				return okJson(dashboard.getEditors().stream().collect(Collectors.joining(",")));
 			}
 
