@@ -27,10 +27,15 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	private final MailSender mailSender;
 
 	@Inject
-	public DashboardCreationHandler(DashboardController dashboardController, HttpServerExchangeHandler exchangeHelper,
-			Authenticator authenticator, MailSender mailSender) {
-		super(dashboardController, exchangeHelper, "views/layout/dashboardCreate/",
-				new String[] { "page_create.ftl.html" });
+	public DashboardCreationHandler(DashboardController dashboardController,
+			HttpServerExchangeHandler exchangeHelper,
+			Authenticator authenticator,
+			MailSender mailSender) {
+		super(
+			dashboardController,
+			exchangeHelper,
+			"views/layout/dashboardCreate/",
+			new String[] { "page_create.ftl.html" });
 		this.authenticator = authenticator;
 		this.mailSender = mailSender;
 	}
@@ -62,8 +67,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		if (!maybeDashboard.isPresent()) {
 			String dashboardId = getHelper().query(exchange, "dashboard").get();
 			Principal principal = getHelper().getPrincipal(exchange).get();
-			Dashboard dashboard = getDashboardController().createDashboard(dashboardId, principal,
-					principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
+			Dashboard dashboard = getDashboardController()
+					.createDashboard(dashboardId, principal, principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
 			logChange(exchange, "Created dashboard %s - enabled: %s", dashboard.getId(), dashboard.isEnabled());
 			if (dashboard.isEnabled()) {
 				return redirect("/" + dashboard.getId() + "/config");

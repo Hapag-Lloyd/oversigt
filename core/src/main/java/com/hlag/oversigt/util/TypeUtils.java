@@ -412,9 +412,9 @@ public class TypeUtils {
 		}
 		return i;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public static <T> T[] createArray(Class<T> clazz,int length) {
+	public static <T> T[] createArray(Class<T> clazz, int length) {
 		return (T[]) Array.newInstance(clazz, length);
 	}
 

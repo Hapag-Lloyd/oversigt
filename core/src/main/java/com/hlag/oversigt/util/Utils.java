@@ -203,7 +203,6 @@ public class Utils {
 		}
 	}
 
-
 	public static <T> Map<String, T> removePasswords(Map<String, T> map, T empty) {
 		Iterator<Entry<String, T>> it = map.entrySet().iterator();
 		while (it.hasNext()) {

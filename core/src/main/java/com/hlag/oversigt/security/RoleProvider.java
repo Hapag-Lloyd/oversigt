@@ -27,17 +27,13 @@ public class RoleProvider {
 		}
 
 		addWithDefaultRole(roles,
-				storage.getOwnedDashboardIds(userid)
-						.stream()
-						.map(Role::getDashboardOwnerRole)
-						.collect(Collectors.toSet()),
+				storage.getOwnedDashboardIds(userid).stream().map(Role::getDashboardOwnerRole).collect(
+						Collectors.toSet()),
 				Role.DASHBOARD_OWNER);
 
 		addWithDefaultRole(roles,
-				storage.getEditableDashboardIds(userid)
-						.stream()
-						.map(Role::getDashboardEditorRole)
-						.collect(Collectors.toSet()),
+				storage.getEditableDashboardIds(userid).stream().map(Role::getDashboardEditorRole).collect(
+						Collectors.toSet()),
 				Role.DASHBOARD_EDITOR);
 
 		return roles;

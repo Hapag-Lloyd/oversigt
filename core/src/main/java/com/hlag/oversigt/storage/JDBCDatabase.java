@@ -515,8 +515,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 
 	@Override
 	public List<String> getOwnedDashboardIds(String userid) {
-		return loadWithOneLike(
-				TABLE_DASHBOARD,
+		return loadWithOneLike(TABLE_DASHBOARD,
 				"ID",
 				new String[] { "ENABLED" },
 				new Object[] { true },

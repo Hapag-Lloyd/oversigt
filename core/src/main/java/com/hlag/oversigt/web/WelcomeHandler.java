@@ -24,11 +24,14 @@ public class WelcomeHandler extends AbstractConfigurationHandler {
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
 		switch (page) {
 			case "welcome":
-				return map("title", "Welcome", "dashboards", getDashboardController().getDashboardIds()//
-						.stream()
-						.map(getDashboardController()::getDashboard)
-						.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
-						.collect(Collectors.toList()));
+				return map("title",
+						"Welcome",
+						"dashboards",
+						getDashboardController().getDashboardIds()//
+								.stream()
+								.map(getDashboardController()::getDashboard)
+								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
+								.collect(Collectors.toList()));
 			default:
 				return null;
 		}

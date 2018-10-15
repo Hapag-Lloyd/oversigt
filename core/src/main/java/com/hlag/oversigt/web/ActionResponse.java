@@ -33,7 +33,10 @@ class ActionResponse {
 		this(false, true, null, null, null);
 	}
 
-	private ActionResponse(boolean doGetRedirect, boolean doNoAction, Integer statusCode, Object jsonObject,
+	private ActionResponse(boolean doGetRedirect,
+			boolean doNoAction,
+			Integer statusCode,
+			Object jsonObject,
 			String redirect) {
 		this.doGetRedirect = doGetRedirect;
 		this.doNoAction = doNoAction;

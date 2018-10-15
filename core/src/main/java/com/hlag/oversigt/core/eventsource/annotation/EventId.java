@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  *
  * @author Andrey Vorobyov
  */
-@Target(value = {ElementType.FIELD, ElementType.PARAMETER})
+@Target(value = { ElementType.FIELD, ElementType.PARAMETER })
 @Retention(value = RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
