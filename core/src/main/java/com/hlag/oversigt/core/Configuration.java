@@ -45,10 +45,8 @@ public class Configuration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
 	private static void bind(Binder binder, String name, Object value) {
-		binder
-			.bindConstant()
-			.annotatedWith(Names.named(name))
-			.to(Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
+		binder.bindConstant().annotatedWith(Names.named(name)).to(
+				Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
 	}
 
 	private boolean debug = false;
@@ -71,7 +69,8 @@ public class Configuration {
 		bind(binder, "api.secret.base64", api.jwtSecretBase64);
 		bind(binder, "api.ttl", api.jwtTimeToLive);
 		bind(binder, "rateLimit", eventManager.rateLimit);
-		binder.bind(Duration.class).annotatedWith(Names.named("discardEventsAfter")).toInstance(eventManager.discardEventsAfter);
+		binder.bind(Duration.class).annotatedWith(Names.named("discardEventsAfter")).toInstance(
+				eventManager.discardEventsAfter);
 		bind(binder, "templateNumberFormat", templateNumberFormat);
 		bind(binder, "databaseLocation", database.location);
 		bind(binder, "databaseName", database.name);
@@ -84,7 +83,6 @@ public class Configuration {
 		bindNamedArray(binder, String[].class, "additionalPackages", eventSources.packages);
 		bindNamedArray(binder, Path[].class, "addonFolders", Paths::get, eventSources.addonFolders);
 		bindNamedArray(binder, String[].class, "widgetsPaths", eventSources.widgetsPaths);
-		
 
 		// Mail Settings
 		bind(binder, "mailSenderHost", mail.hostname);
@@ -121,38 +119,31 @@ public class Configuration {
 		binder.bind(SessionManager.class).toProvider(() -> provideSessionManager(security.session)).asEagerSingleton();
 		binder.bind(SessionConfig.class).toInstance(security.session.cookieConfig);
 	}
-	private static void bindNamedArray(
-			Binder binder,
-			Class<String[]> targetClass,
-			String name,
-			String[] input) {
+
+	private static void bindNamedArray(Binder binder, Class<String[]> targetClass, String name, String[] input) {
 		bindNamedArray(binder, targetClass, name, Function.identity(), input);
 	}
+
 	@SuppressWarnings("unchecked")
-	private static <T> void bindNamedArray(
-			Binder binder,
+	private static <T> void bindNamedArray(Binder binder,
 			Class<T[]> targetClass,
 			String name,
 			Function<String, T> converter,
 			String[] input) {
-		binder
-			.bind(targetClass)
-			.annotatedWith(Names.named(name))
-			.toInstance(
-				(T[]) Arrays
-					.stream(input != null ? input : new String[0])
-					.map(converter)
-					.collect(Collectors.toList())
-					.toArray(createArray(targetClass.getComponentType(), 0)));
+		binder.bind(targetClass)
+				.annotatedWith(Names.named(name))
+				.toInstance((T[]) Arrays.stream(input != null ? input : new String[0])
+						.map(converter)
+						.collect(Collectors.toList())
+						.toArray(createArray(targetClass.getComponentType(), 0)));
 	}
 
 	private SessionManager provideSessionManager(SessionConfiguration sc) {
-		InMemorySessionManager sm = new InMemorySessionManager(
-			new SecureRandomSessionIdGenerator(),
-			"SESSION_MANAGER",
-			sc.maxCount,
-			sc.expireOldestUnusedSessionOnMax,
-			sc.statisticsEnabled);
+		InMemorySessionManager sm = new InMemorySessionManager(new SecureRandomSessionIdGenerator(),
+				"SESSION_MANAGER",
+				sc.maxCount,
+				sc.expireOldestUnusedSessionOnMax,
+				sc.statisticsEnabled);
 		sm.setDefaultSessionTimeout(sc.timeout * 60);
 		return sm;
 	}

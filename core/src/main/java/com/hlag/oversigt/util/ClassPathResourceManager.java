@@ -34,61 +34,60 @@ import io.undertow.server.handlers.resource.URLResource;
  * @author Olaf Neumann
  */
 public class ClassPathResourceManager implements ResourceManager {
-    /**
-     * The prefix that is appended to resources that are to be loaded.
-     */
-    private final String prefix;
+	/**
+	 * The prefix that is appended to resources that are to be loaded.
+	 */
+	private final String prefix;
 
-    public ClassPathResourceManager( final Package p) {
-        this( p.getName().replace(".", "/"));
-    }
+	public ClassPathResourceManager(final Package p) {
+		this(p.getName().replace(".", "/"));
+	}
 
-    public ClassPathResourceManager( final String prefix) {
-        if (prefix.isEmpty()) {
-            this.prefix = "";
-        } else if (prefix.endsWith("/")) {
-            this.prefix = prefix;
-        } else {
-            this.prefix = prefix + "/";
-        }
-    }
+	public ClassPathResourceManager(final String prefix) {
+		if (prefix.isEmpty()) {
+			this.prefix = "";
+		} else if (prefix.endsWith("/")) {
+			this.prefix = prefix;
+		} else {
+			this.prefix = prefix + "/";
+		}
+	}
 
-    @Override
-    public Resource getResource(final String path) throws IOException {
-        String modPath = path;
-        if(modPath.startsWith("/")) {
-            modPath = path.substring(1);
-        }
-        final String realPath = prefix + modPath;
-        final URL resourceUrl=getResourceUrl(realPath);
-        if(resourceUrl == null) {
-            return null;
-        } else {
-            return new URLResource(resourceUrl, resourceUrl.openConnection(), path);
-        }    	
-    }
-    
-    protected URL getResourceUrl(final String realPath) {
-        return Resources.getResource(realPath);
-    }
+	@Override
+	public Resource getResource(final String path) throws IOException {
+		String modPath = path;
+		if (modPath.startsWith("/")) {
+			modPath = path.substring(1);
+		}
+		final String realPath = prefix + modPath;
+		final URL resourceUrl = getResourceUrl(realPath);
+		if (resourceUrl == null) {
+			return null;
+		} else {
+			return new URLResource(resourceUrl, resourceUrl.openConnection(), path);
+		}
+	}
 
-    @Override
-    public boolean isResourceChangeListenerSupported() {
-        return false;
-    }
+	protected URL getResourceUrl(final String realPath) {
+		return Resources.getResource(realPath);
+	}
 
-    @Override
-    public void registerResourceChangeListener(ResourceChangeListener listener) {
-        throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
-    }
+	@Override
+	public boolean isResourceChangeListenerSupported() {
+		return false;
+	}
 
-    @Override
-    public void removeResourceChangeListener(ResourceChangeListener listener) {
-        throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
-    }
+	@Override
+	public void registerResourceChangeListener(ResourceChangeListener listener) {
+		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
+	}
 
+	@Override
+	public void removeResourceChangeListener(ResourceChangeListener listener) {
+		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
+	}
 
-    @Override
-    public void close() throws IOException {
-    }
+	@Override
+	public void close() throws IOException {
+	}
 }

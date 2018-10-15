@@ -84,9 +84,18 @@ public class Dashboard {
 		this.enabled = enabled;
 	}
 
-	public Dashboard(String id, String title, boolean enabled, int screenWidth, int screenHeight, int columns,
-			Color backgroundColor, DashboardColorScheme colorScheme, Color foregroundColorStart,
-			Color foregroundColorEnd, Collection<String> owners, Collection<String> editors) {
+	public Dashboard(String id,
+			String title,
+			boolean enabled,
+			int screenWidth,
+			int screenHeight,
+			int columns,
+			Color backgroundColor,
+			DashboardColorScheme colorScheme,
+			Color foregroundColorStart,
+			Color foregroundColorEnd,
+			Collection<String> owners,
+			Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;

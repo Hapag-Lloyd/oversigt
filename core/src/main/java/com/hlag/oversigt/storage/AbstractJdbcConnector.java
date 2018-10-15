@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 				LOGGER.debug("Preparing statement: {}", sql);
 			}
 			stmt = getConnection().prepareStatement(sql,
-					returnGeneratedKeys ? PreparedStatement.RETURN_GENERATED_KEYS : 0);
+					returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
 			if (values != null) {
 				for (int i = 0; i < values.length; ++i) {
 					stmt.setObject(i + 1, getDialect().convertValue(values[i]));

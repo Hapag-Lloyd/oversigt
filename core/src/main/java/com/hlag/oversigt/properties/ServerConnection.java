@@ -19,7 +19,7 @@ public class ServerConnection extends SerializableProperty {
 	public String getUrl() {
 		return url;
 	}
-	
+
 	private URL createUrl() {
 		try {
 			return new URL(url);
@@ -27,11 +27,11 @@ public class ServerConnection extends SerializableProperty {
 			throw new SneakyException(e);
 		}
 	}
-	
+
 	public String extractHostname() {
 		return createUrl().getHost();
 	}
-	
+
 	public int extractPort() {
 		return createUrl().getPort();
 	}

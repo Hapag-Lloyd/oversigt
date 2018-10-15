@@ -54,10 +54,15 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@Inject
 	public DashboardConfigurationHandler(DashboardController dashboardController,
-			HttpServerExchangeHandler exchangeHelper, Authenticator authenticator, MailSender mailSender,
+			HttpServerExchangeHandler exchangeHelper,
+			Authenticator authenticator,
+			MailSender mailSender,
 			JsonUtils json) {
-		super(dashboardController, exchangeHelper, "views/layout/dashboardConfig/",
-				new String[] { "page_addWidget.ftl.html", "page_configureWidgets.ftl.html", "page_settings.ftl.html" });
+		super(
+			dashboardController,
+			exchangeHelper,
+			"views/layout/dashboardConfig/",
+			new String[] { "page_addWidget.ftl.html", "page_configureWidgets.ftl.html", "page_settings.ftl.html" });
 		this.authenticator = authenticator;
 		this.mailSender = mailSender;
 		this.json = json;
@@ -94,10 +99,16 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Dashboard dashboard = getDashboard(exchange);
 		switch (page) {
 			case "addWidget":
-				return map("dashboard", dashboard, "dashboardManager", getDashboardController(), "preview",
+				return map("dashboard",
+						dashboard,
+						"dashboardManager",
+						getDashboardController(),
+						"preview",
 						(Function<EventSourceInstance, String>) k -> ImageUtil.getPreviewImageUrl(k.getDescriptor()));
 			case "configureWidgets":
-				return map("dashboard", dashboard, "addColorCssToWidgets",
+				return map("dashboard",
+						dashboard,
+						"addColorCssToWidgets",
 						DashboardDesign.isAddColorCssToWidgets(dashboard));
 			case "settings":
 				return map("dashboard", dashboard);
@@ -111,7 +122,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		String eventSourceInstance = getHelper().param(formData, "eventSourceId");
 		Widget widget = getDashboardController().createWidgetForDashboard(getDashboard(exchange), eventSourceInstance);
 		// getDashboard(exchange).addWidget(storage, eventSource);
-		logChange(exchange, "Dashboard %s: add Widget: %s (%s)", getDashboard(exchange).getId(), widget.getId(),
+		logChange(exchange,
+				"Dashboard %s: add Widget: %s (%s)",
+				getDashboard(exchange).getId(),
+				widget.getId(),
 				widget.getEventSourceInstance().getId());
 		return redirect("configureWidgets#widget" + widget.getId());
 	}
@@ -190,7 +204,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Dashboard dashboard = getDashboard(exchange);
 		Widget widget = dashboard.getWidget(widgetId);
 		getDashboardController().deleteWidget(widget);
-		logChange(exchange, "Dashboard %s: Delete widget %s (%s)", dashboard.getId(), widget.getId(),
+		logChange(exchange,
+				"Dashboard %s: Delete widget %s (%s)",
+				dashboard.getId(),
+				widget.getId(),
 				widget.getEventSourceInstance().getId());
 		return ok();
 	}
@@ -248,7 +265,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		Widget widget = dashboard.getWidget(widgetId);
 		widget.setEnabled(enabled);
 		getDashboardController().updateWidget(widget);
-		logChange(exchange, "Dashboard %s: widget %s set enabled to %s", dashboard.getId(), widget.getId(),
+		logChange(exchange,
+				"Dashboard %s: widget %s set enabled to %s",
+				dashboard.getId(),
+				widget.getId(),
 				widget.isEnabled());
 		triggerDashboardReload(dashboard);
 		return ok();
@@ -286,8 +306,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			usersToInform.removeAll(oldOwners);
 
 			if (!newOwners.get().isEmpty()) {
-				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(), usersToInform,
-						Roles.DASHBOARD_OWNER, dashboard);
+				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(),
+						usersToInform,
+						Roles.DASHBOARD_OWNER,
+						dashboard);
 				return okJson(dashboard.getOwners().stream().collect(Collectors.joining(",")));
 			}
 
@@ -321,8 +343,10 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			usersToInform.removeAll(oldEditors);
 
 			if (!newEditors.get().isEmpty()) {
-				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(), usersToInform,
-						Roles.DASHBOARD_EDITOR, dashboard);
+				mailSender.sendPermissionsReceived(getHelper().getPrincipal(exchange).get(),
+						usersToInform,
+						Roles.DASHBOARD_EDITOR,
+						dashboard);
 				return okJson(dashboard.getEditors().stream().collect(Collectors.joining(",")));
 			}
 

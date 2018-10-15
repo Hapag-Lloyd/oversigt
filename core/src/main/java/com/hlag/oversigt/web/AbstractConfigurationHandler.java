@@ -127,7 +127,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	private final Map<String, PageInfo> pages = new LinkedHashMap<>();
 
 	protected AbstractConfigurationHandler(DashboardController dashboardController,
-			HttpServerExchangeHandler exchangeHelper, String path, String[] filenames) {
+			HttpServerExchangeHandler exchangeHelper,
+			String path,
+			String[] filenames) {
 		this.dashboardController = dashboardController;
 		this.exchangeHelper = exchangeHelper;
 		getLogger()
@@ -157,13 +159,18 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 		Optional<Principal> principal = exchangeHelper.getPrincipal(exchange);
 		model.putAll(map(//
-				"principal", principal.orElse(null), "menuItems",
+				"principal",
+				principal.orElse(null),
+				"menuItems",
 				this.pages.entrySet()
 						.stream()
 						.filter(p -> principal.map(p.getValue()::isAllowedFor).orElse(false))
 						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
 						.toArray(), //
-				"activeMenuItem", page, "formUrl", "?"));
+				"activeMenuItem",
+				page,
+				"formUrl",
+				"?"));
 		return model;
 	}
 
@@ -268,7 +275,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				notFound(exchange, "Page '" + page + "' not found");
 			}
 		} else {
-			HttpUtils.redirect(exchange, exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(), false,
+			HttpUtils.redirect(exchange,
+					exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(),
+					false,
 					true);
 		}
 	}
@@ -314,9 +323,8 @@ public class AbstractConfigurationHandler implements HttpHandler {
 									.orElse(false);
 						} else {
 							proceed = exchangeHelper.getPrincipal(exchange)//
-									.map(p -> p.hasRole(needsRole.role()
-											.getRole()
-											.getDashboardSpecificRole(getDashboard(exchange).getId())))//
+									.map(p -> p.hasRole(needsRole.role().getRole().getDashboardSpecificRole(
+											getDashboard(exchange).getId())))//
 									.orElse(false);
 						}
 						if (!proceed) {
