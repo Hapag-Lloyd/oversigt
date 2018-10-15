@@ -25,16 +25,16 @@
 <div class="panel panel-default">
 	<div class="list-group">
 		<div id="dashboardSearchList">
-			<#list dashboardIds as did>
-			<div class="list-group-item">
+			<#list dashboards as dashboard>
+				<div class="list-group-item">
 				<form method="POST" style="margin-bottom:0px;">
-					<input type="hidden" name="dashboardId" value="${did}" />
-					<a class="btn dashboardLink" href="/${did}" target="_blank">${did}</a>
+					<input type="hidden" name="dashboardId" value="${dashboard.id}" />
+					<a class="btn dashboardLink" href="/${dashboard.id}" target="_blank">${dashboard.title} (${dashboard.id})</a>
 					<div class="btn-group pull-right">
-						<a class="btn btn-default" href="/${did}/config" target="_blank">Configure</a>
+						<a class="btn btn-default" href="/${dashboard.id}/config" target="_blank">Configure</a>
 						<button class="btn btn-default" data-type="reload" name="action" value="reloadDashboard" type="submit">Reload</button>
 						<#if roles.hasRole(principal,"server.admin")>
-							<button class="btn btn-warning" data-type="delete" name="action" value="deleteDashboard" type="submit" onclick="if(!confirm('Dou you really want to delete dashboard \'${did}\'?'))return false;">Delete</button>
+							<button class="btn btn-warning" data-type="delete" name="action" value="deleteDashboard" type="submit" onclick="if(!confirm('Dou you really want to delete dashboard \'${dashboard.id}\'?'))return false;">Delete</button>
 						</#if>
 					</div>
 				</form>
