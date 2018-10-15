@@ -1,10 +1,9 @@
 package com.hlag.oversigt.web;
 
-import static com.hlag.oversigt.util.HttpUtils.getPrincipal;
-import static com.hlag.oversigt.util.HttpUtils.maybeParam;
-import static com.hlag.oversigt.util.HttpUtils.param;
-import static com.hlag.oversigt.util.HttpUtils.query;
 import static com.hlag.oversigt.util.Utils.map;
+import static com.hlag.oversigt.web.ActionResponse.ok;
+import static com.hlag.oversigt.web.ActionResponse.okJson;
+import static com.hlag.oversigt.web.ActionResponse.redirect;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -60,7 +59,6 @@ import io.undertow.server.handlers.form.FormData;
 @Singleton
 public class EventSourceConfigurationHandler extends AbstractConfigurationHandler {
 	private static final String PATH = "views/layout/eventSourceConfig/";
-	private final DashboardController dashboardController;
 	private final Runnable shutdown;
 
 	@Inject
@@ -72,13 +70,11 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@Inject
 	public EventSourceConfigurationHandler(DashboardController dashboardController,
-			@Named("Shutdown") Runnable shutdown) {
-		super(
-			PATH,
-			new String[] { "page_1_createEventSource.ftl.html", "page_configureEventSource.ftl.html",
-					"page_dashboards.ftl.html", "page_properties.ftl.html", "page_settings.ftl.html",
-					"page_troubleshooting.ftl.html" });
-		this.dashboardController = dashboardController;
+			HttpServerExchangeHandler exchangeHelper, @Named("Shutdown") Runnable shutdown) {
+		super(dashboardController, exchangeHelper, PATH,
+				new String[] { "page_1_createEventSource.ftl.html", "page_configureEventSource.ftl.html",
+						"page_dashboards.ftl.html", "page_properties.ftl.html", "page_settings.ftl.html",
+						"page_troubleshooting.ftl.html" });
 		this.shutdown = shutdown;
 	}
 
@@ -90,9 +86,9 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	@Override
 	protected String getTemplateName(HttpServerExchange exchange, PageInfo pi) {
 		if ("configureEventSource".equals(pi.getName())) {
-			if (query(exchange, "eventSource").isPresent()) {
+			if (getHelper().query(exchange, "eventSource").isPresent()) {
 				return PATH + "eventSourceInstance.ftl.html";
-			} else if (query(exchange, "action").map("search"::equals).orElse(false)) {
+			} else if (getHelper().query(exchange, "action").map("search"::equals).orElse(false)) {
 				return PATH + "search.ftl.json";
 			}
 		}
@@ -102,7 +98,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	@Override
 	protected String getContentType(HttpServerExchange exchange, PageInfo pi) {
 		if ("configureEventSource".equals(pi.getName())) {
-			if (query(exchange, "action").map("search"::equals).orElse(false)) {
+			if (getHelper().query(exchange, "action").map("search"::equals).orElse(false)) {
 				return "application/json";
 			}
 		}
@@ -114,77 +110,57 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
 		switch (page) {
 			case "dashboards":
-				return map("dashboardIds", dashboardController.getDashboardIds());
+				return map("dashboardIds", getDashboardController().getDashboardIds());
 			case "createEventSource":
-				return map("availableEventSourceKeys",
-						dashboardController//
-								.getEventSourceKeys()
-								.stream()
-								.sorted(EventSourceKey.COMPARATOR)
-								.collect(toList()),
-						"dashboardManager",
-						dashboardController,
-						"preview",
+				return map("availableEventSourceKeys", getDashboardController()//
+						.getEventSourceKeys()
+						.stream()
+						.sorted(EventSourceKey.COMPARATOR)
+						.collect(toList()), "dashboardManager", getDashboardController(), "preview",
 						(Function<EventSourceKey, String>) k -> ImageUtil
-								.getPreviewImageUrl(dashboardController.getEventSourceDescriptor(k)));
+								.getPreviewImageUrl(getDashboardController().getEventSourceDescriptor(k)));
 			case "configureEventSource":
-				if (query(exchange, "action").map("search"::equals).orElse(false)) {
-					return map("json",
-							json.toJson(dashboardController//
-									.getEventSourceInstances()//
-									.stream()//
-									.collect(Collectors.toMap(EventSourceInstance::getId, instance -> {
-										return Stream.of(instance.getId(),
-												instance.getName(),
-												Optional.ofNullable(instance.getDescriptor().getServiceClass())
-														.map(Class::getName)
-														.orElse(""),
-												instance.getDescriptor().getView(),
-												instance.getDescriptor()
-														.getProperties()
-														.stream()
-														.map(instance::getPropertyValueString)
-														.collect(Collectors.joining(" ")),
-												instance.getDescriptor()
-														.getDataItems()
-														.stream()
-														.map(instance::getPropertyValueString)
-														.collect(Collectors.joining(" "))//,
-										// TODO SerializableProperty hier mit reinbringen...
-										).collect(Collectors.joining(" "));
-									}))));
+				if (getHelper().query(exchange, "action").map("search"::equals).orElse(false)) {
+					return map("json", json.toJson(getDashboardController()//
+							.getEventSourceInstances()//
+							.stream()//
+							.collect(Collectors.toMap(EventSourceInstance::getId, instance -> {
+								return Stream.of(instance.getId(), instance.getName(),
+										Optional.ofNullable(instance.getDescriptor().getServiceClass())
+												.map(Class::getName)
+												.orElse(""),
+										instance.getDescriptor().getView(),
+										instance.getDescriptor()
+												.getProperties()
+												.stream()
+												.map(instance::getPropertyValueString)
+												.collect(Collectors.joining(" ")),
+										instance.getDescriptor()
+												.getDataItems()
+												.stream()
+												.map(instance::getPropertyValueString)
+												.collect(Collectors.joining(" "))// ,
+								// TODO SerializableProperty hier mit reinbringen...
+								).collect(Collectors.joining(" "));
+							}))));
 				}
 				return map("eventSourceInstances",
-						Utils.treeSet(EventSourceInstance.COMPARATOR, dashboardController.getEventSourceInstances()),
+						Utils.treeSet(
+								EventSourceInstance.COMPARATOR, getDashboardController().getEventSourceInstances()),
 						"eventSourceInstance",
-						query(exchange, "eventSource").map(dashboardController::getEventSourceInstance).orElse(null),
-						"dashboardManager",
-						dashboardController,
-						"values",
-						spController.getProperties());
+						getHelper().query(exchange, "eventSource")
+								.map(getDashboardController()::getEventSourceInstance)
+								.orElse(null),
+						"dashboardManager", getDashboardController(), "values", spController.getProperties());
 			case "troubleshooting":
-				int lineCount = query(exchange, "lines", Integer::parseInt, 250);
-				return map("linesCount",
-						lineCount,
-						"logFileContent",
-						getLastLogLines(lineCount),
-						"threads",
-						getThreads(),
-						"lastEvents",
-						getCurrentEvents(),
-						"json",
-						json,
-						"loggers",
-						getLoggers(),
-						"logLevels",
-						new String[] { "OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL" });
+				int lineCount = getHelper().query(exchange, "lines", Integer::parseInt, 250);
+				return map("linesCount", lineCount, "logFileContent", getLastLogLines(lineCount), "threads",
+						getThreads(), "lastEvents", getCurrentEvents(), "json", json, "loggers", getLoggers(),
+						"logLevels", new String[] { "OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL" });
 			case "properties":
 				return map("typeNames",
 						spController.getClasses().stream().map(Class::getSimpleName).collect(Collectors.toList()),
-						"values",
-						spController.getProperties(),
-						"members",
-						spController.getAllMembers());
+						"values", spController.getProperties(), "members", spController.getAllMembers());
 			default:
 				return null;
 		}
@@ -229,11 +205,11 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_newEventSourceInstance(HttpServerExchange exchange, FormData data) {
-		final String eventSourceKey = param(data, "eventSourceName");
-		String instanceId = dashboardController
+		final String eventSourceKey = getHelper().param(data, "eventSourceName");
+		String instanceId = getDashboardController()
 				.createEventSourceInstance(
-						dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(eventSourceKey)),
-						getPrincipal(exchange).get())
+						getDashboardController().getEventSourceDescriptor(EventSourceKey.getKey(eventSourceKey)),
+						getHelper().getPrincipal(exchange).get())
 				.getId();
 		logChange(exchange, "Create event source name[%s] id[%s]", eventSourceKey, instanceId);
 		return redirect("configureEventSource#" + instanceId);
@@ -241,27 +217,23 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_configureInstance(HttpServerExchange exchange, FormData data) {
-		final Principal principal = getPrincipal(exchange).get();
+		final Principal principal = getHelper().getPrincipal(exchange).get();
 
-		final String eventSourceId = param(data, "id");
-		final String name = param(data, "name");
-		Duration frequency = maybeParam(data, "frequency")//
+		final String eventSourceId = getHelper().param(data, "id");
+		final String name = getHelper().param(data, "name");
+		Duration frequency = getHelper().maybeParam(data, "frequency")//
 				.map(Duration::parse)//
 				.orElse(null);
 
-		final EventSourceInstance originalInstance = dashboardController.getEventSourceInstance(eventSourceId);
+		final EventSourceInstance originalInstance = getDashboardController().getEventSourceInstance(eventSourceId);
 		final EventSourceDescriptor descriptor = originalInstance.getDescriptor();
-		final EventSourceInstance instance = new EventSourceInstance(descriptor,
-				eventSourceId,
-				name,
-				dashboardController.getEventSourceInstance(eventSourceId).isEnabled(),
-				frequency,
-				originalInstance.getCreatedBy(),
-				principal.getUsername());
+		final EventSourceInstance instance = new EventSourceInstance(descriptor, eventSourceId, name,
+				getDashboardController().getEventSourceInstance(eventSourceId).isEnabled(), frequency,
+				originalInstance.getCreatedBy(), principal.getUsername());
 
 		// read Properties
 		for (EventSourceProperty p : descriptor.getProperties()) {
-			Optional<String> maybeParam = maybeParam(data, eventSourceId + ".property." + p.getName());
+			Optional<String> maybeParam = getHelper().maybeParam(data, eventSourceId + ".property." + p.getName());
 			if ((p.getClazz() == Boolean.class || p.getClazz() == boolean.class) && !maybeParam.isPresent()) {
 				maybeParam = Optional.of("false");
 			}
@@ -270,40 +242,39 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		}
 		// read DataItems
 		for (EventSourceProperty p : descriptor.getDataItems()) {
-			boolean enabled = maybeParam(data, "enable." + eventSourceId + ".data." + p.getName())//
+			boolean enabled = getHelper().maybeParam(data, "enable." + eventSourceId + ".data." + p.getName())//
 					.map(Boolean::parseBoolean)//
 					.orElse(false);
 			if (enabled) {
-				String value = maybeParam(data, eventSourceId + ".data." + p.getName()).get();
+				String value = getHelper().maybeParam(data, eventSourceId + ".data." + p.getName()).get();
 				instance.setPropertyString(p, value);
 			}
 		}
 
 		// update event source
-		dashboardController.updateEventSourceInstance(instance);
-		logChange(exchange,
-				"Configure event source instance id[%s] name[%s] frequency[%s] properties[%s] datas[%s]",
-				eventSourceId,
-				name,
-				frequency,
-				instance.getDescriptor().getProperties().stream().collect(
-						Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))),
-				instance.getDescriptor().getDataItems().stream().collect(
-						Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))));
+		getDashboardController().updateEventSourceInstance(instance);
+		logChange(exchange, "Configure event source instance id[%s] name[%s] frequency[%s] properties[%s] datas[%s]",
+				eventSourceId, name, frequency,
+				instance.getDescriptor()
+						.getProperties()
+						.stream()
+						.collect(Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))),
+				instance.getDescriptor()
+						.getDataItems()
+						.stream()
+						.collect(Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))));
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_deleteInstance(HttpServerExchange exchange, FormData data) {
-		final String eventSourceId = param(data, "id");
-		Collection<String> preventingDashboards = dashboardController.deleteEventSourceInstance(eventSourceId);
+		final String eventSourceId = getHelper().param(data, "id");
+		Collection<String> preventingDashboards = getDashboardController().deleteEventSourceInstance(eventSourceId);
 		if (preventingDashboards == null || preventingDashboards.isEmpty()) {
 			logChange(exchange, "Delete event source id[%s]", eventSourceId);
 			return redirect(exchange.getRequestURI());
 		} else {
-			logChange(exchange,
-					"Try to delete event source id[%s], preventing dashboards: %s",
-					eventSourceId,
+			logChange(exchange, "Try to delete event source id[%s], preventing dashboards: %s", eventSourceId,
 					preventingDashboards);
 			return okJson(preventingDashboards);
 		}
@@ -311,39 +282,39 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected void doAction_restartInstance(HttpServerExchange exchange, FormData data) {
-		final String id = param(data, "id");
-		dashboardController.restartInstance(id, true);
+		final String id = getHelper().param(data, "id");
+		getDashboardController().restartInstance(id, true);
 		logChange(exchange, "Restart event source id[%s]", id);
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_disableInstance(HttpServerExchange exchange, FormData data) {
-		final String id = param(data, "id");
-		dashboardController.disableEventSourceInstance(id);
+		final String id = getHelper().param(data, "id");
+		getDashboardController().disableEventSourceInstance(id);
 		logChange(exchange, "Disable event source id[%s]", id);
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_enableInstance(HttpServerExchange exchange, FormData data) {
-		final String id = param(data, "id");
-		dashboardController.enableEventSourceInstance(id);
+		final String id = getHelper().param(data, "id");
+		getDashboardController().enableEventSourceInstance(id);
 		logChange(exchange, "Enable event source id[%s]", id);
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_stopEventSource(HttpServerExchange exchange, FormData data) {
-		final String id = param(data, "id");
+		final String id = getHelper().param(data, "id");
 		logChange(exchange, "Stop event source id[%s]", id);
-		dashboardController.stopInstance(id);
+		getDashboardController().stopInstance(id);
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_startEventSource(HttpServerExchange exchange, FormData data) {
-		final String id = param(data, "id");
-		dashboardController.startInstance(id);
+		final String id = getHelper().param(data, "id");
+		getDashboardController().startInstance(id);
 		logChange(exchange, "Start event source id[%s]", id);
 		return ok();
 	}
@@ -351,21 +322,21 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_stopAllEventSources(HttpServerExchange exchange, FormData formData) {
 		logChange(exchange, "Stop all event sources");
-		dashboardController.stopAllInstances();
+		getDashboardController().stopAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_startAllEventSources(HttpServerExchange exchange, FormData formData) {
 		logChange(exchange, "Start all event sources");
-		dashboardController.startAllInstances();
+		getDashboardController().startAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_deleteDashboard(HttpServerExchange exchange, FormData formData) {
-		String id = param(formData, "dashboardId");
-		dashboardController.deleteDashboard(id);
+		String id = getHelper().param(formData, "dashboardId");
+		getDashboardController().deleteDashboard(id);
 		logChange(exchange, "Delete dashboard id[%s]", id);
 		return ok();
 	}
@@ -385,14 +356,15 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_createValue(HttpServerExchange exchange, FormData formData) {
-		final String type = param(formData, "type");
+		final String type = getHelper().param(formData, "type");
 
 		Class<? extends SerializableProperty> spClass = spController.getClass(type);
 
 		Map<SerializablePropertyMember, Object> values = new LinkedHashMap<>();
 		for (SerializablePropertyMember member : spController.getMembers(spClass)) {
 			try {
-				values.put(member, member.createInstance(param(formData, "create-" + type + "-" + member.getName())));
+				values.put(member,
+						member.createInstance(getHelper().param(formData, "create-" + type + "-" + member.getName())));
 			} catch (MemberMissingException e) {
 				throw new RuntimeException("The member '" + member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");
@@ -407,8 +379,8 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_editValue(HttpServerExchange exchange, FormData formData) {
-		final String type = param(formData, "type");
-		final int id = Integer.parseInt(param(formData, "id"));
+		final String type = getHelper().param(formData, "type");
+		final int id = Integer.parseInt(getHelper().param(formData, "id"));
 
 		Class<? extends SerializableProperty> spClass = spController.getClass(type);
 		SerializableProperty property = spController.getProperty(spClass, id);
@@ -416,7 +388,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		for (SerializablePropertyMember member : spController.getMembers(spClass)) {
 			try {
-				member.set(clone, param(formData, "edit-" + type + "-" + member.getName()));
+				member.set(clone, getHelper().param(formData, "edit-" + type + "-" + member.getName()));
 			} catch (MemberMissingException e) {
 				throw new RuntimeException("The member '" + member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");
@@ -426,7 +398,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		spController.updateProperty(clone);
 
 		// restart event sources using this value
-		dashboardController.restartInstancesUsingSerializableProperty(property);
+		getDashboardController().restartInstancesUsingSerializableProperty(property);
 
 		logChange(exchange, "Edit property: %s", property);
 		return ok();
@@ -434,8 +406,8 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_deleteValue(HttpServerExchange exchange, FormData formData) {
-		final String type = param(formData, "type");
-		final int id = Integer.parseInt(param(formData, "id"));
+		final String type = getHelper().param(formData, "type");
+		final int id = Integer.parseInt(getHelper().param(formData, "id"));
 
 		Class<? extends SerializableProperty> spClass = spController.getClass(type);
 
@@ -446,8 +418,8 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 	@NeedsRole(role = Roles.ADMIN)
 	protected ActionResponse doAction_changeLogLevel(HttpServerExchange exchange, FormData formData) {
-		String loggerName = param(formData, "logger");
-		Level level = Level.valueOf(param(formData, "level"));
+		String loggerName = getHelper().param(formData, "logger");
+		Level level = Level.valueOf(getHelper().param(formData, "level"));
 
 		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 		Logger logger = context.getLogger(loggerName);

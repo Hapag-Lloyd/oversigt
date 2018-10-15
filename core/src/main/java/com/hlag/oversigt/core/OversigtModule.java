@@ -66,6 +66,7 @@ import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.DashboardConfigurationHandler;
 import com.hlag.oversigt.web.DashboardCreationHandler;
 import com.hlag.oversigt.web.EventSourceConfigurationHandler;
+import com.hlag.oversigt.web.HttpServerExchangeHandler;
 import com.hlag.oversigt.web.LoginHandler;
 import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiApplication;
@@ -80,7 +81,8 @@ import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
 
 /**
- * Main application configuration module. Configures server and all necessary stuff
+ * Main application configuration module. Configures server and all necessary
+ * stuff
  *
  * @author avarabyeu
  * @author noxfireone
@@ -101,7 +103,9 @@ class OversigtModule extends AbstractModule {
 		binder().requireExplicitBindings();
 
 		// some interesting values
-		binder().bind(String.class).annotatedWith(Names.named("application-id")).toInstance(UUID.randomUUID().toString());
+		binder().bind(String.class)
+				.annotatedWith(Names.named("application-id"))
+				.toInstance(UUID.randomUUID().toString());
 
 		// Jira
 		binder().requestStaticInjection(AsynchronousHttpClientFactory.class);
@@ -115,6 +119,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(DashboardConfigurationHandler.class);
 		binder().bind(DashboardCreationHandler.class);
 		binder().bind(EventSourceConfigurationHandler.class);
+		binder().bind(HttpServerExchangeHandler.class);
 		binder().bind(OversigtEventSender.class);
 		binder().bind(JsonUtils.class);
 		binder().bind(RoleProvider.class);
@@ -138,14 +143,15 @@ class OversigtModule extends AbstractModule {
 
 		// GSON
 		Gson gson = new GsonBuilder()//
-			.registerTypeAdapter(Class.class, deserializer(Class::forName))
-			.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
-			.registerTypeAdapter(Color.class, deserializer(Color::parse))
-			.registerTypeAdapter(Duration.class, serializer(Duration::toString))
-			.registerTypeAdapter(Duration.class, deserializer(Duration::parse))
-			.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
-			.registerTypeAdapter(LocalDate.class, deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
-			.create();
+				.registerTypeAdapter(Class.class, deserializer(Class::forName))
+				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
+				.registerTypeAdapter(Color.class, deserializer(Color::parse))
+				.registerTypeAdapter(Duration.class, serializer(Duration::toString))
+				.registerTypeAdapter(Duration.class, deserializer(Duration::parse))
+				.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
+				.registerTypeAdapter(LocalDate.class,
+						deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
+				.create();
 		binder().bind(Gson.class).toInstance(gson);
 
 		// Jackson for our API
@@ -158,7 +164,8 @@ class OversigtModule extends AbstractModule {
 		module.addSerializer(ZonedDateTime.class, ZonedDateTimeSerializer.INSTANCE);
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.registerModule(module);
-		//		objectMapper.registerModule(new JavaTimeModule()); // instead the InstantDeserializer and ZonedDateTimeSerializer are used directly
+		// objectMapper.registerModule(new JavaTimeModule()); // instead the
+		// InstantDeserializer and ZonedDateTimeSerializer are used directly
 		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		binder().bind(ObjectMapper.class).toInstance(objectMapper);
 
@@ -166,11 +173,10 @@ class OversigtModule extends AbstractModule {
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
 		final GuiceConstraintValidatorFactory constraintValidatorFactory = new GuiceConstraintValidatorFactory();
 		requestInjection(constraintValidatorFactory);
-		Validator validator = Validation
-			.buildDefaultValidatorFactory()
-			.usingContext()
-			.constraintValidatorFactory(constraintValidatorFactory)
-			.getValidator();
+		Validator validator = Validation.buildDefaultValidatorFactory()
+				.usingContext()
+				.constraintValidatorFactory(constraintValidatorFactory)
+				.getValidator();
 		binder().bind(Validator.class).toInstance(validator);
 
 		// XML
@@ -200,9 +206,10 @@ class OversigtModule extends AbstractModule {
 	@Singleton
 	@Provides
 	@Inject
-	freemarker.template.Configuration provideTemplateConfiguration(@Named("templateNumberFormat") String templateNumberFormat) {
+	freemarker.template.Configuration provideTemplateConfiguration(
+			@Named("templateNumberFormat") String templateNumberFormat) {
 		freemarker.template.Configuration configuration = new freemarker.template.Configuration(
-			freemarker.template.Configuration.VERSION_2_3_23);
+				freemarker.template.Configuration.VERSION_2_3_23);
 		configuration.setTemplateLoader(new ClassTemplateLoader(Oversigt.class, "/"));
 		configuration.setNumberFormat(templateNumberFormat);
 		configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
@@ -215,10 +222,9 @@ class OversigtModule extends AbstractModule {
 		final JsonProvider jsonProvider = new JacksonJsonProvider();
 		final MappingProvider mappingProvider = new JacksonMappingProvider();
 
-		final com.jayway.jsonpath.Configuration jsonpathConfiguration = com.jayway.jsonpath.Configuration
-			.builder()
-			.options(Option.DEFAULT_PATH_LEAF_TO_NULL)
-			.build();
+		final com.jayway.jsonpath.Configuration jsonpathConfiguration = com.jayway.jsonpath.Configuration.builder()
+				.options(Option.DEFAULT_PATH_LEAF_TO_NULL)
+				.build();
 		com.jayway.jsonpath.Configuration.setDefaults(new com.jayway.jsonpath.Configuration.Defaults() {
 			@Override
 			public Set<Option> options() {
@@ -258,16 +264,16 @@ class OversigtModule extends AbstractModule {
 		@Override
 		public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
 			/*
-			 * By default, all beans are in prototype scope, so new instance will be obtained each
-			 * time. Validator implementer may declare it as singleton and manually maintain
-			 * internal state (to re-use validators and simplify life for GC)
+			 * By default, all beans are in prototype scope, so new instance will be
+			 * obtained each time. Validator implementer may declare it as singleton and
+			 * manually maintain internal state (to re-use validators and simplify life for
+			 * GC)
 			 */
-			boolean bound = injector
-				.getBindings()//
-				.keySet()
-				.stream()
-				.map(k -> k.getTypeLiteral().getRawType())
-				.anyMatch(k -> key.equals(k));
+			boolean bound = injector.getBindings()//
+					.keySet()
+					.stream()
+					.map(k -> k.getTypeLiteral().getRawType())
+					.anyMatch(k -> key.equals(k));
 			if (bound) {
 				return injector.getInstance(key);
 			} else {
