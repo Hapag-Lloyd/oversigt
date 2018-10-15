@@ -110,7 +110,13 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
 		switch (page) {
 			case "dashboards":
-				return map("dashboardIds", getDashboardController().getDashboardIds());
+				return map(
+						"dashboards",
+						dashboardController.getDashboardIds()//
+								.stream()
+								.map(dashboardController::getDashboard)
+								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
+								.collect(Collectors.toList()));
 			case "createEventSource":
 				return map("availableEventSourceKeys", getDashboardController()//
 						.getEventSourceKeys()
