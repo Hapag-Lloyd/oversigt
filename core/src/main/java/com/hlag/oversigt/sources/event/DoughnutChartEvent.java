@@ -10,8 +10,8 @@ import com.hlag.oversigt.core.OversigtEvent;
 public class DoughnutChartEvent extends OversigtEvent {
 	private Collection<String> labels = new ArrayList<>();
 	private List<Dataset> datasets = Arrays.asList(new Dataset());
-	
-	public void add(String name, double value, String color){
+
+	public void add(String name, double value, String color) {
 		labels.add(name);
 		datasets.get(0).data.add(value);
 		datasets.get(0).backgroundColor.add(color);

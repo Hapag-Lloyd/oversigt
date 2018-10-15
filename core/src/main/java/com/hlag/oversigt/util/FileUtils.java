@@ -129,23 +129,21 @@ public class FileUtils {
 				paths.add(fileSystem.getPath(entry.getName()));
 			}
 
-			Optional<String> classpath = Optional
-				.of(jis)
-				.map(JarInputStream::getManifest)
-				.map(Manifest::getMainAttributes)
-				.map(ma -> ma.getValue("Class-Path"));
+			Optional<String> classpath = Optional.of(jis)
+					.map(JarInputStream::getManifest)
+					.map(Manifest::getMainAttributes)
+					.map(ma -> ma.getValue("Class-Path"));
 			if (classpath.isPresent()) {
 				List<String> jarClasspathEntries = Splitter//
-					.on(CharMatcher.whitespace())
-					.omitEmptyStrings()
-					.splitToList(classpath.get());
-				List<Path> jarResources = jarClasspathEntries
-					.stream()
-					.map(zip.toAbsolutePath().getParent()::resolve)
-					.filter(Files::exists)
-					.map(FileUtils::listResourcesFromJar)
-					.flatMap(Collection::stream)
-					.collect(toList());
+						.on(CharMatcher.whitespace())
+						.omitEmptyStrings()
+						.splitToList(classpath.get());
+				List<Path> jarResources = jarClasspathEntries.stream()
+						.map(zip.toAbsolutePath().getParent()::resolve)
+						.filter(Files::exists)
+						.map(FileUtils::listResourcesFromJar)
+						.flatMap(Collection::stream)
+						.collect(toList());
 				paths.addAll(jarResources);
 			}
 		} catch (IOException e) {
@@ -164,11 +162,8 @@ public class FileUtils {
 	}
 
 	private static List<String> getClasspathEntries() {
-		return Splitter
-			.on(File.pathSeparatorChar)
-			.omitEmptyStrings()
-			.trimResults()
-			.splitToList(System.getProperty("java.class.path"));
+		return Splitter.on(File.pathSeparatorChar).omitEmptyStrings().trimResults().splitToList(
+				System.getProperty("java.class.path"));
 	}
 
 	public static Optional<String> getExtension(Path path) {

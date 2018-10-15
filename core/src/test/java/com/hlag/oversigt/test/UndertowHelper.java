@@ -77,7 +77,8 @@ public class UndertowHelper {
 		return sourceChannel;
 	}
 
-	private static HttpServerExchange createHttpExchange(ServerConnection connection, HeaderMap headerMap,
+	private static HttpServerExchange createHttpExchange(ServerConnection connection,
+			HeaderMap headerMap,
 			String[] queryParameters) {
 		HttpServerExchange httpServerExchange = new HttpServerExchange(connection, null, headerMap, 200);
 		httpServerExchange.setRequestMethod(new HttpString("GET"));

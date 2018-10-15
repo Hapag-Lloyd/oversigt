@@ -103,9 +103,8 @@ class OversigtModule extends AbstractModule {
 		binder().requireExplicitBindings();
 
 		// some interesting values
-		binder().bind(String.class)
-				.annotatedWith(Names.named("application-id"))
-				.toInstance(UUID.randomUUID().toString());
+		binder().bind(String.class).annotatedWith(Names.named("application-id")).toInstance(
+				UUID.randomUUID().toString());
 
 		// Jira
 		binder().requestStaticInjection(AsynchronousHttpClientFactory.class);

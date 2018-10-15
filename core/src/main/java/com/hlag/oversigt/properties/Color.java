@@ -182,7 +182,7 @@ public class Color {
 	}
 
 	private static Color parseString(String string) {
-		if(string.length()==0)
+		if (string.length() == 0)
 			return Black;
 		switch (string.charAt(0)) {
 			case '#':

@@ -72,7 +72,8 @@ public class DashboardWidgetResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@PermitAll
 	@NoChangeLog
-	public Response listWidgets(@Context SecurityContext secu, @PathParam("dashboardId") @NotNull String dashboardId,
+	public Response listWidgets(@Context SecurityContext secu,
+			@PathParam("dashboardId") @NotNull String dashboardId,
 			@QueryParam("containing") @ApiParam(required = false, value = "Only show widgets containing this text") String containing) {
 		Dashboard dashboard = controller.getDashboard(dashboardId);
 		if (dashboard == null) {
@@ -89,8 +90,14 @@ public class DashboardWidgetResource {
 					|| w.getBackgroundColor().getHexColor().toLowerCase().contains(lower)
 					|| w.getStyle().toLowerCase().contains(lower) || w.getType().toLowerCase().contains(lower)
 					|| w.getView().toLowerCase().contains(lower)
-					|| w.getEventSourceInstance().getDescriptor().getDataItems().stream().filter(w::hasWidgetData)
-							.map(w::getWidgetData).map(String::toLowerCase).anyMatch(s -> s.contains(lower));
+					|| w.getEventSourceInstance()
+							.getDescriptor()
+							.getDataItems()
+							.stream()
+							.filter(w::hasWidgetData)
+							.map(w::getWidgetData)
+							.map(String::toLowerCase)
+							.anyMatch(s -> s.contains(lower));
 			;
 		}
 
@@ -134,7 +141,8 @@ public class DashboardWidgetResource {
 		}
 
 		return created(URI.create(uri.getAbsolutePath() + "/" + widget.getId()))//
-				.entity(new WidgetDetails(widget, false)).build();
+				.entity(new WidgetDetails(widget, false))
+				.build();
 	}
 
 	@GET
@@ -336,17 +344,40 @@ public class DashboardWidgetResource {
 		private final Map<@NotBlank String, @NotBlank String> data;
 
 		WidgetDetails(Widget widget, boolean showAllDatas) {
-			this(widget.getId(), widget.getEventSourceInstance().getId(), widget.getType(), widget.getTitle(),
-					widget.getName(), widget.getView(), widget.isEnabled(), widget.getPosX(), widget.getPosY(),
-					widget.getSizeX(), widget.getSizeY(), widget.getBackgroundColor(), widget.getStyle(),
-					EventSourceInstanceResource.getValueMap(
-							widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
-							showAllDatas ? widget::getWidgetDataForDashboard : widget::getWidgetData,
-							showAllDatas ? widget::hasWidgetDataForDashboard : widget::hasWidgetData, true));
+			this(
+				widget.getId(),
+				widget.getEventSourceInstance().getId(),
+				widget.getType(),
+				widget.getTitle(),
+				widget.getName(),
+				widget.getView(),
+				widget.isEnabled(),
+				widget.getPosX(),
+				widget.getPosY(),
+				widget.getSizeX(),
+				widget.getSizeY(),
+				widget.getBackgroundColor(),
+				widget.getStyle(),
+				EventSourceInstanceResource.getValueMap(
+						widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),
+						showAllDatas ? widget::getWidgetDataForDashboard : widget::getWidgetData,
+						showAllDatas ? widget::hasWidgetDataForDashboard : widget::hasWidgetData,
+						true));
 		}
 
-		WidgetDetails(int id, String eventSourceInstanceId, String type, String title, String name, String view,
-				boolean enabled, int posX, int posY, int sizeX, int sizeY, Color backgroundColor, String style,
+		WidgetDetails(int id,
+				String eventSourceInstanceId,
+				String type,
+				String title,
+				String name,
+				String view,
+				boolean enabled,
+				int posX,
+				int posY,
+				int sizeX,
+				int sizeY,
+				Color backgroundColor,
+				String style,
 				Map<String, String> data) {
 			this.id = id;
 			this.eventSourceInstanceId = eventSourceInstanceId;

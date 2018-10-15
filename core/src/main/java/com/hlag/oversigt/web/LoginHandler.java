@@ -45,7 +45,8 @@ public class LoginHandler implements HttpHandler {
 	private List<String> availableImages = new ArrayList<>();
 
 	@Inject
-	public LoginHandler(Configuration templateConfiguration, Authenticator authenticator,
+	public LoginHandler(Configuration templateConfiguration,
+			Authenticator authenticator,
 			HttpServerExchangeHandler exchangeHelper) {
 		this.templateConfiguration = templateConfiguration;
 		this.authenticator = authenticator;

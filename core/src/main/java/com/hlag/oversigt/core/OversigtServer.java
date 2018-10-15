@@ -155,14 +155,21 @@ public class OversigtServer extends AbstractIdleService {
 	private JsonUtils json;
 
 	@Inject
-	public OversigtServer(@Named("listeners") List<HttpListenerConfiguration> listeners, EventBus eventBus,
-			OversigtEventSender sender, @Nullable @Named("rateLimit") Long rateLimit,
-			Configuration templateConfiguration, WelcomeHandler welcomeHandler, LoginHandler loginHandler,
+	public OversigtServer(@Named("listeners") List<HttpListenerConfiguration> listeners,
+			EventBus eventBus,
+			OversigtEventSender sender,
+			@Nullable @Named("rateLimit") Long rateLimit,
+			Configuration templateConfiguration,
+			WelcomeHandler welcomeHandler,
+			LoginHandler loginHandler,
 			DashboardConfigurationHandler dashboardConfigurationHandler,
 			DashboardCreationHandler dashboardCreationHandler,
-			EventSourceConfigurationHandler eventSourceConfigurationHandler, DashboardController dashboardController,
-			HttpServerExchangeHandler exchangeHandler, Application restApiApplication,
-			@Named("additionalPackages") String[] additionalPackages, @Named("addonFolders") Path[] addonFolders,
+			EventSourceConfigurationHandler eventSourceConfigurationHandler,
+			DashboardController dashboardController,
+			HttpServerExchangeHandler exchangeHandler,
+			Application restApiApplication,
+			@Named("additionalPackages") String[] additionalPackages,
+			@Named("addonFolders") Path[] addonFolders,
 			@Named("widgetsPaths") String[] widgetsPaths) {
 		this.listeners = listeners;
 		this.eventBus = eventBus;
@@ -212,7 +219,8 @@ public class OversigtServer extends AbstractIdleService {
 	protected void startUp() throws Exception {
 		LOGGER.info("Loading event source descriptors");
 		dashboardController.loadEventSourceDescriptors(//
-				Arrays.asList(MotivationEventSource.class.getPackage()), Arrays.asList(addonFolders),
+				Arrays.asList(MotivationEventSource.class.getPackage()),
+				Arrays.asList(addonFolders),
 				Arrays.asList(widgetsPaths));
 		LOGGER.info("Loading event source instances");
 		dashboardController.loadEventSourceInstances();
@@ -227,8 +235,10 @@ public class OversigtServer extends AbstractIdleService {
 			dashboard.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
 			rateLimit.map(RateLimiter::create)
 					.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
-			logInfo(LOGGER, "Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
-					dashboard.map(Dashboard::getId).orElse(""), rateLimit.orElse(-1L));
+			logInfo(LOGGER,
+					"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
+					dashboard.map(Dashboard::getId).orElse(""),
+					rateLimit.orElse(-1L));
 			eventBus.post(connection);
 		});
 
@@ -236,9 +246,8 @@ public class OversigtServer extends AbstractIdleService {
 			@Subscribe
 			@Override
 			public void accept(OversigtEvent event) {
-				sseHandler.getConnections()
-						.stream()
-						.forEach(connection -> sender.sendEventToConnection(event, connection));
+				sseHandler.getConnections().stream().forEach(
+						connection -> sender.sendEventToConnection(event, connection));
 			}
 		});
 
@@ -294,7 +303,9 @@ public class OversigtServer extends AbstractIdleService {
 
 		Logger accessLogger = LoggerFactory.getLogger("access");
 		final AccessLogHandler accessHandler = new AccessLogHandler(encodingHandler,
-				message -> accessLogger.info(message), "combined", OversigtServer.class.getClassLoader());
+				message -> accessLogger.info(message),
+				"combined",
+				OversigtServer.class.getClassLoader());
 
 		Builder builder = Undertow.builder();
 		listeners.stream()//
@@ -302,8 +313,8 @@ public class OversigtServer extends AbstractIdleService {
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
 		listeners.stream()//
 				.filter(HttpListenerConfiguration::isSsl)
-				.forEach(c -> builder.addHttpsListener(c.getPort(), c.getIp(),
-						c.getSSLConfiguration().createSSLContext()));
+				.forEach(c -> builder
+						.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
 		server = builder.setHandler(accessHandler).build();
 
 		LOGGER.info("Starting web server");
@@ -362,8 +373,8 @@ public class OversigtServer extends AbstractIdleService {
 	private void serveWidget(HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.SEE_OTHER);
 		String widgetName = exchange.getQueryParameters().get("widget").getFirst();
-		exchange.getResponseHeaders()
-				.put(Headers.LOCATION, "/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
+		exchange.getResponseHeaders().put(Headers.LOCATION,
+				"/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
 		exchange.endExchange();
 	}
 
@@ -388,10 +399,18 @@ public class OversigtServer extends AbstractIdleService {
 					redirect(exchange, "/" + dashboardId + "/create", false, true);
 				} else {
 					String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
-							map("title", dashboard.getTitle(), "columns", dashboard.getColumns(), "backgroundColor",
-									dashboard.getBackgroundColor().getHexColor(), "computedTileWidth",
-									dashboard.getComputedTileWidth(), "computedTileHeight",
-									dashboard.getComputedTileHeight(), "widgets", dashboard.getWidgets()));
+							map("title",
+									dashboard.getTitle(),
+									"columns",
+									dashboard.getColumns(),
+									"backgroundColor",
+									dashboard.getBackgroundColor().getHexColor(),
+									"computedTileWidth",
+									dashboard.getComputedTileWidth(),
+									"computedTileHeight",
+									dashboard.getComputedTileHeight(),
+									"widgets",
+									dashboard.getWidgets()));
 					exchange.getResponseSender().send(html);
 				}
 			} else {
