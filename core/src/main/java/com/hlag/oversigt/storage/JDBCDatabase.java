@@ -515,7 +515,13 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 
 	@Override
 	public List<String> getOwnedDashboardIds(String userid) {
-		return load(TABLE_DASHBOARD, "ID", "OWNER", userid, "ENABLED", true, rs -> readColumnValue(rs, "ID"));
+		return loadWithOneLike(
+				TABLE_DASHBOARD,
+				"ID",
+				new String[] { "ENABLED" },
+				new Object[] { true },
+				"OWNER",
+				"%," + userid + ",%");
 	}
 
 	@Override
