@@ -9,10 +9,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.validation.constraints.NotNull;
 
-import com.atlassian.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.EventSource;
 import com.hlag.oversigt.util.Utils;
