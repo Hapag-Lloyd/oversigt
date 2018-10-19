@@ -10,7 +10,7 @@
 	<artifactId>oversigt</artifactId>
 	<version>0.6-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	
+
 	<licenses>
 		<license>
 			<name>MIT License</name>
@@ -31,4 +31,39 @@
 	<modules>
 		<module>core</module>
 	</modules>
+
+	<reporting>
+		<plugins>
+			<!-- Check for un/used dependencies -->
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>analyze-report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<!-- Check versions -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>dependency-updates-report</report>
+							<report>plugin-updates-report</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+
+			<!-- Cross references -->
+			<plugin>
+				<artifactId>maven-jxr-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</reporting>
 </project>
