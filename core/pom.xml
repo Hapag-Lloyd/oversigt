@@ -16,7 +16,7 @@
 		<compilerArgument>-parameters</compilerArgument>
 
 		<guice.version>4.1.0</guice.version>
-		<undertow.version>1.4.8.Final</undertow.version>
+		<undertow.version>1.4.26.Final</undertow.version>
 		<freemarker.version>2.3.26-incubating</freemarker.version>
 		<wro.version>1.8.0</wro.version>
 		<resteasy.version>3.1.4.Final</resteasy.version>
