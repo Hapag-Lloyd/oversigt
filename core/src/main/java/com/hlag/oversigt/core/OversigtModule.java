@@ -92,9 +92,9 @@ class OversigtModule extends AbstractModule {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtModule.class);
 
 	private final Runnable shutdownRunnable;
-	private final StartOptions options;
+	private final OversigtOptions options;
 
-	OversigtModule(StartOptions options, Runnable shutdownRunnable, List<Module> extensions) {
+	OversigtModule(OversigtOptions options, Runnable shutdownRunnable, List<Module> extensions) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}

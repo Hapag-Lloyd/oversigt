@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-public class StartOptionsTest {
+public class OversigtOptionsTest {
 	@Test
 	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() throws Exception {
 		// given
@@ -19,7 +19,7 @@ public class StartOptionsTest {
 		};
 
 		// when
-		StartOptions actualStartOptions = StartOptions.parse(givenCommandLine);
+		OversigtOptions actualStartOptions = OversigtOptions.parse(givenCommandLine);
 
 		// then
 		assertThat(actualStartOptions.isDebugFallback()).isTrue();
@@ -43,7 +43,7 @@ public class StartOptionsTest {
 		expectedProperties.put("startEventSources", "false");
 
 		// when
-		StartOptions actualStartOptions = StartOptions.parse(givenCommandLine);
+		OversigtOptions actualStartOptions = OversigtOptions.parse(givenCommandLine);
 		Map<String, String> actualProperties = actualStartOptions.getProperties();
 
 		// then

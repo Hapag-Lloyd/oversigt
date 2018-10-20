@@ -125,7 +125,7 @@ public final class Oversigt {
 
 	public static void main(String... args) throws InterruptedException, IOException {
 		// parse command line options
-		StartOptions options = StartOptions.parse(args);
+		OversigtOptions options = OversigtOptions.parse(args);
 		// if command line options fail: shut down
 		if (options == null) {
 			return;
@@ -147,7 +147,7 @@ public final class Oversigt {
 
 		/* List of extension-modules */
 		private List<Module> modules = new LinkedList<>();
-		private StartOptions options = null;
+		private OversigtOptions options = null;
 
 		/**
 		 * Registers extension modules
@@ -163,7 +163,7 @@ public final class Oversigt {
 			return this;
 		}
 
-		public Builder startOptions(StartOptions options) {
+		public Builder startOptions(OversigtOptions options) {
 			this.options = options;
 			return this;
 		}
