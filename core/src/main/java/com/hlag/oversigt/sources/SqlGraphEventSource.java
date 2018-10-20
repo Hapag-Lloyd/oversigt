@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent;

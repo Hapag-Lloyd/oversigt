@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core.eventsource.annotation;
+package com.hlag.oversigt.core.eventsource;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

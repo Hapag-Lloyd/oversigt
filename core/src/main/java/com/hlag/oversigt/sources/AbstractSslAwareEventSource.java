@@ -1,8 +1,8 @@
 package com.hlag.oversigt.sources;
 
 import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
 
 public abstract class AbstractSslAwareEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 	private boolean checkSSL = true;

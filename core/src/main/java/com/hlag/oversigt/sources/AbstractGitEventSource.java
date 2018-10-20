@@ -42,7 +42,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 
 import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.LazyInitializedReference;

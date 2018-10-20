@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever;
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.MailboxInfoLoadingProvider;
 import com.hlag.oversigt.core.eventsource.EventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 

@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.eventsource.annotation.NoCache;
+import com.hlag.oversigt.core.eventsource.NoCache;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;

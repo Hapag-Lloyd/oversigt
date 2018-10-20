@@ -10,7 +10,7 @@ import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.hlag.oversigt.core.eventsource.EventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.sources.data.DisplayOption;
 import com.hlag.oversigt.sources.event.HlBarChartEvent;

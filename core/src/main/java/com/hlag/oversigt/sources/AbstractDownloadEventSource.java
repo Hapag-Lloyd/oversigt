@@ -29,7 +29,7 @@ import org.apache.commons.io.IOUtils;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.HttpProxy;
 import com.hlag.oversigt.sources.data.JsonHint;

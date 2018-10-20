@@ -5,7 +5,6 @@ import javax.inject.Inject;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.EventId;
 
 /**
  * @author Andrei Varabyeu

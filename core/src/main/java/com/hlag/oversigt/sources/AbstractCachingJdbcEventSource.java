@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import com.hlag.oversigt.connect.db.DatabaseCache;
 import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.Property;
 
 /**
  * @author neumaol

@@ -6,7 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.google.inject.Module;
-import com.hlag.oversigt.core.eventsource.annotation.DataItemDefault;
 
 /**
  * Marks class as event source

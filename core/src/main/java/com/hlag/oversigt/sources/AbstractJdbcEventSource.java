@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.DatabaseConnection;
 

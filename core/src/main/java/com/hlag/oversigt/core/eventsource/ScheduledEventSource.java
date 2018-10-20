@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.hlag.oversigt.core.ErrorEvent;
 import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.EventId;
 
 /**
  * Scheduled EventSource - produces events with specified time period. Basically, based on Guava's
