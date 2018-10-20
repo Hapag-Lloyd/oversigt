@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.hlag.oversigt.core.EventSource;
 import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 

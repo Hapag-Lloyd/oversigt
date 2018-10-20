@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;

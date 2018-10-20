@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.eventsource;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

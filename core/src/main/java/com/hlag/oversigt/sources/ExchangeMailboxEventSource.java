@@ -11,7 +11,7 @@ import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever;
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.Mail;
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.MailboxFolder;
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.MailboxInfoLoadingProvider;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.sources.data.DisplayOption;

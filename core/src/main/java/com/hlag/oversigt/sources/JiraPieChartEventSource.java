@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.data.DisplayOption;
 import com.hlag.oversigt.sources.event.PieChartEvent;
 

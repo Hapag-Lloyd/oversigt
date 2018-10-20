@@ -1,7 +1,7 @@
 package com.hlag.oversigt.sources;
 
-import com.hlag.oversigt.core.EventSource;
 import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.event.NumberEvent;
 
 @EventSource(displayName = "GIT Commit Count", view = "Number")

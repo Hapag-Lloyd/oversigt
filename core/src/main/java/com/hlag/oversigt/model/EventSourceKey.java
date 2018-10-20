@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Strings;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.util.Utils;
 
 public class EventSourceKey implements Comparable<EventSourceKey> {

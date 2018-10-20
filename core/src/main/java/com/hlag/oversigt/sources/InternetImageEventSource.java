@@ -2,7 +2,7 @@ package com.hlag.oversigt.sources;
 
 import java.io.IOException;
 
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.event.StyleEvent;
 import com.hlag.oversigt.util.Tuple;
 

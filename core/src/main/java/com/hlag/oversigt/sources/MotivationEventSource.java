@@ -7,7 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.core.eventsource.annotation.DataItemDefault;
 import com.hlag.oversigt.sources.event.MeterEvent;

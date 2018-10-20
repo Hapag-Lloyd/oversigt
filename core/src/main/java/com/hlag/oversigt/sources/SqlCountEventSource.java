@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;

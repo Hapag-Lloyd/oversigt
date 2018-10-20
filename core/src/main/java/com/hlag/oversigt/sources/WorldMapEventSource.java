@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Strings;
 import com.hlag.oversigt.connect.db.DatabaseCache;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.sources.data.JsonHint;

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import com.hlag.oversigt.connect.ssh.SshConnection;
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.JsonBasedData;
