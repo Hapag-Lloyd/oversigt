@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.stream.Stream;
 
 import com.hlag.oversigt.connect.db.DatabaseCache;
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 
 /**

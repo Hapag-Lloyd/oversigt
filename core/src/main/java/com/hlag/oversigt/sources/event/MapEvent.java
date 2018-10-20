@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
 public class MapEvent extends OversigtEvent {

@@ -3,8 +3,8 @@ package com.hlag.oversigt.sources.event;
 import java.util.Arrays;
 import java.util.Collection;
 
-import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.annotation.NoCache;
+import com.hlag.oversigt.core.event.NoCache;
+import com.hlag.oversigt.core.event.OversigtEvent;
 
 @NoCache
 public class ReloadEvent extends OversigtEvent {

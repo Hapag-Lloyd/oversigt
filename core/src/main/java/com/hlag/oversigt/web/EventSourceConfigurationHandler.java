@@ -31,8 +31,8 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.OversigtEventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
@@ -63,7 +63,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	private final Runnable shutdown;
 
 	@Inject
-	private OversigtEventSender eventSender;
+	private EventSender eventSender;
 	@Inject
 	private JsonUtils json;
 	@Inject

@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 
 public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {

@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
 public class TimelineEvent extends OversigtEvent {

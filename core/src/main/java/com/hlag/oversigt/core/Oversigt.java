@@ -19,6 +19,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.AbstractJdbcConnector;
 import com.hlag.oversigt.storage.Storage;

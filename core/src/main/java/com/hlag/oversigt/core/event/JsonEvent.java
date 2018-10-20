@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.event;
 
 public class JsonEvent extends OversigtEvent {
 	private final String json;

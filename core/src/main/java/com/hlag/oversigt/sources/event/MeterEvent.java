@@ -1,6 +1,6 @@
 package com.hlag.oversigt.sources.event;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 
 public class MeterEvent extends OversigtEvent {
 	private final byte value;

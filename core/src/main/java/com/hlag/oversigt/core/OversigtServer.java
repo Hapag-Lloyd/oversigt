@@ -1,8 +1,8 @@
 package com.hlag.oversigt.core;
 
+import static com.hlag.oversigt.core.event.EventSender.DASHBOARD_KEY;
 import static com.hlag.oversigt.util.HttpUtils.redirect;
 import static com.hlag.oversigt.util.StringUtils.substringBefore;
-import static com.hlag.oversigt.util.Utils.logInfo;
 import static com.hlag.oversigt.util.Utils.map;
 import static com.hlag.oversigt.util.Utils.not;
 import static io.undertow.servlet.Servlets.defaultContainer;
@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
@@ -40,13 +39,15 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.Configuration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.event.JsonEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -89,7 +90,6 @@ import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.InstanceFactory;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.util.ImmediateInstanceHandle;
-import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
@@ -108,17 +108,13 @@ public class OversigtServer extends AbstractIdleService {
 
 	public static final String MAPPING_API = "/api/v1";
 
-	static final AttachmentKey<RateLimiter> RATE_LIMITER_KEY = AttachmentKey.create(RateLimiter.class);
-	static final AttachmentKey<Dashboard> DASHBOARD_KEY = AttachmentKey.create(Dashboard.class);
-
 	private final List<HttpListenerConfiguration> listeners;
 
 	private final EventBus eventBus;
-	private final Optional<Long> rateLimit;
 
 	private ServerSentEventHandler sseHandler;
 	private Undertow server;
-	private OversigtEventSender sender;
+	private EventSender sender;
 
 	private final Configuration templateConfiguration;
 
@@ -157,8 +153,8 @@ public class OversigtServer extends AbstractIdleService {
 	@Inject
 	public OversigtServer(@Named("listeners") List<HttpListenerConfiguration> listeners,
 			EventBus eventBus,
-			OversigtEventSender sender,
-			@Nullable @Named("rateLimit") Long rateLimit,
+			EventSender sender,
+
 			Configuration templateConfiguration,
 			WelcomeHandler welcomeHandler,
 			LoginHandler loginHandler,
@@ -174,7 +170,6 @@ public class OversigtServer extends AbstractIdleService {
 		this.listeners = listeners;
 		this.eventBus = eventBus;
 		this.sender = sender;
-		this.rateLimit = Optional.ofNullable(rateLimit);
 		this.templateConfiguration = templateConfiguration;
 		this.welcomeHandler = welcomeHandler;
 		this.loginHandler = loginHandler;
@@ -229,16 +224,10 @@ public class OversigtServer extends AbstractIdleService {
 
 		LOGGER.info("Configuring web server");
 		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
-			Optional<Dashboard> dashboard = Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
+			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
 					.map(Deque::getFirst)
-					.map(dashboardController::getDashboard);
-			dashboard.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
-			rateLimit.map(RateLimiter::create)
-					.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
-			logInfo(LOGGER,
-					"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
-					dashboard.map(Dashboard::getId).orElse(""),
-					rateLimit.orElse(-1L));
+					.map(dashboardController::getDashboard)
+					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
 			eventBus.post(connection);
 		});
 
@@ -246,8 +235,9 @@ public class OversigtServer extends AbstractIdleService {
 			@Subscribe
 			@Override
 			public void accept(OversigtEvent event) {
-				sseHandler.getConnections().stream().forEach(
-						connection -> sender.sendEventToConnection(event, connection));
+				sseHandler.getConnections()
+						.stream()
+						.forEach(connection -> sender.sendEventToConnection(event, connection));
 			}
 		});
 
@@ -373,8 +363,8 @@ public class OversigtServer extends AbstractIdleService {
 	private void serveWidget(HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.SEE_OTHER);
 		String widgetName = exchange.getQueryParameters().get("widget").getFirst();
-		exchange.getResponseHeaders().put(Headers.LOCATION,
-				"/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
+		exchange.getResponseHeaders()
+				.put(Headers.LOCATION, "/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
 		exchange.endExchange();
 	}
 

@@ -35,8 +35,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.OversigtEvent;
-import com.hlag.oversigt.core.OversigtEventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
@@ -61,7 +61,7 @@ public class SystemResource {
 	private final Runnable shutdownRunnable;
 
 	@Inject
-	private OversigtEventSender eventSender;
+	private EventSender eventSender;
 
 	@Inject
 	public SystemResource(@Named("Shutdown") Runnable shutdown) {

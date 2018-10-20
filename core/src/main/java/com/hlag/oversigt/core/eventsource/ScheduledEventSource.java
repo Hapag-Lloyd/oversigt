@@ -21,8 +21,8 @@ import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.hlag.oversigt.core.ErrorEvent;
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.ErrorEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 
 /**
  * Scheduled EventSource - produces events with specified time period. Basically, based on Guava's

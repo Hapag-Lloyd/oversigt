@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.event;
 
 import com.google.common.base.Throwables;
 

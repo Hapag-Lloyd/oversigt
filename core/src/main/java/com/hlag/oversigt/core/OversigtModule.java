@@ -50,6 +50,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.NightlyReloaderService;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceNameGenerator;
@@ -119,7 +120,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(DashboardCreationHandler.class);
 		binder().bind(EventSourceConfigurationHandler.class);
 		binder().bind(HttpServerExchangeHandler.class);
-		binder().bind(OversigtEventSender.class);
+		binder().bind(EventSender.class);
 		binder().bind(JsonUtils.class);
 		binder().bind(RoleProvider.class);
 		binder().bind(MailSender.class);
@@ -196,7 +197,7 @@ class OversigtModule extends AbstractModule {
 	@Singleton
 	@Provides
 	@Inject
-	EventBus provideEventBus(OversigtEventSender sender) {
+	EventBus provideEventBus(EventSender sender) {
 		EventBus eventBus = new EventBus(Oversigt::handleEventBusException);
 		eventBus.register(sender);
 		return eventBus;

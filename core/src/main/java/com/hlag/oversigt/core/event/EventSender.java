@@ -1,8 +1,7 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.event;
 
-import static com.hlag.oversigt.core.OversigtServer.DASHBOARD_KEY;
-import static com.hlag.oversigt.core.OversigtServer.RATE_LIMITER_KEY;
 import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logInfo;
 import static com.hlag.oversigt.util.Utils.logWarn;
 
 import java.time.Duration;
@@ -19,6 +18,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,21 +28,25 @@ import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.eventsource.NoCache;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.util.JsonUtils;
 
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
+import io.undertow.util.AttachmentKey;
 
 @Singleton
-public class OversigtEventSender {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtEventSender.class);
+public class EventSender {
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventSender.class);
+
+	private static final AttachmentKey<RateLimiter> RATE_LIMITER_KEY = AttachmentKey.create(RateLimiter.class);
+	public static final AttachmentKey<Dashboard> DASHBOARD_KEY = AttachmentKey.create(Dashboard.class);
 
 	@Named("application-id")
 	@Inject
 	private String applicationId;
+	private final Optional<Long> rateLimit;
 
 	// Send events in another thread
 	private final BlockingQueue<EventSendTask> eventsToSend = new LinkedBlockingQueue<>();
@@ -55,9 +60,12 @@ public class OversigtEventSender {
 	private final Duration defaultEventLifetime;
 
 	@Inject
-	public OversigtEventSender(JsonUtils json, @Named("discardEventsAfter") Duration discardEventsAfter) {
+	public EventSender(JsonUtils json,
+			@Named("discardEventsAfter") Duration discardEventsAfter,
+			@Named("rateLimit") @Nullable Long rateLimit) {
 		this.json = json;
 		this.defaultEventLifetime = discardEventsAfter;
+		this.rateLimit = Optional.ofNullable(rateLimit);
 
 		thread = new Thread(this::sendQueuedTasks, "EventSender");
 		thread.setDaemon(true);
@@ -86,9 +94,15 @@ public class OversigtEventSender {
 	}
 
 	@Subscribe
-	void sendCachedEventsToConnection(ServerSentEventConnection connection) {
+	void newConnectionAdded(ServerSentEventConnection connection) {
+		rateLimit.map(RateLimiter::create)
+				.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
+		logInfo(LOGGER,
+				"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
+				Optional.ofNullable(connection.getAttachment(DASHBOARD_KEY)).map(Dashboard::getId).orElse("*"),
+				rateLimit.orElse(-1L));
 		synchronized (cachedEvents) {
-			cachedEvents.values().removeIf(OversigtEventSender::shouldRemoveEvent);
+			cachedEvents.values().removeIf(EventSender::shouldRemoveEvent);
 			cachedEvents.values().forEach(event -> sendEventToConnection(event, connection));
 		}
 	}
@@ -126,7 +140,7 @@ public class OversigtEventSender {
 		return true;
 	}
 
-	void sendEventToConnection(OversigtEvent event, ServerSentEventConnection connection) {
+	public void sendEventToConnection(OversigtEvent event, ServerSentEventConnection connection) {
 		if (shouldSendEventToConnection(event, connection)) {
 			eventsToSend.add(new EventSendTask(connection, event));
 		}

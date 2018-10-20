@@ -2,7 +2,7 @@ package com.hlag.oversigt.sources.event;
 
 import java.util.List;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
 public class HlBarChartEvent extends OversigtEvent {

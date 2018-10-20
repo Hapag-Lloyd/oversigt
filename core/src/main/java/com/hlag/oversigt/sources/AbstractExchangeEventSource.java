@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever;
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;

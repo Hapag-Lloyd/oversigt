@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 
 public class DoughnutChartEvent extends OversigtEvent {
 	private Collection<String> labels = new ArrayList<>();
