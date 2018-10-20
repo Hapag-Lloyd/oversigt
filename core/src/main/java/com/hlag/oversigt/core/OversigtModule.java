@@ -92,9 +92,9 @@ class OversigtModule extends AbstractModule {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtModule.class);
 
 	private final Runnable shutdownRunnable;
-	private final OversigtOptions options;
+	private final CommandLineOptions options;
 
-	OversigtModule(OversigtOptions options, Runnable shutdownRunnable, List<Module> extensions) {
+	OversigtModule(CommandLineOptions options, Runnable shutdownRunnable, List<Module> extensions) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
@@ -187,7 +187,7 @@ class OversigtModule extends AbstractModule {
 		}
 
 		// binds properties
-		Configuration configuration = readConfiguration(APPLICATION_CONFIG, gson);
+		OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		configuration.bindProperties(binder(), options.isDebugFallback(), options.getLdapBindPasswordFallback());
 		if (options != null) {
 			Names.bindProperties(binder(), options.getProperties());
@@ -244,13 +244,13 @@ class OversigtModule extends AbstractModule {
 		return jsonpathConfiguration;
 	}
 
-	private static Configuration readConfiguration(String resourceUrlString, Gson gson) {
+	private static OversigtConfiguration readConfiguration(String resourceUrlString, Gson gson) {
 		try {
 			URL configUrl = Resources.getResource(resourceUrlString);
 			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);
 			LOGGER.info("Reading Oversigt configuration: " + configUrl);
 			String configString = Resources.toString(configUrl, Charsets.UTF_8);
-			return gson.fromJson(configString, Configuration.class);
+			return gson.fromJson(configString, OversigtConfiguration.class);
 		} catch (IOException e) {
 			throw new IllegalStateException("Unable to read configuration", e);
 		}

@@ -41,8 +41,8 @@ import io.undertow.server.session.SessionManager;
  *
  * @author avarabyeu
  */
-public class Configuration {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
+public class OversigtConfiguration {
+	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
 
 	private static void bind(Binder binder, String name, Object value) {
 		binder.bindConstant().annotatedWith(Names.named(name)).to(

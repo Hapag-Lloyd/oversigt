@@ -44,7 +44,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.Configuration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
 import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.event.EventSender;

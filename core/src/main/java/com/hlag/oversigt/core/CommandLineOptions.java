@@ -13,10 +13,10 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-public class OversigtOptions {
+public class CommandLineOptions {
 
-	public static OversigtOptions parse(String[] args) {
-		OversigtOptions options = new OversigtOptions();
+	public static CommandLineOptions parse(String[] args) {
+		CommandLineOptions options = new CommandLineOptions();
 		CmdLineParser parser = new CmdLineParser(options);
 		try {
 			parser.parseArgument(args);
@@ -34,7 +34,7 @@ public class OversigtOptions {
 		}
 	}
 
-	private OversigtOptions() {
+	private CommandLineOptions() {
 	}
 
 	@Option(name = "--startEventSources", usage = "When starting the server also start all event sources", handler = BooleanOptionHandler.class, required = false)
