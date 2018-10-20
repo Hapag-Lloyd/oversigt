@@ -58,7 +58,8 @@ public class AsynchronousHttpClientFactory {
 		final HttpClientOptions options = new HttpClientOptions();
 		options.setSocketTimeout(SOCKET_TIMEOUT, TimeUnit.SECONDS); // XXX
 
-		final DefaultHttpClientFactory defaultHttpClientFactory = new DefaultHttpClientFactory(new NoOpEventPublisher(),
+		final DefaultHttpClientFactory<?> defaultHttpClientFactory = new DefaultHttpClientFactory<>(
+				new NoOpEventPublisher(),
 				new RestClientApplicationProperties(serverUri),
 				new ThreadLocalContextManager<Object>() {
 					@Override
