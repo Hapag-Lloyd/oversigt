@@ -29,7 +29,7 @@
 			<ul class="list-inline nav nav-pills" id="filterEventSourcesSearchList">
 				<#list eventSourceInstances as eventSourceInstance>
 					<li<#if eventSourceInstance?counter==1> class="active"</#if> data-eventSource="${eventSourceInstance.id}">
-						<a class="<#if eventSourceInstance.descriptor.serviceClass??><#if !dashboardManager.isRunning(eventSourceInstance)>text-muted</#if><#else>text-warning</#if>" <#if !eventSourceInstance.enabled>style="text-decoration: line-through"</#if> data-toggle="pill" href="#${eventSourceInstance.id}" data-url="?eventSource=${eventSourceInstance.id}">
+						<a class="<#if eventSourceInstance.descriptor.serviceClass??><#if dashboardManager.hasException(eventSourceInstance)>text-danger </#if><#if !dashboardManager.isRunning(eventSourceInstance)>text-muted </#if><#else>text-warning </#if>" <#if !eventSourceInstance.enabled>style="text-decoration: line-through"</#if> data-toggle="pill" href="#${eventSourceInstance.id}" data-url="?eventSource=${eventSourceInstance.id}">
 							${eventSourceInstance.name}
 						</a>
 					</li>

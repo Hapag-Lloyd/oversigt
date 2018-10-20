@@ -2,8 +2,10 @@ package com.hlag.oversigt.model;
 
 import static com.hlag.oversigt.util.Utils.not;
 import static com.hlag.oversigt.util.Utils.toList;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -66,9 +68,9 @@ import com.google.inject.Singleton;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
-import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
@@ -158,7 +160,7 @@ public class DashboardController {
 	/**
 	 * Creates a new dashboard instance, persists it in the storage and makes it available for other
 	 * users.
-	 * 
+	 *
 	 * @param id the ID of the dashboard to be created
 	 * @param owner the owner of the dashboard to be created
 	 * @param enabled <code>true</code> if the dashboard should be enabled by default
@@ -463,8 +465,9 @@ public class DashboardController {
 	private void adoptDefaultEventSourceProperties(EventSourceInstance instance, EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
 		Service service = createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
-		instance.getDescriptor().getProperties().forEach(
-				SneakyException.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
+		instance.getDescriptor()
+				.getProperties()
+				.forEach(SneakyException.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
 	}
 
 	String getValueString(EventSourceProperty property, final Object value) {
@@ -679,6 +682,13 @@ public class DashboardController {
 				.orElse(null);
 	}
 
+	public boolean hasException(EventSourceInstance instance) {
+		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
+				.map(ScheduledEventSource::getLastFailureException)
+				.map(x -> x != null)
+				.orElse(false);
+	}
+
 	public void disableEventSourceInstance(String id) {
 		EventSourceInstance instance = getEventSourceInstance(id);
 		if (isRunning(instance)) {
@@ -696,7 +706,7 @@ public class DashboardController {
 
 	/**
 	 * Delete an event source instance if the instance is not used any more
-	 * 
+	 *
 	 * @param eventSourceId the ID of the event source to remove
 	 * @return <code>null</code> if the removal was successful or the names of all dashboards
 	 *         containing widgets that use this event source instance
@@ -717,8 +727,9 @@ public class DashboardController {
 		if (!force && !widgetsToDelete.isEmpty()) {
 			return dashboards.values()
 					.stream()
-					.filter(d -> d.getWidgets().stream().anyMatch(
-							w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
+					.filter(d -> d.getWidgets()
+							.stream()
+							.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
 					.map(Dashboard::getId)
 					.collect(toSet());
 		} else if (force && !widgetsToDelete.isEmpty()) {
