@@ -35,8 +35,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.event.EventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
@@ -89,7 +89,8 @@ public class SystemResource {
 
 	@GET
 	@Path("/logfiles")
-	@ApiResponses({ @ApiResponse(code = 200, message = "A list of available log files will be transferred.") })
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "A list of available log files will be transferred.", response = String.class, responseContainer = "list") })
 	@JwtSecured
 	@ApiOperation(value = "List available log files", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
@@ -105,9 +106,9 @@ public class SystemResource {
 	@GET
 	@Path("/logfiles/{filename}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of available log files will be transferred", response = String.class, responseContainer = "list") })
+			@ApiResponse(code = 200, message = "The requested lines of the log file will be transferred", response = String.class, responseContainer = "list") })
 	@JwtSecured
-	@ApiOperation(value = "List available log files", //
+	@ApiOperation(value = "Retreive log file content", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
