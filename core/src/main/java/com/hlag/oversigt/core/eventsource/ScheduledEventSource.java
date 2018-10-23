@@ -87,12 +87,16 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			}
 			logTrace(getLogger(), "Done producing event");
 			setLastRunNow(true);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			sendEvent(new ErrorEvent(e));
 			logError(getLogger(), "Cannot produce event with id %s. Deleting last event.", eventId);
 			failure("Event source threw an exception", e);
 			setLastRunNow(false);
 			removeLastEvent();
+			if (!(e instanceof Exception)) {
+				logError(getLogger(), "Error occurred. Stopping service.");
+				stopAsync();
+			}
 		}
 	}
 
