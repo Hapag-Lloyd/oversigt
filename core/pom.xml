@@ -229,9 +229,9 @@
 
 		<!-- JIRA support -->
 		<dependency>
-			<groupId>com.atlassian.fugue</groupId>
+			<groupId>io.atlassian.fugue</groupId>
 			<artifactId>fugue</artifactId>
-			<version>2.6.1</version>
+			<version>4.7.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.jira</groupId>
