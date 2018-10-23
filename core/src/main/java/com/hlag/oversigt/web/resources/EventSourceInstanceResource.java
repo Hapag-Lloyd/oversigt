@@ -6,6 +6,7 @@ import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -31,9 +32,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.hlag.oversigt.model.DashboardController;
@@ -56,6 +56,10 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Api(tags = { "EventSource" }, authorizations = {
 		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -153,7 +157,7 @@ public class EventSourceInstanceResource {
 	@GET
 	@Path("/{id}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns details of the requested event source instance", response = EventSourceInstanceDetails.class),
+			@ApiResponse(code = 200, message = "Returns details of the requested event source instance", response = FullEventSourceInstanceInfo.class),
 			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read event source instance")
@@ -161,7 +165,11 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response readInstance(@PathParam("id") @NotBlank String instanceId) {
 		try {
-			return ok(new EventSourceInstanceDetails(controller.getEventSourceInstance(instanceId))).build();
+			EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
+			FullEventSourceInstanceInfo result = new FullEventSourceInstanceInfo(
+					new EventSourceInstanceDetails(instance),
+					new ServiceInfo(instance, controller));
+			return ok(result).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
@@ -216,8 +224,9 @@ public class EventSourceInstanceResource {
 			newInstance.setEnabled(details.isEnabled());
 			newInstance.setName(details.getName());
 			newInstance.setFrequency(details.getFrequency());
-			newInstance.getDescriptor().getProperties().forEach(
-					p -> newInstance.setPropertyString(p, details.properties.get(p.getName())));
+			newInstance.getDescriptor()
+					.getProperties()
+					.forEach(p -> newInstance.setPropertyString(p, details.properties.get(p.getName())));
 			newInstance.getDescriptor().getDataItems().forEach(p -> {
 				if (details.dataItems.containsKey(p.getName())) {
 					newInstance.setPropertyString(p, details.dataItems.get(p.getName()));
@@ -256,29 +265,6 @@ public class EventSourceInstanceResource {
 		}
 	}
 
-	public static class EventSourceInstanceInfo {
-		@NotBlank
-		private String id;
-		@NotBlank
-		private String name;
-
-		public EventSourceInstanceInfo() {
-		}
-
-		public EventSourceInstanceInfo(EventSourceInstance instance) {
-			this.id = instance.getId();
-			this.name = instance.getName();
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-	}
-
 	static Map<String, String> getValueMap(Stream<EventSourceProperty> propertyStream,
 			Function<EventSourceProperty, String> getValue,
 			Predicate<EventSourceProperty> hasValue,
@@ -308,10 +294,30 @@ public class EventSourceInstanceResource {
 				true);
 	}
 
+	@Getter
+	@NoArgsConstructor
+	public static class EventSourceInstanceInfo {
+		@NotBlank
+		private String id;
+		@NotBlank
+		private String name;
+
+		public EventSourceInstanceInfo(EventSourceInstance instance) {
+			this.id = instance.getId();
+			this.name = instance.getName();
+		}
+	}
+
+	@Getter
+	@ToString
+	@NoArgsConstructor
+	@AllArgsConstructor
 	public static class EventSourceInstanceDetails {
 		@NotBlank
+		@JsonProperty(access = Access.READ_ONLY)
 		private String eventSourceDescriptor;
 		@NotBlank
+		@JsonProperty(access = Access.READ_ONLY)
 		private String id;
 		@NotBlank
 		private String name;
@@ -322,9 +328,6 @@ public class EventSourceInstanceResource {
 		@NotNull
 		private Map<@NotBlank String, @NotNull String> dataItems;
 
-		public EventSourceInstanceDetails() {
-		}
-
 		public EventSourceInstanceDetails(EventSourceInstance instance) {
 			this(
 				instance.getDescriptor().getKey().getKey(),
@@ -333,56 +336,50 @@ public class EventSourceInstanceResource {
 				instance.isEnabled(),
 				instance.getFrequency(),
 				getPropertyMap(instance),
-				getDataItemMap(instance));
+				getDataItemMap(instance)/*,
+										instance.getCreatedBy(),
+										instance.getLastChangeBy()*/);
 		}
+	}
 
-		public EventSourceInstanceDetails(@NotBlank String eventSourceDescriptor,
-				@NotBlank String id,
-				@NotBlank String name,
-				boolean enabled,
-				Duration frequency,
-				@NotNull Map<@NotBlank String, @NotNull String> properties,
-				@NotNull Map<@NotBlank String, @NotNull String> dataItems) {
-			this.eventSourceDescriptor = eventSourceDescriptor;
-			this.id = id;
-			this.name = name;
-			this.enabled = enabled;
-			this.frequency = frequency;
-			this.properties = properties;
-			this.dataItems = dataItems;
-		}
+	@Getter
+	@ToString
+	@NoArgsConstructor
+	public static class ServiceInfo {
+		@JsonProperty(access = Access.READ_ONLY)
+		private String createdBy;
+		@JsonProperty(access = Access.READ_ONLY)
+		private String lastChangeBy;
+		@JsonProperty(access = Access.READ_ONLY)
+		private boolean running;
+		@JsonProperty(access = Access.READ_ONLY)
+		private ZonedDateTime lastFailureDateTime;
+		@JsonProperty(access = Access.READ_ONLY)
+		private String lastFailureDescription;
+		@JsonProperty(access = Access.READ_ONLY)
+		private String lastFailureException;
+		@JsonProperty(access = Access.READ_ONLY)
+		private ZonedDateTime lastRun;
+		@JsonProperty(access = Access.READ_ONLY)
+		private ZonedDateTime lastSuccessfulRun;
 
-		public String getEventSourceDescriptor() {
-			return eventSourceDescriptor;
+		public ServiceInfo(EventSourceInstance instance, DashboardController controller) {
+			this.createdBy = instance.getCreatedBy();
+			this.lastChangeBy = instance.getLastChangeBy();
+			this.running = controller.isRunning(instance);
+			lastFailureDateTime = controller.getLastFailureDateTime(instance);
+			lastFailureDescription = controller.getLastFailureDescription(instance);
+			lastFailureException = controller.getLastFailureException(instance);
+			lastRun = controller.getLastRun(instance);
+			lastSuccessfulRun = controller.getLastSuccessfulRun(instance);
 		}
+	}
 
-		public String getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public boolean isEnabled() {
-			return enabled;
-		}
-
-		public Duration getFrequency() {
-			return frequency;
-		}
-
-		public Map<String, String> getProperties() {
-			return properties;
-		}
-
-		public Map<String, String> getDataItems() {
-			return dataItems;
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
-		}
+	@Getter
+	@AllArgsConstructor
+	@ToString
+	public static class FullEventSourceInstanceInfo {
+		private EventSourceInstanceDetails instanceDetails;
+		private ServiceInfo serviceInfo;
 	}
 }
