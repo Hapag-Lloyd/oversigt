@@ -1,13 +1,16 @@
 package com.hlag.oversigt.web.resources;
 
 import static com.hlag.oversigt.util.Utils.removePasswords;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -36,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
@@ -118,7 +122,7 @@ public class EventSourceInstanceResource {
 				.getEventSourceInstances()
 				.stream()
 				.filter(filter)
-				.map(EventSourceInstanceInfo::new)
+				.map(instance -> new EventSourceInstanceInfo(instance, controller))
 				.collect(Collectors.toList())).build();
 	}
 
@@ -301,10 +305,28 @@ public class EventSourceInstanceResource {
 		private String id;
 		@NotBlank
 		private String name;
+		@NotNull
+		private List<@NotNull DashboardShortInfo> usedBy;
 
-		public EventSourceInstanceInfo(EventSourceInstance instance) {
+		public EventSourceInstanceInfo(EventSourceInstance instance, DashboardController controller) {
 			this.id = instance.getId();
 			this.name = instance.getName();
+			this.usedBy = new ArrayList<>(controller//
+					.getDashboardsWhereEventSourceIsUsed(instance)
+					.map(DashboardShortInfo::new)
+					.collect(toList()));
+		}
+	}
+
+	@Getter
+	public static class DashboardShortInfo {
+		@NotBlank
+		private final String id;
+		private final String title;
+
+		public DashboardShortInfo(Dashboard dashboard) {
+			this.id = dashboard.getId();
+			this.title = dashboard.getTitle();
 		}
 	}
 

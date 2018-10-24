@@ -208,13 +208,12 @@ public class DashboardController {
 		}
 	}
 
-	public Collection<Dashboard> getDashboards(EventSourceInstance instance) {
+	public Stream<Dashboard> getDashboardsWhereEventSourceIsUsed(EventSourceInstance instance) {
 		return dashboards.values()
 				.stream()
 				.filter(d -> d.getWidgets()//
 						.stream()
-						.anyMatch(w -> w.getEventSourceInstance() == instance))
-				.collect(toList());
+						.anyMatch(w -> w.getEventSourceInstance() == instance));
 	}
 
 	private void reloadDashboardsWithEventSourceInstance(EventSourceInstance instance) {

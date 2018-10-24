@@ -167,7 +167,7 @@
 					/>
 			</#list>
 		</div>
-		<#assign dashboards=dashboardManager.getDashboards(eventSourceInstance)>
+		<#assign dashboards=dashboardManager.getDashboardsWhereEventSourceIsUsed(eventSourceInstance)>
 		<#if usages?has_content>
 			<div class="panel-heading">
 				Usage
