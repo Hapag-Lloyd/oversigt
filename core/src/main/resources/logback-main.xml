@@ -24,7 +24,7 @@
 	</root>
 
 	<!-- settings for some internal loggers -->
-	<logger name="com.hlag.oversigt.core" level="DEBUG" />
+	<logger name="com.hlag.oversigt.core" level="INFO" />
 	<logger name="com.hlag.oversigt.core.OversigtEventSender" level="INFO"/>
 	<logger name="com.hlag.oversigt.model" level="INFO"/>
 	
