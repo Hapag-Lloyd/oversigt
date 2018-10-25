@@ -40,10 +40,10 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 @EventSource(displayName = "Calendar Timeline View", view = "Timeline")
 public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEvent> {
 	// TODO internationalize these strings
-	private static final String UNTIL = "bis ";
+	private static final String UNTIL = "until ";
 	private static final String TODAY = "Today";
-	private static final String ALL_DAY_UNTIL = "ganztägig, bis ";
-	private static final String ALL_DAY = "ganztägig";
+	private static final String ALL_DAY = "all day";
+	private static final String ALL_DAY_UNTIL = ALL_DAY + ", " + UNTIL;
 
 	private Period maximumPointInFuture = Period.ofMonths(3);
 	private int minimumEventCount = 0;
@@ -69,8 +69,8 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	@Override
 	protected TimelineEvent produceExchangeEvent() throws Exception {
-		TimelineEvent event = new TimelineEvent(maximumPointInFuture);
-		LocalDate now = LocalDate.now();
+		TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
+		LocalDate now = LocalDate.now(getZoneId());
 
 		fillTimelineEvent(now, event);
 
@@ -115,23 +115,24 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		try {
 			ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
 			ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
+			LocalDate now = LocalDate.now(getZoneId());
 
 			//for all day appointments, write "ganztägig"
 			String duration;
 
 			if (appointment.getIsAllDayEvent()) {
-				LocalDate _endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
-				boolean endSameDay = _endDate.isEqual(start.toLocalDate());
-				boolean endsToday = _endDate.isEqual(LocalDate.now());
+				LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
+				boolean endSameDay = endDate.isEqual(start.toLocalDate());
+				boolean endsToday = endDate.isEqual(now);
 
 				if (endSameDay || endsToday) {
 					duration = ALL_DAY;
 				} else {
-					duration = ALL_DAY_UNTIL + _endDate.format(DateTimeFormatter.ofPattern("d. MMM", getLocale()));
+					duration = ALL_DAY_UNTIL + endDate.format(DateTimeFormatter.ofPattern("d. MMM", getLocale()));
 				}
 			} else {
 				//not an all day event
-				boolean startInPast = start.toLocalDate().isBefore(LocalDate.now());
+				boolean startInPast = start.toLocalDate().isBefore(now);
 
 				if (startInPast) {
 					duration = UNTIL + end.format(DateTimeFormatter.ofPattern("d. MMM, HH:mm", getLocale()));

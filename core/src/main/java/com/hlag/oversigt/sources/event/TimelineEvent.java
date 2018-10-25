@@ -1,9 +1,11 @@
 package com.hlag.oversigt.sources.event;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAmount;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -19,9 +21,13 @@ public class TimelineEvent extends OversigtEvent {
 	private SortedSet<Event> events = new TreeSet<>();
 
 	private final TemporalAmount maxAge;
+	private final ZoneId zoneId;
+	private final Locale locale;
 
-	public TimelineEvent(TemporalAmount maxAge) {
+	public TimelineEvent(TemporalAmount maxAge, ZoneId zoneId, Locale locale) {
 		this.maxAge = maxAge;
+		this.zoneId = zoneId;
+		this.locale = locale;
 	}
 
 	public TemporalAmount getMaxAge() {
@@ -64,7 +70,7 @@ public class TimelineEvent extends OversigtEvent {
 			boolean allDay,
 			String background,
 			String fontColor) {
-		final LocalDate now = LocalDate.now();
+		final LocalDate now = LocalDate.now(zoneId);
 
 		// filter event in the past
 		if (endDate.isBefore(now)) {
@@ -87,11 +93,12 @@ public class TimelineEvent extends OversigtEvent {
 	 * Removes events older than maxAge if more than minCount of events are inside this event.
 	 */
 	public void removeEvents(TemporalAmount maxAge, int minCount) {
+		final LocalDate now = LocalDate.now(zoneId);
+
 		if (events.size() > minCount) {
 			int count = 0;
 			for (Event event : events) {
-				if (count > minCount
-						&& (maxAge == null || event.getLocalDate().minus(maxAge).isAfter(LocalDate.now()))) {
+				if (count > minCount && (maxAge == null || event.getLocalDate().minus(maxAge).isAfter(now))) {
 					events = new TreeSet<>(events.headSet(event));
 					return;
 				}
