@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAmount;
 import java.util.Comparator;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -15,7 +14,7 @@ import com.hlag.oversigt.properties.Color;
 
 public class TimelineEvent extends OversigtEvent {
 
-	private static final Comparator<Event> BY_DATE = (e1, e2) -> e1.getLocalDate().compareTo(e2.getLocalDate());
+	private static final Comparator<Event> BY_DATE = (e1, e2) -> e1.getOriginalDate().compareTo(e2.getOriginalDate());
 	private static final Comparator<Event> BY_NAME = (e1, e2) -> e1.getName().compareTo(e2.getName());
 
 	private SortedSet<Event> events = new TreeSet<>();
@@ -34,12 +33,8 @@ public class TimelineEvent extends OversigtEvent {
 		return maxAge;
 	}
 
-	public Optional<LocalDate> getDateOfFirstEvent() {
-		return events.stream().findFirst().map(Event::getLocalDate);
-	}
-
 	public boolean hasEventAt(LocalDate date) {
-		return events.stream().filter(event -> event.getLocalDate().equals(date)).findAny().isPresent();
+		return events.stream().filter(event -> event.getOriginalDate().equals(date)).findAny().isPresent();
 	}
 
 	public void addEvent(String name, LocalDate startDate, LocalDate endDate, boolean allDay, Color background) {
@@ -86,7 +81,10 @@ public class TimelineEvent extends OversigtEvent {
 			return;
 		}
 
-		events.add(new Event(name, startDate, background, fontColor));
+		final LocalDate date = startDate.isBefore(now) ? now : startDate;
+		final String dateLabel = DateTimeFormatter.ofPattern("MMM d", locale).format(startDate);
+
+		events.add(new Event(name, date, dateLabel, startDate, background, fontColor));
 	}
 
 	/**
@@ -98,7 +96,7 @@ public class TimelineEvent extends OversigtEvent {
 		if (events.size() > minCount) {
 			int count = 0;
 			for (Event event : events) {
-				if (count > minCount && (maxAge == null || event.getLocalDate().minus(maxAge).isAfter(now))) {
+				if (count > minCount && (maxAge == null || event.getOriginalDate().minus(maxAge).isAfter(now))) {
 					events = new TreeSet<>(events.headSet(event));
 					return;
 				}
@@ -111,20 +109,23 @@ public class TimelineEvent extends OversigtEvent {
 
 		private final String name;
 		private final String date;
+		private final String dateLabel;
 		private final String background;
 		private final String fontColor;
-		private final LocalDate localDate;
+		private final LocalDate originalDate;
 
-		private Event(String name, LocalDate date, String background) {
-			this(name, date, background, "white");
-		}
-
-		private Event(String name, LocalDate date, String background, String fontColor) {
+		private Event(String name,
+				LocalDate date,
+				String dateLabel,
+				LocalDate originalDate,
+				String background,
+				String fontColor) {
 			this.name = name;
 			this.date = date.format(DateTimeFormatter.ISO_DATE);
+			this.dateLabel = dateLabel;
 			this.background = background;
 			this.fontColor = fontColor == null ? "white" : fontColor;
-			this.localDate = date;
+			this.originalDate = originalDate;
 		}
 
 		public String getName() {
@@ -135,6 +136,10 @@ public class TimelineEvent extends OversigtEvent {
 			return date;
 		}
 
+		public String getDateLabel() {
+			return dateLabel;
+		}
+
 		public String getBackground() {
 			return background;
 		}
@@ -143,8 +148,8 @@ public class TimelineEvent extends OversigtEvent {
 			return fontColor;
 		}
 
-		public LocalDate getLocalDate() {
-			return localDate;
+		public LocalDate getOriginalDate() {
+			return originalDate;
 		}
 
 		@Override
@@ -154,7 +159,7 @@ public class TimelineEvent extends OversigtEvent {
 
 		@Override
 		public String toString() {
-			return String.format("Event [name=%s, date=%s]", name, localDate);
+			return String.format("Event [name=%s, date=%s]", name, originalDate);
 		}
 	}
 }

@@ -227,6 +227,9 @@ window.TimeKnots = {
             .data(events).enter()
             .append('text').attr("class", "event-description-date")
             .html(function(d){
+                if (typeof d.dateLabel === 'string') {
+                    return d.dateLabel;
+                }
                 if (moment(d.date).isSame(TODAY, 'day') && d.name !== "TODAY") {
                     return "TODAY";
                 }
