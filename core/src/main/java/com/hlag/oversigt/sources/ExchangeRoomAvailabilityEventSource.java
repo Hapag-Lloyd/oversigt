@@ -2,6 +2,7 @@ package com.hlag.oversigt.sources;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -9,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,7 +33,6 @@ import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
-import com.hlag.oversigt.util.Utils;
 
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
@@ -66,18 +67,26 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			return null;
 		}
 
-		List<RoomAvailabilityItem> avl = meetings.entrySet()
+		final List<RoomAvailabilityItem> unsortedItems = meetings.entrySet()
 				.stream()
 				.map(e -> checkRoomAvailability(now, e.getKey(), e.getValue()))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 
+		final List<RoomAvailabilityItem> sortedItems;
 		if (isAvailableRoomsToTop()) {
-			avl = Utils.concat(avl.stream().filter(a -> a.free), avl.stream().filter(a -> !a.free))
-					.collect(Collectors.toList());
+			Comparator<RoomAvailabilityItem> compareByFreeAndUntil = (a, b) -> (a.free ? -1 : 1)
+					* a.until.orElse(LocalTime.MAX).compareTo(b.until.orElse(LocalTime.MAX));
+			Comparator<RoomAvailabilityItem> compareByIndex = (a, b) -> unsortedItems.indexOf(a)
+					- unsortedItems.indexOf(b);
+
+			sortedItems = unsortedItems.stream().sorted(compareByFreeAndUntil.thenComparing(compareByIndex)).collect(
+					Collectors.toList());
+		} else {
+			sortedItems = unsortedItems;
 		}
 
-		return new RoomAvailabilityListEvent(avl);
+		return new RoomAvailabilityListEvent(sortedItems);
 	}
 
 	private RoomAvailabilityItem checkRoomAvailability(ZonedDateTime when, Room room, Collection<Meeting> meetings) {
@@ -87,10 +96,10 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return new RoomAvailabilityItem(room,
 				!bs.isBusy(when),
 				bs.currentStateUntil(when)
-						.filter(LocalDate.now(getZoneId()).plusDays(1).atStartOfDay(getZoneId())::isAfter)
+						.filter(when.toLocalDate().plusDays(1).atStartOfDay(getZoneId())::isAfter)
 						.map(ZonedDateTime::toLocalTime)
-						.map(formatter::format)
-						.orElse(null));
+						.orElse(null),
+				formatter);
 	}
 
 	private Map<Room, List<Meeting>> getMeetings(Room[] rooms, ExchangeService service, LocalDate day)
@@ -326,24 +335,25 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 	public static final class RoomAvailabilityItem {
 
-		private String clazz;
-		private String name;
-		private String number;
-		private String status;
-		private volatile boolean free;
+		private final String clazz;
+		private final String name;
+		private final String number;
+		private final String status;
+		private final boolean free;
+		private final Optional<LocalTime> until;
 
-		public RoomAvailabilityItem(Room room, Boolean free, String until) {
+		public RoomAvailabilityItem(Room room, Boolean free, LocalTime until, DateTimeFormatter formatter) {
 			clazz = free != null && free ? "free" : "occupied";
 			name = room.name;
 			number = room.roomNumber;
 			this.free = free;
+			this.until = Optional.ofNullable(until);
 
 			if (free == null) {
 				status = "";
 			} else {
-				status = free ? "Free" : "Busy"; // TODO internationalization
+				status = (free ? "Free" : "Busy") + (until == null ? " Today" : " until " + formatter.format(until)); // TODO internationalization
 			}
-			status += until == null ? " Today" : " until " + until; // TODO internationalization
 		}
 
 		@Override
