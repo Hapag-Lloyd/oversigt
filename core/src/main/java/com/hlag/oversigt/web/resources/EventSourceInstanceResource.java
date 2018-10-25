@@ -336,10 +336,8 @@ public class EventSourceInstanceResource {
 	@AllArgsConstructor
 	public static class EventSourceInstanceDetails {
 		@NotBlank
-		@JsonProperty(access = Access.READ_ONLY)
 		private String eventSourceDescriptor;
 		@NotBlank
-		@JsonProperty(access = Access.READ_ONLY)
 		private String id;
 		@NotBlank
 		private String name;
