@@ -1,0 +1,21 @@
+<app-header [title]="'Create Event Source'" [additional]="search"></app-header>
+<ng-template #search>
+  <input nz-input placeholder="Filter event sources" [(ngModel)]="searchText" size="50">
+</ng-template>
+
+<div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-evenly; align-items: baseline;">
+  <nz-card *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText" nzHoverable style="width: 300px; margin-bottom: 2ex;" nzTitle="{{info.name}}" [nzCover]="coverTemplate"
+    [nzActions]="[actionInfo,actionCreate]">
+    <p *ngIf="info.description !== null">{{info.description}}</p>
+    <p *ngIf="info.description === null">This event source does not have a description.</p>
+    <ng-template #coverTemplate>
+      <!--<img alt="Example image" src="{{info.image}}" />-->
+    </ng-template>
+    <ng-template #actionInfo>
+      <a (click)="showEventSourceInfo(info.key)"><i nz-icon type="info-circle" theme="outline"></i></a>
+    </ng-template>
+    <ng-template #actionCreate>
+      <a (click)="createEventSource(info.key)"><i nz-icon type="plus-circle" theme="outline"></i></a>
+    </ng-template>
+  </nz-card>
+</div>

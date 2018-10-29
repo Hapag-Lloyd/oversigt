@@ -1,0 +1,24 @@
+<app-header [title]="'Loggers'"></app-header>
+
+<nz-table #basicTable [nzData]="loggerInfos" [nzFrontPagination]="'false'" [nzShowPagination]="'false'" [nzSize]="'small'" [nzLoading]="loggerInfos.length === 0">
+  <thead>
+    <tr>
+      <th nzShowSort nzSortKey="name">Logger</th>
+      <th nzShowSort nzSortKey="level">Log Level</th>
+      <th nzShowSort nzSortKey="effectiveLevel">Effective Log Level</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of basicTable.data">
+      <td>{{data.name}}</td>
+      <td>{{data.level}}</td>
+      <td>{{data.effectiveLevel}}</td>
+      <td>
+        <nz-radio-group [(ngModel)]="data.level" [nzSize]="'small'">
+          <label *ngFor="let level of possibleLogLevels" (click)="setLogLevel(data.name, level)" nz-radio-button nzValue="{{level}}">{{level}}</label>
+        </nz-radio-group>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>

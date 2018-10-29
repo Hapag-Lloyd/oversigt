@@ -1,0 +1,50 @@
+import { Component, OnInit, Input } from '@angular/core';
+import { SystemService } from 'src/oversigt-client';
+
+@Component({
+  selector: 'app-config-logs-logfile',
+  templateUrl: './config-logs-logfile.component.html',
+  styleUrls: ['./config-logs-logfile.component.css']
+})
+export class ConfigLogsLogfileComponent implements OnInit {
+  logfiles: string[] = [];
+  content: string = null;
+  selectedValue: string = null;
+
+  constructor(
+    private ss: SystemService
+  ) { }
+
+  ngOnInit() {
+    this.ss.listLogFiles().subscribe(
+      list => {
+        this.logfiles = list.sort((a, b) => a.toLowerCase() < b.toLowerCase() ? 1 : -1);
+      },
+      error => {
+        console.error(error);
+        alert(error);
+        // TODO
+      }
+    );
+  }
+
+  loadLogFileContent(filename: string): void {
+    this.ss.getLogFileContent(filename, -100).subscribe(
+      logLines => {
+        this.content = logLines.reverse().join('\n');
+      }
+    );
+  }
+
+  downloadLogfile(filename: string): void {
+    this.ss.getLogFileContent(filename).subscribe(
+      logLines => {
+        const content = logLines.join('\n');
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url);
+      }
+    );
+  }
+
+}

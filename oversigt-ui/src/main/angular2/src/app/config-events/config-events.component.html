@@ -1,0 +1,27 @@
+<app-header [title]="'Cached Events'" [additional]="search"></app-header>
+<ng-template #search>
+  <button (click)="reloadEvents()" nz-button nzType="default" style="margin-right: 8px"><i nz-icon type="reload"></i></button>
+  <input nz-input placeholder="Filter events" size="50" [(ngModel)]="filter">
+</ng-template>
+
+<nz-list [nzDataSource]="events | filterEventitem: filter" [nzRenderItem]="item" [nzItemLayout]="'horizontal'" [nzLoading]="events.length === null">
+  <ng-template #item let-item>
+    <nz-list-item [nzActions]="[eventSourceLink]">
+      <nz-list-item-meta [nzTitle]="title" [nzDescription]="content">
+        <ng-template #title>
+          <a (click)="item.visible = !item.visible">{{item.event.id}}
+            <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
+            <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
+          </a>
+        </ng-template>
+        <ng-template #content>
+          <pre *ngIf="item.visible">{{item.event | json}}</pre>
+        </ng-template>
+      </nz-list-item-meta>
+      <ng-template #eventSourceLink>
+        <a routerLink="/config/eventSources/{{item.event.id}}" nz-button nz-tooltip nzTitle="Go to event source" nzType="dashed"><i
+            nz-icon type="link" theme="outline"></i></a>
+      </ng-template>
+    </nz-list-item>
+  </ng-template>
+</nz-list>

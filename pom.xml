@@ -30,6 +30,7 @@
 	</properties>
 	<modules>
 		<module>core</module>
+		<module>oversigt-ui</module>
 	</modules>
 
 	<build>

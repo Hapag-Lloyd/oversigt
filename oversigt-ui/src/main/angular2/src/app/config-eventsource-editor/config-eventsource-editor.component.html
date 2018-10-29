@@ -1,0 +1,28 @@
+<nz-form-item>
+  <nz-form-label [nzSpan]="6" nzFor="{{property.name}}">
+    <span>{{property.displayName}}</span>
+  </nz-form-label>
+  <nz-form-control [ngSwitch]="property.inputType" [nzSpan]="18">
+    <nz-input-group style="width: 100%;">
+      <input *ngSwitchCase="'text'" nz-input type="text" [(ngModel)]="value" />
+      <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
+      <nz-date-picker *ngSwitchCase="'date'" [(ngModel)]="value"></nz-date-picker>
+      <nz-time-picker *ngSwitchCase="'time'" [(ngModel)]="value"></nz-time-picker>
+      <input *ngSwitchCase="'password'" nz-input type="password" [(ngModel)]="value" />
+      <input *ngSwitchCase="'url'" nz-input type="url" [(ngModel)]="value" />
+      <input *ngSwitchCase="'color'" nz-input type="color" [(ngModel)]="value" />
+      <label *ngSwitchCase="'boolean'" nz-checkbox [(ngModel)]="value"></label>
+      <div *ngSwitchCase="'enum'">
+        <nz-select *ngIf="canBeDisabled || property.allowedValues.length > 6" style="width: 100%;" [(ngModel)]="value"
+          nzPlaceHolder="Choose">
+          <nz-option *ngFor="let si of property.allowedValues" nzValue="{{si}}" nzLabel="{{property.allowedValuesMap[si]}}"></nz-option>
+        </nz-select>
+        <nz-radio-group *ngIf="!canBeDisabled && property.allowedValues.length <= 6" [(ngModel)]="value">
+          <label *ngFor="let si of property.allowedValues" nz-radio-button nzValue="{{si}}">{{property.allowedValuesMap[si]}}</label>
+        </nz-radio-group>
+      </div>
+      <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
+    </nz-input-group>
+    <nz-form-extra *ngIf="property.description !== null">{{property.description}}</nz-form-extra>
+  </nz-form-control>
+</nz-form-item>

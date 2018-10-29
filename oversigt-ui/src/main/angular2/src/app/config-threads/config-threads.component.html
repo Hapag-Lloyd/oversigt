@@ -1,0 +1,40 @@
+<app-header [title]="'Threads'" [additional]="search"></app-header>
+<ng-template #search>
+  <button (click)="reloadThreads()" nz-button nzType="default" style="margin-right: 8px"><i nz-icon type="reload"></i></button>
+  <input nz-input placeholder="Filter threads" size="50" [(ngModel)]="filter">
+</ng-template>
+
+<nz-list [nzDataSource]="threadInfos | filterEventitem: filter" [nzRenderItem]="item" [nzSize]="'small'" [nzItemLayout]="'horizontal'"
+  [nzLoading]="threadInfos.length === 0">
+  <ng-template #item let-item>
+    <nz-list-item [nzActions]="[eventSourceLink]">
+      <nz-list-item-meta [nzTitle]="title" [nzDescription]="content" [nzAvatar]="threadState">
+        <ng-template #title>
+          {{item.threadInfo.id}} -
+          <a *ngIf="item.threadInfo.stackTrace.length > 0" (click)="item.visible = !item.visible">{{item.threadInfo.name}}
+            <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
+            <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
+          </a>
+          <span *ngIf="item.threadInfo.stackTrace.length === 0">{{item.threadInfo.name}}</span>
+        </ng-template>
+        <ng-template #content>
+          <ul *ngIf="item.visible" style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
+            <li *ngFor="let row of item.threadInfo.stackTrace" class="stacktrace">
+              <span class="classname">{{row.className}}</span>.<span class="methodname" [ngStyle]="{'font-style':(row.nativeMethod ? 'italic' : 'normal')}">{{row.methodName}}</span>()
+              <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}:{{row.lineNumber}}]</span>
+            </li>
+          </ul>
+        </ng-template>
+      </nz-list-item-meta>
+      <ng-template #threadState>
+        <nz-avatar [nzText]="item.threadInfo.state" nzSize="large" [ngStyle]="{'background-color':threadStateColor[item.threadInfo.state]}"
+          style="vertical-align: middle;"></nz-avatar>
+      </ng-template>
+      <ng-template #eventSourceLink>
+        <a *ngIf="item.threadInfo.name.includes('[eventID=') && !item.threadInfo.name.startsWith('NightlyReloaderService')"
+          routerLink="/config/eventSources/{{item.threadInfo.name.substring(item.threadInfo.name.indexOf('[eventID=') + 9, item.threadInfo.name.lastIndexOf(']'))}}" nz-button nz-tooltip nzTitle="Go to event source" nzType="dashed"><i
+            nz-icon type="link" theme="outline"></i></a>
+      </ng-template>
+    </nz-list-item>
+  </ng-template>
+</nz-list>

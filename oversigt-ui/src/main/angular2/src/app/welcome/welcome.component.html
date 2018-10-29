@@ -1,0 +1,24 @@
+<div class="container">
+  <div class="jumbotron">
+    <h1>Oversigt</h1>
+    <p><strong>Welcome to Oversigt</strong>. This is the famous dashboard server.</p>
+    <div *ngIf="dashboards.length > 0">
+      <p>There are already a number of dashboards available. You may visit them by clicking the links below:</p>
+      <div class="panel panel-default">
+        <div class="list-group">
+          <div id="dashboardSearchList">
+            <div *ngFor="let dashboard of dashboards" class="list-group-item">
+              <a class="btn" routerLink="/{{dashboard.id}}">{{dashboard.title}}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>You can create new dashboards by navigating to <code>/dashboardName</code>.</p>
+      <p>Another option is to switch to the <a routerLink="/config">configuration page</a> to change some dashboard settings.</p>
+    </div>
+    <div *ngIf="dashboards.length == 0">
+      <p>There are no dashboards yet. Create one by navigating to <code>/dashboardName</code> or switch to the <a routerLink="/config">configuration
+          page</a> to configure your server.</p>
+    </div>
+  </div>
+</div>

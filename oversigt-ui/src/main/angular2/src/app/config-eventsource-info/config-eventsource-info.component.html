@@ -1,0 +1,8 @@
+<nz-form-item [class.readonly-form]="item.readonly">
+    <nz-form-label [nzSpan]="6" nzFor="info_{{item.id}}">
+      <span [style.color]="item.readonly ? '#666' : 'inherit'">{{item.title}}</span>
+    </nz-form-label>
+    <nz-form-control [nzSpan]="18">
+      <input nz-input type="text" [style.color]="item.readonly ? '#666' : 'inherit'" id="info_{{item.id}}" value="{{item.value}}" [attr.readonly]="item.readonly ? 'readonly' : null">
+    </nz-form-control>
+</nz-form-item>

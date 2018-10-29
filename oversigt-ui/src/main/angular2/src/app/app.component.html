@@ -1,0 +1,22 @@
+<nz-layout *ngIf="isShowingConfiguration(); else plain">
+  <nz-header>
+    <h1>Oversigt</h1>
+  </nz-header>
+  <nz-layout>
+    <!--<nz-sider nzCollapsible [(nzCollapsed)]="isCollapsed" [nzTrigger]="trigger">-->
+    <nz-sider>
+      <nz-affix>
+        <app-config-menu [isCollapsed]="isCollapsed"></app-config-menu>
+      </nz-affix>
+    </nz-sider>
+    <nz-content>
+      <router-outlet></router-outlet>
+    </nz-content>
+  </nz-layout>
+</nz-layout>
+<ng-template #trigger>
+  <i nz-icon type="layout"></i>
+</ng-template>
+<ng-template #plain>
+  <router-outlet></router-outlet>
+</ng-template>

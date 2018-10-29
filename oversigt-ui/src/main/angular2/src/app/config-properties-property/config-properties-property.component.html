@@ -1,0 +1,47 @@
+<app-header *ngIf="propertyType !== null" [title]="propertyType" [additional]="create"></app-header>
+<ng-template #create>
+  <button nz-button nzType="default" (click)="showCreateModal(createContent)"><i nz-icon type="plus-circle"></i></button>
+</ng-template>
+
+<nz-table *ngIf="propertyType !== null" #basicTable [nzData]="values" [nzShowPagination]="false" [nzFrontPagination]="false"
+  [nzBordered]="true">
+  <thead>
+    <tr>
+      <th *ngFor="let member of members"><i *ngIf="member.icon !== null" nz-icon type="{{member.icon}}"></i>
+        {{member.displayName}}</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of values">
+      <td *ngFor="let member of members">{{data[member.name]}}</td>
+      <td>
+        <nz-button-group>
+          <button nz-button nzType="default" (click)="showEditModal(createContent, data['id'])"><i nz-icon type="edit"></i></button>
+          <button nz-popconfirm nzType="danger" nzTitle="Do you really want to delete the {{propertyType}} '{{data['name']}}'?"
+            (nzOnConfirm)="deleteValue(data['id'])" nz-button><i nz-icon type="delete"></i></button>
+        </nz-button-group>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #createContent>
+  <form nz-form>
+    <div *ngFor="let member of members" nz-row style="margin-bottom: 1ex;">
+      <div *ngIf="member.required" nz-col nzSpan="9">
+        <nz-badge [nzDot]="true">
+          <label>{{member.name}}</label>
+        </nz-badge>
+      </div>
+      <div *ngIf="!member.required" nz-col nzSpan="9">
+        <label>{{member.name}}</label>
+      </div>
+      <div nz-col nzSpan="15">
+        <input *ngIf="member.type !== 'number'" nz-input [(ngModel)]="valueToCreate[member.name]" name="{{member.name}}"
+          type="{{member.type}}" />
+        <nz-input-number *ngIf="member.type === 'number'" [(ngModel)]="valueToCreate[member.name]"></nz-input-number>
+      </div>
+    </div>
+  </form>
+</ng-template>
