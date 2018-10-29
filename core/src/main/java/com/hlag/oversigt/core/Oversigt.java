@@ -21,10 +21,8 @@ import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
-import com.hlag.oversigt.storage.AbstractJdbcConnector;
 import com.hlag.oversigt.storage.Storage;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 
 /**
@@ -56,11 +54,11 @@ public final class Oversigt {
 	 */
 	public Oversigt bootstrap() {
 		if (bootstrapped.compareAndSet(false, true)) {
-			boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
-			if (debug) {
-				((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AbstractJdbcConnector.class))
-						.setLevel(Level.ALL);
-			}
+			final boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
+			//			if (debug) {
+			//				((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AbstractJdbcConnector.class))
+			//						.setLevel(Level.ALL);
+			//			}
 
 			/* bootstrap server */
 			Service application = injector.getInstance(OversigtServer.class);

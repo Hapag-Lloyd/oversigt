@@ -46,7 +46,7 @@ public class EventSourceStatusResource {
 	@ApiOperation(value = "Read an event source instance's current state")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
-	public Response getInstanceState(@PathParam("id") @NotBlank String instanceId) {
+	public Response isInstanceRunning(@PathParam("id") @NotBlank String instanceId) {
 		EventSourceInstance instance;
 		try {
 			instance = controller.getEventSourceInstance(instanceId);

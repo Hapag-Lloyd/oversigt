@@ -35,9 +35,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@NotBlank
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
-	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final Class<? extends Service> serviceClass;
-	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final Class<? extends OversigtEvent> eventClass;
 	@JsonIgnore
 	private final Class<? extends Module> moduleClass;
@@ -78,6 +76,16 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 
 	public Class<? extends Service> getServiceClass() {
 		return serviceClass;
+	}
+
+	@JsonProperty(access = Access.READ_ONLY, required = false)
+	public String getServiceClassName() {
+		return serviceClass != null ? serviceClass.getName() : null;
+	}
+
+	@JsonProperty(access = Access.READ_ONLY, required = false)
+	public String getEventClassName() {
+		return eventClass != null ? eventClass.getName() : null;
 	}
 
 	@JsonIgnore

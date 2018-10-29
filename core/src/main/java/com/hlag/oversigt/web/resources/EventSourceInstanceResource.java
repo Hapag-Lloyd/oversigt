@@ -305,12 +305,14 @@ public class EventSourceInstanceResource {
 		private String id;
 		@NotBlank
 		private String name;
+		private boolean running;
 		@NotNull
 		private List<@NotNull DashboardShortInfo> usedBy;
 
 		public EventSourceInstanceInfo(EventSourceInstance instance, DashboardController controller) {
 			this.id = instance.getId();
 			this.name = instance.getName();
+			this.running = controller.isRunning(instance);
 			this.usedBy = new ArrayList<>(controller//
 					.getDashboardsWhereEventSourceIsUsed(instance)
 					.map(DashboardShortInfo::new)
