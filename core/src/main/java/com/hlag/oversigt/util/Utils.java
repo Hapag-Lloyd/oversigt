@@ -1,16 +1,16 @@
 package com.hlag.oversigt.util;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.function.Function.identity;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Strings;
 import com.hlag.oversigt.security.Principal;
 
 public class Utils {
@@ -111,7 +110,7 @@ public class Utils {
 		return builder.build();
 	}
 
-	public static <T> Comparator<T> caseSensitiveComparator(Function<T, String> function) {
+	public static <I, T extends Comparable<T>> Comparator<I> caseSensitiveComparator(Function<I, T> function) {
 		return (a, b) -> function.apply(a).compareTo(function.apply(b));
 	}
 
@@ -121,10 +120,6 @@ public class Utils {
 
 	public static <T> Predicate<T> not(Predicate<T> predicate) {
 		return x -> !predicate.test(x);
-	}
-
-	public static <T> boolean isNotNull(T object) {
-		return object != null;
 	}
 
 	public static boolean is(Object object) {
@@ -140,17 +135,8 @@ public class Utils {
 	}
 
 	@SafeVarargs
-	public static <T> Stream<T> stream(Collection<T>... collections) {
-		return Stream.of(collections).flatMap(Collection::stream);
-	}
-
-	@SafeVarargs
 	public static <T> Stream<T> concat(Stream<T>... streams) {
-		Stream<T> out = streams[0];
-		for (int i = 1; i < streams.length; ++i) {
-			out = Stream.concat(out, streams[i]);
-		}
-		return out;
+		return Arrays.stream(streams).flatMap(identity());
 	}
 
 	public static Map<String, Object> map(Object... parameters) {
@@ -169,20 +155,6 @@ public class Utils {
 		return values;
 	}
 
-	public static <T> TreeSet<T> treeSet(Comparator<T> comparator, Collection<? extends T> items) {
-		TreeSet<T> set = new TreeSet<>(comparator);
-		set.addAll(items);
-		return set;
-	}
-
-	public static <T> List<T> toList(T[] array) {
-		return toList(array, Function.identity());
-	}
-
-	public static <T, R> List<R> toList(T[] array, Function<T, R> mapper) {
-		return Stream.of(array).map(mapper).collect(Collectors.toList());
-	}
-
 	public static <K, V> Map<K, V> toLinkedMap(Stream<Entry<K, V>> stream) {
 		return toLinkedMap(stream, Entry::getKey, Entry::getValue);
 	}
@@ -196,11 +168,10 @@ public class Utils {
 	}
 
 	public static String notNullOrEmpty(String string, String message) {
-		if (!Strings.isNullOrEmpty(Objects.requireNonNull(string, message))) {
-			return string;
-		} else {
+		if (requireNonNull(string, message).isEmpty()) {
 			throw new IllegalArgumentException(message);
 		}
+		return string;
 	}
 
 	public static <T> Map<String, T> removePasswords(Map<String, T> map, T empty) {

@@ -19,7 +19,7 @@ import com.hlag.oversigt.util.Utils;
 
 public class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME = Utils
-			.caseSensitiveComparator(EventSourceKey::getDisplayName);
+			.caseInsensitiveComparator(EventSourceKey::getDisplayName);
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_KEY = Utils
 			.caseSensitiveComparator(EventSourceKey::getKey);
 	public static final Comparator<EventSourceKey> COMPARATOR = COMPARATOR_BY_DISPLAY_NAME

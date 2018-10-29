@@ -1,7 +1,7 @@
 package com.hlag.oversigt.model;
 
 import static com.hlag.oversigt.util.Utils.not;
-import static com.hlag.oversigt.util.Utils.toList;
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -204,7 +204,7 @@ public class DashboardController {
 
 	public void reloadDashboards(Dashboard... dashboards) {
 		if (dashboards.length > 0) {
-			eventBus.post(new ReloadEvent(toList(dashboards, Dashboard::getId)));
+			eventBus.post(new ReloadEvent(stream(dashboards).map(Dashboard::getId).collect(toList())));
 		}
 	}
 
@@ -1027,7 +1027,7 @@ public class DashboardController {
 				.filter(allowedPathsFilter)
 				.map(Path::getParent)
 				.map(this::loadEventSourceFromPath)
-				.filter(Utils::isNotNull)
+				.filter(not(Objects::isNull))
 				.collect(toList());
 	}
 

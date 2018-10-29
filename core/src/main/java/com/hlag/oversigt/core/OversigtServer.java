@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -45,9 +46,9 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
-import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -56,7 +57,6 @@ import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.util.Utils;
 import com.hlag.oversigt.web.DashboardConfigurationHandler;
 import com.hlag.oversigt.web.DashboardCreationHandler;
 import com.hlag.oversigt.web.EventSourceConfigurationHandler;
@@ -441,7 +441,7 @@ public class OversigtServer extends AbstractIdleService {
 					return Arrays.stream(widgetsPaths)
 							.map(s -> s + end)
 							.map(OversigtServer::getResourceUrl)
-							.filter(Utils::isNotNull)
+							.filter(not(Objects::isNull))
 							.findFirst()
 							.orElse(null);
 				} else {

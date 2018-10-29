@@ -1,7 +1,9 @@
 package com.hlag.oversigt.web;
 
 import static com.hlag.oversigt.util.Utils.map;
-import static com.hlag.oversigt.web.ActionResponse.*;
+import static com.hlag.oversigt.web.ActionResponse.ok;
+import static com.hlag.oversigt.web.ActionResponse.okJson;
+import static com.hlag.oversigt.web.ActionResponse.redirect;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -31,8 +33,8 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.event.EventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
@@ -48,7 +50,6 @@ import com.hlag.oversigt.util.ImageUtil;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
-import com.hlag.oversigt.util.Utils;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -161,8 +162,10 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 									}))));
 				}
 				return map("eventSourceInstances",
-						Utils.treeSet(EventSourceInstance.COMPARATOR,
-								getDashboardController().getEventSourceInstances()),
+						getDashboardController().getEventSourceInstances()
+								.stream()
+								.sorted(EventSourceInstance.COMPARATOR)
+								.collect(toList()),
 						"eventSourceInstance",
 						getHelper().query(exchange, "eventSource")
 								.map(getDashboardController()::getEventSourceInstance)
@@ -295,10 +298,14 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 				eventSourceId,
 				name,
 				frequency,
-				instance.getDescriptor().getProperties().stream().collect(
-						Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))),
-				instance.getDescriptor().getDataItems().stream().collect(
-						Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))));
+				instance.getDescriptor()
+						.getProperties()
+						.stream()
+						.collect(Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))),
+				instance.getDescriptor()
+						.getDataItems()
+						.stream()
+						.collect(Collectors.toMap(Function.identity(), p -> instance.getPropertyValueString(p))));
 		return ok();
 	}
 
