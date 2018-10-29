@@ -1,11 +1,11 @@
 <app-header [title]="'Event Sources'" [level]="1" [additional]="list"></app-header>
 <ng-template #list>
-  <nz-select style="min-width: 25em;" [(ngModel)]="selectedEventSource" (ngModelChange)="selectEventSource($event)" [nzSize]="'large'">
+  <!--<nz-select style="min-width: 25em;" [(ngModel)]="selectedEventSource" (ngModelChange)="selectEventSource($event)" [nzSize]="'large'">
     <nz-option *ngFor="let info of eventSourceInfos" [nzLabel]="info.name" [nzValue]="info"></nz-option>
-  </nz-select>
-  <!--<ul>
+  </nz-select>-->
+  <ul>
     <li *ngFor="let info of eventSourceInfos"><a routerLink="{{info.id}}">{{info.name}}</a></li>
-  </ul>-->
+  </ul>
 </ng-template>
 
 <router-outlet *ngIf="selectedEventSource !== null; else noEventSourceSelected"></router-outlet>

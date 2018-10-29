@@ -21,7 +21,7 @@
           <ul *ngIf="item.visible" style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
             <li *ngFor="let row of item.threadInfo.stackTrace" class="stacktrace">
               <span class="classname">{{row.className}}</span>.<span class="methodname" [ngStyle]="{'font-style':(row.nativeMethod ? 'italic' : 'normal')}">{{row.methodName}}</span>()
-              <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}:{{row.lineNumber}}]</span>
+              <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}<span *ngIf="row.lineNumber >= 0">:{{row.lineNumber}}</span>]</span>
             </li>
           </ul>
         </ng-template>
@@ -31,9 +31,7 @@
           style="vertical-align: middle;"></nz-avatar>
       </ng-template>
       <ng-template #eventSourceLink>
-        <a *ngIf="item.threadInfo.name.includes('[eventID=') && !item.threadInfo.name.startsWith('NightlyReloaderService')"
-          routerLink="/config/eventSources/{{item.threadInfo.name.substring(item.threadInfo.name.indexOf('[eventID=') + 9, item.threadInfo.name.lastIndexOf(']'))}}" nz-button nz-tooltip nzTitle="Go to event source" nzType="dashed"><i
-            nz-icon type="link" theme="outline"></i></a>
+        <app-eventsource-button *ngIf="isEventSourceThread(item)" [eventSourceId]="getEventSourceId(item)"></app-eventsource-button>
       </ng-template>
     </nz-list-item>
   </ng-template>

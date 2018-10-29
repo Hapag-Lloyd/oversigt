@@ -73,6 +73,11 @@ export class ConfigThreadsComponent implements OnInit {
     return name.includes('[eventID=') && !name.startsWith('NightlyReloaderService');
   }
 
+  getEventSourceId(com: ThreadInfoComposite): string {
+    const name = com.threadInfo.name;
+    return com.threadInfo.name.substring(com.threadInfo.name.indexOf('[eventID=') + 9, com.threadInfo.name.lastIndexOf(']'))
+  }
+
   getThreadDetails(info: ThreadInfo): string {
     return '';
   }

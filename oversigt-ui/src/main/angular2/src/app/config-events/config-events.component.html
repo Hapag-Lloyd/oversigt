@@ -4,7 +4,8 @@
   <input nz-input placeholder="Filter events" size="50" [(ngModel)]="filter">
 </ng-template>
 
-<nz-list [nzDataSource]="events | filterEventitem: filter" [nzRenderItem]="item" [nzItemLayout]="'horizontal'" [nzLoading]="events.length === null">
+<nz-list [nzDataSource]="events | filterEventitem: filter" [nzRenderItem]="item" [nzItemLayout]="'horizontal'"
+  [nzLoading]="events.length === null">
   <ng-template #item let-item>
     <nz-list-item [nzActions]="[eventSourceLink]">
       <nz-list-item-meta [nzTitle]="title" [nzDescription]="content">
@@ -19,8 +20,7 @@
         </ng-template>
       </nz-list-item-meta>
       <ng-template #eventSourceLink>
-        <a routerLink="/config/eventSources/{{item.event.id}}" nz-button nz-tooltip nzTitle="Go to event source" nzType="dashed"><i
-            nz-icon type="link" theme="outline"></i></a>
+        <app-eventsource-button [eventSourceId]="item.event.id"></app-eventsource-button>
       </ng-template>
     </nz-list-item>
   </ng-template>

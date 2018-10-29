@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EventSourceService, EventSourceInstanceInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-config-eventsources',
@@ -12,31 +13,30 @@ export class ConfigEventsourcesComponent implements OnInit {
   selectedEventSource: EventSourceInstanceInfo = null;
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private ess: EventSourceService,
   ) { }
 
   ngOnInit() {
     const _this = this;
     this.initEventSourceInstanceList();
-    this.route.url.subscribe(segments => {
-      const paths = _this.route.snapshot.url.map(segment => segment.path);
-      console.log('New URL', paths);
-      if (paths[0] === 'config' && paths[1] === 'eventSources') {
-        if (paths.length > 2) {
-          const selectedId = paths[2];
-          console.log('Selected:', selectedId);
-          _this.selectedEventSource = _this.eventSourceInfos.find(info => info.id === selectedId);
-        }
-      }
-    });
+
   }
 
   private initEventSourceInstanceList() {
     this.ess.listInstances().subscribe(
       infos => {
         this.eventSourceInfos = infos;
+
+        const titles = {};
+        const ids = [];
+        infos.forEach(info => {
+          info.usedBy.forEach(use => {
+            titles[use.id] = use.title;
+            if (ids.indexOf(use.id) < 0) {
+              ids.push(use.id);
+            }
+          });
+        });
       },
       error => {
         console.error(error);
@@ -48,7 +48,7 @@ export class ConfigEventsourcesComponent implements OnInit {
 
   selectEventSource(event: EventSourceInstanceInfo): void {
     this.selectedEventSource = event;
-    this.router.navigateByUrl('/config/eventSources/' + event.id);
+    // this.router.navigateByUrl('/config/eventSources/' + event.id);
   }
 
   removeEventSourceInstance(id: string): void {

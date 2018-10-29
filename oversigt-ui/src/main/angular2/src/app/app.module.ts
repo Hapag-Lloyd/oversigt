@@ -32,6 +32,7 @@ import { FilterEventitemPipe } from './filter-eventitem.pipe';
 import { ConfigThreadsComponent } from './config-threads/config-threads.component';
 import { ConfigDashboardsComponent } from './config-dashboards/config-dashboards.component';
 import { ConfigDashboardsEditComponent } from './config-dashboards-edit/config-dashboards-edit.component';
+import { EventsourceButtonComponent } from './eventsource-button/eventsource-button.component';
 
 registerLocaleData(en);
 
@@ -91,6 +92,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigThreadsComponent,
     ConfigDashboardsComponent,
     ConfigDashboardsEditComponent,
+    EventsourceButtonComponent,
   ],
   imports: [
     RouterModule.forRoot(
