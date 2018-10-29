@@ -5,11 +5,11 @@ import { Subscription } from 'rxjs';
 import { NzModalService, NzNotificationService } from 'ng-zorro-antd';
 
 @Component({
-  selector: 'app-config-properties-property',
-  templateUrl: './config-properties-property.component.html',
-  styleUrls: ['./config-properties-property.component.css']
+  selector: 'app-config-property',
+  templateUrl: './config-property.component.html',
+  styleUrls: ['./config-property.component.css']
 })
-export class ConfigPropertiesPropertyComponent implements OnInit, OnDestroy {
+export class ConfigPropertyComponent implements OnInit, OnDestroy {
   private subscription: Subscription = null;
   propertyType: string;
   members: SerializablePropertyMember[] = [];

@@ -13,7 +13,7 @@ import { LoginComponent } from './login/login.component';
 import { ConfigLogsLogfileComponent } from './config-logs-logfile/config-logs-logfile.component';
 import { ConfigLogsLoggerComponent } from './config-logs-logger/config-logs-logger.component';
 import { ConfigSystemComponent } from './config-system/config-system.component';
-import { ConfigPropertiesPropertyComponent } from './config-properties-property/config-properties-property.component';
+import { ConfigPropertyComponent } from './config-property/config-property.component';
 import { ConfigMenuComponent } from './config-menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config-eventsources/config-eventsources.component';
 import { ConfigEventsourcesEventsourceComponent } from './config-eventsources-eventsource/config-eventsources-eventsource.component';
@@ -56,7 +56,7 @@ const appRoutes: Routes = [
   { path: 'config/loggers',           component: ConfigLogsLoggerComponent },
   { path: 'config/events',            component: ConfigEventsComponent },
   { path: 'config/threads',           component: ConfigThreadsComponent },
-  { path: 'config/properties/:name',  component: ConfigPropertiesPropertyComponent },
+  { path: 'config/properties/:name',  component: ConfigPropertyComponent },
   // { path: 'config/properties/:name', component: ConfigPropertiesPropertyComponent },
   { path: 'config/system',            component: ConfigSystemComponent },
   { path: ':dashboardId',             component: DashboardComponent },
@@ -77,7 +77,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigLogsLogfileComponent,
     ConfigLogsLoggerComponent,
     ConfigSystemComponent,
-    ConfigPropertiesPropertyComponent,
+    ConfigPropertyComponent,
     ConfigMenuComponent,
     ConfigEventsourcesComponent,
     ConfigEventsourcesEventsourceComponent,
