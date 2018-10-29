@@ -264,10 +264,10 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				// server configuration
-				.get("/config", securedEventSourceConfigurationHandler)//
-				.post("/config", securedEventSourceConfigurationHandler)//
-				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.get("/config", securedEventSourceConfigurationHandler)//
+				//				.post("/config", securedEventSourceConfigurationHandler)//
+				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -283,7 +283,8 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/assets", createAssetsHandler())
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
-				.addPrefixPath(MAPPING_API, createApiHandler());
+				.addPrefixPath(MAPPING_API, createApiHandler())
+				.addPrefixPath("/config", createConfigUiHandler());
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
@@ -461,6 +462,10 @@ public class OversigtServer extends AbstractIdleService {
 
 	private HttpHandler createSwaggerUiHandler() {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
+	}
+
+	private HttpHandler createConfigUiHandler() {
+		return Handlers.resource(new ClassPathResourceManager("oversigt-ui"));
 	}
 
 	/**

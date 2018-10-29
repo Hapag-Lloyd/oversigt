@@ -86,8 +86,8 @@
 							<arguments>
 								<argument>build</argument>
 								<argument>--prod</argument>
-								<!-- <argument>- -bh</argument> -->
-								<!-- <argument>/oversigt-ui/</argument> -->
+								<argument>--base-href</argument>
+								<argument>/config/</argument>
 							</arguments>
 							<workingDirectory>${basedir}/target/angular2</workingDirectory>
 						</configuration>
@@ -95,34 +95,31 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.2.2</version>
-				<configuration>
-					<failOnMissingWebXml>false</failOnMissingWebXml>
-					<webResources>
-						<resource>
-							<directory>${basedir}/target/angular2/dist</directory>
-							<includes>
-								<include>assets/**/*.*</include>
-								<include>*.*</include>
-							</includes>
-						</resource>
-						<resource>
-							<directory>${basedir}/target/angular2/src</directory>
-							<includes>
-								<include>locale/*.xlf</include>
-							</includes>
-						</resource>
-						<resource>
-							<directory>src/main/webapp</directory>
-						</resource>
-					</webResources>
-				</configuration>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>add-resource</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>add-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/angular2/dist</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
