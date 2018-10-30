@@ -2,24 +2,37 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EventSourceService, EventSourceInstanceInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { EventsourceSelectionService } from '../eventsource-selection.service';
 
 @Component({
   selector: 'app-config-eventsources',
   templateUrl: './config-eventsources.component.html',
   styleUrls: ['./config-eventsources.component.css']
 })
-export class ConfigEventsourcesComponent implements OnInit {
+export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   eventSourceInfos: EventSourceInstanceInfo[] = [];
   selectedEventSource: EventSourceInstanceInfo = null;
+  private eventSourceSelectionSubscription: Subscription = null;
 
   constructor(
+    private eventSourceSelection: EventsourceSelectionService,
     private ess: EventSourceService,
-  ) { }
+  ) {
+    this.eventSourceSelectionSubscription = eventSourceSelection.selectedEventSource.subscribe(
+      id => {
+        this.selectedEventSource = this.eventSourceInfos.find(info => info.id === id);
+      }
+    );
+  }
 
   ngOnInit() {
     const _this = this;
     this.initEventSourceInstanceList();
 
+  }
+
+  ngOnDestroy() {
+    this.eventSourceSelectionSubscription.unsubscribe();
   }
 
   private initEventSourceInstanceList() {
