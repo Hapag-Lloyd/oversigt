@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EventSourceService, EventSourceInstanceInfo } from 'src/oversigt-client';
+import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { EventsourceSelectionService } from '../eventsource-selection.service';
@@ -21,18 +21,19 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     this.eventSourceSelectionSubscription = eventSourceSelection.selectedEventSource.subscribe(
       id => {
         this.selectedEventSource = this.eventSourceInfos.find(info => info.id === id);
+        alert(this.selectedEventSource.id);
       }
     );
   }
 
   ngOnInit() {
-    const _this = this;
     this.initEventSourceInstanceList();
-
   }
 
   ngOnDestroy() {
-    this.eventSourceSelectionSubscription.unsubscribe();
+    if (this.eventSourceSelectionSubscription !== null) {
+      this.eventSourceSelectionSubscription.unsubscribe();
+    }
   }
 
   private initEventSourceInstanceList() {
@@ -40,15 +41,19 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
       infos => {
         this.eventSourceInfos = infos;
 
-        const titles = {};
-        const ids = [];
+        const idToName: {[id: string]: string} = {};
+        const dashboardToUses: {[id: string]: DashboardShortInfo[]} = {};
+        const unusedIds: string[] = [];
         infos.forEach(info => {
-          info.usedBy.forEach(use => {
-            titles[use.id] = use.title;
-            if (ids.indexOf(use.id) < 0) {
-              ids.push(use.id);
+          idToName[info.id] = info.name;
+          if (info.usedBy !== null && info.usedBy.length > 0) {
+            if (dashboardToUses[info.id] === undefined) {
+              dashboardToUses[info.id] = [];
             }
-          });
+            info.usedBy.forEach(ub => dashboardToUses[info.id].push(ub));
+          } else {
+            unusedIds.push(info.id);
+          }
         });
       },
       error => {

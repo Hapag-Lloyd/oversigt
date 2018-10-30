@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
-import { EventSourceInstanceInfo } from 'src/oversigt-client';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class EventsourceSelectionService {
-  private selectedEventSourceSource: Subject<string>;
+  private _selectedEventSourceSubject = new Subject<string>();
+  private _selectedEventSourceObservable = this._selectedEventSourceSubject .asObservable();
 
-  private _selectedEventSource = this.selectedEventSourceSource.asObservable();
+  constructor() { }
 
   get selectedEventSource(): Observable<string> {
-    return this._selectedEventSource;
+    return this._selectedEventSourceObservable;
   }
 
-  selectEventSource(info: string): void {
-    this.selectedEventSourceSource.next(info);
+  selectEventSource(eventSourceId: string): void {
+    this._selectedEventSourceSubject.next(eventSourceId);
   }
 }

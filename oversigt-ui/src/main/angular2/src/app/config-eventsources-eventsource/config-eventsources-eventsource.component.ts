@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, ServiceInfo, Dashboard } from 'src/oversigt-client';
 import { NzNotificationService, NzMessageService } from 'ng-zorro-antd';
 import { ConfigEventsourcesComponent } from '../config-eventsources/config-eventsources.component';
+import { EventsourceSelectionService } from '../eventsource-selection.service';
 
 @Component({
   selector: 'app-config-eventsources-eventsource',
@@ -22,6 +23,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   isEnablingEventSource = false;
 
   constructor(
+    private eventSourceSelection: EventsourceSelectionService,
     private route: ActivatedRoute,
     private router: Router,
     private ess: EventSourceService,
@@ -30,9 +32,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   ) { }
 
   ngOnInit() {
-    this.eventSourceId = this.route.snapshot.paramMap.get('id');
     this.subscription = this.route.params.subscribe(params => {
-      this.eventSourceId = this.route.snapshot.paramMap.get('id');
       this.initComponent();
     });
   }
@@ -44,6 +44,10 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   }
 
   private initComponent() {
+    // find selected event source id
+    this.eventSourceId = this.route.snapshot.paramMap.get('id');
+    this.eventSourceSelection.selectEventSource(this.eventSourceId);
+
     // Reset component
     this.instanceDetails = null;
     this.eventSourceDescriptor = null;
