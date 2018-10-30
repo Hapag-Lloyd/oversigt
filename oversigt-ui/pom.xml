@@ -14,22 +14,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-clean-plugin</artifactId>
-				<configuration>
-					<failOnError>false</failOnError>
-					<filesets>
-						<fileset>
-							<directory>src/main/angular2</directory>
-							<includes>
-								<include>dist/**/*.*</include>
-								<include>node_modules/**/*.*</include>
-							</includes>
-							<followSymlinks>false</followSymlinks>
-						</fileset>
-					</filesets>
-				</configuration>
-			</plugin>
-			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<executions>
 					<execution>
@@ -44,7 +28,8 @@
 								<resource>
 									<directory>src/main/angular2</directory>
 									<includes>
-										<include>**/*</include>
+										<include>*.*</include>
+										<include>src/**/*</include>
 									</includes>
 								</resource>
 							</resources>
@@ -58,6 +43,7 @@
 				<version>1.4.0</version>
 				<executions>
 					<execution>
+						<?m2e ignore?>
 						<id>npm install</id>
 						<goals>
 							<goal>exec</goal>
@@ -75,6 +61,7 @@
 						</configuration>
 					</execution>
 					<execution>
+						<?m2e ignore?>
 						<id>angular-cli build</id>
 						<goals>
 							<goal>exec</goal>
@@ -116,41 +103,5 @@
 				</executions>
 			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
-					only. It has no influence on the Maven build itself. -->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											org.codehaus.mojo
-										</groupId>
-										<artifactId>
-											exec-maven-plugin
-										</artifactId>
-										<versionRange>
-											[1.4.0,)
-										</versionRange>
-										<goals>
-											<goal>exec</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 </project>
