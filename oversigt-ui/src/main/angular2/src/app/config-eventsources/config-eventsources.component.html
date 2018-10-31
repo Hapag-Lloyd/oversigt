@@ -3,6 +3,14 @@
   <nz-select style="min-width: 25em;" [(ngModel)]="selectedEventSource" (ngModelChange)="selectEventSource($event)" [nzSize]="'large'">
     <nz-option *ngFor="let info of eventSourceInfos" [nzLabel]="info.name" [nzValue]="info"></nz-option>
   </nz-select>
+  <!--<nz-tree-select
+      style="min-width: 25em;"
+      [nzNodes]="treeNodes" [nzSize]='"large"'
+      nzShowSearch
+      nzPlaceHolder="Select event source"
+      [(ngModel)]="selectedEventSource"
+      (ngModelChange)="selectEventSource($event)">
+    </nz-tree-select>-->
   <!--<ul>
     <li *ngFor="let info of eventSourceInfos"><a routerLink="{{info.id}}">{{info.name}}</a></li>
   </ul>-->

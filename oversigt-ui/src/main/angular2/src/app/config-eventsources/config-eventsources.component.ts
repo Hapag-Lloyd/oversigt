@@ -3,6 +3,7 @@ import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventS
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { EventsourceSelectionService } from '../eventsource-selection.service';
+import { NzTreeNode } from 'ng-zorro-antd';
 
 @Component({
   selector: 'app-config-eventsources',
@@ -12,6 +13,7 @@ import { EventsourceSelectionService } from '../eventsource-selection.service';
 export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   eventSourceInfos: EventSourceInstanceInfo[] = [];
   selectedEventSource: EventSourceInstanceInfo = null;
+  treeNodes: NzTreeNode[] = [];
   private subscriptions: Subscription[] = [];
   private selectedEventSourceIdToBeSelected: string = null;
 
@@ -64,20 +66,7 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
           _this_.selectedEventSourceIdToBeSelected = null;
         }
 
-        const idToName: {[id: string]: string} = {};
-        const dashboardToUses: {[id: string]: DashboardShortInfo[]} = {};
-        const unusedIds: string[] = [];
-        infos.forEach(info => {
-          idToName[info.id] = info.name;
-          if (info.usedBy !== null && info.usedBy.length > 0) {
-            if (dashboardToUses[info.id] === undefined) {
-              dashboardToUses[info.id] = [];
-            }
-            info.usedBy.forEach(ub => dashboardToUses[info.id].push(ub));
-          } else {
-            unusedIds.push(info.id);
-          }
-        });
+        _this_.buildTreeSelectNodes(infos);
       },
       error => {
         console.error(error);
@@ -85,6 +74,33 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
         // TODO
       }
     );
+  }
+
+  private buildTreeSelectNodes(infos: EventSourceInstanceInfo[]) {
+    function createKnot(title: string, children: NzTreeNode[] = []): NzTreeNode {
+      return <NzTreeNode>{level: 0, title: title, isLeaf: false, children: children, isSelectable: false};
+    }
+    function createLeaf(id: string, title: string, info: EventSourceInstanceInfo): NzTreeNode {
+      return <NzTreeNode><any>{level: 1, title: title, key: id, value: info, isLeaf: true, children: []};
+    }
+
+    const dashboards = {};
+    infos.forEach(info => {
+      if (info.usedBy !== null) {
+        info.usedBy.forEach(ub => {
+          dashboards[ub.id] = ub.title;
+        });
+      }
+    });
+    const nodes = Object.keys(dashboards).map(id => createKnot(dashboards[id],
+      infos.filter(info => info.usedBy !== null && info.usedBy.length > 0)
+      .filter(info => info.usedBy.find(ub => ub.id === id) !== undefined)
+      .map(info => createLeaf(info.id, info.name, info))
+      ));
+    nodes.push(createKnot('<unused>',
+                          infos.filter(info => info.usedBy === null || info.usedBy.length === 0)
+                                .map(info => createLeaf(info.id, info.name, info))));
+    this.treeNodes = nodes;
   }
 
   private getEventSource(id: string): EventSourceInstanceInfo {
