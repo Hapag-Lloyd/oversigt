@@ -1,6 +1,8 @@
 <app-header [title]="'Event Sources'" [level]="1" [additional]="list"></app-header>
 <ng-template #list>
-  <nz-select style="min-width: 25em;" [(ngModel)]="selectedEventSource" (ngModelChange)="selectEventSource($event)" [nzSize]="'large'">
+  <nz-select style="min-width: 25em;" [(ngModel)]="selectedEventSource" (ngModelChange)="selectEventSource($event)"
+    [nzAutoFocus]="selectedEventSource === null" [nzShowSearch]="true" [nzSize]="'large'" [nzFilterOption]="filterSelectOption"
+    [nzPlaceHolder]="'Select event source'">
     <nz-option *ngFor="let info of eventSourceInfos" [nzLabel]="info.name" [nzValue]="info"></nz-option>
   </nz-select>
   <!--<nz-tree-select

@@ -3,7 +3,7 @@ import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventS
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { EventsourceSelectionService } from '../eventsource-selection.service';
-import { NzTreeNode } from 'ng-zorro-antd';
+import { NzTreeNode, NzOptionComponent } from 'ng-zorro-antd';
 
 @Component({
   selector: 'app-config-eventsources',
@@ -74,6 +74,10 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
         // TODO
       }
     );
+  }
+
+  filterSelectOption(input: string, option: NzOptionComponent): boolean {
+    return JSON.stringify(option.nzValue).toLowerCase().includes(input.toLowerCase());
   }
 
   private buildTreeSelectNodes(infos: EventSourceInstanceInfo[]) {
