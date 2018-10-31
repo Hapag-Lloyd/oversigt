@@ -33,6 +33,7 @@ import { ConfigThreadsComponent } from './config-threads/config-threads.componen
 import { ConfigDashboardsComponent } from './config-dashboards/config-dashboards.component';
 import { ConfigDashboardsEditComponent } from './config-dashboards-edit/config-dashboards-edit.component';
 import { EventsourceButtonComponent } from './eventsource-button/eventsource-button.component';
+import { ConfigEventsourcesDetailsComponent } from './config-eventsources-details/config-eventsources-details.component';
 
 registerLocaleData(en);
 
@@ -48,8 +49,8 @@ const appRoutes: Routes = [
   ] },
   { path: 'config/dashboards/create', component: ConfigurationComponent },
   { path: 'config/createEventSource', component: ConfigEventsourceCreateComponent },
-  { path: 'config/eventSources',      component: ConfigEventsourcesComponent, /* TODO resolve: null, */ children: [
-    { path : ':id',                   component: ConfigEventsourcesEventsourceComponent },
+  { path: 'config/eventSources',      component: ConfigEventsourcesComponent, children: [
+    { path : ':id',                   component: ConfigEventsourcesDetailsComponent },
   ] },
   // { path: 'config/eventSources/:id', component: ConfigurationComponent },
   { path: 'config/logfiles',          component: ConfigLogsLogfileComponent },
@@ -93,6 +94,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigDashboardsComponent,
     ConfigDashboardsEditComponent,
     EventsourceButtonComponent,
+    ConfigEventsourcesDetailsComponent,
   ],
   imports: [
     RouterModule.forRoot(

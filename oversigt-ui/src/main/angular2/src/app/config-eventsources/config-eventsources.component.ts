@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo } from 'src/oversigt-client';
+import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventSourceInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { EventsourceSelectionService } from '../eventsource-selection.service';
@@ -12,18 +12,36 @@ import { EventsourceSelectionService } from '../eventsource-selection.service';
 export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   eventSourceInfos: EventSourceInstanceInfo[] = [];
   selectedEventSource: EventSourceInstanceInfo = null;
-  private eventSourceSelectionSubscription: Subscription = null;
+  private subscriptions: Subscription[] = [];
+  private selectedEventSourceIdToBeSelected: string = null;
 
   constructor(
     private eventSourceSelection: EventsourceSelectionService,
+    private route: ActivatedRoute,
+    private router: Router,
     private ess: EventSourceService,
   ) {
-    this.eventSourceSelectionSubscription = eventSourceSelection.selectedEventSource.subscribe(
-      id => {
-        this.selectedEventSource = this.eventSourceInfos.find(info => info.id === id);
-        alert(this.selectedEventSource.id);
+    const _this_ = this;
+    this.subscriptions.push(eventSourceSelection.selectedEventSource.subscribe(id => {
+      this.selectedEventSource = this.getEventSource(id);
+    }));
+    this.subscriptions.push(route.url.subscribe(segs => {
+      if (route !== null
+          && route.snapshot !== null
+          && route.snapshot.firstChild !== null
+          && route.snapshot.firstChild.params !== null) {
+        _this_.selectedEventSource = _this_.getEventSource(route.snapshot.firstChild.params['id']);
+        _this_.selectedEventSourceIdToBeSelected = null;
+        if (_this_.selectedEventSource === undefined) {
+          _this_.selectedEventSourceIdToBeSelected = route.snapshot.firstChild.params['id'];
+        }
+        console.log('select', _this_.selectedEventSource);
+      } else {
+        _this_.selectedEventSource = null;
       }
-    );
+    }));
+
+    // TODO alle 5 minuten die Liste der EventSources aktualisieren
   }
 
   ngOnInit() {
@@ -31,15 +49,20 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.eventSourceSelectionSubscription !== null) {
-      this.eventSourceSelectionSubscription.unsubscribe();
-    }
+    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   private initEventSourceInstanceList() {
+    const _this_ = this;
     this.ess.listInstances().subscribe(
       infos => {
-        this.eventSourceInfos = infos;
+        _this_.eventSourceInfos = infos;
+        console.log('infos');
+        if (_this_.selectedEventSourceIdToBeSelected !== null) {
+          console.log('select');
+          _this_.selectedEventSource = _this_.getEventSource(_this_.selectedEventSourceIdToBeSelected);
+          _this_.selectedEventSourceIdToBeSelected = null;
+        }
 
         const idToName: {[id: string]: string} = {};
         const dashboardToUses: {[id: string]: DashboardShortInfo[]} = {};
@@ -64,9 +87,12 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     );
   }
 
-  selectEventSource(event: EventSourceInstanceInfo): void {
-    this.selectedEventSource = event;
-    // this.router.navigateByUrl('/config/eventSources/' + event.id);
+  private getEventSource(id: string): EventSourceInstanceInfo {
+    return this.eventSourceInfos.find(info => info.id === id);
+  }
+
+  selectEventSource(id: string | EventSourceInstanceInfo): void {
+    this.router.navigateByUrl('/config/eventSources/' + (typeof id === 'string' ? id : id.id));
   }
 
   removeEventSourceInstance(id: string): void {

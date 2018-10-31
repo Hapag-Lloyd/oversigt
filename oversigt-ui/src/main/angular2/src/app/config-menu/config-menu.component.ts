@@ -9,14 +9,6 @@ class MenuItem {
   items?: MenuItem[];
 }
 
-/*const MENU_ITEMS = [
-  new MenuEntry('Event Sources', 'eventSources'),
-  new MenuEntry('Dashboards', 'dashboards'),
-  new MenuEntry('Properties', 'properties'),
-  new MenuEntry('Logs', 'logs'),
-  new MenuEntry('System', 'system'),
-];*/
-
 @Component({
   selector: 'app-config-menu',
   templateUrl: './config-menu.component.html',

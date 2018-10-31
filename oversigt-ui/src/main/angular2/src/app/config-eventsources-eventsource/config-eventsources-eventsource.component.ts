@@ -23,18 +23,19 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   isEnablingEventSource = false;
 
   constructor(
-    private eventSourceSelection: EventsourceSelectionService,
+    private message: NzMessageService,
+    /*private eventSourceSelection: EventsourceSelectionService,
     private route: ActivatedRoute,
     private router: Router,
     private ess: EventSourceService,
-    private message: NzMessageService,
-    private configEventSourcesComponent: ConfigEventsourcesComponent,
+    private configEventSourcesComponent: ConfigEventsourcesComponent,*/
   ) { }
 
   ngOnInit() {
-    this.subscription = this.route.params.subscribe(params => {
+    /*this.subscription = this.route.params.subscribe(params => {
       this.initComponent();
     });
+    this.initComponent();*/
   }
 
   ngOnDestroy() {
@@ -44,9 +45,10 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   }
 
   private initComponent() {
-    // find selected event source id
+    /*// find selected event source id
     this.eventSourceId = this.route.snapshot.paramMap.get('id');
     this.eventSourceSelection.selectEventSource(this.eventSourceId);
+    console.log(this.eventSourceId);
 
     // Reset component
     this.instanceDetails = null;
@@ -61,11 +63,11 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
           eventSourceDescriptor => this.eventSourceDescriptor = eventSourceDescriptor
         );
       }
-    );
+    );*/
   }
 
   saveConfiguration() {
-    this.ess.updateInstance(this.eventSourceId, this.instanceDetails).subscribe(
+    /*this.ess.updateInstance(this.eventSourceId, this.instanceDetails).subscribe(
       ok => {
         this.message.success('The configuration has been saved.');
       },
@@ -73,7 +75,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
         console.error(error);
         this.message.error('Saving event source configuration failed. See log for details.');
       }
-    );
+    );*/
   }
 
   showUsage() {
@@ -85,7 +87,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   }
 
   stopEventSource() {
-    this.isStoppingEventSource = true;
+    /*this.isStoppingEventSource = true;
     this.ess.setInstanceRunning(this.instanceDetails.id, false).subscribe(
       ok => {
         this.isStoppingEventSource = false;
@@ -98,11 +100,11 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
         // TODO
       }
     );
-    this.message.success('The event source "' + this.instanceDetails.name + '" has been stopped.');
+    this.message.success('The event source "' + this.instanceDetails.name + '" has been stopped.');*/
   }
 
   startEventSource() {
-    this.isStartingEventSource = true;
+    /*this.isStartingEventSource = true;
     this.ess.setInstanceRunning(this.instanceDetails.id, true).subscribe(
       ok => {
         this.isStartingEventSource = false;
@@ -116,7 +118,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
         // TODO
       }
     );
-    this.message.success('The event source "' + this.instanceDetails.name + '" has been started.');
+    this.message.success('The event source "' + this.instanceDetails.name + '" has been started.');*/
   }
 
   disableEventSource() {
@@ -132,7 +134,7 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
   }
 
   private changeEnablingState(enabled: boolean, ok: () => {}, fail: () => {}): void {
-    const _this = this;
+    /*const _this = this;
     this.isEnablingEventSource = true;
     // read current state from server
     this.ess.readInstance(this.instanceDetails.id).subscribe(
@@ -161,11 +163,11 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
         _this.isEnablingEventSource = false;
         fail();
       }
-    );
+    );*/
   }
 
   deleteEventSource() {
-    // TODO bildschirm blocken
+    /*// TODO bildschirm blocken
     this.ess.deleteInstance(this.instanceDetails.id).subscribe(
       ok => {
         // TODO aus der Liste der exisierenden EventSources löschen
@@ -182,6 +184,6 @@ export class ConfigEventsourcesEventsourceComponent implements OnInit, OnDestroy
         alert(error);
         // TODO if the event source is being used by other widgets... show this to the user
       }
-    );
+    );*/
   }
 }

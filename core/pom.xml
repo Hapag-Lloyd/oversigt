@@ -32,11 +32,11 @@
 
 	<dependencies>
 		<!-- our own UI -->
-		<dependency>
+		<!--  <dependency>
 			<groupId>com.hlag.oversigt</groupId>
 			<artifactId>oversigt-ui</artifactId>
 			<version>0.6-SNAPSHOT</version>
-		</dependency>
+		</dependency> -->
 
 		<!-- lombok -->
 		<dependency>
