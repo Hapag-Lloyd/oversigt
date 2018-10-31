@@ -51,7 +51,9 @@ export class ConfigMenuComponent implements OnInit {
       }
     ];
     this.sps.listPropertyTypes().subscribe(
-      types => this.items[2].items = types.map(type => this.createMenuItem(type, '/config/properties/' + type))
+      types => this.items[2].items = types
+          .map(type => this.createMenuItem(type, '/config/properties/' + type))
+          .sort((a, b) => a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1)
     );
   }
 

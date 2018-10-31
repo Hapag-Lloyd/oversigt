@@ -1,0 +1,28 @@
+.ant-form-item {
+  margin: 0;
+}
+
+.header {
+  background-color: rgb(240, 242, 245);
+}
+
+nz-dropdown {
+  margin-right: 8px;
+}
+
+[nz-button]+[nz-button], [nz-button]+nz-button-group, nz-button-group+nz-dropdown {
+  margin-left: 8px;
+}
+nz-button-group [nz-button]+[nz-button] {
+  margin-left: inherit;
+}
+
+
+button.green {
+  color: green;
+}
+button.green:hover {
+  background-color: green;
+  color: white;
+  border-color: green;
+}

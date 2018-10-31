@@ -16,7 +16,6 @@ import { ConfigSystemComponent } from './config-system/config-system.component';
 import { ConfigPropertyComponent } from './config-property/config-property.component';
 import { ConfigMenuComponent } from './config-menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config-eventsources/config-eventsources.component';
-import { ConfigEventsourcesEventsourceComponent } from './config-eventsources-eventsource/config-eventsources-eventsource.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
 import { registerLocaleData } from '@angular/common';
@@ -81,7 +80,6 @@ export function initializeApiConfiguration(): Configuration {
     ConfigPropertyComponent,
     ConfigMenuComponent,
     ConfigEventsourcesComponent,
-    ConfigEventsourcesEventsourceComponent,
     ConfigEventsourceInfoComponent,
     ConfigEventsourceCreateComponent,
     ConfigEventsourceEditorComponent,
