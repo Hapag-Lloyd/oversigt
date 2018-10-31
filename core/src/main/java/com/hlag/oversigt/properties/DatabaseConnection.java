@@ -3,7 +3,7 @@ package com.hlag.oversigt.properties;
 public class DatabaseConnection extends SerializableProperty {
 	public static final DatabaseConnection EMPTY = new DatabaseConnection(0, "", "", "");
 
-	@Member(icon = "th-large", size = 4)
+	@Member(icon = "file", size = 4)
 	private String driverClassName;
 	@Member(icon = "cloud", size = 4)
 	private String jdbcUrl;
