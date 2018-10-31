@@ -1,12 +1,16 @@
 package com.hlag.oversigt.web.resources;
 
+import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -14,17 +18,23 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
+import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
+import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
 import io.swagger.annotations.Api;
@@ -32,6 +42,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
  * @author Olaf Neumann
@@ -45,6 +59,11 @@ public class Authentication {
 
 	@Inject
 	private ApiAuthenticationUtils authentication;
+	@Inject
+	private DashboardController dashboardController;
+
+	@Context
+	private SecurityContext securityContext;
 
 	private static Map<String, String> createTokenMap(String token) {
 		Map<String, String> map = new HashMap<>();
@@ -57,7 +76,7 @@ public class Authentication {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/login")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "User successfully logged in"), //
+			@ApiResponse(code = 200, message = "User successfully logged in", response = AuthData.class), //
 			@ApiResponse(code = 403, message = "Log in failed") //
 	})
 	@ApiOperation("Log in a user")
@@ -72,11 +91,36 @@ public class Authentication {
 			Utils.logChange(principal, "logged in");
 
 			// Return the token on the response
-			return ok(createTokenMap(token), MediaType.APPLICATION_JSON).build();
+			return ok(new AuthData(token, findRolesForUser(principal)), MediaType.APPLICATION_JSON).build();
 		} catch (Exception e) {
 			LOGGER.warn("MAYBE " + username + " - tried to authenticate", e);
 			return status(Response.Status.FORBIDDEN).build();
 		}
+	}
+
+	@GET
+	@Path("/roles")
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "A list of roles the current user has.", response = AuthData.class), //
+	})
+	@ApiOperation(value = "Get user roles", authorizations = {
+			@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@JwtSecured
+	public Response getRoles() {
+		return ok(new AuthData(findRolesForUser((Principal) securityContext.getUserPrincipal()))).build();
+
+	}
+
+	private Set<String> findRolesForUser(final Principal principal) {
+		return Utils
+				.concat(Stream.of(Role.ROLE_NAME_SERVER_ADMIN),
+						Utils.concat(dashboardController.getDashboardIds().stream().map(Role::getDashboardOwnerRole),
+								dashboardController.getDashboardIds().stream().map(Role::getDashboardEditorRole))
+								.map(Role::getName))
+				.filter(principal::hasRole)
+				.collect(toSet());
 	}
 
 	@GET
@@ -118,6 +162,20 @@ public class Authentication {
 			return true; //ok(true).build();
 		} catch (Exception e) {
 			return false; //ok(false).build();
+		}
+	}
+
+	@Getter
+	@ToString
+	@AllArgsConstructor
+	public static class AuthData {
+		private String token;
+		@NotNull
+		private Set<@NotBlank String> roles;
+
+		AuthData(Set<String> roles) {
+			this.token = null;
+			this.roles = roles;
 		}
 	}
 }

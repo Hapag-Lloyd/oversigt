@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Configuration } from 'src/oversigt-client';
 import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from 'src/environments/environment.prod';
 
 @Component({
   selector: 'app-root',
@@ -19,8 +20,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // tslint:disable-next-line:max-line-length
-    this.configuration.apiKeys['Authorization'] = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIxNTQwMTI2MDg5NjYxLTc3MTJlZDg0LTRhOWMtNDZhMy1hMWE1LTBiYzQxNzYxOGQzNSIsImlhdCI6MTU0MDEyNjA4OSwic3ViIjoib3ZlcnNpZ3QtYXBpIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvdjEiLCJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNjQwMTQwNDg5fQ.laAyfPSKlGmXhebQsNQaLxZHss-s83Ls16e8lUc7WAs'; // TODO replace by user login
+    this.configuration.apiKeys['Authorization'] = environment.authorizationKey;
   }
 
   isShowingConfiguration(): boolean {
