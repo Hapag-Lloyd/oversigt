@@ -66,21 +66,4 @@ export class ConfigMenuComponent implements OnInit {
   get itemsForUser(): MenuItem[] {
     return this.items;
   }
-
-  /*private filterMenuItems(items: MenuItem[]): MenuItem[] {
-    if (items === undefined || items === null) {
-      return [];
-    }
-    return items.filter(item => {
-      return item.requiredRole === undefined || item.requiredRole === null || this.userService.hasRole(item.requiredRole);
-    }).map(item => {
-      return <MenuItem>{
-        label: item.label,
-        icon: item.icon,
-        routerLink: item.routerLink,
-        items: this.filterMenuItems(item.items),
-        requiredRole: item.requiredRole,
-      };
-    });
-  }*/
 }
