@@ -17,16 +17,15 @@ export enum ConfigurationSelection {
   styleUrls: ['./configuration.component.css']
 })
 export class ConfigurationComponent implements OnInit {
-  configurationSelection = '';
 
   constructor(
     private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
-    this.route.url.subscribe(segments => {
-      const secondPart = segments.map(segment => segment.path)[1];
-      this.configurationSelection = Object.values(ConfigurationSelection).find(k => k === secondPart);
-    });
+  }
+
+  hasSelectedChild(): boolean {
+    return this.route.snapshot.children.length > 0;
   }
 }

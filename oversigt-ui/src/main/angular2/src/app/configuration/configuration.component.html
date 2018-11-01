@@ -1,2 +1,6 @@
-<h1>Configuration</h1>
-<p>This page ist empty</p>
+<router-outlet *ngIf="hasSelectedChild(); else nothingSelected"></router-outlet>
+
+<ng-template #nothingSelected>
+  <h1>Configuration</h1>
+  <p>This page ist empty</p>
+</ng-template>

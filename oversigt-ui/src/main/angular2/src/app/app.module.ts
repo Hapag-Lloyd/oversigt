@@ -41,26 +41,27 @@ registerLocaleData(en);
 const appRoutes: Routes = [
   { path: '',                         component: WelcomeComponent },
   { path: 'login',                    component: LoginComponent },
-  { path: 'config',                   component: ConfigurationComponent },
-  { path: 'config/createDashboard',   component: ConfigurationComponent },
-  { path: 'config/dashboards',        component: ConfigDashboardsComponent, children: [
-    { path: ':id',                    component: ConfigDashboardsEditComponent, children: [
-      { path: ':id',                  component: ConfigurationComponent }
-    ] }
+  { path: 'config',                   component: ConfigurationComponent, children: [
+    { path: 'createDashboard',        component: ConfigurationComponent },
+    { path: 'dashboards',             component: ConfigDashboardsComponent, children: [
+      { path: ':id',                  component: ConfigDashboardsEditComponent, children: [
+        { path: ':id',                component: ConfigurationComponent }
+      ] }
+    ] },
+    { path: 'dashboards/create',      component: ConfigurationComponent },
+    { path: 'createEventSource',      component: ConfigEventsourceCreateComponent },
+    { path: 'eventSources',           component: ConfigEventsourcesComponent, children: [
+      { path : ':id',                 component: ConfigEventsourcesDetailsComponent },
+    ] },
+    // { path: 'eventSources/:id',    component: ConfigurationComponent },
+    { path: 'logfiles',               component: ConfigLogsLogfileComponent },
+    { path: 'loggers',                component: ConfigLogsLoggerComponent },
+    { path: 'events',                 component: ConfigEventsComponent },
+    { path: 'threads',                component: ConfigThreadsComponent },
+    { path: 'properties/:name',       component: ConfigPropertyComponent },
+    // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
+    { path: 'system',                 component: ConfigSystemComponent },
   ] },
-  { path: 'config/dashboards/create', component: ConfigurationComponent },
-  { path: 'config/createEventSource', component: ConfigEventsourceCreateComponent },
-  { path: 'config/eventSources',      component: ConfigEventsourcesComponent, children: [
-    { path : ':id',                   component: ConfigEventsourcesDetailsComponent },
-  ] },
-  // { path: 'config/eventSources/:id', component: ConfigurationComponent },
-  { path: 'config/logfiles',          component: ConfigLogsLogfileComponent },
-  { path: 'config/loggers',           component: ConfigLogsLoggerComponent },
-  { path: 'config/events',            component: ConfigEventsComponent },
-  { path: 'config/threads',           component: ConfigThreadsComponent },
-  { path: 'config/properties/:name',  component: ConfigPropertyComponent },
-  // { path: 'config/properties/:name', component: ConfigPropertiesPropertyComponent },
-  { path: 'config/system',            component: ConfigSystemComponent },
   { path: ':dashboardId',             component: DashboardComponent },
 /*  { path: '**', component: PageNotFoundComponent }*/
 ];
