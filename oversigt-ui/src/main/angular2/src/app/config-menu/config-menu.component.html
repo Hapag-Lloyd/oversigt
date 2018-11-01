@@ -8,5 +8,6 @@
               *ngIf="si.icon !== null" nz-icon type="{{si.icon}}"></i> {{si.label}}</span></li>
       </ul>
     </li>
+    <li nz-menu-item (click)="doLogout()"> <i nz-icon type="logout" theme="outline"></i> Log out</li>
   </ul>
 </div>

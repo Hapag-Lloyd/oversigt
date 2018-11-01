@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SerializableValueService } from 'src/oversigt-client';
 import { UserService } from '../user-service.service';
 
@@ -23,7 +23,8 @@ export class ConfigMenuComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private userService: UserService,
-    private sps: SerializableValueService
+    private router: Router,
+    private sps: SerializableValueService,
   ) { }
 
   ngOnInit() {
@@ -65,5 +66,10 @@ export class ConfigMenuComponent implements OnInit {
 
   get itemsForUser(): MenuItem[] {
     return this.items;
+  }
+
+  doLogout() {
+    this.userService.logOut();
+    this.router.navigateByUrl('/');
   }
 }
