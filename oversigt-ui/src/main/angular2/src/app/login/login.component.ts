@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
 import { NzMessageService } from 'ng-zorro-antd';
 import { Router } from '@angular/router';
+import { UserServiceService } from '../user-service.service';
 
 @Component({
   selector: 'app-login',
@@ -14,9 +15,8 @@ export class LoginComponent implements OnInit {
   loginButtonEnabled = true;
 
   constructor(
-    private authenticationService: AuthenticationService,
     private message: NzMessageService,
-    private configuration: Configuration,
+    private user: UserServiceService,
     private router: Router,
   ) { }
 
@@ -30,22 +30,15 @@ export class LoginComponent implements OnInit {
     }
 
     this.loginButtonEnabled = false;
-    this.authenticationService.authenticateUser(this.username, this.password).subscribe(
-      ok => {
-        const authorization = 'Bearer ' + ok['token'];
-        this.configuration.apiKeys['Authorization'] = authorization;
+    const password = this.password;
+    this.password = '';
+    this.user.logIn(this.username, password,
+      name => { // success
+        this.username = '';
         this.router.navigateByUrl('/config');
-      },
-      fail => {
-        if (fail.status === 403) {
-          this.password = '';
-          this.message.error('Login failed.');
-        } else {
-          console.error(fail);
-          // TODO
-        }
-      },
-      () => {
+      }, () => { // fail
+        this.message.error('Login failed.');
+      }, () => { // done
         this.loginButtonEnabled = true;
       }
     );

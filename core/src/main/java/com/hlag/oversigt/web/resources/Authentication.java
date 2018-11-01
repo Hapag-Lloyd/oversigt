@@ -91,7 +91,8 @@ public class Authentication {
 			Utils.logChange(principal, "logged in");
 
 			// Return the token on the response
-			return ok(new AuthData(token, findRolesForUser(principal)), MediaType.APPLICATION_JSON).build();
+			return ok(new AuthData(principal.getName(), token, findRolesForUser(principal)), MediaType.APPLICATION_JSON)
+					.build();
 		} catch (Exception e) {
 			LOGGER.warn("MAYBE " + username + " - tried to authenticate", e);
 			return status(Response.Status.FORBIDDEN).build();
@@ -169,6 +170,7 @@ public class Authentication {
 	@ToString
 	@AllArgsConstructor
 	public static class AuthData {
+		private String displayName;
 		private String token;
 		@NotNull
 		private Set<@NotBlank String> roles;

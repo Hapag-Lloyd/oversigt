@@ -6,7 +6,7 @@
         autofocus="autofocus">
       <input [(ngModel)]="password" type="password" name="password" class="form-control" placeholder="Password"
         required="required">
-      <button class="btn btn-lg btn-primary btn-block" (click)="doLogin()">Log In</button>
+      <button class="btn btn-lg btn-primary btn-block" (click)="doLogin()" [disabled]="!loginButtonEnabled">Log In</button>
     </form>
   </div>
 </div>
