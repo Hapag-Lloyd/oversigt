@@ -27,7 +27,7 @@ export class UserService {
   }
 
   isLoggedIn(): boolean {
-    return this.token !== null;
+    return this.token !== null && this.token !== '';
   }
 
   getName(): string {
@@ -96,8 +96,8 @@ export class UserService {
   }
 
   public logOut() {
-    this.token = null;
-    this.name = null;
+    this.token = '';
+    this.name = '';
     this.roles = [];
   }
 

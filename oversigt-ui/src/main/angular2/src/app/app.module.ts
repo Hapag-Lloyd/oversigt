@@ -42,7 +42,9 @@ registerLocaleData(en);
 const appRoutes: Routes = [
   { path: '',                         component: WelcomeComponent },
   { path: 'login',                    component: LoginComponent },
-  { path: 'config',                   component: ConfigurationComponent, canActivate: [AuthGuard], children: [
+  { path: 'config',                   component: ConfigurationComponent,
+                                      canActivate: [AuthGuard],
+                                      canActivateChild: [AuthGuard], children: [
     { path: 'createDashboard',        component: ConfigurationComponent },
     { path: 'dashboards',             component: ConfigDashboardsComponent, children: [
       { path: ':id',                  component: ConfigDashboardsEditComponent, children: [
