@@ -2,29 +2,63 @@ import { Injectable } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
 import { UrlSegment } from '@angular/router';
 
-
+const USER_NAME = 'user.name';
+const USER_TOKEN = 'user.token';
+const USER_ROLES = 'user.roles';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private _name: string = null;
-  private _token: string = null;
-  private _roles: string[] = [];
+  private __name: string = null;
+  private __token: string = null;
+  private __roles: string[] = [];
 
   private _requestedUrl: string = null;
 
   constructor(
     private authentication: AuthenticationService,
     private configuration: Configuration,
-  ) { }
-
-  get isLoggedIn(): boolean {
-    return this._token !== null;
+  ) {
+    this.__name = localStorage.getItem(USER_NAME);
+    this.__token = localStorage.getItem(USER_TOKEN);
+    this.__roles = JSON.parse(localStorage.getItem(USER_ROLES));
+    // TODO check if token is still valid - log out if not
   }
 
-  get name(): string {
-    return this._name;
+  isLoggedIn(): boolean {
+    return this.token !== null;
+  }
+
+  getName(): string {
+    return this.name;
+  }
+
+  private get name(): string {
+    return this.__name;
+  }
+
+  private set name(name: string) {
+    this.__name = name;
+    localStorage.setItem(USER_NAME, name);
+  }
+
+  private get token(): string {
+    return this.__token;
+  }
+
+  private set token(token: string) {
+    this.__token = token;
+    localStorage.setItem(USER_TOKEN, token);
+  }
+
+  private get roles(): string[] {
+    return this.__roles;
+  }
+
+  private set roles(roles: string[]) {
+    this.__roles = roles;
+    localStorage.setItem(USER_ROLES, JSON.stringify(roles));
   }
 
   get requestedUrl(): string {
@@ -43,9 +77,9 @@ export class UserService {
     this.authentication.authenticateUser(username, password).subscribe(
       ok => {
         const authorization = 'Bearer ' + ok.token;
-        this._token = ok.token;
-        this._name = ok.displayName;
-        this._roles = ok.roles;
+        this.token = ok.token;
+        this.name = ok.displayName;
+        this.roles = ok.roles;
         this.configuration.apiKeys['Authorization'] = authorization;
         success(ok.displayName);
       },
@@ -61,7 +95,13 @@ export class UserService {
     );
   }
 
+  public logOut() {
+    this.token = null;
+    this.name = null;
+    this.roles = [];
+  }
+
   hasRole(roleName: string): boolean {
-    return this._roles.includes(roleName);
+    return this.roles !== null && this.roles.includes(roleName);
   }
 }

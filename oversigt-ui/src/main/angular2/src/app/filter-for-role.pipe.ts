@@ -14,21 +14,8 @@ export class FilterForRolePipe implements PipeTransform {
     if (!items) {
       return [];
     }
-    /*if (!searchText) {
-      return items;
-    }*/
 
     return items.filter(item => this.isItemAllowed(item));
-
-    /*searchText = searchText.toLowerCase();
-
-    return items.filter( it => {
-      if (it['event'] !== undefined) {
-        return JSON.stringify(it.event).toLowerCase().includes(searchText);
-      } else {
-        return JSON.stringify(it).toLowerCase().includes(searchText);
-      }
-    });*/
   }
 
   private isItemAllowed(item: any): boolean {
