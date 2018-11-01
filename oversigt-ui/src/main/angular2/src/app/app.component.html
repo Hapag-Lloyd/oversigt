@@ -1,25 +1,19 @@
-<nz-layout *ngIf="isShowingConfiguration(); else plain">
-  <nz-header>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;align-items: baseline;">
-      <h1 style="margin-top: 0.5ex;color: lightcyan;text-shadow: 0 0 5px antiquewhite;">Oversigt</h1>
-      <a nz-button [nzType]="'dashed'" (click)="doLogOut()">Logout</a>
+<div *ngIf="isShowingConfiguration(); else plain">
+  <!--<div style="display: flex; flex-direction: row; justify-content: space-between;align-items: baseline;">
+    <h1 style="margin-top: 0.5ex;color: lightcyan;text-shadow: 0 0 5px antiquewhite;">Oversigt</h1>
+    <a nz-button [nzType]="'dashed'" (click)="doLogOut()">Logout</a>
+  </div>-->
+  <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
+    <div style="flex-shrink: 0; position: sticky;">
+      <app-config-menu [isCollapsed]="isCollapsed"></app-config-menu>
+      <div><a nz-button [nzType]="'ghost'" (click)="doLogOut()">Logout</a></div>
     </div>
-  </nz-header>
-  <nz-layout>
-    <!--<nz-sider nzCollapsible [(nzCollapsed)]="isCollapsed" [nzTrigger]="trigger">-->
-    <nz-sider>
-      <nz-affix>
-        <app-config-menu [isCollapsed]="isCollapsed"></app-config-menu>
-      </nz-affix>
-    </nz-sider>
-    <nz-content>
+    <div style="flex-grow: 1; ">
       <router-outlet></router-outlet>
-    </nz-content>
-  </nz-layout>
-</nz-layout>
-<ng-template #trigger>
-  <i nz-icon type="layout"></i>
-</ng-template>
+    </div>
+  </div>
+</div>
+
 <ng-template #plain>
   <router-outlet></router-outlet>
 </ng-template>
