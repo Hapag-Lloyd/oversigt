@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Configuration } from 'src/oversigt-client';
 import { ActivatedRoute, Router } from '@angular/router';
-import { environment } from 'src/environments/environment.prod';
 
 @Component({
   selector: 'app-root',
@@ -15,12 +13,10 @@ export class AppComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private configuration: Configuration
   ) {
   }
 
   ngOnInit(): void {
-    this.configuration.apiKeys['Authorization'] = environment.authorizationKey;
   }
 
   isShowingConfiguration(): boolean {

@@ -33,6 +33,8 @@ import { ConfigDashboardsComponent } from './config-dashboards/config-dashboards
 import { ConfigDashboardsEditComponent } from './config-dashboards-edit/config-dashboards-edit.component';
 import { EventsourceButtonComponent } from './eventsource-button/eventsource-button.component';
 import { ConfigEventsourcesDetailsComponent } from './config-eventsources-details/config-eventsources-details.component';
+import { FilterForRolePipe } from './filter-for-role.pipe';
+import { environment } from 'src/environments/environment';
 
 registerLocaleData(en);
 
@@ -64,7 +66,7 @@ const appRoutes: Routes = [
 ];
 
 export function initializeApiConfiguration(): Configuration {
-  return new Configuration({apiKeys: {'Authorization': ''}});
+  return new Configuration({apiKeys: {'Authorization': environment.authorizationKey}});
 }
 
 @NgModule({
@@ -93,6 +95,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigDashboardsEditComponent,
     EventsourceButtonComponent,
     ConfigEventsourcesDetailsComponent,
+    FilterForRolePipe,
   ],
   imports: [
     RouterModule.forRoot(

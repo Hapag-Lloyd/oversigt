@@ -38,7 +38,7 @@ export class ConfigMenuComponent implements OnInit {
       }, {
         label: 'Dashboards', icon: 'fund',
         items: [
-            {label: 'Create', icon: 'plus-circle', routerLink: '/config/createDashboard'},
+            {label: 'Create', icon: 'plus-circle', routerLink: '/config/createDashboard', requiredRole: 'server.admin'},
             {label: 'Configure', icon: 'bars', routerLink: '/config/dashboards'} ]
       }, {
         label: 'Properties', icon: 'appstore', requiredRole: 'server.dashboard.owner',
@@ -54,8 +54,11 @@ export class ConfigMenuComponent implements OnInit {
       }
     ];
     this.sps.listPropertyTypes().subscribe(
-      types => this.items[2].items = types
-          .map(type => <MenuItem>{label: type, routerLink: '/config/properties/' + type, requiredRole: 'server.dashboard.owner'})
+      types => this.items.find(item => item.label === 'Properties').items = types
+          .map(type => <MenuItem>{label: type,
+                                  icon: 'build',
+                                  routerLink: '/config/properties/' + type,
+                                  requiredRole: 'server.dashboard.owner', })
           .sort((a, b) => a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1)
     );
   }

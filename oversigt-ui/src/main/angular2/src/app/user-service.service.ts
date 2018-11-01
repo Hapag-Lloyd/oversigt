@@ -12,7 +12,7 @@ export class UserServiceService {
   private _roles: string[] = [];
 
   constructor(
-    private authorization: AuthenticationService,
+    private authentication: AuthenticationService,
     private configuration: Configuration,
   ) { }
 
@@ -25,7 +25,7 @@ export class UserServiceService {
   }
 
   public logIn(username: string, password: string, success: (name: string) => void, fail: () => void, done: () => void): void {
-    this.authorization.authenticateUser(username, password).subscribe(
+    this.authentication.authenticateUser(username, password).subscribe(
       ok => {
         const authorization = 'Bearer ' + ok.token;
         this._token = ok.token;
@@ -42,9 +42,7 @@ export class UserServiceService {
           // TODO
         }
       },
-      () => {
-        done();
-      }
+      done
     );
   }
 

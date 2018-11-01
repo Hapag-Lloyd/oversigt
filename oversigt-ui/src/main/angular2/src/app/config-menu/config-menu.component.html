@@ -1,8 +1,10 @@
 <ul nz-menu [nzMode]="'inline'" [nzTheme]="'dark'" [nzInlineCollapsed]="isCollapsed">
-  <li *ngFor="let item of itemsForUser" nz-submenu>
+  <li *ngFor="let item of itemsForUser | filterForRole" nz-submenu>
     <span title><i nz-icon type="{{item.icon}}"></i><span class="nav-text">{{item.label}}</span></span>
     <ul>
-      <li *ngFor="let si of item.items" nz-menu-item routerLink="{{si.routerLink}}"><i *ngIf="si.icon !== null" nz-icon type="{{si.icon}}"></i> {{si.label}}</li>
+      <li *ngFor="let si of item.items | filterForRole" nz-menu-item routerLink="{{si.routerLink}}"><span title><i *ngIf="si.icon !== null" nz-icon type="{{si.icon}}"></i> {{si.label}}</span></li>
     </ul>
   </li>
 </ul>
+
+<!--filterForRole-->
