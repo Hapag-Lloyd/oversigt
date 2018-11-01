@@ -21,6 +21,7 @@
           <label *ngFor="let si of property.allowedValues" nz-radio-button nzValue="{{si}}">{{property.allowedValuesMap[si]}}</label>
         </nz-radio-group>
       </div>
+      <app-json-schema *ngSwitchCase="'json'" [schema]="property.jsonSchema"></app-json-schema>
       <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
     </nz-input-group>
     <nz-form-extra *ngIf="property.description !== null">{{property.description}}</nz-form-extra>

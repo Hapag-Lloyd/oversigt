@@ -1,0 +1,7 @@
+<select *ngIf="schemaObject.enum?.length > 0; else input">
+  <option *ngFor="let item of schemaObject.enum">{{item}}</option>
+</select>
+
+<ng-template #input>
+  <input type="text" size="10" placeholder="{{schemaObject.format}}" />
+</ng-template>

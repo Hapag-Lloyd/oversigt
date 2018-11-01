@@ -36,6 +36,7 @@ import { ConfigEventsourcesDetailsComponent } from './config-eventsources-detail
 import { FilterForRolePipe } from './filter-for-role.pipe';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './guards/auth.guard';
+import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
 
 registerLocaleData(en);
 
@@ -110,6 +111,7 @@ export function initializeApiConfiguration(): Configuration {
     FormsModule,
     BrowserAnimationsModule,
     NgZorroAntdModule,
+    JsonSchemaEditorModule,
   ],
   providers: [DashboardService, { provide: NZ_I18N, useValue: en_US }],
   bootstrap: [AppComponent]
