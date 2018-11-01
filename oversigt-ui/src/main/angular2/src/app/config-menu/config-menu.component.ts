@@ -1,12 +1,14 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SerializableValueService } from 'src/oversigt-client';
+import { UserServiceService } from '../user-service.service';
 
 class MenuItem {
   label: string;
   icon?: string;
   routerLink?: string;
-  items?: MenuItem[];
+  items?: MenuItem[] = [];
+  requiredRole?: string;
 }
 
 @Component({
@@ -16,10 +18,11 @@ class MenuItem {
 })
 export class ConfigMenuComponent implements OnInit {
   @Input() isCollapsed: boolean;
-  items: MenuItem[];
+  private items: MenuItem[];
 
   constructor(
     private route: ActivatedRoute,
+    private userService: UserServiceService,
     private sps: SerializableValueService
   ) { }
 
@@ -38,27 +41,43 @@ export class ConfigMenuComponent implements OnInit {
             {label: 'Create', icon: 'plus-circle', routerLink: '/config/createDashboard'},
             {label: 'Configure', icon: 'bars', routerLink: '/config/dashboards'} ]
       }, {
-        label: 'Properties', icon: 'appstore',
+        label: 'Properties', icon: 'appstore', requiredRole: 'server.dashboard.owner',
         items: []
       }, {
         label: 'System', icon: 'desktop',
         items: [
             {label: 'Logs', icon: 'exception', routerLink: '/config/logfiles'},
-            {label: 'Loggers', icon: 'filter', routerLink: '/config/loggers'},
+            {label: 'Loggers', icon: 'filter', routerLink: '/config/loggers', requiredRole: 'server.admin'},
             {label: 'Events', icon: 'thunderbolt', routerLink: '/config/events'},
             {label: 'Threads', icon: 'interation', routerLink: '/config/threads'},
-            {label: 'System', icon: 'hdd', routerLink: '/config/system'} ]
+            {label: 'System', icon: 'hdd', routerLink: '/config/system', requiredRole: 'server.admin'} ]
       }
     ];
     this.sps.listPropertyTypes().subscribe(
       types => this.items[2].items = types
-          .map(type => this.createMenuItem(type, '/config/properties/' + type))
+          .map(type => <MenuItem>{label: type, routerLink: '/config/properties/' + type, requiredRole: 'server.dashboard.owner'})
           .sort((a, b) => a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1)
     );
   }
 
-  private createMenuItem(label: string, routerLink: string): MenuItem {
-    return {label: label, routerLink: routerLink, icon: 'build'};
+  get itemsForUser(): MenuItem[] {
+    return this.items;
   }
 
+  /*private filterMenuItems(items: MenuItem[]): MenuItem[] {
+    if (items === undefined || items === null) {
+      return [];
+    }
+    return items.filter(item => {
+      return item.requiredRole === undefined || item.requiredRole === null || this.userService.hasRole(item.requiredRole);
+    }).map(item => {
+      return <MenuItem>{
+        label: item.label,
+        icon: item.icon,
+        routerLink: item.routerLink,
+        items: this.filterMenuItems(item.items),
+        requiredRole: item.requiredRole,
+      };
+    });
+  }*/
 }

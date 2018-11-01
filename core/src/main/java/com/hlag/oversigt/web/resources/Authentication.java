@@ -115,11 +115,13 @@ public class Authentication {
 	}
 
 	private Set<String> findRolesForUser(final Principal principal) {
-		return Utils
-				.concat(Stream.of(Role.ROLE_NAME_SERVER_ADMIN),
-						Utils.concat(dashboardController.getDashboardIds().stream().map(Role::getDashboardOwnerRole),
-								dashboardController.getDashboardIds().stream().map(Role::getDashboardEditorRole))
-								.map(Role::getName))
+		return Utils.concat(
+				Stream.of(Role.ROLE_NAME_SERVER_ADMIN,
+						Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER,
+						Role.ROLE_NAME_GENERAL_DASHBOARD_EDITOR),
+				Utils.concat(dashboardController.getDashboardIds().stream().map(Role::getDashboardOwnerRole),
+						dashboardController.getDashboardIds().stream().map(Role::getDashboardEditorRole))
+						.map(Role::getName))
 				.filter(principal::hasRole)
 				.collect(toSet());
 	}

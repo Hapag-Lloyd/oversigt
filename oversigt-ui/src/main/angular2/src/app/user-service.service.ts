@@ -9,6 +9,7 @@ import { AuthenticationService, Configuration } from 'src/oversigt-client';
 export class UserServiceService {
   private _name: string = null;
   private _token: string = null;
+  private _roles: string[] = [];
 
   constructor(
     private authorization: AuthenticationService,
@@ -29,6 +30,7 @@ export class UserServiceService {
         const authorization = 'Bearer ' + ok.token;
         this._token = ok.token;
         this._name = ok.displayName;
+        this._roles = ok.roles;
         this.configuration.apiKeys['Authorization'] = authorization;
         success(ok.displayName);
       },
@@ -44,5 +46,9 @@ export class UserServiceService {
         done();
       }
     );
+  }
+
+  hasRole(roleName: string): boolean {
+    return this._roles.includes(roleName);
   }
 }
