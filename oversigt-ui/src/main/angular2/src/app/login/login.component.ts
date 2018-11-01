@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
 import { NzMessageService } from 'ng-zorro-antd';
 import { Router } from '@angular/router';
-import { UserServiceService } from '../user-service.service';
+import { UserService } from '../user-service.service';
 
 @Component({
   selector: 'app-login',
@@ -16,7 +16,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private message: NzMessageService,
-    private user: UserServiceService,
+    private user: UserService,
     private router: Router,
   ) { }
 

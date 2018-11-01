@@ -6,7 +6,7 @@ import { AuthenticationService, Configuration } from 'src/oversigt-client';
 @Injectable({
   providedIn: 'root'
 })
-export class UserServiceService {
+export class UserService {
   private _name: string = null;
   private _token: string = null;
   private _roles: string[] = [];

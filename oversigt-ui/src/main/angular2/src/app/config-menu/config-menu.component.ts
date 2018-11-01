@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SerializableValueService } from 'src/oversigt-client';
-import { UserServiceService } from '../user-service.service';
+import { UserService } from '../user-service.service';
 
 class MenuItem {
   label: string;
@@ -22,7 +22,7 @@ export class ConfigMenuComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private userService: UserServiceService,
+    private userService: UserService,
     private sps: SerializableValueService
   ) { }
 

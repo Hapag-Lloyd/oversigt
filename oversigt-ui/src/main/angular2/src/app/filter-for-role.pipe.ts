@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { UserServiceService } from './user-service.service';
+import { UserService } from './user-service.service';
 
 @Pipe({
   name: 'filterForRole'
@@ -7,7 +7,7 @@ import { UserServiceService } from './user-service.service';
 export class FilterForRolePipe implements PipeTransform {
 
   constructor(
-    private userService: UserServiceService,
+    private userService: UserService,
   ) { }
 
   transform(items: any[]): any[] {
