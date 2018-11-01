@@ -35,13 +35,14 @@ import { EventsourceButtonComponent } from './eventsource-button/eventsource-but
 import { ConfigEventsourcesDetailsComponent } from './config-eventsources-details/config-eventsources-details.component';
 import { FilterForRolePipe } from './filter-for-role.pipe';
 import { environment } from 'src/environments/environment';
+import { AuthGuard } from './guards/auth.guard';
 
 registerLocaleData(en);
 
 const appRoutes: Routes = [
   { path: '',                         component: WelcomeComponent },
   { path: 'login',                    component: LoginComponent },
-  { path: 'config',                   component: ConfigurationComponent, children: [
+  { path: 'config',                   component: ConfigurationComponent, canActivate: [AuthGuard], children: [
     { path: 'createDashboard',        component: ConfigurationComponent },
     { path: 'dashboards',             component: ConfigDashboardsComponent, children: [
       { path: ':id',                  component: ConfigDashboardsEditComponent, children: [

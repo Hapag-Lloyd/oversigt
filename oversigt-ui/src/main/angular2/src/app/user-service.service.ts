@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
+import { UrlSegment } from '@angular/router';
 
 
 
@@ -11,17 +12,31 @@ export class UserService {
   private _token: string = null;
   private _roles: string[] = [];
 
+  private _requestedUrl: string = null;
+
   constructor(
     private authentication: AuthenticationService,
     private configuration: Configuration,
   ) { }
 
-  get loggedIn(): boolean {
+  get isLoggedIn(): boolean {
     return this._token !== null;
   }
 
   get name(): string {
     return this._name;
+  }
+
+  get requestedUrl(): string {
+    if (this._requestedUrl === null || this._requestedUrl.length === 0) {
+      return 'config';
+    } else {
+      return this._requestedUrl;
+    }
+  }
+
+  set requestedUrl(url: string) {
+    this._requestedUrl = url;
   }
 
   public logIn(username: string, password: string, success: (name: string) => void, fail: () => void, done: () => void): void {
