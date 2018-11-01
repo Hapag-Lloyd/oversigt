@@ -1,8 +1,8 @@
 <nz-layout *ngIf="isShowingConfiguration(); else plain">
   <nz-header>
-    <div style="display: flex; flex-direction: row; justify-content: space-between;">
-      <h1>Oversigt</h1>
-      <a (click)="doLogOut()">Logout</a>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;align-items: baseline;">
+      <h1 style="margin-top: 0.5ex;color: lightcyan;text-shadow: 0 0 5px antiquewhite;">Oversigt</h1>
+      <a nz-button [nzType]="'dashed'" (click)="doLogOut()">Logout</a>
     </div>
   </nz-header>
   <nz-layout>
