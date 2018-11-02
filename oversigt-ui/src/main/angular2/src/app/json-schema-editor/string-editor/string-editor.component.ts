@@ -8,10 +8,49 @@ import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
 })
 export class StringEditorComponent implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
+  editorType = 'input';
+  inputType = null;
+  values: string[];
+  valueToTitle: {[key: string]: string} = {};
 
   constructor() { }
 
   ngOnInit() {
+    // TODO handle unique items
+    console.log(this.schemaObject);
+
+    if (this.schemaObject.enumSource !== undefined && this.schemaObject.enumSource.length === 1) {
+      this.editorType = 'select';
+      const enumSource = this.schemaObject.enumSource[0];
+      const valueIndex = enumSource.value.replace(/{/g, '').replace(/}/g, '').substring('item.'.length);
+      const titleIndex = enumSource.title.replace(/{/g, '').replace(/}/g, '').substring('item.'.length);
+      this.values = enumSource.source.map(item => item[valueIndex]);
+      const titles = enumSource.source.map(item => item[titleIndex]);
+      for (let i = 0; i < this.values.length; ++i) {
+        this.valueToTitle[this.values[i]] = titles[i];
+      }
+    } else {
+      switch (this.schemaObject.format) {
+        case 'text':
+        case null:
+        case '':
+        case 'hostname': // TODO maybe better editor?
+          this.inputType = 'text';
+          break;
+        case 'color':
+          this.inputType = 'color';
+          break;
+        case 'date':
+          this.inputType = 'date';
+          break;
+        case 'password':
+          this.inputType = 'password';
+          break;
+        default:
+          this.inputType = this.schemaObject.format;
+          break;
+      }
+    }
   }
 
 }

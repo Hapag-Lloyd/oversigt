@@ -12,7 +12,13 @@ export class JsonSchemaProperty {
   format?: string;
   uniqueItems?: boolean;
   items?: JsonSchemaProperty;
-  enum?: string[];
+  enumSource?: EnumSource[];
+}
+
+export class EnumSource {
+  source: any[];
+  title: string;
+  value: string;
 }
 
 @Component({

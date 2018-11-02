@@ -3,5 +3,11 @@
 </select>
 
 <ng-template #input>
-  <input type="text" size="10" placeholder="{{schemaObject.format}}" />
+  <ng-container [ngSwitch]="editorType">
+    <input *ngSwitchCase="'input'" type="{{inputType}}" size="10" placeholder="{{schemaObject.title}}" />
+    <select *ngSwitchCase="'select'">
+      <option *ngFor="let value of values" value="{{value}}">{{valueToTitle[value]}}</option>
+    </select>
+    <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
+  </ng-container>
 </ng-template>
