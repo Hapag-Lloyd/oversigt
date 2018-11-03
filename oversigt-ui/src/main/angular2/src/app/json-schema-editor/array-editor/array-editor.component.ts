@@ -9,6 +9,10 @@ import { AbstractValueAccessor } from 'src/app/_editor/abstract-value-accessor';
 export class ArrayEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: {};
 
+  get array(): any[] {
+    return this.value;
+  }
+
   ngOnInit() {
   }
 
