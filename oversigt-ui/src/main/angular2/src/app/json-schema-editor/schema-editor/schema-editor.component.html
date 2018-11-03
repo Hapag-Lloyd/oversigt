@@ -1,0 +1,7 @@
+<div class="schema-editor" [ngSwitch]="schemaObject.type" style="border: 1px solid blue; padding: 3px;">
+  <div>{{schemaObject.title}}</div>
+  <app-json-array *ngSwitchCase="'array'" [schemaObject]="schemaObject.items"></app-json-array>
+  <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject"></app-json-object>
+  <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject"></app-json-string>
+  <pre *ngSwitchDefault>No editor for schema type "{{schemaObject.type}}"</pre>
+</div>

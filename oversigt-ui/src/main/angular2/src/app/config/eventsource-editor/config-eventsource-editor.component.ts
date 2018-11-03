@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { EventSourceProperty, SerializableValueService } from 'src/oversigt-client';
-import { MakeProvider } from '../_editor/abstract-value-accessor';
+import { MakeProvider } from '../../_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-config-eventsource-editor',

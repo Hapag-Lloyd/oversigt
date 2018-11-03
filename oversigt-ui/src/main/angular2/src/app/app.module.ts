@@ -3,7 +3,9 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import en from '@angular/common/locales/en';
 
+import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
 import { AppComponent } from './app.component';
 import { DashboardService, ApiModule, Configuration } from '../oversigt-client';
 import { WelcomeComponent } from './welcome/welcome.component';
@@ -17,9 +19,7 @@ import { ConfigPropertyComponent } from './config/property/config-property.compo
 import { ConfigMenuComponent } from './config/_menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config/eventsources/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
 import { registerLocaleData } from '@angular/common';
-import en from '@angular/common/locales/en';
 import { ConfigEventsourceInfoComponent } from './config/eventsource-info/config-eventsource-info.component';
 import { ConfigEventsourceCreateComponent } from './config/eventsource-create/config-eventsource-create.component';
 import { ConfigEventsourceEditorComponent } from './config/eventsource-editor/config-eventsource-editor.component';
@@ -36,7 +36,8 @@ import { ConfigEventsourcesDetailsComponent } from './config/eventsources-detail
 import { FilterForRolePipe } from './filter-for-role.pipe';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './guards/auth.guard';
-import { InputFieldComponent } from './config/_editor/input-field.component';
+import { InputFieldComponent } from './_editor/input-field.component';
+import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
 
 registerLocaleData(en);
 
@@ -112,6 +113,7 @@ export function initializeApiConfiguration(): Configuration {
     FormsModule,
     BrowserAnimationsModule,
     NgZorroAntdModule,
+    JsonSchemaEditorModule,
   ],
   providers: [DashboardService, { provide: NZ_I18N, useValue: en_US }],
   bootstrap: [AppComponent]
