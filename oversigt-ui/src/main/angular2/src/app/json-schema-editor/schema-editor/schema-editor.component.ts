@@ -1,4 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { MakeProvider, AbstractValueAccessor } from 'src/app/_editor/abstract-value-accessor';
 
 export class JsonSchemaProperty {
   title: string;
@@ -26,12 +27,9 @@ export class EnumSource {
   templateUrl: './schema-editor.component.html',
   styleUrls: ['./schema-editor.component.css']
 })
-export class SchemaEditorComponent implements OnInit {
+export class SchemaEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schema: '';
   @Input() schemaObject: JsonSchemaProperty = null;
-  @Input() value: any;
-
-  constructor() { }
 
   ngOnInit() {
     if (this.schemaObject === null) {

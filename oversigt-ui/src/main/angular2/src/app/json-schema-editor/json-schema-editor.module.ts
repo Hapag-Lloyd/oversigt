@@ -4,10 +4,12 @@ import { ArrayEditorComponent } from './array-editor/array-editor.component';
 import { SchemaEditorComponent } from './schema-editor/schema-editor.component';
 import { ObjectEditorComponent } from './object-editor/object-editor.component';
 import { StringEditorComponent } from './string-editor/string-editor.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   imports: [
     CommonModule,
+    FormsModule,
   ],
   declarations: [
     ArrayEditorComponent,

@@ -1,15 +1,14 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
+import { AbstractValueAccessor } from 'src/app/_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-json-object',
   templateUrl: './object-editor.component.html',
   styleUrls: ['./object-editor.component.css']
 })
-export class ObjectEditorComponent implements OnInit {
+export class ObjectEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
-
-  constructor() { }
 
   ngOnInit() {
   }

@@ -1,19 +1,18 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
+import { AbstractValueAccessor } from 'src/app/_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-json-string',
   templateUrl: './string-editor.component.html',
   styleUrls: ['./string-editor.component.css']
 })
-export class StringEditorComponent implements OnInit {
+export class StringEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
   editorType = 'input';
   inputType = null;
   values: string[];
   valueToTitle: {[key: string]: string} = {};
-
-  constructor() { }
 
   ngOnInit() {
     // TODO handle unique items
