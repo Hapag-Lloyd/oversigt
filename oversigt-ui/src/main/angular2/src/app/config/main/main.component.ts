@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { debug } from 'util';
 
 export enum ConfigurationSelection {
   None = '',
@@ -13,8 +12,8 @@ export enum ConfigurationSelection {
 
 @Component({
   selector: 'app-configuration',
-  templateUrl: './configuration.component.html',
-  styleUrls: ['./configuration.component.css']
+  templateUrl: './main.component.html',
+  styleUrls: ['./main.component.css']
 })
 export class ConfigurationComponent implements OnInit {
 

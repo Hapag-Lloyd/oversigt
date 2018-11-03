@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventSourceInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { EventsourceSelectionService } from '../eventsource-selection.service';
+import { EventsourceSelectionService } from '../../eventsource-selection.service';
 import { NzTreeNode, NzOptionComponent } from 'ng-zorro-antd';
 
 @Component({

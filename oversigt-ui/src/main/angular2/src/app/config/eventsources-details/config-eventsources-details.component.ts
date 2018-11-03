@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor } from 'src/oversigt-client';
-import { EventsourceSelectionService } from '../eventsource-selection.service';
+import { EventsourceSelectionService } from '../../eventsource-selection.service';
 import { Subscribable, Subscription } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd';
-import { ConfigEventsourcesComponent } from '../config-eventsources/config-eventsources.component';
+import { ConfigEventsourcesComponent } from '../eventsources/config-eventsources.component';
 
 @Component({
   selector: 'app-config-eventsources-details',

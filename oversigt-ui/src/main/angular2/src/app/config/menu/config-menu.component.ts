@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SerializableValueService } from 'src/oversigt-client';
-import { UserService } from '../user-service.service';
+import { UserService } from '../../user-service.service';
 
 class MenuItem {
   label: string;
