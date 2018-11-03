@@ -14,7 +14,7 @@ import { ConfigLogsLogfileComponent } from './config/logfiles/config-logs-logfil
 import { ConfigLogsLoggerComponent } from './config/loggers/config-logs-logger.component';
 import { ConfigSystemComponent } from './config/system/config-system.component';
 import { ConfigPropertyComponent } from './config/property/config-property.component';
-import { ConfigMenuComponent } from './config/menu/config-menu.component';
+import { ConfigMenuComponent } from './config/_menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config/eventsources/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
@@ -24,7 +24,7 @@ import { ConfigEventsourceInfoComponent } from './config/eventsource-info/config
 import { ConfigEventsourceCreateComponent } from './config/eventsource-create/config-eventsource-create.component';
 import { ConfigEventsourceEditorComponent } from './config/eventsource-editor/config-eventsource-editor.component';
 import { FilterEventsourceinfoPipe } from './filter-eventsourceinfo.pipe';
-import { HeaderComponent } from './header/header.component';
+import { HeaderComponent } from './config/_header/header.component';
 import { ConfigEventsComponent } from './config/events/config-events.component';
 import { PrettyPrintPipe } from './prettyprint.pipe';
 import { FilterEventitemPipe } from './filter-eventitem.pipe';
