@@ -1,34 +1,31 @@
-import { Component, Provider, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor } from '@angular/forms';
 import { EventSourceProperty, SerializableValueService } from 'src/oversigt-client';
-
-export const CUSTOM_INPUT_CONTROL_VALUE_ACCESSOR: any = [{
-  provide: NG_VALUE_ACCESSOR,
-  useExisting: forwardRef(() => ConfigEventsourceEditorComponent),
-  multi: true
-}];
+import { MakeProvider } from '../_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-config-eventsource-editor',
   templateUrl: './config-eventsource-editor.component.html',
   styleUrls: ['./config-eventsource-editor.component.css'],
-  providers: CUSTOM_INPUT_CONTROL_VALUE_ACCESSOR,
+  providers: [MakeProvider(ConfigEventsourceEditorComponent)]
 })
 export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAccessor {
   @Input() property: EventSourceProperty;
   @Input() canBeDisabled = false;
-  private _value: any = '';
+  private _value: any = null;
   get value(): any { return this._value; }
-  set value(v: any) {
-    if (v !== this._value) {
-      this._value = v;
-      this.onChange(v);
+  set value(value: any) {
+    if (value !== this._value) {
+      this._value = value;
+      this.onChange(value);
     }
   }
 
   writeValue(value: any) {
-    this._value = value;
-    this.onChange(value);
+    if (value !== this._value) {
+      this._value = value;
+      this.onChange(value);
+    }
   }
 
   onChange = (_) => {};

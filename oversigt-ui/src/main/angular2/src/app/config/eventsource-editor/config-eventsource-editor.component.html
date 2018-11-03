@@ -22,6 +22,7 @@
         </nz-radio-group>
       </div>
       <pre *ngSwitchCase="'json'">JSON: {{value}}</pre>
+      <app-inputfield *ngSwitchCase="'json'" [(ngModel)]="value" [displaytext]="'hallo'" [placeholder]="'blub'"></app-inputfield>
       <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
     </nz-input-group>
     <nz-form-extra *ngIf="property.description !== null">{{property.description}}</nz-form-extra>

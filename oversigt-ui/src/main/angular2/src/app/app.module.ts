@@ -36,6 +36,7 @@ import { ConfigEventsourcesDetailsComponent } from './config/eventsources-detail
 import { FilterForRolePipe } from './filter-for-role.pipe';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './guards/auth.guard';
+import { InputFieldComponent } from './config/_editor/input-field.component';
 
 registerLocaleData(en);
 
@@ -100,6 +101,7 @@ export function initializeApiConfiguration(): Configuration {
     EventsourceButtonComponent,
     ConfigEventsourcesDetailsComponent,
     FilterForRolePipe,
+    InputFieldComponent,
   ],
   imports: [
     RouterModule.forRoot(
