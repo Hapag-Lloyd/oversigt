@@ -1,11 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
-import { AbstractValueAccessor } from 'src/app/_editor/abstract-value-accessor';
+import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-json-string',
   templateUrl: './string-editor.component.html',
-  styleUrls: ['./string-editor.component.css']
+  styleUrls: ['./string-editor.component.css'],
+  providers: [MakeProvider(StringEditorComponent)]
 })
 export class StringEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;

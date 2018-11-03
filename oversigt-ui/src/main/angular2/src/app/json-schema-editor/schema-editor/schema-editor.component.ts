@@ -25,7 +25,8 @@ export class EnumSource {
 @Component({
   selector: 'app-json-schema',
   templateUrl: './schema-editor.component.html',
-  styleUrls: ['./schema-editor.component.css']
+  styleUrls: ['./schema-editor.component.css'],
+  providers: [MakeProvider(SchemaEditorComponent)]
 })
 export class SchemaEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schema: '';
