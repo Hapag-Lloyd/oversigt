@@ -1,6 +1,7 @@
 <ng-container [ngSwitch]="editorType">
+  <span class="input-title">{{schemaObject.title}}: </span>
   <input *ngSwitchCase="'input'" type="{{inputType}}" size="10" placeholder="{{schemaObject.title}}" [(ngModel)]="value" />
-  <select *ngSwitchCase="'select'">
+  <select *ngSwitchCase="'select'" [(ngModel)]="value">
     <option *ngFor="let value of values" value="{{value}}">{{valueToTitle[value]}}</option>
   </select>
   <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>

@@ -1,6 +1,13 @@
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
-  <div style="flex-grow: 1; position: sticky;">
-    <app-json-schema *ngFor="let item of array" [schemaObject]="schemaObject"></app-json-schema>
+  <div style="flex-grow: 1">
+    <ng-container *ngIf="value !== null; else noContent">
+      <div *ngFor="let item of value; let i = index">
+        <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]"></app-json-schema>
+      </div>
+    </ng-container>
+    <ng-template #noContent>
+      <div>Currently this array has no content.</div>
+    </ng-template>
   </div>
   <div style="flex-shrink: 0; ">
     <button>add</button>

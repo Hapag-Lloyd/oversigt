@@ -14,7 +14,11 @@ export class ObjectEditorComponent extends AbstractValueAccessor implements OnIn
   ngOnInit() {
   }
 
-  getProperties(): JsonSchemaProperty[] {
-    return Object.values(this.schemaObject.properties);
+  getPropertyNames(): string[] {
+    return Object.keys(this.schemaObject.properties);
+  }
+
+  getProperty(name: string): JsonSchemaProperty {
+    return this.schemaObject.properties[name];
   }
 }

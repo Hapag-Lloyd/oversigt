@@ -63,4 +63,9 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
       );
     }
   }
+
+  toString(object: any): string {
+    return JSON.stringify(object);
+  }
+
 }

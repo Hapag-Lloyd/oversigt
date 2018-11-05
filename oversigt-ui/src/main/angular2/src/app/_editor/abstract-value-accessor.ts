@@ -17,10 +17,15 @@ export abstract class AbstractValueAccessor implements ControlValueAccessor {
     // this.onChange(value);
   }
 
-  onChange = (_) => {};
-  onTouched = () => {};
+  private onChange = (_) => {};
+  private onTouched = () => {};
   registerOnChange(fn: (_: any) => void): void { this.onChange = fn; }
   registerOnTouched(fn: () => void): void { this.onTouched = fn; }
+
+
+  toString(object: any): string {
+    return JSON.stringify(object);
+  }
 }
 
 export function MakeProvider(type: any) {

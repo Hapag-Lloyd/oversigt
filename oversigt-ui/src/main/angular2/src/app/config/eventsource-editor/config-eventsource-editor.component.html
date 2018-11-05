@@ -22,7 +22,7 @@
         </nz-radio-group>
       </div>
       <pre *ngSwitchCase="'json'">JSON: {{value}}</pre>
-      <app-inputfield *ngSwitchCase="'json'" [(ngModel)]="value" [displaytext]="'hallo'" [placeholder]="'blub'"></app-inputfield>
+      <pre *ngSwitchCase="'json'">{{toString(value)}}</pre>
       <app-json-schema *ngSwitchCase="'json'" [(ngModel)]="value" [schema]="property.jsonSchema"></app-json-schema>
       <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
     </nz-input-group>
