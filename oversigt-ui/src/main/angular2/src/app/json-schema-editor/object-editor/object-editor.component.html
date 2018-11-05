@@ -1,4 +1,4 @@
 <div>
   <pre>object: {{value}}</pre>
-  <app-json-schema *ngFor="let property of getProperties()" [schemaObject]="property"></app-json-schema>
+  <app-json-schema *ngFor="let property of getProperties()" [schemaObject]="property" [(ngModel)]="value[property.title]"></app-json-schema>
 </div>

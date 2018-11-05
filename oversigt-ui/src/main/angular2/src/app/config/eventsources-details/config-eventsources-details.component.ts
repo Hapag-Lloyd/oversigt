@@ -6,6 +6,16 @@ import { Subscribable, Subscription } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd';
 import { ConfigEventsourcesComponent } from '../eventsources/config-eventsources.component';
 
+export class ParsedEventSourceInstanceDetails {
+  eventSourceDescriptor: string;
+  id: string;
+  name: string;
+  enabled: boolean;
+  frequency: string;
+  properties: { [key: string]: any; };
+  dataItems: { [key: string]: string; };
+}
+
 @Component({
   selector: 'app-config-eventsources-details',
   templateUrl: './config-eventsources-details.component.html',
@@ -15,7 +25,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   private subscription: Subscription = null;
   eventSourceId: string = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
-  instanceDetails: EventSourceInstanceDetails = null;
+  parsedInstanceDetails: ParsedEventSourceInstanceDetails = null;
   serviceInfo: ServiceInfo = null;
 
   isStartingEventSource = false;
@@ -50,23 +60,55 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.eventSourceSelection.selectEventSource(this.eventSourceId);
 
     // Reset component
-    this.instanceDetails = null;
+    this.parsedInstanceDetails = null;
     this.eventSourceDescriptor = null;
 
     // Load data from server
     this.ess.readInstance(this.eventSourceId).subscribe(
       fullInfo => {
-        this.instanceDetails = fullInfo.instanceDetails;
         this.serviceInfo = fullInfo.serviceInfo;
-        this.ess.getEventSourceDetails(this.instanceDetails.eventSourceDescriptor).subscribe(
-          eventSourceDescriptor => this.eventSourceDescriptor = eventSourceDescriptor
+        this.ess.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
+          eventSourceDescriptor => {
+            this.eventSourceDescriptor = eventSourceDescriptor;
+            this.parsedInstanceDetails = this.parseInstanceDeatils(fullInfo.instanceDetails);
+          }
         );
       }
     );
   }
 
+  private parseInstanceDeatils(details: EventSourceInstanceDetails): ParsedEventSourceInstanceDetails {
+    const props = {};
+    Object.keys(details.properties).forEach(key =>
+      props[key] =  this.eventSourceDescriptor.properties.find(p => p.name === key).inputType === 'json'
+                  ? JSON.parse(details.properties[key])
+                  : details.properties[key]);
+    return {  eventSourceDescriptor: details.eventSourceDescriptor,
+      id: details.id,
+      name: details.name,
+      enabled: details.enabled,
+      frequency: details.frequency,
+      properties: props,
+      dataItems: details.dataItems };
+  }
+
+  private serializeInstanceDetails(parsed: ParsedEventSourceInstanceDetails): EventSourceInstanceDetails {
+    const props = {};
+    Object.keys(parsed.properties).forEach(key =>
+      props[key] =  this.eventSourceDescriptor.properties.find(p => p.name === key).inputType === 'json'
+                  ? JSON.stringify(parsed.properties[key])
+                  : parsed.properties[key]);
+    return {  eventSourceDescriptor: parsed.eventSourceDescriptor,
+      id: parsed.id,
+      name: parsed.name,
+      enabled: parsed.enabled,
+      frequency: parsed.frequency,
+      properties: props,
+      dataItems: parsed.dataItems };
+  }
+
   saveConfiguration() {
-    this.ess.updateInstance(this.eventSourceId, this.instanceDetails).subscribe(
+    this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
         this.message.success('The configuration has been saved.');
       },
@@ -87,7 +129,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   stopEventSource() {
     this.isStoppingEventSource = true;
-    this.ess.setInstanceRunning(this.instanceDetails.id, false).subscribe(
+    this.ess.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
       ok => {
         this.isStoppingEventSource = false;
         // TODO reload instance and service details
@@ -99,12 +141,12 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO
       }
     );
-    this.message.success('The event source "' + this.instanceDetails.name + '" has been stopped.');
+    this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been stopped.');
   }
 
   startEventSource() {
     this.isStartingEventSource = true;
-    this.ess.setInstanceRunning(this.instanceDetails.id, true).subscribe(
+    this.ess.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
       ok => {
         this.isStartingEventSource = false;
         // TODO reload instance and service details
@@ -117,7 +159,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO
       }
     );
-    this.message.success('The event source "' + this.instanceDetails.name + '" has been started.');
+    this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been started.');
   }
 
   disableEventSource() {
@@ -136,13 +178,13 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     const _this = this;
     this.isEnablingEventSource = true;
     // read current state from server
-    this.ess.readInstance(this.instanceDetails.id).subscribe(
+    this.ess.readInstance(this.parsedInstanceDetails.id).subscribe(
       instanceInfo => {
         // change enabled state and send back to server
         instanceInfo.instanceDetails.enabled = enabled;
-        _this.ess.updateInstance(_this.instanceDetails.id, instanceInfo.instanceDetails).subscribe(
+        _this.ess.updateInstance(_this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
           success => {
-            _this.instanceDetails.enabled = enabled;
+            _this.parsedInstanceDetails.enabled = enabled;
             _this.isEnablingEventSource = false;
             ok();
           },
@@ -167,12 +209,12 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   deleteEventSource() {
     // TODO bildschirm blocken
-    this.ess.deleteInstance(this.instanceDetails.id).subscribe(
+    this.ess.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
         // TODO aus der Liste der exisierenden EventSources löschen
-        const messageId = this.message.success('Event source "' + this.instanceDetails.name + '" has been deleted.',
+        const messageId = this.message.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.',
           {nzDuration: 0}).messageId;
-        this.configEventSourcesComponent.removeEventSourceInstance(this.instanceDetails.id);
+        this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);
         setTimeout(() => {
           this.message.remove(messageId);
           this.router.navigateByUrl('/config/eventSources');
