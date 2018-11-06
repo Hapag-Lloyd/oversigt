@@ -25,7 +25,9 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
   private createObjectFromProperty(property: JsonSchemaProperty) {
     switch (property.type) {
       case 'string':
-        if (property.enumSource === undefined) {
+        if (property.default !== undefined) {
+          return property.default;
+        } else if (property.enumSource === undefined) {
           return '';
         } else {
           return property.enumSource[0].source[0].value;
@@ -44,8 +46,8 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
     console.error('Unknown type: ', property.type);
   }
 
-  removeArrayItem(index: number) {
-    //
+  removeArrayItem(itemToRemove: any) {
+    this.value = this.value.filter(item => item !== itemToRemove);
   }
 
 }

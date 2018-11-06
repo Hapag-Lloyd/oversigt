@@ -3,6 +3,7 @@
     <ng-container *ngIf="value !== null; else noContent">
       <div *ngFor="let item of value; let i = index">
         <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]"></app-json-schema>
+        <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
       </div>
     </ng-container>
     <ng-template #noContent>
@@ -10,7 +11,6 @@
     </ng-template>
   </div>
   <div style="flex-shrink: 0; ">
-    <button (click)="addArrayItem()">add</button>
-    <button>remove</button>
+    <button nz-button [nzType]="'dashed'" (click)="addArrayItem()"><i nz-icon type="plus-circle" theme="outline"></i></button>
   </div>
 </div>

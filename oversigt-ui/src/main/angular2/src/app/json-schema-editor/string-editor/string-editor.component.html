@@ -1,8 +1,15 @@
 <ng-container [ngSwitch]="editorType">
   <span class="input-title">{{schemaObject.title}}: </span>
-  <input *ngSwitchCase="'input'" type="{{inputType}}" size="10" placeholder="{{schemaObject.title}}" [(ngModel)]="value" />
-  <select *ngSwitchCase="'select'" [(ngModel)]="value">
-    <option *ngFor="let value of values" value="{{value}}">{{valueToTitle[value]}}</option>
-  </select>
+  <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" size="10" [(ngModel)]="value" />
+  <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
+  <ng-container *ngSwitchCase="'select'">
+    <nz-select *ngIf="values.length > 5" style="width: 100%;" [(ngModel)]="value" nzPlaceHolder="Choose {{schemaObject.title}}">
+      <nz-option *ngFor="let value of values" nzValue="{{value}}" nzLabel="{{valueToTitle[value]}}"></nz-option>
+    </nz-select>
+    <nz-radio-group *ngIf="values.length <= 5" [(ngModel)]="value">
+      <label *ngFor="let value of values" nz-radio-button nzValue="{{value}}">{{valueToTitle[value]}}</label>
+    </nz-radio-group>
+  </ng-container>
   <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
 </ng-container>
+
