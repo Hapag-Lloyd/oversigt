@@ -1,10 +1,13 @@
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
   <div style="flex-grow: 1">
-    <ng-container *ngIf="value !== null; else noContent">
-      <div *ngFor="let item of value; let i = index">
-        <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]"></app-json-schema>
-        <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
+    <ng-container *ngIf="value !== null; else noContent" [ngSwitch]="displayFormat">
+      <div *ngSwitchCase="'table'">
+        <div *ngFor="let item of value; let i = index">
+          <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]"></app-json-schema>
+          <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
+        </div>
       </div>
+      <pre *ngSwitchDefault>Unknown array display format: {{displayFormat}}</pre>
     </ng-container>
     <ng-template #noContent>
       <div>Currently this array has no content.</div>

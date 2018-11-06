@@ -1,5 +1,3 @@
-<div>
-  <div *ngFor="let name of getPropertyNames()">
-    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]"></app-json-schema>
-  </div>
+<div *ngFor="let name of getPropertyNames()">
+  <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]"></app-json-schema>
 </div>

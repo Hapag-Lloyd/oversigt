@@ -10,12 +10,16 @@ import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
 })
 export class ArrayEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
+  @Input() displayFormat: string;
 
   get array(): any[] {
     return this.value;
   }
 
   ngOnInit() {
+    if (this.displayFormat === undefined || this.displayFormat === null || this.displayFormat === '') {
+      this.displayFormat = 'grid';
+    }
   }
 
   addArrayItem() {
