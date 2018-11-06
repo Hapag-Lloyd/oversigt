@@ -30,7 +30,7 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
         this.valueToTitle[this.values[i]] = titles[i];
       }
     } else if (this.schemaObject.type === 'number') {
-      this.editorType = 'string';
+      this.editorType = 'input';
       this.inputType = 'number';
     } else {
       switch (this.schemaObject.format) {
