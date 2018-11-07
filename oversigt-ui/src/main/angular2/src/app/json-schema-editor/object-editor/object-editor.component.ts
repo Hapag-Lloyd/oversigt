@@ -10,6 +10,7 @@ import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-va
 })
 export class ObjectEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
+  @Input() showTitles = true;
 
   ngOnInit() {
   }

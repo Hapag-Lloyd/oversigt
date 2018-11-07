@@ -22,8 +22,20 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
     }
   }
 
+  getNames(): string[] {
+    return Object.keys(this.schemaObject.properties);
+  }
+
   addArrayItem() {
     this.value.push(this.createObjectFromProperty(this.schemaObject));
+  }
+
+  moveItemUp(item: any) {
+    alert('Not implemented yet')
+  }
+
+  moveItemDown(item: any) {
+    alert('Not implemented yet')
   }
 
   private createObjectFromProperty(property: JsonSchemaProperty) {

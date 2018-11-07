@@ -10,6 +10,7 @@ import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-va
 })
 export class StringEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
+  @Input() showTitle: true;
   editorType = 'input';
   inputType = null;
   values: string[];

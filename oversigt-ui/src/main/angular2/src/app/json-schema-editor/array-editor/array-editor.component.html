@@ -1,13 +1,30 @@
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
   <div style="flex-grow: 1">
     <ng-container *ngIf="value !== null; else noContent" [ngSwitch]="displayFormat">
-      <div *ngSwitchCase="'table'">
-        <div *ngFor="let item of value; let i = index">
+      <table *ngSwitchCase="'table'">
+        <tr>
+          <th *ngFor="let name of getNames()">{{schemaObject.properties[name].title}}</th>
+          <th></th>
+        </tr>
+        <tr *ngFor="let item of value; let i = index">
+          <td *ngFor="let name of getNames()">
+            <app-json-schema [schemaObject]="schemaObject.properties[name]" [(ngModel)]="value[i][name]" [showTitles]="false"></app-json-schema>
+          </td>
+          <td>
+            <nz-button-group>
+              <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
+              <button *ngIf="i !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(item)"><i nz-icon type="up-circle" theme="outline"></i></button>
+              <button *ngIf="i !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(item)"><i nz-icon type="down-circle" theme="outline"></i></button>
+            </nz-button-group>
+          </td>
+        </tr>
+      </table>
+      <pre *ngSwitchDefault>Unknown array display format: {{displayFormat}}</pre>
+      <div *ngSwitchDefault>
+        <div *ngFor="let item of value; let i = index" style="border: 1px solid red">
           <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]"></app-json-schema>
-          <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
         </div>
       </div>
-      <pre *ngSwitchDefault>Unknown array display format: {{displayFormat}}</pre>
     </ng-container>
     <ng-template #noContent>
       <div>Currently this array has no content.</div>

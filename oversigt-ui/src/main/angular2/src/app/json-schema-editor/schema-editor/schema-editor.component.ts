@@ -31,6 +31,7 @@ export class EnumSource {
 export class SchemaEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schema: '';
   @Input() schemaObject: JsonSchemaProperty = null;
+  @Input() showTitles = true;
 
   ngOnInit() {
     if (this.schemaObject === null) {

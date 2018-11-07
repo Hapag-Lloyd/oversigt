@@ -1,5 +1,5 @@
 <ng-container [ngSwitch]="editorType">
-  <span class="input-title">{{schemaObject.title}}: </span>
+  <span *ngIf="showTitle" class="input-title">{{schemaObject.title}}: </span>
   <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" size="10" [(ngModel)]="value" />
   <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
   <ng-container *ngSwitchCase="'select'">

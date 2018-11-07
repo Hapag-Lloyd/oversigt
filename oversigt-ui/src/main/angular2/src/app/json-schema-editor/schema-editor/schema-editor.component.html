@@ -1,8 +1,8 @@
 <ng-container *ngIf="value !== null; else null" [ngSwitch]="schemaObject.type">
   <app-json-array *ngSwitchCase="'array'" [schemaObject]="schemaObject.items" [(ngModel)]="value" [displayFormat]="schemaObject.format"></app-json-array>
-  <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value"></app-json-object>
-  <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value"></app-json-string>
-  <app-json-string *ngSwitchCase="'number'" [schemaObject]="schemaObject" [(ngModel)]="value"></app-json-string>
+  <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitles]="showTitles"></app-json-object>
+  <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
+  <app-json-string *ngSwitchCase="'number'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
   <pre *ngSwitchDefault>No editor for schema type "{{schemaObject.type}}"</pre>
 </ng-container>
 
