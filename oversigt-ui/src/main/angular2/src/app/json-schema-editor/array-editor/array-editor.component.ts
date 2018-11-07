@@ -31,11 +31,11 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
   }
 
   moveItemUp(item: any) {
-    alert('Not implemented yet')
+    alert('Not implemented yet');
   }
 
   moveItemDown(item: any) {
-    alert('Not implemented yet')
+    alert('Not implemented yet');
   }
 
   private createObjectFromProperty(property: JsonSchemaProperty) {

@@ -1,6 +1,7 @@
 <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
   <div style="flex-grow: 1">
     <ng-container *ngIf="value !== null; else noContent" [ngSwitch]="displayFormat">
+      <!-- table display -->
       <table *ngSwitchCase="'table'">
         <tr>
           <th *ngFor="let name of getNames()">{{schemaObject.properties[name].title}}</th>
@@ -12,13 +13,25 @@
           </td>
           <td>
             <nz-button-group>
-              <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle" theme="outline"></i></button>
-              <button *ngIf="i !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(item)"><i nz-icon type="up-circle" theme="outline"></i></button>
-              <button *ngIf="i !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(item)"><i nz-icon type="down-circle" theme="outline"></i></button>
+              <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle"
+                  theme="outline"></i></button>
+              <button *ngIf="i !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(item)"><i nz-icon type="up-circle"
+                  theme="outline"></i></button>
+              <button *ngIf="i !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(item)"><i
+                  nz-icon type="down-circle" theme="outline"></i></button>
             </nz-button-group>
           </td>
         </tr>
       </table>
+
+      <!-- tab display -->
+      <nz-tabset *ngSwitchCase="'tabs'" style="height:220px;" [nzTabPosition]="'left'">
+        <nz-tab *ngFor="let item of value; let i = index" [nzTitle]="i"> <!-- TODO change title -->
+          <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]" [showTitles]="true"></app-json-schema>
+        </nz-tab>
+      </nz-tabset>
+
+      <!-- grid display -->
       <pre *ngSwitchDefault>Unknown array display format: {{displayFormat}}</pre>
       <div *ngSwitchDefault>
         <div *ngFor="let item of value; let i = index" style="border: 1px solid red">
