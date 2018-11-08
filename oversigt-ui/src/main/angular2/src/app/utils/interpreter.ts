@@ -1,30 +1,31 @@
 
 /* self-interpretation */
-export function interpret(object: any, instructions: string, defaultValue: string = ''): string {
-  const instructionsWithoutBraces = instructions.substring(2, instructions.length - 2).trim();
+export function interpret(object: any, instructions: string, index: number): string {
+  const regex = new RegExp('\{\{([^}]+)}}');
+  const array = instructions.split(regex); // regex.exec(instructions);
 
-  let output;
   if (instructions !== undefined) {
-    if (instructionsWithoutBraces.startsWith('self.')) {
-      const element = instructionsWithoutBraces.substring('self.'.length);
-      if (element.includes('.')) {
-        throw new Error('Unable to interpret: ' + instructions);
-      }
-      output = object[element];
-    } else if (instructionsWithoutBraces.startsWith('item.')) {
-      const element = instructionsWithoutBraces.substring('item.'.length);
-      if (element.includes('.')) {
-        throw new Error('Unable to interpret: ' + instructions);
-      }
-      output = object[element];
-    } else {
-      throw new Error('Unrecognized instructions: ' + instructions);
+    for (let i = 1; i < array.length; i += 2) {
+      array[i] = computeReplacement(object, array[i], index);
     }
   }
 
-  if (output !== undefined && output !== null && output !== '') {
-    return output;
+  return array.join('');
+}
+
+function computeReplacement(object: any, instruction: string, index: number): string {
+  instruction = instruction.trim();
+  if (instruction === 'i0') {
+    return String(index);
+  } else if (instruction === 'i1') {
+    return String(index + 1);
   } else {
-    return defaultValue;
+    const regex = new RegExp('(?:self|item)\s*\.(.+)');
+    if (regex.test(instruction)) {
+      const members = regex.exec(instruction);
+      return object[members[1].trim()];
+    } else {
+      throw new Error('Unable to interpret instruction: ' + instruction);
+    }
   }
 }
