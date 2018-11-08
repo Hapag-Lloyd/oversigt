@@ -18,7 +18,6 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
 
   ngOnInit() {
     // TODO handle unique items
-    console.log(this.schemaObject);
 
     if (this.schemaObject.enumSource !== undefined && this.schemaObject.enumSource.length === 1) {
       this.editorType = 'select';

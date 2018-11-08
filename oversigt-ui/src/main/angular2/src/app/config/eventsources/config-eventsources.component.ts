@@ -37,7 +37,6 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
         if (_this_.selectedEventSource === undefined) {
           _this_.selectedEventSourceIdToBeSelected = route.snapshot.firstChild.params['id'];
         }
-        console.log('select', _this_.selectedEventSource);
       } else {
         _this_.selectedEventSource = null;
       }
@@ -59,9 +58,7 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     this.ess.listInstances().subscribe(
       infos => {
         _this_.eventSourceInfos = infos;
-        console.log('infos');
         if (_this_.selectedEventSourceIdToBeSelected !== null) {
-          console.log('select');
           _this_.selectedEventSource = _this_.getEventSource(_this_.selectedEventSourceIdToBeSelected);
           _this_.selectedEventSourceIdToBeSelected = null;
         }
