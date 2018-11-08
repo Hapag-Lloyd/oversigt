@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-value-accessor';
 import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
+import { interpret } from 'src/app/utils/interpreter';
 
 @Component({
   selector: 'app-json-array',
@@ -38,6 +39,14 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
     alert('Not implemented yet');
   }
 
+  removeArrayItem(itemToRemove: any) {
+    this.value = this.value.filter(item => item !== itemToRemove);
+  }
+
+  getTabName(item: any, index: number): string {
+    return interpret(item, this.schemaObject.headerTemplate, String(index));
+  }
+
   private createObjectFromProperty(property: JsonSchemaProperty) {
     switch (property.type) {
       case 'string':
@@ -60,10 +69,6 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
         return obj;
     }
     console.error('Unknown type: ', property.type);
-  }
-
-  removeArrayItem(itemToRemove: any) {
-    this.value = this.value.filter(item => item !== itemToRemove);
   }
 
 }

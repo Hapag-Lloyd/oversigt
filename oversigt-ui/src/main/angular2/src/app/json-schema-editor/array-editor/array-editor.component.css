@@ -1,0 +1,11 @@
+table {
+  width: 100%;
+}
+
+table th.action{
+  width: 1%;
+}
+
+table .action {
+  display: flex;
+}

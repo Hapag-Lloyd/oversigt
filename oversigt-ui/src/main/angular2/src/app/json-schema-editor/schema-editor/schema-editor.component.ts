@@ -14,6 +14,7 @@ export class JsonSchemaProperty {
   uniqueItems?: boolean;
   items?: JsonSchemaProperty;
   enumSource?: EnumSource[];
+  headerTemplate?: string;
 }
 
 export class EnumSource {

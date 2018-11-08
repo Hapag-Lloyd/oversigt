@@ -5,7 +5,7 @@
       <table *ngSwitchCase="'table'">
         <tr>
           <th *ngFor="let name of getNames()">{{schemaObject.properties[name].title}}</th>
-          <th></th>
+          <th class="action"></th>
         </tr>
         <tr *ngFor="let item of value; let i = index">
           <td *ngFor="let name of getNames()">
@@ -13,12 +13,14 @@
           </td>
           <td>
             <nz-button-group>
-              <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle"
-                  theme="outline"></i></button>
-              <button *ngIf="i !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(item)"><i nz-icon type="up-circle"
-                  theme="outline"></i></button>
-              <button *ngIf="i !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(item)"><i
-                  nz-icon type="down-circle" theme="outline"></i></button>
+              <div class="action">
+                <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(item)"><i nz-icon type="minus-circle"
+                    theme="outline"></i></button>
+                <button *ngIf="i !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(item)"><i nz-icon type="up-circle"
+                    theme="outline"></i></button>
+                <button *ngIf="i !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(item)"><i
+                    nz-icon type="down-circle" theme="outline"></i></button>
+              </div>
             </nz-button-group>
           </td>
         </tr>
@@ -26,7 +28,8 @@
 
       <!-- tab display -->
       <nz-tabset *ngSwitchCase="'tabs'" style="height:220px;" [nzTabPosition]="'left'">
-        <nz-tab *ngFor="let item of value; let i = index" [nzTitle]="i"> <!-- TODO change title -->
+        <nz-tab *ngFor="let item of value; let i = index" [nzTitle]="getTabName(item, i)">
+          <!-- TODO change title -->
           <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[i]" [showTitles]="true"></app-json-schema>
         </nz-tab>
       </nz-tabset>
