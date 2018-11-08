@@ -2,7 +2,7 @@ import { Component, OnInit, Input, OnDestroy, TemplateRef } from '@angular/core'
 import { SerializableValueService, SerializablePropertyMember } from 'src/oversigt-client';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { NzModalService, NzNotificationService } from 'ng-zorro-antd';
+import { NzModalService, NzMessageService } from 'ng-zorro-antd';
 
 @Component({
   selector: 'app-config-property',
@@ -19,14 +19,11 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private modalService: NzModalService,
-    private notification: NzNotificationService,
+    private message: NzMessageService,
     private svs: SerializableValueService,
   ) { }
 
   ngOnInit() {
-    this.notification.config({
-      nzPlacement: 'bottomRight'
-    });
     this.propertyType = this.route.snapshot.paramMap.get('name');
     this.subscription = this.route.url.subscribe(_ => {
       const newType = this.route.snapshot.paramMap.get('name');
@@ -71,7 +68,7 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
     this.svs.deleteProperty(this.propertyType, id).subscribe(
       ok => {
         this.setValues(this.values.filter(e => e['id'] !== id));
-        this.createSuccessNotification('Deleted', 'Property "' + valueToDelete['name'] + '" has been deleted.');
+        this.createSuccessNotification('Property "' + valueToDelete['name'] + '" has been deleted.');
       },
       error => alert('There was an error while deleting the property: ' + error)
     );
@@ -88,7 +85,7 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
           createdValue => {
             this.values.push(createdValue);
             this.setValues(this.values); // sort the stuff...
-            this.createSuccessNotification('Created', 'Property "' + createdValue['name'] + '" has been created.');
+            this.createSuccessNotification('Property "' + createdValue['name'] + '" has been created.');
             resolve();
           },
           error => {
@@ -100,30 +97,44 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
   }
 
   showEditModal(tplContent: TemplateRef<{}>, id: number): void {
+    const _this_ = this;
     this.valueToCreate = {};
     const valueToEdit = this.getValue(id);
     for (const member of this.members) {
       this.valueToCreate[member.name] = valueToEdit[member.name];
     }
-    this.showModal('Edit', tplContent, () => new Promise((resolve, fail) => {
-      this.svs.updateProperty(this.propertyType, id, this.valueToCreate).subscribe(
-        changedValue => {
-          for (const member of this.members) {
-            valueToEdit[member.name] = changedValue[member.name];
-          }
-          this.setValues(this.values); // sort the stuff...
-          this.createSuccessNotification('Saved', 'Changes for property "' + changedValue['name'] + '" have been saved.');
-          resolve();
-        },
-        error => {
-          alert(error.error.errors[0]);
-          fail();
+    this.showModal('Edit', tplContent, () => {
+      const unfilledArguments = [];
+      for (const member of this.members) {
+        if (member.required && !_this_.valueToCreate[member.name]) {
+          unfilledArguments.push(member.name);
         }
-      );
-    }));
+      }
+      if (unfilledArguments.length === 0) {
+        return new Promise((resolve, fail) => {
+          _this_.svs.updateProperty(_this_.propertyType, id, _this_.valueToCreate).subscribe(
+            changedValue => {
+              for (const member of this.members) {
+                valueToEdit[member.name] = changedValue[member.name];
+              }
+              _this_.setValues(_this_.values); // sort the stuff...
+              _this_.createSuccessNotification('Changes for property "' + changedValue['name'] + '" have been saved.');
+              resolve();
+            },
+            error => {
+              alert(error.error.errors[0]);
+              fail();
+            }
+          );
+        });
+      } else {
+        this.message.error('Please fill all required fields. The following field(s) are missing: ' + unfilledArguments.join(', '));
+        return false;
+      }
+    });
   }
 
-  private showModal<T>(verb: string, tplContent: TemplateRef<{}>, promise: () => Promise<T>) {
+  private showModal<T>(verb: string, tplContent: TemplateRef<{}>, promise: () => false | Promise<T>) {
     this.modalService.create({
       nzTitle: verb + ' ' + this.propertyType + ' entry',
       nzContent: tplContent,
@@ -134,11 +145,7 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
     });
   }
 
-  private clearBeforeNotifications(): void {
-    this.notification.remove();
-  }
-
-  private createSuccessNotification(title: string, text: string): void {
-    this.notification.success(title, text);
+  private createSuccessNotification(text: string): void {
+    this.message.success(text);
   }
 }
