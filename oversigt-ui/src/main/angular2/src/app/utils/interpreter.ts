@@ -1,6 +1,6 @@
 
 /* self-interpretation */
-export function interpret(object: any, instructions: string, index: number): string {
+export function interpret(object: any, instructions: string, index: number, defaultValue: string = ''): string {
   const regex = new RegExp('\{\{([^}]+)}}');
   const array = instructions.split(regex); // regex.exec(instructions);
 
@@ -10,7 +10,8 @@ export function interpret(object: any, instructions: string, index: number): str
     }
   }
 
-  return array.join('');
+  const returnValue = array.join('');
+  return returnValue ? returnValue : defaultValue;
 }
 
 function computeReplacement(object: any, instruction: string, index: number): string {

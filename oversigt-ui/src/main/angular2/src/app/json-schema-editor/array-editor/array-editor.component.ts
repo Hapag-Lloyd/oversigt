@@ -44,7 +44,7 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
   }
 
   getTabName(item: any, index: number): string {
-    return interpret(item, this.schemaObject.headerTemplate, index);
+    return interpret(item, this.schemaObject.headerTemplate, index, 'Item ' + (index + 1));
   }
 
   private createObjectFromProperty(property: JsonSchemaProperty) {
