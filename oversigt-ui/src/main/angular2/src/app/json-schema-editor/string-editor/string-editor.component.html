@@ -1,4 +1,4 @@
-<ng-container [ngSwitch]="editorType">
+<ng-container *ngIf="value !== null; else nullValue" [ngSwitch]="editorType">
   <span *ngIf="showTitle" class="input-title">{{schemaObject.title}}: </span>
   <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" size="10" [(ngModel)]="value" />
   <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
@@ -13,3 +13,6 @@
   <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
 </ng-container>
 
+<ng-template #nullValue>
+  <em>StringEditor value is null</em>
+</ng-template>

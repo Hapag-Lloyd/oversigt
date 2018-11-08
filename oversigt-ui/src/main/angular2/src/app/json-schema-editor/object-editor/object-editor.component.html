@@ -1,3 +1,9 @@
-<div *ngFor="let name of getPropertyNames()">
-  <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
-</div>
+<ng-container *ngIf="value !== null; else nullValue">
+  <div *ngFor="let name of getPropertyNames()">
+    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
+  </div>
+</ng-container>
+
+<ng-template #nullValue>
+  <em>SchemaEditor value is null</em>
+</ng-template>
