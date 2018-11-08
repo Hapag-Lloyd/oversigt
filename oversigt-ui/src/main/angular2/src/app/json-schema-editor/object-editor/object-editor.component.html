@@ -1,7 +1,9 @@
 <ng-container *ngIf="value !== null; else nullValue">
-  <div *ngFor="let name of getPropertyNames()">
-    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
-  </div>
+  <nz-card>
+    <div *ngFor="let name of getPropertyNames()">
+      <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
+    </div>
+  </nz-card>
 </ng-container>
 
 <ng-template #nullValue>
