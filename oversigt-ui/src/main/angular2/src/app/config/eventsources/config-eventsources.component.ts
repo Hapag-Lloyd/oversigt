@@ -54,16 +54,15 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   }
 
   private initEventSourceInstanceList() {
-    const _this_ = this;
     this.ess.listInstances().subscribe(
       infos => {
-        _this_.eventSourceInfos = infos;
-        if (_this_.selectedEventSourceIdToBeSelected !== null) {
-          _this_.selectedEventSource = _this_.getEventSource(_this_.selectedEventSourceIdToBeSelected);
-          _this_.selectedEventSourceIdToBeSelected = null;
+        this.eventSourceInfos = infos;
+        if (this.selectedEventSourceIdToBeSelected !== null) {
+          this.selectedEventSource = this.getEventSource(this.selectedEventSourceIdToBeSelected);
+          this.selectedEventSourceIdToBeSelected = null;
         }
 
-        _this_.buildTreeSelectNodes(infos);
+        this.buildTreeSelectNodes(infos);
       },
       error => {
         console.error(error);
