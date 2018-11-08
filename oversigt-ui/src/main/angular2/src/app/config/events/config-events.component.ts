@@ -34,6 +34,11 @@ export class ConfigEventsComponent implements OnInit {
     this.ss.getCachedEvents().subscribe(
       events => {
         _this.events = events.map(e => new EventItem(e));
+      },
+      error => {
+        console.error(error);
+        alert(error);
+        // TODO
       }
     );
   }
