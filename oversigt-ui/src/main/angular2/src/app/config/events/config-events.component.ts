@@ -17,7 +17,7 @@ export class EventItem {
   styleUrls: ['./config-events.component.css']
 })
 export class ConfigEventsComponent implements OnInit {
-  events: EventItem[] = null;
+  events: EventItem[] = [];
   filter = '';
 
   constructor(
@@ -29,10 +29,11 @@ export class ConfigEventsComponent implements OnInit {
   }
 
   reloadEvents(): void {
-    this.events = null;
+    const _this = this;
+    this.events = [];
     this.ss.getCachedEvents().subscribe(
       events => {
-        this.events = events.map(e => new EventItem(e));
+        _this.events = events.map(e => new EventItem(e));
       }
     );
   }
