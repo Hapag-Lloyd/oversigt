@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { UserService } from './user-service.service';
+import { UserService } from '../user-service.service';
 
 @Pipe({
   name: 'filterForRole'

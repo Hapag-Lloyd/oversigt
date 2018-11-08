@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { EventItem } from './config/events/config-events.component';
+import { EventItem } from '../config/events/config-events.component';
 
 @Pipe({
   name: 'filterEventitem'
