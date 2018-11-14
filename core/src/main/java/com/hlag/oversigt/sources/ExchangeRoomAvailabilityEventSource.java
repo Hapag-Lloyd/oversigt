@@ -75,13 +75,15 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 		final List<RoomAvailabilityItem> sortedItems;
 		if (isAvailableRoomsToTop()) {
-			Comparator<RoomAvailabilityItem> compareByFreeAndUntil = (a, b) -> (a.free ? -1 : 1)
+			Comparator<RoomAvailabilityItem> compareByFree = (a, b) -> Boolean.compare(b.free, a.free);
+			Comparator<RoomAvailabilityItem> compareByUntil = (a, b) -> (a.free ? -1 : 1)
 					* a.until.orElse(LocalTime.MAX).compareTo(b.until.orElse(LocalTime.MAX));
 			Comparator<RoomAvailabilityItem> compareByIndex = (a, b) -> unsortedItems.indexOf(a)
 					- unsortedItems.indexOf(b);
 
-			sortedItems = unsortedItems.stream().sorted(compareByFreeAndUntil.thenComparing(compareByIndex)).collect(
-					Collectors.toList());
+			sortedItems = unsortedItems.stream()
+					.sorted(compareByFree.thenComparing(compareByUntil).thenComparing(compareByIndex))
+					.collect(Collectors.toList());
 		} else {
 			sortedItems = unsortedItems;
 		}
