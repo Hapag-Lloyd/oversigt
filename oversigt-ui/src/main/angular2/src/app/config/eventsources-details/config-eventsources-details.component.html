@@ -1,39 +1,37 @@
 <form nz-form *ngIf="eventSourceDescriptor !== null">
-  <nz-affix>
-    <div class="header">
-      <app-header [title]="parsedInstanceDetails.name" [additional]="buttons"></app-header>
-      <ng-template #buttons>
-        <nz-dropdown [nzTrigger]="'click'">
-          <a nz-dropdown>Add to dashboard <i nz-icon type="down"></i></a>
-          <ul nz-menu nzSelectable>
-            <li nz-menu-item> <a>Dashboard A</a> </li>
-            <li nz-menu-item> <a>Test dashboard</a> </li>
-            <li nz-menu-item> <a>Another dashboard</a> </li>
-          </ul>
-        </nz-dropdown>
-        <button nz-button nzType="primary" (click)="saveConfiguration()" nz-tooltip nzTitle="Save event source configuration"><i
-            nz-icon type="save" theme="fill"></i></button>
-        <button nz-button nzType="default" (click)="showUsage()" nz-tooltip nzTitle="Show event source usage"><i
-            nz-icon type="bar-chart" theme="outline"></i></button>
-        <nz-button-group>
-          <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !serviceInfo.running"
-            nz-button nzType="danger" (click)="startEventSource()" nz-tooltip nzTitle="Start event source" [nzLoading]="isStartingEventSource"
-            class="green"><i nz-icon type="play-circle" theme="fill"></i></button>
-          <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && serviceInfo.running"
-            nz-button nzType="danger" (click)="stopEventSource()" nz-tooltip nzTitle="Stop event source" [nzLoading]="isStoppingEventSource"><i
-              nz-icon type="pause-circle" theme="fill"></i></button>
-          <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled" nz-button nzType="danger"
-            (click)="disableEventSource()" nz-tooltip nzTitle="Disable event source" [nzLoading]="isEnablingEventSource"><i
-              nz-icon type="poweroff" theme="outline"></i></button>
-          <button *ngIf="eventSourceDescriptor.serviceClassName !== null && !parsedInstanceDetails.enabled" nz-button nzType="default"
-            (click)="enableEventSource()" nz-tooltip nzTitle="Enable event source" [nzLoading]="isEnablingEventSource"
-            class="green"><i nz-icon type="poweroff" theme="outline"></i></button>
-          <button nz-button nz-popconfirm nzType="danger" nzTitle="Do you really want to delete this event source?"
-            (nzOnConfirm)="deleteEventSource()"><i nz-icon type="delete" theme="outline"></i></button>
-        </nz-button-group>
-      </ng-template>
-    </div>
-  </nz-affix>
+  <div class="header">
+    <app-header [title]="parsedInstanceDetails.name" [additional]="buttons"></app-header>
+    <ng-template #buttons>
+      <nz-dropdown [nzTrigger]="'click'">
+        <a nz-dropdown>Add to dashboard <i nz-icon type="down"></i></a>
+        <ul nz-menu nzSelectable>
+          <li nz-menu-item> <a>Dashboard A</a> </li>
+          <li nz-menu-item> <a>Test dashboard</a> </li>
+          <li nz-menu-item> <a>Another dashboard</a> </li>
+        </ul>
+      </nz-dropdown>
+      <button nz-button nzType="primary" (click)="saveConfiguration()" nz-tooltip nzTitle="Save event source configuration"><i
+          nz-icon type="save" theme="fill"></i></button>
+      <button nz-button nzType="default" (click)="showUsage()" nz-tooltip nzTitle="Show event source usage"><i
+          nz-icon type="bar-chart" theme="outline"></i></button>
+      <nz-button-group>
+        <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !serviceInfo.running"
+          nz-button nzType="danger" (click)="startEventSource()" nz-tooltip nzTitle="Start event source" [nzLoading]="isStartingEventSource"
+          class="green"><i nz-icon type="play-circle" theme="fill"></i></button>
+        <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && serviceInfo.running"
+          nz-button nzType="danger" (click)="stopEventSource()" nz-tooltip nzTitle="Stop event source" [nzLoading]="isStoppingEventSource"><i
+            nz-icon type="pause-circle" theme="fill"></i></button>
+        <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled" nz-button nzType="danger"
+          (click)="disableEventSource()" nz-tooltip nzTitle="Disable event source" [nzLoading]="isEnablingEventSource"><i
+            nz-icon type="poweroff" theme="outline"></i></button>
+        <button *ngIf="eventSourceDescriptor.serviceClassName !== null && !parsedInstanceDetails.enabled" nz-button nzType="default"
+          (click)="enableEventSource()" nz-tooltip nzTitle="Enable event source" [nzLoading]="isEnablingEventSource"
+          class="green"><i nz-icon type="poweroff" theme="outline"></i></button>
+        <button nz-button nz-popconfirm nzType="danger" nzTitle="Do you really want to delete this event source?"
+          (nzOnConfirm)="deleteEventSource()"><i nz-icon type="delete" theme="outline"></i></button>
+      </nz-button-group>
+    </ng-template>
+  </div>
   <nz-collapse [nzBordered]="'true'" style="margin: 2ex;">
     <nz-collapse-panel [nzHeader]="'Event Source Information'" [nzActive]="'true'">
       <app-config-eventsource-info [item]="{id:'name',title:'Event Source Name',value:parsedInstanceDetails.name,readonly:false}"></app-config-eventsource-info>

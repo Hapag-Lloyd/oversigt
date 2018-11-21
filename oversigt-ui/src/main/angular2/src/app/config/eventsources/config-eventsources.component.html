@@ -18,9 +18,11 @@
   </ul>-->
 </ng-template>
 
-Choose one event source or <a routerLink="create">create</a> one.
-<div *ngIf="selectedEventSource === null; else childSelected" style="display: flex; flex-direction: row; flex-wrap: wrap">
-  <button *ngFor="let info of eventSourceInfos" nz-button nzStyle="default" (click)="selectEventSource(info.id)">{{info.name}}</button>
+<div *ngIf="selectedEventSource === null; else childSelected">
+  Choose one event source or <a routerLink="/config/createEventSource">create</a> one.
+  <div style="display: flex; flex-direction: row; flex-wrap: wrap">
+    <button *ngFor="let info of eventSourceInfos" nz-button nzStyle="default" (click)="selectEventSource(info.id)">{{info.name}}</button>
+  </div>
 </div>
 
 <ng-template #childSelected>
