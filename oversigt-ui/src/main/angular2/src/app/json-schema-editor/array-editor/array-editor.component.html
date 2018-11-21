@@ -65,12 +65,12 @@
     <!-- unknown display style -->
     <pre *ngSwitchDefault>Unknown array display format: {{displayFormat}}</pre>
   </ng-container>
+
+  <ng-template #noContent>
+    <nz-alert nzType="info" nzMessage="Currently this array has no content."></nz-alert>
+  </ng-template>
 </nz-card>
 
-<ng-template #noContent>
-  <div>Currently this array has no content.</div>
-</ng-template>
-
 <ng-template #nullValue>
-  <em>SchemaEditor value is null</em>
+  <nz-alert nzType="error" nzMessage="ArrayEditor value is null"></nz-alert>
 </ng-template>
