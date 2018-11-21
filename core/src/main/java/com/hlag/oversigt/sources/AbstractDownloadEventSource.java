@@ -38,6 +38,8 @@ import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
 
+import lombok.ToString;
+
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
 	private static final TextProcessor textProcessor = TextProcessor.create().registerDatetimeFunctions();
@@ -142,11 +144,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			logTrace(getLogger(), "Matching URL: %s", url);
 			Matcher repmat = PATTERN_URL_MATCHER_REPLACEMENT.matcher(url);
 			while (repmat.find()) {
-				int major = Integer.parseInt(repmat.group(1)) - 1;
-				int minor = Integer.parseInt(repmat.group(2)) - 1;
-				if (replacements.get(major) != null && replacements.get(major).get(minor) != null) {
-					String search = "${" + (major + 1) + "." + (minor + 1) + "}";
-					String replacement = replacements.get(major).get(minor);
+				int major = Integer.parseInt(repmat.group(1));
+				int minor = Integer.parseInt(repmat.group(2));
+				if (replacements.size() < major || replacements.get(major - 1).size() < minor) {
+					throw new RuntimeException("Unable to find replacement ${" + major + "." + minor + "}");
+				}
+				if (replacements.get(major - 1) != null && replacements.get(major - 1).get(minor - 1) != null) {
+					String search = "${" + major + "." + minor + "}";
+					String replacement = replacements.get(major - 1).get(minor - 1);
 					url = url.replace(search, replacement);
 					logTrace(getLogger(), "Replacing %s with %s to %s", search, replacement, url);
 				}
@@ -170,6 +175,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 					replacements.add(reps);
 
 					if (i == addresses.size() - 1 && replacements.size() == 1) {
+						if (reps.isEmpty()) {
+							throw new RuntimeException("Pattern did not match. Unable to call next URL.");
+						}
 						addresses.add(new InternetAddress(reps.get(0), null));
 					}
 				}
@@ -224,6 +232,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.httpHeaders = httpHeaders;
 	}
 
+	@ToString
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
 		static InternetAddress fromUrl(URL url) {
@@ -257,6 +266,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 	}
 
+	@ToString
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class LoginData {
 		private final String name;
@@ -276,6 +286,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 	}
 
+	@ToString
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class HttpHeader {
 		private final String name;

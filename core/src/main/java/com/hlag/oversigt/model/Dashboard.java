@@ -1,5 +1,6 @@
 package com.hlag.oversigt.model;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -19,6 +20,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
 public class Dashboard {
+	private static Set<String> newSet(String... items) {
+		return newSet(Arrays.asList(items));
+	}
+
+	private static Set<String> newSet(Collection<String> items) {
+		TreeSet<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		set.addAll(items);
+		return Collections.synchronizedSet(set);
+	}
+
 	static final int TILE_DISTANCE = 6;
 
 	@NotNull
@@ -64,12 +75,10 @@ public class Dashboard {
 
 	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private final Set<@NotBlank /* TODO @UserId */ String> owners = Collections
-			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
+	private Set<@NotBlank /* TODO @UserId */ String> owners = newSet();
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private final Set<@NotBlank /* TODO @UserId */ String> editors = Collections
-			.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
+	private Set<@NotBlank /* TODO @UserId */ String> editors = newSet();
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
@@ -198,30 +207,20 @@ public class Dashboard {
 		this.foregroundColorEnd = Color.parse(foregroundColorEnd);
 	}
 
-	public Set<String> getOwners() {
-		synchronized (owners) {
-			return owners;
-		}
+	public Collection<String> getOwners() {
+		return owners;
 	}
 
 	public void setOwners(Collection<String> owners) {
-		synchronized (this.owners) {
-			this.owners.clear();
-			this.owners.addAll(owners);
-		}
+		this.owners = newSet(owners);
 	}
 
-	public Set<String> getEditors() {
-		synchronized (editors) {
-			return editors;
-		}
+	public Collection<String> getEditors() {
+		return editors;
 	}
 
 	public void setEditors(Collection<String> editors) {
-		synchronized (this.editors) {
-			this.editors.clear();
-			this.editors.addAll(editors);
-		}
+		this.editors = newSet(editors);
 	}
 
 	public boolean isEditor(String username) {
