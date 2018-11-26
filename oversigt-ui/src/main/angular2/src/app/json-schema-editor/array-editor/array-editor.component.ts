@@ -23,24 +23,56 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
     }
   }
 
+  get hasComplexSubtype(): boolean {
+    return this.schemaObject.properties !== undefined;
+  }
+
   getNames(): string[] {
-    return Object.keys(this.schemaObject.properties);
+    if (this.hasComplexSubtype) {
+      return Object.keys(this.schemaObject.properties);
+    } else {
+      return ['row'];
+    }
+  }
+
+  getTitle(column: number): string {
+    if (this.hasComplexSubtype) {
+      return this.schemaObject.properties[this.getNames()[column]].title;
+    } else {
+      return 'row';
+    }
+  }
+
+  getValue(column: number, row: number): any {
+    if (this.hasComplexSubtype) {
+      return this.value[row][this.schemaObject.properties[this.getNames()[column]].title];
+    } else {
+      return this.value[row];
+    }
+  }
+
+  getSchema(column: number): JsonSchemaProperty {
+    if (this.hasComplexSubtype) {
+      return this.schemaObject.properties[column];
+    } else {
+      return this.schemaObject;
+    }
   }
 
   addArrayItem() {
     this.value.push(this.createObjectFromProperty(this.schemaObject));
   }
 
-  moveItemUp(item: any) {
+  moveItemUp(item: number) {
     alert('Not implemented yet');
   }
 
-  moveItemDown(item: any) {
+  moveItemDown(item: number) {
     alert('Not implemented yet');
   }
 
-  removeArrayItem(itemToRemove: any) {
-    this.value = this.value.filter(item => item !== itemToRemove);
+  removeArrayItem(itemToRemove: number) {
+    this.value.splice(itemToRemove, 1);
   }
 
   getTabName(item: any, index: number): string {
@@ -55,6 +87,7 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
         } else if (property.enumSource === undefined) {
           return '';
         } else {
+          // TODO respect values that are already in the array
           return property.enumSource[0].source[0].value;
         }
       case 'number':
