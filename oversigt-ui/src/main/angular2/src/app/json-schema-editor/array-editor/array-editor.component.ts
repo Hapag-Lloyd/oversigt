@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-value-accessor';
-import { JsonSchemaProperty } from '../schema-editor/schema-editor.component';
+import { JsonSchemaProperty, createObjectFromProperty } from '../schema-editor/schema-editor.component';
 import { interpret } from 'src/app/utils/interpreter';
 
 @Component({
@@ -60,7 +60,7 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
   }
 
   addArrayItem() {
-    this.value.push(this.createObjectFromProperty(this.schemaObject));
+    this.value.push(createObjectFromProperty(this.schemaObject));
   }
 
   moveItemUp(item: number) {
@@ -78,30 +78,4 @@ export class ArrayEditorComponent extends AbstractValueAccessor implements OnIni
   getTabName(item: any, index: number): string {
     return interpret(item, this.schemaObject.headerTemplate, index, 'Item ' + (index + 1));
   }
-
-  private createObjectFromProperty(property: JsonSchemaProperty) {
-    switch (property.type) {
-      case 'string':
-        if (property.default !== undefined) {
-          return property.default;
-        } else if (property.enumSource === undefined) {
-          return '';
-        } else {
-          // TODO respect values that are already in the array
-          return property.enumSource[0].source[0].value;
-        }
-      case 'number':
-        return 0;
-      case 'array':
-        return [];
-      case 'object':
-        const obj = {};
-        Object.keys(property.properties).forEach(p => {
-          obj[p] = this.createObjectFromProperty(property.properties[p]);
-        });
-        return obj;
-    }
-    console.error('Unknown type: ', property.type);
-  }
-
 }

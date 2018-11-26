@@ -38,5 +38,33 @@ export class SchemaEditorComponent extends AbstractValueAccessor implements OnIn
     if (this.schemaObject === null) {
       this.schemaObject = JSON.parse(this.schema);
     }
+    if (this.value === null) {
+      this.value = createObjectFromProperty(this.schemaObject);
+    }
   }
+}
+
+export function createObjectFromProperty(property: JsonSchemaProperty) {
+  switch (property.type) {
+    case 'string':
+      if (property.default !== undefined) {
+        return property.default;
+      } else if (property.enumSource === undefined) {
+        return '';
+      } else {
+        // TODO respect values that are already in the array
+        return property.enumSource[0].source[0].value;
+      }
+    case 'number':
+      return 0;
+    case 'array':
+      return [];
+    case 'object':
+      const obj = {};
+      Object.keys(property.properties).forEach(p => {
+        obj[p] = this.createObjectFromProperty(property.properties[p]);
+      });
+      return obj;
+  }
+  console.error('Unknown type: ', property.type);
 }
