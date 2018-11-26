@@ -70,14 +70,14 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         this.ess.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
           eventSourceDescriptor => {
             this.eventSourceDescriptor = eventSourceDescriptor;
-            this.parsedInstanceDetails = this.parseInstanceDeatils(fullInfo.instanceDetails);
+            this.parsedInstanceDetails = this.parseInstanceDetails(fullInfo.instanceDetails);
           }
         );
       }
     );
   }
 
-  private parseInstanceDeatils(details: EventSourceInstanceDetails): ParsedEventSourceInstanceDetails {
+  private parseInstanceDetails(details: EventSourceInstanceDetails): ParsedEventSourceInstanceDetails {
     const props = {};
     Object.keys(details.properties).forEach(key =>
       props[key] =  this.eventSourceDescriptor.properties.find(p => p.name === key).inputType === 'json'
