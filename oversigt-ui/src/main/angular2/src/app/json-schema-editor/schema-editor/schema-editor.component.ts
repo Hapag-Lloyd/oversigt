@@ -23,27 +23,6 @@ export class EnumSource {
   value: string;
 }
 
-@Component({
-  selector: 'app-json-schema',
-  templateUrl: './schema-editor.component.html',
-  styleUrls: ['./schema-editor.component.css'],
-  providers: [MakeProvider(SchemaEditorComponent)]
-})
-export class SchemaEditorComponent extends AbstractValueAccessor implements OnInit {
-  @Input() schema: '';
-  @Input() schemaObject: JsonSchemaProperty = null;
-  @Input() showTitles = true;
-
-  ngOnInit() {
-    if (this.schemaObject === null) {
-      this.schemaObject = JSON.parse(this.schema);
-    }
-    if (this.value === null) {
-      this.value = createObjectFromProperty(this.schemaObject);
-    }
-  }
-}
-
 export function createObjectFromProperty(property: JsonSchemaProperty) {
   switch (property.type) {
     case 'string':
@@ -62,9 +41,37 @@ export function createObjectFromProperty(property: JsonSchemaProperty) {
     case 'object':
       const obj = {};
       Object.keys(property.properties).forEach(p => {
-        obj[p] = this.createObjectFromProperty(property.properties[p]);
+        obj[p] = createObjectFromProperty(property.properties[p]);
       });
       return obj;
   }
   console.error('Unknown type: ', property.type);
+}
+
+@Component({
+  selector: 'app-json-schema',
+  templateUrl: './schema-editor.component.html',
+  styleUrls: ['./schema-editor.component.css'],
+  providers: [MakeProvider(SchemaEditorComponent)]
+})
+export class SchemaEditorComponent extends AbstractValueAccessor implements OnInit {
+  @Input() schema: '';
+  @Input() schemaObject: JsonSchemaProperty = null;
+  @Input() showTitles = true;
+
+  ngOnInit() {
+    if (this.schemaObject === null) {
+      this.schemaObject = JSON.parse(this.schema);
+    }
+  }
+
+  writeValue(value: any) {
+    if (value !== null) {
+      super.writeValue(value);
+    } else {
+      super.writeValue(createObjectFromProperty(this.schemaObject));
+    }
+    // warning: comment below if only want to emit on user intervention
+    // this.onChange(value);
+  }
 }
