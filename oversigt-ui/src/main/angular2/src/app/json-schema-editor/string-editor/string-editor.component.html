@@ -1,17 +1,22 @@
-<ng-container *ngIf="value !== null; else nullValue" [ngSwitch]="editorType">
-  <label *ngIf="showTitle">{{schemaObject.title}}</label>
-  <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" [(ngModel)]="value" />
-  <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
-  <ng-container *ngSwitchCase="'select'">
-    <nz-select *ngIf="values.length > 5" style="width: 10em" [(ngModel)]="value" nzPlaceHolder="Choose {{schemaObject.title}}">
-      <nz-option *ngFor="let value of values" nzValue="{{value}}" nzLabel="{{valueToTitle[value]}}"></nz-option>
-    </nz-select>
-    <nz-radio-group *ngIf="values.length <= 5" [(ngModel)]="value">
-      <label *ngFor="let value of values" nz-radio-button nzValue="{{value}}">{{valueToTitle[value]}}</label>
-    </nz-radio-group>
-  </ng-container>
-  <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
-</ng-container>
+<div *ngIf="value !== null; else nullValue" class="schema-string-editor">
+  <div *ngIf="showTitle" class="label">
+    <!-- TODO: set FOR attribute -->
+    <label>{{schemaObject.title}}</label>
+  </div>
+  <div [ngSwitch]="editorType" class="editor" style="overflow:auto;">
+    <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" [(ngModel)]="value" />
+    <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
+    <ng-container *ngSwitchCase="'select'">
+      <nz-select *ngIf="values.length > 5" style="width: 10em" [(ngModel)]="value" nzPlaceHolder="Choose {{schemaObject.title}}">
+        <nz-option *ngFor="let value of values" nzValue="{{value}}" nzLabel="{{valueToTitle[value]}}"></nz-option>
+      </nz-select>
+      <nz-radio-group *ngIf="values.length <= 5" [(ngModel)]="value">
+        <label *ngFor="let choice of values" nz-radio-button nzValue="{{choice}}">{{valueToTitle[choice]}}</label>
+      </nz-radio-group>
+    </ng-container>
+    <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
+  </div>
+</div>
 
 <ng-template #nullValue>
   <nz-alert nzType="error" nzMessage="StringEditor value is null"></nz-alert>

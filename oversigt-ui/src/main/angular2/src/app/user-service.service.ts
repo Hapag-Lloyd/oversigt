@@ -88,7 +88,7 @@ export class UserService {
           fail();
         } else {
           console.error(error);
-          // TODO
+          // TODO: Error handling
         }
       },
       done

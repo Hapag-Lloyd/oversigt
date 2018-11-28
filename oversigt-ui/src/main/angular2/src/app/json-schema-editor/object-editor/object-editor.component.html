@@ -1,8 +1,8 @@
-<nz-card *ngIf="value !== null; else nullValue">
-  <div *ngFor="let name of getPropertyNames()">
+<div *ngIf="value !== null; else nullValue" style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: stretch; align-content: flex-start">
+  <div *ngFor="let name of getPropertyNames()" style="flex: 1 0 23%; ">
     <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
   </div>
-</nz-card>
+</div>
 
 <ng-template #nullValue>
   <nz-alert nzType="error" nzMessage="ObjectEditor value is null"></nz-alert>

@@ -67,7 +67,7 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }

@@ -24,7 +24,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
     this.ss.getLoggers(false).subscribe(
@@ -34,7 +34,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }
@@ -49,7 +49,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }

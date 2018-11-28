@@ -25,7 +25,7 @@ export class ConfigDashboardsComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }

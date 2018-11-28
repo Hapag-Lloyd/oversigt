@@ -29,7 +29,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }
@@ -65,7 +65,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
   }

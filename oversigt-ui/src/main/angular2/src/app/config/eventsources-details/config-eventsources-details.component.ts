@@ -138,7 +138,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
     this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been stopped.');
@@ -156,7 +156,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
     this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been started.');
@@ -191,7 +191,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
           error => {
             console.error(error);
             alert(error);
-            // TODO
+            // TODO: Error handling
             _this.isEnablingEventSource = false;
             fail();
           }
@@ -200,7 +200,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
         _this.isEnablingEventSource = false;
         fail();
       }

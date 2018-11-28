@@ -53,7 +53,7 @@ export class ConfigSystemComponent implements OnInit {
             error => {
               console.error(error.error);
               // alert(error);
-              // TODO
+              // TODO: Error handling
             },
             () => {
               restarted[item.id] = true;
@@ -65,7 +65,7 @@ export class ConfigSystemComponent implements OnInit {
       error => {
         console.error(error);
         alert(error);
-        // TODO
+        // TODO: Error handling
       }
     );
     setTimeout(() => {

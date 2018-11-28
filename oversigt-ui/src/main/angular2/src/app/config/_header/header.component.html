@@ -7,7 +7,7 @@
       <h5 *ngSwitchCase="5">{{title}}</h5>
       <h6 *ngSwitchDefault>{{title}}</h6>
   </div>
-  <!-- TODO wenn der Viewport zu schmal wird, muss der zweite Teil nach unten -->
+  <!-- TODO: wenn der Viewport zu schmal wird, muss der zweite Teil nach unten -->
   <div *ngIf="additional !== null" style="display: flex; flex-direction: row; align-content: flex-end; align-items: center; justify-content: space-around">
     <ng-template [ngTemplateOutlet]="additional"></ng-template>
   </div>
