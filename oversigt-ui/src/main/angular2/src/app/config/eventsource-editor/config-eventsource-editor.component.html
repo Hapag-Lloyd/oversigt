@@ -1,6 +1,7 @@
 <nz-form-item>
   <nz-form-label [nzSpan]="6" nzFor="{{property.name}}">
-    <span>{{property.displayName}}</span>
+    <span *ngIf="!canBeDisabled">{{property.displayName}}</span>
+    <label *ngIf="canBeDisabled" nz-checkbox [(ngModel)]="enabled">{{property.displayName}}</label>
   </nz-form-label>
   <nz-form-control [ngSwitch]="property.inputType" [nzSpan]="18">
     <nz-input-group style="width: 100%;">

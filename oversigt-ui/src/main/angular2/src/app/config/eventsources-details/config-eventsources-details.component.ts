@@ -78,6 +78,13 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     );
   }
 
+  deleteDataItem(name: string): void {
+    console.log('Remove', name);
+    console.log(this.parsedInstanceDetails.dataItems[name]);
+    this.parsedInstanceDetails.dataItems[name] = undefined;
+    console.log(this.parsedInstanceDetails.dataItems[name]);
+  }
+
   private parseInstanceDetails(details: EventSourceInstanceDetails): ParsedEventSourceInstanceDetails {
     const props = {};
     Object.keys(details.properties).forEach(key =>
@@ -110,6 +117,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   saveConfiguration() {
     this.isSavingEventSource = true;
+    console.log(this.parsedInstanceDetails);
     this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
         this.message.success('The configuration has been saved.');

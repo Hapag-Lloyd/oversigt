@@ -50,7 +50,7 @@
     [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
   <app-header [title]="'Data Items'" [level]="3"></app-header>
   <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
-    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]" [canBeDisabled]="true"></app-config-eventsource-editor>
+    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]" [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
 </form>
 <div *ngIf="eventSourceDescriptor === null">
   <nz-spin></nz-spin>

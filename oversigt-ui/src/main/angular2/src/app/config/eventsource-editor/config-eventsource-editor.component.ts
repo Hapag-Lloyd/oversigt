@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { EventSourceProperty, SerializableValueService } from 'src/oversigt-client';
 import { MakeProvider } from '../../_editor/abstract-value-accessor';
@@ -10,22 +10,53 @@ import { MakeProvider } from '../../_editor/abstract-value-accessor';
   providers: [MakeProvider(ConfigEventsourceEditorComponent)]
 })
 export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAccessor {
+  // the property to handle
   @Input() property: EventSourceProperty;
+  @Output() propertyDeletion = new EventEmitter();
+
+  // how to handle disabled values
   @Input() canBeDisabled = false;
+  private _enabled = false;
+  get enabled(): boolean {
+    return this._enabled;
+  }
+  set enabled(enabled: boolean) {
+    this.setValue(this.value, enabled);
+  }
+
+  // accessors for ngModel
   private _value: any = null;
-  get value(): any { return this._value; }
-  set value(value: any) {
-    if (value !== this._value) {
+  private setValue(value: any, enabled: boolean): void {
+    const oldValue = this._value;
+    if (enabled) {
       this._value = value;
+      this._enabled = true;
+    } else {
+      this._value = null;
+      this._enabled = false;
+      this.propertyDeletion.emit();
+    }
+    if (oldValue !== this._value) {
       this.onChange(value);
     }
   }
-
-  writeValue(value: any) {
+  get value(): any { return this._value; }
+  set value(value: any) {
+    this.setValue(value, value !== undefined);
+    /*this.enabled = value !== undefined;
     if (value !== this._value) {
       this._value = value;
       this.onChange(value);
-    }
+    }*/
+  }
+
+  writeValue(value: any) {
+    this.setValue(value, value !== undefined);
+    /*this.enabled = value !== undefined;
+    if (value !== this._value) {
+      this._value = value;
+      this.onChange(value);
+    }*/
   }
 
   onChange = (_) => {};
