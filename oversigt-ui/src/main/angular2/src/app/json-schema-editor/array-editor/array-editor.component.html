@@ -52,14 +52,14 @@
 
   <!-- grid display -->
   <ng-container  *ngSwitchCase="'grid'">
-    <nz-card *ngFor="let item of value; let row = index">
+    <div *ngFor="let item of value; let row = index" class="array-item" style="border: 1px solid #ddd; border-radius: 4px; padding: 1em;">
       <div class="array-controls">
         <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(row)"><i nz-icon type="minus-circle" theme="outline"></i></button>
       </div>
       <div>
         <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]"></app-json-schema>
       </div>
-    </nz-card>
+    </div>
   </ng-container>
 
   <!-- unknown display style -->

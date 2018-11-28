@@ -22,6 +22,29 @@
         </nz-radio-group>
       </div>
       <app-json-schema *ngSwitchCase="'json'" [(ngModel)]="value" [schema]="property.jsonSchema"></app-json-schema>
+      <nz-select *ngSwitchCase="'duration'" [(ngModel)]="value" style="width: 100%;">
+        <nz-option nzLabel="10 seconds" nzValue="PT10S"></nz-option>
+        <nz-option nzLabel="20 seconds" nzValue="PT20S"></nz-option>
+        <nz-option nzLabel="30 seconds" nzValue="PT30S"></nz-option>
+        <nz-option nzLabel="45 seconds" nzValue="PT45S"></nz-option>
+        <nz-option nzLabel="1 minute" nzValue="PT1M"></nz-option>
+        <nz-option nzLabel="2 minutes" nzValue="PT2M"></nz-option>
+        <nz-option nzLabel="3 minutes" nzValue="PT3M"></nz-option>
+        <nz-option nzLabel="5 minutes" nzValue="PT5M"></nz-option>
+        <nz-option nzLabel="10 minutes" nzValue="PT10M"></nz-option>
+        <nz-option nzLabel="15 minutes" nzValue="PT15M"></nz-option>
+        <nz-option nzLabel="20 minutes" nzValue="PT20M"></nz-option>
+        <nz-option nzLabel="30 minutes" nzValue="PT30M"></nz-option>
+        <nz-option nzLabel="45 minutes" nzValue="PT45M"></nz-option>
+        <nz-option nzLabel="1 hour" nzValue="PT1H"></nz-option>
+        <nz-option nzLabel="2 hours" nzValue="PT2H"></nz-option>
+        <nz-option nzLabel="3 hours" nzValue="PT3H"></nz-option>
+        <nz-option nzLabel="6 hours" nzValue="PT6H"></nz-option>
+        <nz-option nzLabel="8 hours" nzValue="PT8H"></nz-option>
+        <nz-option nzLabel="12 hours" nzValue="PT12H"></nz-option>
+        <nz-option nzLabel="1 day" nzValue="PT24H"></nz-option>
+      </nz-select>
+      <textarea *ngSwitchCase="'sql'" [(ngModel)]="value" style="width: 100%; min-height: 5em;"></textarea>
       <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
     </nz-input-group>
     <nz-form-extra *ngIf="property.description !== null">{{property.description}}</nz-form-extra>
