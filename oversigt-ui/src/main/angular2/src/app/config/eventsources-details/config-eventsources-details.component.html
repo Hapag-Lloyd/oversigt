@@ -10,10 +10,12 @@
           <li nz-menu-item> <a>Another dashboard</a> </li>
         </ul>
       </nz-dropdown>
-      <button nz-button nzType="primary" (click)="saveConfiguration()" nz-tooltip nzTitle="Save event source configuration"><i
-          nz-icon type="save" theme="fill"></i></button>
-      <button nz-button nzType="default" (click)="showUsage()" nz-tooltip nzTitle="Show event source usage"><i
-          nz-icon type="bar-chart" theme="outline"></i></button>
+      <button nz-button nzType="primary" (click)="saveConfiguration()" nz-tooltip nzTitle="Save event source configuration" [nzLoading]="isSavingEventSource">
+        <i nz-icon type="save" theme="fill"></i>
+      </button>
+      <button nz-button nzType="default" (click)="showUsage()" nz-tooltip nzTitle="Show event source usage">
+        <i nz-icon type="bar-chart" theme="outline"></i>
+      </button>
       <nz-button-group>
         <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !serviceInfo.running"
           nz-button nzType="danger" (click)="startEventSource()" nz-tooltip nzTitle="Start event source" [nzLoading]="isStartingEventSource"
@@ -32,29 +34,23 @@
       </nz-button-group>
     </ng-template>
   </div>
-  <nz-collapse [nzBordered]="'true'" style="margin: 2ex;">
-    <nz-collapse-panel [nzHeader]="'Event Source Information'" [nzActive]="'true'">
-      <app-config-eventsource-info [item]="{id:'name',title:'Event Source Name',value:parsedInstanceDetails.name,readonly:false}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'type',title:'Type',value:eventSourceDescriptor.displayName,readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'id',title:'Unique ID',value:parsedInstanceDetails.id,readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'view',title:'View',value:eventSourceDescriptor.view,readonly:true}"></app-config-eventsource-info>
-    </nz-collapse-panel>
-    <nz-collapse-panel [nzHeader]="'Runtime Information'" [nzActive]="'false'">
-      <app-config-eventsource-info [item]="{id:'running',title:'Running',value:serviceInfo.running ? 'yes' : 'no',readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'created_by',title:'Created By',value:serviceInfo.createdBy,readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'changed_by',title:'Last Change By',value:serviceInfo.lastChangeBy,readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info [item]="{id:'last_success',title:'Last successful Run',value:serviceInfo.lastSuccessfulRun,readonly:true}"></app-config-eventsource-info>
-      <app-config-eventsource-info *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [item]="{id:'last_run',title:'Last Run',value:serviceInfo.lastRun,readonly:true}"></app-config-eventsource-info>
-    </nz-collapse-panel>
-    <nz-collapse-panel *ngIf="eventSourceDescriptor.properties.length > 0" [nzHeader]="'Properties'" [nzActive]="'true'">
-      <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
-        [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
-    </nz-collapse-panel>
-    <nz-collapse-panel *ngIf="eventSourceDescriptor.dataItems.length > 0" [nzHeader]="'Data Items'" [nzActive]="eventSourceDescriptor.properties.length === 0">
-      <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
-        [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]" [canBeDisabled]="true"></app-config-eventsource-editor>
-    </nz-collapse-panel>
-  </nz-collapse>
+  <app-header [title]="'Main'" [level]="3"></app-header>
+  <app-config-eventsource-info [item]="{id:'name',title:'Event Source Name',value:parsedInstanceDetails.name,readonly:false}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'type',title:'Type',value:eventSourceDescriptor.displayName,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'id',title:'Unique ID',value:parsedInstanceDetails.id,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'view',title:'View',value:eventSourceDescriptor.view,readonly:true}"></app-config-eventsource-info>
+  <app-header [title]="'Runtime'" [level]="3"></app-header>
+  <app-config-eventsource-info [item]="{id:'running',title:'Running',value:serviceInfo.running ? 'yes' : 'no',readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'created_by',title:'Created By',value:serviceInfo.createdBy,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'changed_by',title:'Last Change By',value:serviceInfo.lastChangeBy,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info [item]="{id:'last_success',title:'Last successful Run',value:serviceInfo.lastSuccessfulRun,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [item]="{id:'last_run',title:'Last Run',value:serviceInfo.lastRun,readonly:true}"></app-config-eventsource-info>
+  <app-header [title]="'Properties'" [level]="3"></app-header>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
+  <app-header [title]="'Data Items'" [level]="3"></app-header>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]" [canBeDisabled]="true"></app-config-eventsource-editor>
 </form>
 <div *ngIf="eventSourceDescriptor === null">
   <nz-spin></nz-spin>

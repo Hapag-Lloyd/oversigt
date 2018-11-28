@@ -31,6 +31,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   isStartingEventSource = false;
   isStoppingEventSource = false;
   isEnablingEventSource = false;
+  isSavingEventSource = false;
 
   constructor(
     private router: Router,
@@ -108,6 +109,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   saveConfiguration() {
+    this.isSavingEventSource = true;
     this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
         this.message.success('The configuration has been saved.');
@@ -115,6 +117,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       error => {
         console.error(error);
         this.message.error('Saving event source configuration failed. See log for details.');
+      },
+      () => {
+        this.isSavingEventSource = false;
       }
     );
   }
