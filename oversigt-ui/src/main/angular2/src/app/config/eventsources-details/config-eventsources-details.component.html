@@ -35,22 +35,23 @@
     </ng-template>
   </div>
   <app-header [title]="'Main'" [level]="3"></app-header>
-  <app-config-eventsource-info [item]="{id:'name',title:'Event Source Name',value:parsedInstanceDetails.name,readonly:false}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'type',title:'Type',value:eventSourceDescriptor.displayName,readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'id',title:'Unique ID',value:parsedInstanceDetails.id,readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'view',title:'View',value:eventSourceDescriptor.view,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esName" [id]="'name'" [title]="'Event Source Name'" [(ngModel)]="parsedInstanceDetails.name"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esType" [id]="'type'" [title]="'Type'" [(ngModel)]="eventSourceDescriptor.displayName" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esId" [id]="'id'"   [title]="'Unique ID'" [(ngModel)]="parsedInstanceDetails.id" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esView" [id]="'view'" [title]="'View'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-config-eventsource-info>
   <app-header [title]="'Runtime'" [level]="3"></app-header>
-  <app-config-eventsource-info [item]="{id:'running',title:'Running',value:serviceInfo.running ? 'yes' : 'no',readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'created_by',title:'Created By',value:serviceInfo.createdBy,readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'changed_by',title:'Last Change By',value:serviceInfo.lastChangeBy,readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info [item]="{id:'last_success',title:'Last successful Run',value:serviceInfo.lastSuccessfulRun,readonly:true}"></app-config-eventsource-info>
-  <app-config-eventsource-info *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [item]="{id:'last_run',title:'Last Run',value:serviceInfo.lastRun,readonly:true}"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esRunning" [id]="'running'" [title]="'Running'" [(ngModel)]="serviceInfo.running" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [(ngModel)]="serviceInfo.createdBy" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [(ngModel)]="serviceInfo.lastChangeBy" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [(ngModel)]="serviceInfo.lastSuccessfulRun" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esLastRun" *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [id]="'last_run'" [title]="'Last run'" [(ngModel)]="serviceInfo.lastRun" [readOnly]="true"></app-config-eventsource-info>
   <app-header [title]="'Properties'" [level]="3"></app-header>
   <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
     [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
   <app-header [title]="'Data Items'" [level]="3"></app-header>
   <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
-    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]" [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
+    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]"
+    [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
 </form>
 <div *ngIf="eventSourceDescriptor === null">
   <nz-spin></nz-spin>

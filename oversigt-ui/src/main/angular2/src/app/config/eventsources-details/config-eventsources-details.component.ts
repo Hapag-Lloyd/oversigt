@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor } from 'src/oversigt-client';
 import { EventsourceSelectionService } from '../../eventsource-selection.service';
 import { Subscribable, Subscription } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd';
 import { ConfigEventsourcesComponent } from '../eventsources/config-eventsources.component';
+import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -22,11 +23,20 @@ export class ParsedEventSourceInstanceDetails {
   styleUrls: ['./config-eventsources-details.component.css']
 })
 export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
+  @ViewChildren(ConfigEventsourceEditorComponent) editors !: QueryList<ConfigEventsourceEditorComponent>;
+
   private subscription: Subscription = null;
   eventSourceId: string = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
-  parsedInstanceDetails: ParsedEventSourceInstanceDetails = null;
+  private _parsedInstanceDetails: ParsedEventSourceInstanceDetails = null;
   serviceInfo: ServiceInfo = null;
+
+  get parsedInstanceDetails(): ParsedEventSourceInstanceDetails {
+    return this._parsedInstanceDetails;
+  }
+  set parsedInstanceDetails(value: ParsedEventSourceInstanceDetails) {
+    this._parsedInstanceDetails = value;
+  }
 
   isStartingEventSource = false;
   isStoppingEventSource = false;
@@ -43,10 +53,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.route.url.subscribe(_ => {
+    this.subscription = this.route.url.subscribe(_ => {
       this.initComponent();
     });
-    this.initComponent();
   }
 
   ngOnDestroy() {
@@ -79,9 +88,8 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   deleteDataItem(name: string): void {
-    console.log('Remove', name);
-    console.log(this.parsedInstanceDetails.dataItems[name]);
-    this.parsedInstanceDetails.dataItems[name] = undefined;
+    console.log('Remove', name, this.parsedInstanceDetails.dataItems[name]);
+    delete this.parsedInstanceDetails.dataItems[name];
     console.log(this.parsedInstanceDetails.dataItems[name]);
   }
 
@@ -101,11 +109,19 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   private serializeInstanceDetails(parsed: ParsedEventSourceInstanceDetails): EventSourceInstanceDetails {
+    console.log('Serialize', parsed.dataItems);
     const props = {};
     Object.keys(parsed.properties).forEach(key =>
       props[key] =  this.eventSourceDescriptor.properties.find(p => p.name === key).inputType === 'json'
                   ? JSON.stringify(parsed.properties[key])
                   : parsed.properties[key]);
+    // remove data items that have been disabled in the UI
+    this.editors
+      .filter(e => e.canBeDisabled) // only data items can be disabled
+      .filter(e => !e.enabled) // retain only items that have been disabled in the UI
+      .map(e => e.property.name) // transform to the data item name to remove
+      .forEach(n => delete parsed.dataItems[n]); // remove items
+    // create the object to send to the server
     return {  eventSourceDescriptor: parsed.eventSourceDescriptor,
       id: parsed.id,
       name: parsed.name,
@@ -127,6 +143,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         this.message.error('Saving event source configuration failed. See log for details.');
       },
       () => {
+        // TODO: Reload info from server
         this.isSavingEventSource = false;
       }
     );

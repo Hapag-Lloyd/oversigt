@@ -1,21 +1,16 @@
 import { Component, OnInit, Input } from '@angular/core';
-
-export class Item {
-  id: string;
-  title: string;
-  value: string;
-  readonly: boolean;
-}
+import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-value-accessor';
 
 @Component({
   selector: 'app-config-eventsource-info',
   templateUrl: './config-eventsource-info.component.html',
-  styleUrls: ['./config-eventsource-info.component.css']
+  styleUrls: ['./config-eventsource-info.component.css'],
+  providers: [MakeProvider(ConfigEventsourceInfoComponent)]
 })
-export class ConfigEventsourceInfoComponent implements OnInit {
-  @Input() item: Item;
-
-  constructor() { }
+export class ConfigEventsourceInfoComponent extends AbstractValueAccessor implements OnInit {
+  @Input() id: string;
+  @Input() title: string;
+  @Input() readOnly = false;
 
   ngOnInit() {
   }
