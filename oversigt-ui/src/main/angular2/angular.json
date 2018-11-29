@@ -28,10 +28,15 @@
               }
             ],
             "styles": [
+              "node_modules/@clr/icons/clr-icons.min.css",
+              "node_modules/@clr/ui/clr-ui.min.css",
               "node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/@webcomponents/custom-elements/custom-elements.min.js",
+              "node_modules/@clr/icons/clr-icons.min.js"
+            ]
           },
           "configurations": {
             "production": {

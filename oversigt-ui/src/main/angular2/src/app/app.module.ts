@@ -37,6 +37,7 @@ import { FilterForRolePipe } from './pipes/filter-for-role.pipe';
 import { environment } from 'src/environments/environment';
 import { AuthGuard } from './guards/auth.guard';
 import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
+import { ClarityModule } from '@clr/angular';
 
 registerLocaleData(en);
 
@@ -112,6 +113,7 @@ export function initializeApiConfiguration(): Configuration {
     BrowserAnimationsModule,
     NgZorroAntdModule,
     JsonSchemaEditorModule,
+    ClarityModule,
   ],
   providers: [DashboardService, { provide: NZ_I18N, useValue: en_US }],
   bootstrap: [AppComponent]

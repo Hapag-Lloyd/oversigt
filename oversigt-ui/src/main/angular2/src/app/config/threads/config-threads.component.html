@@ -4,35 +4,24 @@
   <input nz-input placeholder="Filter threads" size="50" [(ngModel)]="filter">
 </ng-template>
 
-<nz-list [nzDataSource]="threadInfos | filterEventitem: filter" [nzRenderItem]="item" [nzSize]="'small'" [nzItemLayout]="'horizontal'"
-  [nzLoading]="threadInfos.length === 0">
-  <ng-template #item let-item>
-    <nz-list-item [nzActions]="[eventSourceLink]">
-      <nz-list-item-meta [nzTitle]="title" [nzDescription]="content" [nzAvatar]="threadState">
-        <ng-template #title>
-          {{item.threadInfo.id}} -
-          <a *ngIf="item.threadInfo.stackTrace.length > 0" (click)="item.visible = !item.visible">{{item.threadInfo.name}}
-            <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
-            <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
-          </a>
-          <span *ngIf="item.threadInfo.stackTrace.length === 0">{{item.threadInfo.name}}</span>
-        </ng-template>
-        <ng-template #content>
-          <ul *ngIf="item.visible" style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
+<clr-stack-view>
+  <clr-stack-block *ngFor="let item of threadInfos | filterEventitem: filter">
+    <clr-stack-label>{{item.threadInfo.name}}</clr-stack-label>
+    <clr-stack-content>{{item.threadInfo.state}}</clr-stack-content>
+    <clr-stack-block *ngIf="isEventSourceThread(item)">
+      <clr-stack-label>Event source</clr-stack-label>
+      <clr-stack-content><app-eventsource-button [eventSourceId]="getEventSourceId(item)"></app-eventsource-button></clr-stack-content>
+    </clr-stack-block>
+    <clr-stack-block *ngIf="item.threadInfo.stackTrace.length > 0">
+        <clr-stack-label>Stack trace</clr-stack-label>
+        <clr-stack-content>
+          <ul style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
             <li *ngFor="let row of item.threadInfo.stackTrace" class="stacktrace">
               <span class="classname">{{row.className}}</span>.<span class="methodname" [ngStyle]="{'font-style':(row.nativeMethod ? 'italic' : 'normal')}">{{row.methodName}}</span>()
               <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}<span *ngIf="row.lineNumber >= 0">:{{row.lineNumber}}</span>]</span>
             </li>
           </ul>
-        </ng-template>
-      </nz-list-item-meta>
-      <ng-template #threadState>
-        <nz-avatar [nzText]="item.threadInfo.state" nzSize="large" [ngStyle]="{'background-color':threadStateColor[item.threadInfo.state]}"
-          style="vertical-align: middle;"></nz-avatar>
-      </ng-template>
-      <ng-template #eventSourceLink>
-        <app-eventsource-button *ngIf="isEventSourceThread(item)" [eventSourceId]="getEventSourceId(item)"></app-eventsource-button>
-      </ng-template>
-    </nz-list-item>
-  </ng-template>
-</nz-list>
+        </clr-stack-content>
+    </clr-stack-block>
+  </clr-stack-block>
+</clr-stack-view>
