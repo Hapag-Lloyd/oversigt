@@ -1,8 +1,7 @@
 <div class="array-header" style="display: flex; flex-direction: row; align-content: space-between; align-items: center; justify-content: space-between;">
-  <div class="array-title">{{schemaObject.title}}</div>
-  <!-- TODO: wenn der Viewport zu schmal wird, muss der zweite Teil nach unten -->
+  <label *ngIf="showMainTitle" class="clr-control-label">{{schemaObject.title}}</label>
   <div class="array-buttons">
-      <button nz-button [nzType]="'dashed'" (click)="addArrayItem()"><i nz-icon type="plus-circle" theme="outline"></i> {{schemaObject.title}}</button>
+    <button class="btn btn-outline btn-sm" (click)="addArrayItem()"><clr-icon shape="plus-circle"></clr-icon> {{schemaObject.title}}</button>
   </div>
 </div>
 
@@ -12,25 +11,25 @@
     <table *ngIf="value.length > 0">
       <thead>
         <tr>
-          <th *ngFor="let name of getNames(); let column = index" [style.width.%]="100 / getNames().length" class="array-column-editor">{{getTitle(column)}}</th>
-          <th class="action"></th>
+          <th *ngFor="let name of getNames(); let column = index" [style.width.%]="100 / getNames().length" class="array-column-editor"><div><label class="clr-control-label">{{getTitle(column)}}</label></div></th>
+          <th class="action">&nbsp;</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let item of value; let row = index">
           <td *ngFor="let name of getNames(); let column = index">
             <ng-container *ngIf="hasComplexSubtype; else simpleSubtypeHeader">
-              <app-json-schema [schemaObject]="schemaObject.properties[name]" [(ngModel)]="value[row][name]" [showTitles]="false"></app-json-schema>
+              <app-json-schema [schemaObject]="schemaObject.properties[name]" [(ngModel)]="value[row][name]" [showTitles]="false" [showMainTitle]="true"></app-json-schema>
             </ng-container>
             <ng-template #simpleSubtypeHeader>
-              <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]" [showTitles]="false"></app-json-schema>
+              <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]" [showTitles]="false" [showMainTitle]="true"></app-json-schema>
             </ng-template>
           </td>
           <td>
-            <div class="action">
-              <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(row)"><i nz-icon type="minus-circle" theme="outline"></i></button>
-              <button *ngIf="row !== 0" nz-button [nzType]="'dashed'" (click)="moveItemUp(row)"><i nz-icon type="up-circle" theme="outline"></i></button>
-              <button *ngIf="row !== value.length - 1" nz-button [nzType]="'dashed'" (click)="moveItemDown(row)"><i nz-icon type="down-circle" theme="outline"></i></button>
+            <div class="btn-group btn-outline-primary btn-icon btn-sm">
+              <button *ngIf="row !== 0" class="btn" (click)="moveItemUp(row)"><clr-icon shape="circle-arrow"></clr-icon></button>
+              <button *ngIf="row !== value.length - 1" class="btn" (click)="moveItemDown(row)"><clr-icon shape="circle-arrow down"></clr-icon></button>
+              <button class="btn" (click)="removeArrayItem(row)"><clr-icon shape="minus-circle"></clr-icon></button>
             </div>
           </td>
         </tr>
@@ -40,30 +39,44 @@
 
   <!-- tab display -->
   <ng-container *ngSwitchCase="'tabs'">
-    <nz-tabset *ngIf="value.length > 0" [nzTabPosition]="'left'">
-      <nz-tab *ngFor="let item of value; let row = index" [nzTitle]="getTabName(item, row)">
-        <div class="array-controls">
-          <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(row)"><i nz-icon type="minus-circle" theme="outline"></i></button>
-        </div>
-        <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]" [showTitles]="true"></app-json-schema>
-      </nz-tab>
-    </nz-tabset>
+    <clr-tabs *ngIf="value.length > 0">
+      <clr-tab *ngFor="let item of value; let row = index">
+        <button clrTabLink>{{getTabName(item, row)}}</button>
+        <clr-tab-content>
+          <div class="array-controls">
+            <button class="btn btn-icon btn-outline btn-sm" (click)="removeArrayItem(row)"><clr-icon shape="minus-circle"></clr-icon></button>
+          </div>
+          <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]" [showTitles]="true" [showMainTitle]="true"></app-json-schema>
+        </clr-tab-content>
+      </clr-tab>
+    </clr-tabs>
   </ng-container>
 
   <!-- grid display -->
   <ng-container  *ngSwitchCase="'grid'">
-    <div *ngFor="let item of value; let row = index" class="array-item" style="border: 1px solid #ddd; border-radius: 4px; padding: 1em;">
-      <div class="array-controls">
-        <button nz-button [nzType]="'dashed'" (click)="removeArrayItem(row)"><i nz-icon type="minus-circle" theme="outline"></i></button>
-      </div>
-      <div>
-        <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]"></app-json-schema>
+    <div class="list-group">
+      <div *ngFor="let item of value; let row = index" class="list-group-item">
+        <div class="array-controls">
+          <button class="btn btn-outline btn-icon btn-sm" (click)="removeArrayItem(row)"><clr-icon shape="minus-circle"></clr-icon></button>
+        </div>
+        <div>
+          <app-json-schema [schemaObject]="schemaObject" [(ngModel)]="value[row]" [showMainTitle]="true"></app-json-schema>
+        </div>
       </div>
     </div>
   </ng-container>
 
   <!-- unknown display style -->
-  <nz-alert *ngSwitchDefault nzType="warning" nzMessage="Unknown array display format: {{displayFormat}}"></nz-alert>
+  <div *ngSwitchDefault class="alert alert-danger" role="alert">
+    <div class="alert-items">
+      <div class="alert-item static">
+        <div class="alert-icon-wrapper">
+          <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+        </div>
+        <span class="alert-text">Unknown array display format: {{displayFormat}}</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <ng-template #nullValue>

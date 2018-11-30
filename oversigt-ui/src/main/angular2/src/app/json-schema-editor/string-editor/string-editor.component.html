@@ -1,22 +1,37 @@
 <div *ngIf="value !== null; else nullValue" class="schema-string-editor">
-  <div *ngIf="showTitle" class="label">
-    <!-- TODO: set FOR attribute -->
-    <label>{{schemaObject.title}}</label>
-  </div>
-  <div [ngSwitch]="editorType" class="editor" style="overflow:auto;">
-    <input *ngSwitchCase="'input'" nz-input type="{{inputType}}" [(ngModel)]="value" />
-    <nz-input-number *ngSwitchCase="'number'" [(ngModel)]="value"></nz-input-number>
-    <ng-container *ngSwitchCase="'select'">
-      <nz-select *ngIf="values.length > 5" style="width: 10em" [(ngModel)]="value" nzPlaceHolder="Choose {{schemaObject.title}}">
-        <nz-option *ngFor="let value of values" nzValue="{{value}}" nzLabel="{{valueToTitle[value]}}"></nz-option>
-      </nz-select>
-      <nz-radio-group *ngIf="values.length <= 5" [(ngModel)]="value">
-        <label *ngFor="let choice of values" nz-radio-button nzValue="{{choice}}">{{valueToTitle[choice]}}</label>
-      </nz-radio-group>
-    </ng-container>
+  <label *ngIf="showTitle" class="clr-control-label">{{schemaObject.title}}</label>
+  <div class="clr-control-container" [ngSwitch]="editorType">
+    <div *ngSwitchCase="'input'" class="clr-input-wrapper">
+      <input class="clr-input" type="{{inputType}}" [(ngModel)]="value"/>
+    </div>
+    <div *ngSwitchCase="'number'" class="clr-input-wrapper">
+      <input class="clr-input" type="number" [(ngModel)]="value"/>
+    </div>
+    <div *ngSwitchCase="'select'" class="clr-select-wrapper">
+      <select class="clr-select" [(ngModel)]="value">
+        <option *ngFor="let value of values" value="{{value}}">{{valueToTitle[value]}}</option>
+      </select>
+    </div>
     <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
   </div>
 </div>
+
+<!--
+    <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
+      <div class="toggle-switch">
+        <input type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <label for="prop_{{property.name}}"></label>
+      </div>
+    </div>
+  -->
+
+
+
+
+
+
+
+
 
 <ng-template #nullValue>
   <div class="alert alert-danger" role="alert">

@@ -12,6 +12,7 @@ import { interpret } from 'src/app/utils/interpreter';
 export class ArrayEditorComponent extends AbstractValueAccessor implements OnInit {
   @Input() schemaObject: JsonSchemaProperty;
   @Input() displayFormat: string;
+  @Input() showMainTitle = false;
 
   get array(): any[] {
     return this.value;

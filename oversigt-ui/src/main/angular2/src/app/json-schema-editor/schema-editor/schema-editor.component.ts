@@ -58,6 +58,7 @@ export class SchemaEditorComponent extends AbstractValueAccessor implements OnIn
   @Input() schema: '';
   @Input() schemaObject: JsonSchemaProperty = null;
   @Input() showTitles = true;
+  @Input() showMainTitle = false;
 
   ngOnInit() {
     if (this.schemaObject === null) {

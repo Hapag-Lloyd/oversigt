@@ -1,6 +1,21 @@
 table {
-  width: 100%;
-  display: block;
+  margin-top: 3px;
+}
+
+table th div {
+  text-align: left;
+}
+
+table tr td:last-child {
+  text-align: right;
+}
+
+div.btn-group {
+  margin-right: 0;
+}
+
+.array-buttons button:last-child {
+  margin-right: 0;
 }
 
 table th.action{

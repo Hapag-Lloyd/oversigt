@@ -1,6 +1,6 @@
-<div *ngIf="value !== null; else nullValue" style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: stretch; align-content: flex-start">
-  <div *ngFor="let name of getPropertyNames()" style="flex: 1 0 26%; ">
-    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles"></app-json-schema>
+<div *ngIf="value !== null; else nullValue" class="object-parent">
+  <div *ngFor="let name of getPropertyNames()" class="object-child object-child-{{getProperty(name).type}}">
+    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles" [showMainTitle]="true"></app-json-schema>
   </div>
 </div>
 
