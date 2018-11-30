@@ -3,10 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor } from 'src/oversigt-client';
 import { EventsourceSelectionService } from '../../eventsource-selection.service';
 import { Subscribable, Subscription } from 'rxjs';
-import { NzMessageService } from 'ng-zorro-antd';
 import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventsources.component';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
+import { NotificationService } from 'src/app/notification.service';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -47,7 +47,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private message: NzMessageService,
+    private notification: NotificationService,
     private eventSourceSelection: EventsourceSelectionService,
     private ess: EventSourceService,
     private configEventSourcesComponent: ConfigEventsourcesComponent,
@@ -138,12 +138,12 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
         this.savingEventSourceState = ClrLoadingState.SUCCESS;
-        this.message.success('The configuration has been saved.');
+        this.notification.success('The configuration has been saved.');
       },
       error => {
         this.savingEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
-        this.message.error('Saving event source configuration failed. See log for details.');
+        this.notification.error('Saving event source configuration failed. See log for details.');
       },
       () => {
         // TODO: Reload info from server
@@ -152,11 +152,11 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   showUsage() {
-    this.message.error('This function is not implemented yet.');
+    this.notification.error('This function is not implemented yet.');
   }
 
   addToDashboard(id: string) {
-    this.message.error('This function is not implemented yet.');
+    this.notification.error('This function is not implemented yet.');
   }
 
   stopEventSource() {
@@ -174,7 +174,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO: Error handling
       }
     );
-    this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been stopped.');
+    this.notification.success('The event source "' + this.parsedInstanceDetails.name + '" has been stopped.');
   }
 
   startEventSource() {
@@ -193,22 +193,22 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO: Error handling
       }
     );
-    this.message.success('The event source "' + this.parsedInstanceDetails.name + '" has been started.');
+    this.notification.success('The event source "' + this.parsedInstanceDetails.name + '" has been started.');
   }
 
   disableEventSource() {
     this.changeEnablingState(false,
-      () => this.message.success('The event source has been disabled.'),
-      () => this.message.error('The event has not been disabled.'));
+      () => this.notification.success('The event source has been disabled.'),
+      () => this.notification.error('The event has not been disabled.'));
   }
 
   enableEventSource() {
     this.changeEnablingState(true,
-      () => this.message.success('The event source has been enabled.'),
-      () => this.message.error('The event has not been enabled.'));
+      () => this.notification.success('The event source has been enabled.'),
+      () => this.notification.error('The event has not been enabled.'));
   }
 
-  private changeEnablingState(enabled: boolean, ok: () => {}, fail: () => {}): void {
+  private changeEnablingState(enabled: boolean, ok: () => void, fail: () => void): void {
     const _this = this;
     this.enablingEventSourceState = ClrLoadingState.LOADING;
     // read current state from server
@@ -246,11 +246,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.ess.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
         // TODO aus der Liste der exisierenden EventSources löschen
-        const messageId = this.message.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.',
-          {nzDuration: 0}).messageId;
+        this.notification.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.');
         this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);
         setTimeout(() => {
-          this.message.remove(messageId);
           this.router.navigateByUrl('/config/eventSources');
         }, 1500);
       },

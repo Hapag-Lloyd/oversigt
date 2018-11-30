@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { LoggerInfo, SystemService } from 'src/oversigt-client';
-import { NzMessageService } from 'ng-zorro-antd';
+import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-logs-logger',
@@ -13,7 +13,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
 
   constructor(
     private ss: SystemService,
-    private message: NzMessageService
+    private notification: NotificationService
   ) { }
 
   ngOnInit() {
@@ -44,7 +44,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
       ok => {
         this.loggerInfos.filter(info => info.name === loggerName)[0].level = level;
         // TODO compute effective level
-        this.message.success('Logger "' + loggerName + '" has been set to level "' + level + '".');
+        this.notification.success('Logger "' + loggerName + '" has been set to level "' + level + '".');
       },
       error => {
         console.error(error);

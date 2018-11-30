@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EventSourceService, EventSourceInfo } from 'src/oversigt-client';
 import { Router } from '@angular/router';
-import { NzMessageService } from 'ng-zorro-antd';
+import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-eventsource-create',
@@ -17,7 +17,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
   constructor(
     private router: Router,
     private ess: EventSourceService,
-    private messages: NzMessageService,
+    private notification: NotificationService,
   ) { }
 
   ngOnInit() {
@@ -46,13 +46,12 @@ export class ConfigEventsourceCreateComponent implements OnInit {
   createEventSource(key: string) {
     let timeDone = false;
     let createdId: string = null;
-    const id = this.messages.loading('Creating event source..', { nzDuration: 0 }).messageId;
+    this.notification.success('Creating event source..');
     const check = () => {
       if (timeDone && createdId !== null) {
-        this.messages.remove(id);
         this.router.navigateByUrl('config/eventSources/' + createdId);
       }
-    }
+    };
     setTimeout(_ => {
       timeDone = true;
       check();
@@ -71,7 +70,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
   }
 
   showEventSourceInfo(key: string) {
-    this.messages.warning('Not yet implemented.');
+    this.notification.warning('Not yet implemented.');
   }
 
 }
