@@ -1,8 +1,8 @@
-<nz-form-item [class.readonly-form]="readOnly">
-    <nz-form-label [nzSpan]="6" nzFor="info_{{id}}">
-      <span [style.color]="readOnly ? '#666' : 'inherit'">{{title}}</span>
-    </nz-form-label>
-    <nz-form-control [nzSpan]="18">
-      <input nz-input type="text" [style.color]="readOnly ? '#666' : 'inherit'" id="info_{{id}}" name="info_{{id}}" value="{{value}}" [attr.readonly]="readOnly">
-    </nz-form-control>
-</nz-form-item>
+<clr-input-container [class.readonly-form]="readOnly">
+  <label>
+    <!--<span [style.color]="readOnly ? '#666' : 'inherit'">{{title}}</span>-->
+    {{title}}
+  </label>
+  <input *ngIf="!readOnly" clrInput type="text" value="{{value}}" name="info_{{id}}"/>
+  <input *ngIf="readOnly" clrInput type="text" value="{{value}}" name="info_{{id}}" readonly="readonly"/>
+</clr-input-container>

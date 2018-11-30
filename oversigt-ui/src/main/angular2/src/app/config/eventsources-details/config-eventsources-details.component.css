@@ -1,15 +1,15 @@
 
 .eventsource-config-header {
-  display: flex; 
-  flex-flow: row wrap-reverse; 
-  justify-content: space-between; 
+  display: flex;
+  flex-flow: row wrap-reverse;
+  justify-content: space-between;
   align-items: center;
 }
 
 .eventsource-config-main {
-  display: flex; 
-  flex-flow: row wrap; 
-  justify-content: space-between; 
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
   align-content: stretch;
 }
 
@@ -20,6 +20,9 @@
 
 .eventsource-config-main .es-info {
   flex: 2 2 55%;
+}
 
+form {
+  margin: 0;
 }
 

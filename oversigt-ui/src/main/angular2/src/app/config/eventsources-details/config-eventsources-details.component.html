@@ -34,7 +34,9 @@
     <div class="card">
       <div class="card-header">Base Info</div>
       <div class="card-block">
-        <ng-container *ngTemplateOutlet="esBaseInfo"></ng-container>
+        <form clrForm clrLayout="compact">
+          <ng-container *ngTemplateOutlet="esBaseInfo"></ng-container>
+        </form>
       </div>
     </div>
   </div>
@@ -45,27 +47,35 @@
         Properties are used to configure the event source. All properties apply to every instance of this event source and thus change every widget created from this event source.
       </div>
       <div class="card-block">
-        <app-config-eventsource-info name="esName" [id]="'name'" [title]="'Event Source Name'" [(ngModel)]="parsedInstanceDetails.name"></app-config-eventsource-info>
-        <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
-          [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
+        <ng-container *ngTemplateOutlet="esProperties"></ng-container>
       </div>
     </div>
     <div class="card">
       <div class="card-header">Data Items</div>
       <div class="card-block">
         Data Items are configuration properties that can be adjusted for each widget.
-      </div>      
+      </div>
       <div class="card-block">
-        <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
-          [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]"
-          [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
+        <ng-container *ngTemplateOutlet="esDataItems"></ng-container>
       </div>
     </div>
   </div>
 </div>
 
+
+<ng-template #esProperties>
+  <app-config-eventsource-info name="esName" [id]="'name'" [title]="'Event Source Name'" [(ngModel)]="parsedInstanceDetails.name"></app-config-eventsource-info>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
+</ng-template>
+<ng-template #esDataItems>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]"
+    [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
+</ng-template>
+
 <ng-template #esBaseInfo>
-  <app-config-eventsource-info name="esType" [id]="'type'" [title]="'Type'" [(ngModel)]="eventSourceDescriptor.displayName" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esType" [id]="'type'" [title]="'Type'" [(ngModel)]="eventSourceDescriptor.displayName" [readOnly]="false"></app-config-eventsource-info>
   <app-config-eventsource-info name="esId" [id]="'id'"   [title]="'Unique ID'" [(ngModel)]="parsedInstanceDetails.id" [readOnly]="true"></app-config-eventsource-info>
   <app-config-eventsource-info name="esView" [id]="'view'" [title]="'View'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-config-eventsource-info>
   <app-config-eventsource-info name="esRunning" [id]="'running'" [title]="'Running'" [(ngModel)]="serviceInfo.running" [readOnly]="true"></app-config-eventsource-info>
@@ -91,7 +101,7 @@
       class="btn" (click)="stopEventSource()" title="Stop event source" [clrLoading]="stoppingEventSourceState">
       <clr-icon shape="stop" class="is-solid"></clr-icon>
     </button>
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled" 
+    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled"
       class="btn" (click)="disableEventSource()" title="Disable event source" [clrLoading]="enablingEventSourceState">
       <clr-icon shape="power"></clr-icon>
     </button>
