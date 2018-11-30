@@ -1,4 +1,5 @@
-<div *ngIf="value !== null; else nullValue" [ngSwitch]="schemaObject.type" style="overflow: auto; display: inline-block;width:100%;">
+<div *ngIf="value !== null; else nullValue" [ngSwitch]="schemaObject.type"
+    style="overflow: auto; display: inline-block;width:100%;">
   <app-json-array *ngSwitchCase="'array'" [schemaObject]="schemaObject.items" [(ngModel)]="value" [displayFormat]="schemaObject.format"></app-json-array>
   <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitles]="showTitles"></app-json-object>
   <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
@@ -7,5 +8,14 @@
 </div>
 
 <ng-template #nullValue>
-  <nz-alert nzType="error" nzMessage="SchemaEditor value is null"></nz-alert>
+  <div class="alert alert-danger" role="alert">
+      <div class="alert-items">
+          <div class="alert-item static">
+              <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+              </div>
+              <span class="alert-text">SchemaEditor value is null</span>
+          </div>
+      </div>
+  </div>
 </ng-template>

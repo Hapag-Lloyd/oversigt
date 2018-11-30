@@ -6,12 +6,14 @@ import { ObjectEditorComponent } from './object-editor/object-editor.component';
 import { StringEditorComponent } from './string-editor/string-editor.component';
 import { FormsModule } from '@angular/forms';
 import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
+import { ClarityModule } from '@clr/angular';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     NgZorroAntdModule,
+    ClarityModule,
   ],
   declarations: [
     ArrayEditorComponent,

@@ -1,8 +1,7 @@
-.ant-form-item {
-  margin: 0;
-  margin-bottom: 0.5ex;
+.clr-control-container, input {
+  width: 100%;
 }
-.ant-form-extra {
-  padding-top: 0;
-  padding-bottom: 4px;
+
+.clr-select-wrapper, .clr-select-wrapper select, textarea {
+  width: 100%;
 }

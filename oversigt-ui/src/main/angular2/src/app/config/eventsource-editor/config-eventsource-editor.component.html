@@ -5,22 +5,41 @@
     <input type="checkbox" id="prop_check_{{property.name}}">
     <label for="prop_check_{{property.name}}">{{property.displayName}}</label>
   </div>
-  <div class="clr-control-container">
-    <div [ngSwitch]="property.inputType" class="clr-input-wrapper">
-      <input *ngSwitchCase="'text'" class="clr-input" type="text" [(ngModel)]="value" id="prop_{{property.name}}"/>
-      <input *ngSwitchCase="'number'" class="clr-input" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
-      <input *ngSwitchCase="'date'" clrDate class="clr-input" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
-      <input *ngSwitchCase="'password'" class="clr-input" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
-      <input *ngSwitchCase="'url'" class="clr-input" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
-      <input *ngSwitchCase="'color'" class="clr-input" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
-      <label *ngSwitchCase="'boolean'" nz-checkbox [(ngModel)]="value"></label>
-      <ng-container *ngSwitchCase="'enum'">
-        <select clrSelect [(ngModel)]="value">
-          <option *ngFor="let si of property.allowedValues" value="{{si}}">{{property.allowedValuesMap[si]}}</option>
-        </select>
-      </ng-container>
-      <app-json-schema *ngSwitchCase="'json'" [(ngModel)]="value" [schema]="property.jsonSchema"></app-json-schema>
-      <select *ngSwitchCase="'duration'" clrSelect [(ngModel)]="value">
+  <div class="clr-control-container" [ngSwitch]="property.inputType">
+    <div *ngSwitchCase="'text'" class="clr-input-wrapper">
+      <input class="clr-input" type="text" [(ngModel)]="value" id="prop_{{property.name}}"/>
+    </div>
+    <div *ngSwitchCase="'number'" class="clr-input-wrapper">
+      <input class="clr-input" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
+    </div>
+    <div *ngSwitchCase="'date'" class="clr-input-wrapper">
+      <input clrDate class="clr-input" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
+    </div>
+    <div *ngSwitchCase="'password'" class="clr-input-wrapper">
+      <input class="clr-input" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
+    </div>
+    <div *ngSwitchCase="'url'" class="clr-input-wrapper">
+      <input class="clr-input" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
+    </div>
+    <div *ngSwitchCase="'color'" class="clr-input-wrapper">
+      <input class="clr-input" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
+    </div>
+    <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
+      <div class="toggle-switch">
+        <input type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <label for="prop_{{property.name}}"></label>
+      </div>
+    </div>
+    <div *ngSwitchCase="'sql'" class="clr-control-container">
+        <textarea [(ngModel)]="value" placeholder="Enter SQL code" class="clr-textarea"></textarea>
+    </div>
+    <div *ngSwitchCase="'enum'" class="clr-select-wrapper">
+      <select class="clr-select" [(ngModel)]="value">
+        <option *ngFor="let si of property.allowedValues" value="{{si}}">{{property.allowedValuesMap[si]}}</option>
+      </select>
+    </div>
+    <div *ngSwitchCase="'duration'" class="clr-select-wrapper">
+      <select class="clr-select" [(ngModel)]="value">
         <option value="PT10S">10 seconds</option>
         <option value="PT20S">20 seconds</option>
         <option value="PT30S">30 seconds</option>
@@ -42,11 +61,12 @@
         <option value="PT12H">12 hours</option>
         <option value="PT24H">1 day</option>
       </select>
-      <textarea *ngSwitchCase="'sql'" clrTextarea [(ngModel)]="value"></textarea>
-      <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
-
-      <clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
     </div>
+    <div *ngSwitchCase="'json'">
+      <app-json-schema [(ngModel)]="value" [schema]="property.jsonSchema"></app-json-schema>
+    </div>
+    <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
+
     <span *ngIf="property.description !== null" class="clr-subtext">{{property.description}}</span>
   </div>
 </div>
