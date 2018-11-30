@@ -1,0 +1,26 @@
+<div class="content-container">
+    <div class="content-area">
+      <router-outlet *ngIf="hasSelectedChild(); else: nothingSelected"></router-outlet>
+
+      <ng-template #nothingSelected>
+        <h1>Event Sources</h1>
+        <clr-tabs>
+          <clr-tab>
+            <button clrTabLink id="configureEventSource">Configure event source</button>
+            <clr-tab-content id="contentConfigureEventSource" *clrIfActive>
+              <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
+                <button *ngFor="let info of eventSourceInfos" class="btn btn-default" (click)="selectEventSource(info.id)">{{info.name}}</button>
+              </div>
+            </clr-tab-content>
+          </clr-tab>
+          <clr-tab>
+            <button clrTabLink id="createEventSource">Create new event source</button>
+            <clr-tab-content id="contentCreateEventSource" *clrIfActive>
+            ...
+            </clr-tab-content>
+          </clr-tab>
+        </clr-tabs>
+      </ng-template>
+
+  </div>
+</div>

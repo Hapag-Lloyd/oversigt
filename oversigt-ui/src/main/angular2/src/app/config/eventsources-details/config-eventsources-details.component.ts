@@ -4,7 +4,7 @@ import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourc
 import { EventsourceSelectionService } from '../../eventsource-selection.service';
 import { Subscribable, Subscription } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd';
-import { ConfigEventsourcesComponent } from '../eventsources/config-eventsources.component';
+import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventsources.component';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 
 export class ParsedEventSourceInstanceDetails {

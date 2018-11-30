@@ -13,6 +13,7 @@ export class AppComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private userService: UserService,
   ) {
   }
 
@@ -23,5 +24,10 @@ export class AppComponent implements OnInit {
   isShowingConfiguration(): boolean {
     const url = this.router.url;
     return url.startsWith('/config/') || url === '/config';
+  }
+
+  doLogout() {
+    this.userService.logOut();
+    this.router.navigateByUrl('/');
   }
 }

@@ -53,6 +53,10 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(s => s.unsubscribe());
   }
 
+  hasSelectedChild(): boolean {
+    return this.route.snapshot.children.length > 0;
+  }
+
   private initEventSourceInstanceList() {
     this.ess.listInstances().subscribe(
       infos => {

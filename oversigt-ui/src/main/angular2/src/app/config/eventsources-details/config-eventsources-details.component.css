@@ -1,28 +1,25 @@
-.ant-form-item {
-  margin: 0;
+
+.eventsource-config-header {
+  display: flex; 
+  flex-flow: row wrap-reverse; 
+  justify-content: space-between; 
+  align-items: center;
 }
 
-.header {
-  background-color: rgb(240, 242, 245);
+.eventsource-config-main {
+  display: flex; 
+  flex-flow: row wrap; 
+  justify-content: space-between; 
+  align-content: stretch;
 }
 
-nz-dropdown {
-  margin-right: 8px;
+.eventsource-config-main .system-info {
+  flex: 1 1 35%;
+  padding-right: 24px;
 }
 
-[nz-button]+[nz-button], [nz-button]+nz-button-group, nz-button-group+nz-dropdown {
-  margin-left: 8px;
-}
-nz-button-group [nz-button]+[nz-button] {
-  margin-left: inherit;
+.eventsource-config-main .es-info {
+  flex: 2 2 55%;
+
 }
 
-
-button.green {
-  color: green;
-}
-button.green:hover {
-  background-color: green;
-  color: white;
-  border-color: green;
-}

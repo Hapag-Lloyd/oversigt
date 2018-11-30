@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthenticationService, Configuration } from 'src/oversigt-client';
-import { NzMessageService } from 'ng-zorro-antd';
 import { Router } from '@angular/router';
 import { UserService } from '../user-service.service';
+import { NotificationService } from '../notification.service';
 
 @Component({
   selector: 'app-login',
@@ -15,7 +14,7 @@ export class LoginComponent implements OnInit {
   loginButtonEnabled = true;
 
   constructor(
-    private message: NzMessageService,
+    private message: NotificationService,
     private user: UserService,
     private router: Router,
   ) { }

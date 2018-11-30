@@ -17,7 +17,7 @@ import { ConfigLogsLoggerComponent } from './config/loggers/config-logs-logger.c
 import { ConfigSystemComponent } from './config/system/config-system.component';
 import { ConfigPropertyComponent } from './config/property/config-property.component';
 import { ConfigMenuComponent } from './config/_menu/config-menu.component';
-import { ConfigEventsourcesComponent } from './config/eventsources/config-eventsources.component';
+import { ConfigEventsourcesComponent } from './config/eventsources-main/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { registerLocaleData } from '@angular/common';
 import { ConfigEventsourceInfoComponent } from './config/eventsource-info/config-eventsource-info.component';

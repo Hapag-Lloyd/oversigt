@@ -1,16 +1,27 @@
-<div *ngIf="isShowingConfiguration(); else plain">
-  <!--<div style="display: flex; flex-direction: row; justify-content: space-between;align-items: baseline;">
-    <h1 style="margin-top: 0.5ex;color: lightcyan;text-shadow: 0 0 5px antiquewhite;">Oversigt</h1>
-    <a nz-button [nzType]="'dashed'" (click)="doLogOut()">Logout</a>
-  </div>-->
-  <div style="display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;">
-    <div style="flex-shrink: 0; position: sticky;">
-      <app-config-menu [isCollapsed]="isCollapsed"></app-config-menu>
+<div *ngIf="isShowingConfiguration(); else plain" class="main-container">
+  <header class="header header-6">
+    <div class="branding">
+      <a href="#" class="nav-link">
+        <clr-icon shape="box-plot" class="is-solid"></clr-icon>
+        <span class="title">Oversigt</span>
+      </a>
     </div>
-    <div style="flex-grow: 1; ">
-      <router-outlet></router-outlet>
+    <div class="header-nav">
+      <a routerLink="/config/eventSources" class="nav-link nav-text">Event Sources</a>
+      <a routerLink="/config/dashboards" class="nav-link nav-text">Dashboards</a>
+      <a routerLink="/config/properties" class="nav-link nav-text">Properties</a>
+      <a routerLink="/config/system" class="nav-link nav-text">System</a>
     </div>
-  </div>
+    <form class="search">
+      <label for="search_input">
+        <input id="search_input" type="text" placeholder="Search for configuration...">
+      </label>
+    </form>
+    <div class="header-actions">
+      <a (click)="doLogout()" class="nav-link nav-icon"><clr-icon shape="logout"></clr-icon></a>
+    </div>
+  </header>
+  <router-outlet></router-outlet>
 </div>
 
 <ng-template #plain>
