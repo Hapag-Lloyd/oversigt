@@ -10,7 +10,7 @@
     <clr-stack-content>{{item.threadInfo.state}}</clr-stack-content>
     <clr-stack-block *ngIf="isEventSourceThread(item)">
       <clr-stack-label>Event source</clr-stack-label>
-      <clr-stack-content><app-eventsource-button [eventSourceId]="getEventSourceId(item)"></app-eventsource-button></clr-stack-content>
+      <clr-stack-content><app-eventsource-button [eventSourceId]="getEventSourceId(item)" [showAsText]="true"></app-eventsource-button></clr-stack-content>
     </clr-stack-block>
     <clr-stack-block *ngIf="item.threadInfo.stackTrace.length > 0">
         <clr-stack-label>Stack trace</clr-stack-label>

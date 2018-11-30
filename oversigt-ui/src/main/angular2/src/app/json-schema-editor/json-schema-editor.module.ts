@@ -5,14 +5,12 @@ import { SchemaEditorComponent } from './schema-editor/schema-editor.component';
 import { ObjectEditorComponent } from './object-editor/object-editor.component';
 import { StringEditorComponent } from './string-editor/string-editor.component';
 import { FormsModule } from '@angular/forms';
-import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
 import { ClarityModule } from '@clr/angular';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
-    NgZorroAntdModule,
     ClarityModule,
   ],
   declarations: [
@@ -24,6 +22,6 @@ import { ClarityModule } from '@clr/angular';
   exports: [
     SchemaEditorComponent,
   ],
-  providers: [ { provide: NZ_I18N, useValue: en_US } ]
+  providers: [  ]
 })
 export class JsonSchemaEditorModule { }

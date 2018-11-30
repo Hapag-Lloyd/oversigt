@@ -1,3 +1,4 @@
-<a routerLink="/config/eventSources/{{eventSourceId}}" nz-button nz-tooltip nzTitle="Go to event source" nzType="dashed">
-  <i nz-icon type="link" theme="outline"></i>
+<a routerLink="/config/eventSources/{{eventSourceId}}" title="Go to event source">
+  <clr-icon *ngIf="!showAsText" shape="link"></clr-icon>
+  <ng-container *ngIf="showAsText">{{eventSourceId}}</ng-container>
 </a>

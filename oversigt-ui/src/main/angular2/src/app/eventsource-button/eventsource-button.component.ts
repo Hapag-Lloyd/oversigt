@@ -6,6 +6,7 @@ import { Component, OnInit, Input } from '@angular/core';
 })
 export class EventsourceButtonComponent implements OnInit {
   @Input() eventSourceId: string;
+  @Input() showAsText = false;
 
   constructor() { }
 
