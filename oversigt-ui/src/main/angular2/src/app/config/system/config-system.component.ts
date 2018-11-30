@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { EventSourceService } from 'src/oversigt-client';
-import { NzMessageService } from 'ng-zorro-antd';
+import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-system',
@@ -14,7 +14,7 @@ export class ConfigSystemComponent implements OnInit {
 
   constructor(
     private ess: EventSourceService,
-    private message: NzMessageService,
+    private notification: NotificationService,
   ) {}
 
   ngOnInit() {}
@@ -39,7 +39,7 @@ export class ConfigSystemComponent implements OnInit {
       this.restartPrecent = Object.values(restarted).filter(i => i).length / Object.keys(restarted).length;
       this.restartingEventSources = Object.values(restarted).reduce((a, b) => a && b);
       if (!this.restartingEventSources) {
-        this.message.success(messageWhenDone);
+        this.notification.success(messageWhenDone);
       }
     };
     this.ess.listInstances().subscribe(

@@ -6,6 +6,7 @@ import { Subscribable, Subscription } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd';
 import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventsources.component';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
+import { ClrLoadingState } from '@clr/angular';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -38,10 +39,10 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this._parsedInstanceDetails = value;
   }
 
-  isStartingEventSource = false;
-  isStoppingEventSource = false;
-  isEnablingEventSource = false;
-  isSavingEventSource = false;
+  startingEventSourceState = ClrLoadingState.DEFAULT;
+  stoppingEventSourceState = ClrLoadingState.DEFAULT;
+  enablingEventSourceState = ClrLoadingState.DEFAULT;
+  savingEventSourceState = ClrLoadingState.DEFAULT;
 
   constructor(
     private router: Router,
@@ -132,19 +133,20 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   saveConfiguration() {
-    this.isSavingEventSource = true;
+    this.savingEventSourceState = ClrLoadingState.LOADING;
     console.log(this.parsedInstanceDetails);
     this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
+        this.savingEventSourceState = ClrLoadingState.SUCCESS;
         this.message.success('The configuration has been saved.');
       },
       error => {
+        this.savingEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         this.message.error('Saving event source configuration failed. See log for details.');
       },
       () => {
         // TODO: Reload info from server
-        this.isSavingEventSource = false;
       }
     );
   }
@@ -158,14 +160,15 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   stopEventSource() {
-    this.isStoppingEventSource = true;
+    this.stoppingEventSourceState = ClrLoadingState.LOADING;
     this.ess.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
       ok => {
-        this.isStoppingEventSource = false;
+        this.stoppingEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
         this.serviceInfo.running = false;
       },
       error => {
+        this.stoppingEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
@@ -175,15 +178,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   startEventSource() {
-    this.isStartingEventSource = true;
+    this.startingEventSourceState = ClrLoadingState.LOADING;
     this.ess.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
       ok => {
-        this.isStartingEventSource = false;
+        this.startingEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
         this.serviceInfo.running = true;
         // TODO nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
       },
       error => {
+        this.startingEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
@@ -206,7 +210,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   private changeEnablingState(enabled: boolean, ok: () => {}, fail: () => {}): void {
     const _this = this;
-    this.isEnablingEventSource = true;
+    this.enablingEventSourceState = ClrLoadingState.LOADING;
     // read current state from server
     this.ess.readInstance(this.parsedInstanceDetails.id).subscribe(
       instanceInfo => {
@@ -215,14 +219,14 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         _this.ess.updateInstance(_this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
           success => {
             _this.parsedInstanceDetails.enabled = enabled;
-            _this.isEnablingEventSource = false;
+            _this.enablingEventSourceState = ClrLoadingState.SUCCESS;
             ok();
           },
           error => {
             console.error(error);
             alert(error);
             // TODO: Error handling
-            _this.isEnablingEventSource = false;
+            _this.enablingEventSourceState = ClrLoadingState.ERROR;
             fail();
           }
         );
@@ -231,7 +235,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         console.error(error);
         alert(error);
         // TODO: Error handling
-        _this.isEnablingEventSource = false;
+        _this.enablingEventSourceState = ClrLoadingState.ERROR;
         fail();
       }
     );
