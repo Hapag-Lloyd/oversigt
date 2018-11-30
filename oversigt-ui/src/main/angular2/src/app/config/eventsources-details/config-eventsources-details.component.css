@@ -22,7 +22,8 @@
   flex: 2 2 55%;
 }
 
-form {
-  margin: 0;
+clr-dropdown-menu input {
+  margin-left: 1rem;
+  width: 5rem;
 }
 

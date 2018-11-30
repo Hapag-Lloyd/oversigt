@@ -1,3 +1,11 @@
-.ant-form-item {
-  margin: 0;
+input {
+  width: 100%;
+}
+
+input[readonly] {
+  border-bottom: 1px solid rgba(154, 154, 154, 0.8);
+}
+
+.clr-form-control div {
+  width: 100%;
 }

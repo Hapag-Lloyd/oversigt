@@ -15,7 +15,7 @@
       <button type="button" clrDropdownItem>event source 2</button>
       <div class="dropdown-divider"></div>
       <label class="dropdown-header">Search for event source</label>
-      <input clrInput placeholder="Event source attributes..." name="eventSourceSearch"  />
+      <input class="clr-input" placeholder="Search..." name="eventSourceSearch" /> <!-- TODO: implement search -->
       <button type="button" clrDropdownItem>event source 3</button>
       <button type="button" clrDropdownItem>event source 4</button>
     </clr-dropdown-menu>
@@ -34,7 +34,7 @@
     <div class="card">
       <div class="card-header">Base Info</div>
       <div class="card-block">
-        <form clrForm clrLayout="compact">
+        <form clrForm clrLayout="horizontal">
           <ng-container *ngTemplateOutlet="esBaseInfo"></ng-container>
         </form>
       </div>
@@ -47,7 +47,9 @@
         Properties are used to configure the event source. All properties apply to every instance of this event source and thus change every widget created from this event source.
       </div>
       <div class="card-block">
-        <ng-container *ngTemplateOutlet="esProperties"></ng-container>
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esProperties"></ng-container>
+        </form>
       </div>
     </div>
     <div class="card">
@@ -56,7 +58,9 @@
         Data Items are configuration properties that can be adjusted for each widget.
       </div>
       <div class="card-block">
-        <ng-container *ngTemplateOutlet="esDataItems"></ng-container>
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esDataItems"></ng-container>
+        </form>
       </div>
     </div>
   </div>
@@ -75,22 +79,19 @@
 </ng-template>
 
 <ng-template #esBaseInfo>
-  <app-config-eventsource-info name="esType" [id]="'type'" [title]="'Type'" [(ngModel)]="eventSourceDescriptor.displayName" [readOnly]="false"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esId" [id]="'id'"   [title]="'Unique ID'" [(ngModel)]="parsedInstanceDetails.id" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esView" [id]="'view'" [title]="'View'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esRunning" [id]="'running'" [title]="'Running'" [(ngModel)]="serviceInfo.running" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [(ngModel)]="serviceInfo.createdBy" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [(ngModel)]="serviceInfo.lastChangeBy" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [(ngModel)]="serviceInfo.lastSuccessfulRun" [readOnly]="true"></app-config-eventsource-info>
-  <app-config-eventsource-info name="esLastRun" *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [id]="'last_run'" [title]="'Last run'" [(ngModel)]="serviceInfo.lastRun" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esType" [id]="'type'" [title]="'Type'" [ngModel]="eventSourceDescriptor.displayName" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esId" [id]="'id'"   [title]="'Unique ID'" [description]="'The unique ID that identifies this event source.'" [ngModel]="parsedInstanceDetails.id" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esView" [id]="'view'" [title]="'View'" [description]="'This is the widget template that will be used to display your data.'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="serviceInfo.running ? 'yes' : 'no'" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="serviceInfo.createdBy" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="serviceInfo.lastChangeBy" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="serviceInfo.lastSuccessfulRun" [readOnly]="true"></app-config-eventsource-info>
+  <app-config-eventsource-info name="esLastRun" *ngIf="serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="serviceInfo.lastRun" [readOnly]="true"></app-config-eventsource-info>
 </ng-template>
 
 <ng-template #esControl>
   <button class="btn btn-primary btn-icon" (click)="saveConfiguration()" title="Save event source configuration" [clrLoading]="savingEventSourceState">
     <clr-icon shape="floppy" class="is-solid"></clr-icon>
-  </button>
-  <button class="btn btn-default btn-icon"(click)="showUsage()" title="Show event source usage">
-    <clr-icon shape="bubble-chart"></clr-icon>
   </button>
   <div class="btn-group btn-default btn-icon">
     <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !serviceInfo.running"
@@ -113,6 +114,9 @@
       <clr-icon shape="trash"></clr-icon>
     </button>
   </div>
+  <button class="btn btn-default btn-icon"(click)="showUsage()" title="Show event source usage">
+    <clr-icon shape="bubble-chart"></clr-icon>
+  </button>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
       Add

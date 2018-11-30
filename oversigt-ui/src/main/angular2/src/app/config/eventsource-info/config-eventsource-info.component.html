@@ -1,8 +1,10 @@
-<clr-input-container [class.readonly-form]="readOnly">
-  <label>
-    <!--<span [style.color]="readOnly ? '#666' : 'inherit'">{{title}}</span>-->
-    {{title}}
-  </label>
-  <input *ngIf="!readOnly" clrInput type="text" value="{{value}}" name="info_{{id}}"/>
-  <input *ngIf="readOnly" clrInput type="text" value="{{value}}" name="info_{{id}}" readonly="readonly"/>
-</clr-input-container>
+
+<div class="clr-form-control">
+  <label for="info_{{id}}" class="clr-control-label">{{title}}</label>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input class="clr-input" [(ngModel)]="value" type="text" id="info_{{id}}" [attr.readonly]="readOnly ? 'readonly' : null">
+    </div>
+    <span *ngIf="description !== null" class="clr-subtext">{{description}}</span>
+  </div>
+</div>

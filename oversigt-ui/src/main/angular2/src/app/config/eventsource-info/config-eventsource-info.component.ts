@@ -10,6 +10,7 @@ import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-va
 export class ConfigEventsourceInfoComponent extends AbstractValueAccessor implements OnInit {
   @Input() id: string;
   @Input() title: string;
+  @Input() description: string = null;
   @Input() readOnly = false;
 
   ngOnInit() {
