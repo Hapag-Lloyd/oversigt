@@ -1,14 +1,14 @@
-<div class="header" style="display: flex; flex-direction: row; align-content: space-between; align-items: center; justify-content: space-between;">
-  <div [ngSwitch]="level">
-      <h1 *ngSwitchCase="1">{{title}}</h1>
-      <h2 *ngSwitchCase="2">{{title}}</h2>
-      <h3 *ngSwitchCase="3">{{title}}</h3>
-      <h4 *ngSwitchCase="4">{{title}}</h4>
-      <h5 *ngSwitchCase="5">{{title}}</h5>
-      <h6 *ngSwitchDefault>{{title}}</h6>
-  </div>
+<div class="ov-header">
+  <ng-container [ngSwitch]="level">
+    <h1 *ngSwitchCase="1">{{title}}</h1>
+    <h2 *ngSwitchCase="2">{{title}}</h2>
+    <h3 *ngSwitchCase="3">{{title}}</h3>
+    <h4 *ngSwitchCase="4">{{title}}</h4>
+    <h5 *ngSwitchCase="5">{{title}}</h5>
+    <h6 *ngSwitchDefault>{{title}}</h6>
+  </ng-container>
   <!-- TODO: wenn der Viewport zu schmal wird, muss der zweite Teil nach unten -->
-  <div *ngIf="additional !== null" style="display: flex; flex-direction: row; align-content: flex-end; align-items: center; justify-content: space-around">
+  <div *ngIf="additional !== null">
     <ng-template [ngTemplateOutlet]="additional"></ng-template>
   </div>
 </div>

@@ -1,4 +1,7 @@
-.header div {
-  display: inline-block;
-  vertical-align: text-bottom;
+
+.ov-header {
+  display: flex;
+  flex-flow: row wrap-reverse;
+  justify-content: space-between;
+  align-items: center;
 }
