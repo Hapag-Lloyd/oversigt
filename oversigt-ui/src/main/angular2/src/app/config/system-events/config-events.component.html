@@ -8,24 +8,16 @@
   </div>
 </ng-template>
 
-<nz-list [nzDataSource]="events | filterEventitem: filter" [nzRenderItem]="item" [nzItemLayout]="'horizontal'"
-  [nzLoading]="events.length === null">
-  <ng-template #item let-item>
-    <nz-list-item [nzActions]="[eventSourceLink]">
-      <nz-list-item-meta [nzTitle]="title" [nzDescription]="content">
-        <ng-template #title>
-          <a (click)="item.visible = !item.visible">{{item.event.id}}
-            <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
-            <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
-          </a>
-        </ng-template>
-        <ng-template #content>
-          <pre *ngIf="item.visible">{{item.event | json}}</pre>
-        </ng-template>
-      </nz-list-item-meta>
-      <ng-template #eventSourceLink>
-        <app-eventsource-button [eventSourceId]="item.event.id"></app-eventsource-button>
-      </ng-template>
-    </nz-list-item>
-  </ng-template>
-</nz-list>
+<ul class="list-group">
+  <li *ngFor="let item of events | filterEventitem: filter" class="list-group-item content">
+    <a class="event" (click)="item.visible = !item.visible">{{item.event.id}}
+      <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
+      <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
+    </a>
+    <span style="float:right;">
+      <app-eventsource-button [eventSourceId]="item.event.id"></app-eventsource-button>
+    </span>
+    <pre *ngIf="item.visible">{{item.event | json}}</pre>
+  </li>
+  <li *ngIf="events.length === 0" class="list-group-item no-content">No events cached</li>
+</ul>
