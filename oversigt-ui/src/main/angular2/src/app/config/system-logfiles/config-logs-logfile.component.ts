@@ -29,6 +29,8 @@ export class ConfigLogsLogfileComponent implements OnInit {
   }
 
   loadLogFileContent(filename: string): void {
+    // TODO: adjust URL so the log file name is part of the url
+    this.selectedValue = filename;
     this.ss.getLogFileContent(filename, -100).subscribe(
       logLines => {
         this.content = logLines.reverse().join('\n');
