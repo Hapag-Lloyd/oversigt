@@ -3,11 +3,11 @@ import { EventSourceService } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/notification.service';
 
 @Component({
-  selector: 'app-config-system',
-  templateUrl: './config-system.component.html',
-  styleUrls: ['./config-system.component.css']
+  selector: 'app-config-server',
+  templateUrl: './config-server.component.html',
+  styleUrls: ['./config-server.component.css']
 })
-export class ConfigSystemComponent implements OnInit {
+export class ConfigServerComponent implements OnInit {
   restartDrawerVisible = false;
   restartingEventSources = false;
   restartPrecent = 0;

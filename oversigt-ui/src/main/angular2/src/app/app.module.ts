@@ -14,6 +14,7 @@ import { LoginComponent } from './login/login.component';
 import { ConfigurationComponent } from './config/main/main.component';
 import { ConfigPropertyComponent } from './config/property/config-property.component';
 import { ConfigSystemComponent } from './config/system/config-system.component';
+import { ConfigServerComponent } from './config/system-server/config-server.component';
 import { ConfigThreadsComponent } from './config/system-threads/config-threads.component';
 import { ConfigLogsLogfileComponent } from './config/system-logfiles/config-logs-logfile.component';
 import { ConfigLogsLoggerComponent } from './config/system-loggers/config-logs-logger.component';
@@ -65,7 +66,7 @@ const appRoutes: Routes = [
       { path: 'loggers',              component: ConfigLogsLoggerComponent },
       { path: 'events',               component: ConfigEventsComponent },
       { path: 'threads',              component: ConfigThreadsComponent },
-      { path: 'server',               component: ConfigurationComponent }, // TODO
+      { path: 'server',               component: ConfigServerComponent }, // TODO
     ]},
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
@@ -88,6 +89,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigLogsLogfileComponent,
     ConfigLogsLoggerComponent,
     ConfigSystemComponent,
+    ConfigServerComponent,
     ConfigPropertyComponent,
     ConfigMenuComponent,
     ConfigEventsourcesComponent,

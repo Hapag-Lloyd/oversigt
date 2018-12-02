@@ -1,24 +1,27 @@
 <app-header [title]="'Loggers'"></app-header>
 
-<nz-table #basicTable [nzData]="loggerInfos" [nzFrontPagination]="'false'" [nzShowPagination]="'false'" [nzSize]="'small'" [nzLoading]="loggerInfos.length === 0">
+<table *ngIf="loggerInfos.length > 0" class="table table-noborder table-compact">
   <thead>
     <tr>
-      <th nzShowSort nzSortKey="name">Logger</th>
-      <th nzShowSort nzSortKey="level">Log Level</th>
-      <th nzShowSort nzSortKey="effectiveLevel">Effective Log Level</th>
-      <th>Actions</th>
+      <th class="left">Logger</th>
+      <th>Log Level</th>
+      <th>Effective</th>
+      <th class="left">Set level</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of basicTable.data">
-      <td>{{data.name}}</td>
+    <tr *ngFor="let data of loggerInfos">
+      <td class="left">{{data.name}}</td>
       <td>{{data.level}}</td>
       <td>{{data.effectiveLevel}}</td>
-      <td>
-        <nz-radio-group [(ngModel)]="data.level" [nzSize]="'small'">
-          <label *ngFor="let level of possibleLogLevels" (click)="setLogLevel(data.name, level)" nz-radio-button nzValue="{{level}}">{{level}}</label>
-        </nz-radio-group>
+      <td class="left">
+        <div class="btn-group btn-sm">
+          <div *ngFor="let level of possibleLogLevels" class="radio btn" [class.effective-level]="data.effectiveLevel === level">
+            <input id="rdo-{{level}}-{{data.name}}" name="rdo-{{data.name}}" type="radio" value="{{level}}" [(ngModel)]="data.level">
+            <label for="rdo-{{level}}-{{data.name}}" (click)="setLogLevel(data.name, level)">{{level}}</label>
+          </div>
+        </div>
       </td>
     </tr>
   </tbody>
-</nz-table>
+</table>

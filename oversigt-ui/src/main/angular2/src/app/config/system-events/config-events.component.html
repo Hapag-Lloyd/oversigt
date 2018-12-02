@@ -11,8 +11,8 @@
 <ul class="list-group">
   <li *ngFor="let item of events | filterEventitem: filter" class="list-group-item content">
     <a class="event" (click)="item.visible = !item.visible">{{item.event.id}}
-      <i *ngIf="item.visible" nz-icon type="caret-down" theme="outline"></i>
-      <i *ngIf="!item.visible" nz-icon type="caret-right" theme="outline"></i>
+        <clr-icon *ngIf="item.visible" shape="angle down"></clr-icon>
+        <clr-icon *ngIf="!item.visible" shape="angle right"></clr-icon>
     </a>
     <span style="float:right;">
       <app-eventsource-button [eventSourceId]="item.event.id"></app-eventsource-button>
