@@ -7,6 +7,7 @@ import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventso
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
 import { NotificationService } from 'src/app/notification.service';
+import { uniqueItems } from 'src/app/utils/arrays';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -44,13 +45,15 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   enablingEventSourceState = ClrLoadingState.DEFAULT;
   savingEventSourceState = ClrLoadingState.DEFAULT;
 
+  // List of recently configured event sources
+  recentlyUsed: ParsedEventSourceInstanceDetails[] = [];
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private notification: NotificationService,
     private eventSourceSelection: EventsourceSelectionService,
     private ess: EventSourceService,
-    private configEventSourcesComponent: ConfigEventsourcesComponent,
   ) { }
 
   ngOnInit() {
@@ -82,6 +85,20 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
           eventSourceDescriptor => {
             this.eventSourceDescriptor = eventSourceDescriptor;
             this.parsedInstanceDetails = this.parseInstanceDetails(fullInfo.instanceDetails);
+
+            // recently used sources
+            let recentlyUsedJson = localStorage.getItem('eventsources.recentlyUsed');
+            if (recentlyUsedJson === null || recentlyUsedJson === undefined || recentlyUsedJson === '') {
+              recentlyUsedJson = '[]';
+            }
+            this.recentlyUsed = JSON.parse(recentlyUsedJson);
+            this.recentlyUsed.unshift(this.parsedInstanceDetails);
+            this.recentlyUsed = uniqueItems(this.recentlyUsed);
+            while (this.recentlyUsed.length > 8) {
+              this.recentlyUsed.pop();
+              // TODO: Check that saved event sources still exist
+            }
+            localStorage.setItem('eventsources.recentlyUsed', JSON.stringify(this.recentlyUsed));
           }
         );
       }

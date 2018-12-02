@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
-import { UrlSegment } from '@angular/router';
 
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
