@@ -52,7 +52,7 @@ export class AppComponent implements OnInit {
 
   getSelectedMenuItemChildren(): MenuItem[] {
     const url = this.router.url;
-    const item = this.menuItems.find(c => c.link === url);
+    const item = this.menuItems.find(c => url.startsWith(c.link));
     if (item !== undefined) {
       return item.children;
     } else {

@@ -12,10 +12,12 @@ import { WelcomeComponent } from './welcome/welcome.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { LoginComponent } from './login/login.component';
 import { ConfigurationComponent } from './config/main/main.component';
-import { ConfigLogsLogfileComponent } from './config/logfiles/config-logs-logfile.component';
-import { ConfigLogsLoggerComponent } from './config/loggers/config-logs-logger.component';
-import { ConfigSystemComponent } from './config/system/config-system.component';
 import { ConfigPropertyComponent } from './config/property/config-property.component';
+import { ConfigSystemComponent } from './config/system/config-system.component';
+import { ConfigThreadsComponent } from './config/system-threads/config-threads.component';
+import { ConfigLogsLogfileComponent } from './config/system-logfiles/config-logs-logfile.component';
+import { ConfigLogsLoggerComponent } from './config/system-loggers/config-logs-logger.component';
+import { ConfigEventsComponent } from './config/system-events/config-events.component';
 import { ConfigMenuComponent } from './config/_menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config/eventsources-main/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -25,10 +27,8 @@ import { ConfigEventsourceCreateComponent } from './config/eventsource-create/co
 import { ConfigEventsourceEditorComponent } from './config/eventsource-editor/config-eventsource-editor.component';
 import { FilterEventsourceinfoPipe } from './pipes/filter-eventsourceinfo.pipe';
 import { HeaderComponent } from './config/_header/header.component';
-import { ConfigEventsComponent } from './config/events/config-events.component';
 import { PrettyPrintPipe } from './pipes/prettyprint.pipe';
 import { FilterEventitemPipe } from './pipes/filter-eventitem.pipe';
-import { ConfigThreadsComponent } from './config/threads/config-threads.component';
 import { ConfigDashboardsComponent } from './config/dashboards/config-dashboards.component';
 import { ConfigDashboardsEditComponent } from './config/dashboards-edit/config-dashboards-edit.component';
 import { EventsourceButtonComponent } from './eventsource-button/eventsource-button.component';
@@ -54,7 +54,6 @@ const appRoutes: Routes = [
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
-    /*{ path: 'createEventSource',      component: ConfigEventsourceCreateComponent },*/
     { path: 'eventSources',           component: ConfigurationComponent, children: [
       { path: 'create',               component: ConfigEventsourceCreateComponent },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },

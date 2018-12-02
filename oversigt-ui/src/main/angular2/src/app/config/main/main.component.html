@@ -1,16 +1,14 @@
 <router-outlet #outlet="outlet"></router-outlet>
 
-<div [hidden]="outlet.isActivated" class="content-container">
-  <div class="content-area">
-    <h1>Oversigt Configuration</h1>
-    <p>Welcome to the Oversigt configuration.</p>
-    <p>
-      This is where you configure the Oversigt server, create dashboards and set
-      up event sources to produce the data you want to display.
-    </p>
-    <p>
-      Use the above menu to go to the primary configuration sections. Each page
-      will show you more possibilities to adjust the settings.
-    </p>
-  </div>
+<div [hidden]="outlet.isActivated">
+  <h1>Oversigt Configuration</h1>
+  <p>Welcome to the Oversigt configuration.</p>
+  <p>
+    This is where you configure the Oversigt server, create dashboards and set
+    up event sources to produce the data you want to display.
+  </p>
+  <p>
+    Use the above menu to go to the primary configuration sections. Each page
+    will show you more possibilities to adjust the settings.
+  </p>
 </div>
