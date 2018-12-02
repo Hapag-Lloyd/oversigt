@@ -2,44 +2,44 @@
 <div class="clr-form-control">
   <label *ngIf="!canBeDisabled" for="prop_{{property.name}}" class="clr-control-label">{{property.displayName}}</label>
   <div *ngIf="canBeDisabled" class="checkbox clr-control-label">
-    <input type="checkbox" id="prop_check_{{property.name}}">
+    <input type="checkbox" id="prop_check_{{property.name}}" [(ngModel)]="enabled">
     <label for="prop_check_{{property.name}}">{{property.displayName}}</label>
   </div>
   <div class="clr-control-container" [ngSwitch]="property.inputType">
     <div *ngSwitchCase="'text'" class="clr-input-wrapper">
-      <input class="clr-input" type="text" [(ngModel)]="value" id="prop_{{property.name}}"/>
+      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="text" [(ngModel)]="value" id="prop_{{property.name}}"/>
     </div>
     <div *ngSwitchCase="'number'" class="clr-input-wrapper">
-      <input class="clr-input" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'date'" class="clr-input-wrapper">
-      <input clrDate class="clr-input" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <input clrDate class="clr-input" [disabled]="canBeDisabled && !enabled" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'password'" class="clr-input-wrapper">
-      <input class="clr-input" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'url'" class="clr-input-wrapper">
-      <input class="clr-input" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'color'" class="clr-input-wrapper">
-      <input class="clr-input" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
       <div class="toggle-switch">
-        <input type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <input [disabled]="canBeDisabled && !enabled" type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
         <label for="prop_{{property.name}}"></label>
       </div>
     </div>
     <div *ngSwitchCase="'sql'" class="clr-control-container">
-        <textarea class="clr-textarea" [(ngModel)]="value" id="prop_{{property.name}}" placeholder="Enter SQL code"></textarea>
+      <textarea class="clr-textarea" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}" placeholder="Enter SQL code"></textarea>
     </div>
     <div *ngSwitchCase="'enum'" class="clr-select-wrapper">
-      <select class="clr-select" [(ngModel)]="value" id="prop_{{property.name}}">
+      <select class="clr-select" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}">
         <option *ngFor="let si of property.allowedValues" value="{{si}}">{{property.allowedValuesMap[si]}}</option>
       </select>
     </div>
     <div *ngSwitchCase="'duration'" class="clr-select-wrapper">
-      <select class="clr-select" [(ngModel)]="value" id="prop_{{property.name}}">
+      <select class="clr-select" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}">
         <option value="PT10S">10 seconds</option>
         <option value="PT20S">20 seconds</option>
         <option value="PT30S">30 seconds</option>
