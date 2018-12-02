@@ -8,24 +8,25 @@
   </div>
 </ng-template>
 
-<clr-stack-view>
-  <clr-stack-block *ngFor="let item of threadInfos | filterEventitem: filter">
-    <clr-stack-label>{{item.threadInfo.name}}</clr-stack-label>
-    <clr-stack-content>{{item.threadInfo.state}}</clr-stack-content>
-    <clr-stack-block *ngIf="isEventSourceThread(item)">
-      <clr-stack-label>Event source</clr-stack-label>
-      <clr-stack-content><app-eventsource-button [eventSourceId]="getEventSourceId(item)" [showAsText]="true"></app-eventsource-button></clr-stack-content>
-    </clr-stack-block>
-    <clr-stack-block *ngIf="item.threadInfo.stackTrace.length > 0">
-        <clr-stack-label>Stack trace</clr-stack-label>
-        <clr-stack-content>
-          <ul style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
-            <li *ngFor="let row of item.threadInfo.stackTrace" class="stacktrace">
-              <span class="classname">{{row.className}}</span>.<span class="methodname" [ngStyle]="{'font-style':(row.nativeMethod ? 'italic' : 'normal')}">{{row.methodName}}</span>()
-              <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}<span *ngIf="row.lineNumber >= 0">:{{row.lineNumber}}</span>]</span>
-            </li>
-          </ul>
-        </clr-stack-content>
-    </clr-stack-block>
-  </clr-stack-block>
-</clr-stack-view>
+<clr-datagrid>
+  <clr-dg-column>Thread Name</clr-dg-column>
+  <clr-dg-column>Status</clr-dg-column>
+  <clr-dg-column>Link</clr-dg-column>
+
+  <clr-dg-row *ngFor="let item of threadInfos | filterEventitem: filter">
+    <clr-dg-cell>{{item.threadInfo.name}}</clr-dg-cell>
+    <clr-dg-cell>{{item.threadInfo.state}}</clr-dg-cell>
+    <clr-dg-cell><a *ngIf="isEventSourceThread(item)" routerLink="/config/eventSources/{{getEventSourceId(item)}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
+    <ng-container ngProjectAs="clr-dg-row-detail" *ngIf="item.threadInfo.stackTrace.length > 0">
+      <clr-dg-row-detail *clrIfExpanded>
+        <ul style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">
+          <li *ngFor="let row of item.threadInfo.stackTrace" class="stacktrace">
+            <span class="classname">{{row.className}}</span>.<span class="methodname" [ngStyle]="{'font-style':(row.nativeMethod ? 'italic' : 'normal')}">{{row.methodName}}</span>()
+            <span *ngIf="row.fileName !== null" class="sourceposition">[{{row.fileName}}<span *ngIf="row.lineNumber >= 0">:{{row.lineNumber}}</span>]</span>
+          </li>
+        </ul>
+      </clr-dg-row-detail>
+    </ng-container>
+  </clr-dg-row>
+</clr-datagrid>
+
