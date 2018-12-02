@@ -1,7 +1,11 @@
 <app-header [title]="'Cached Events'" [additional]="search"></app-header>
 <ng-template #search>
-  <button (click)="reloadEvents()" nz-button nzType="default" style="margin-right: 8px"><i nz-icon type="reload"></i></button>
-  <input nz-input placeholder="Filter events" size="50" [(ngModel)]="filter">
+  <button class="btn btn-outline btn-icon btn-sm" (click)="reloadEvents()" title="Reload events"><clr-icon shape="refresh"></clr-icon></button>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input class="clr-input" type="text" placeholder="Filter events" [(ngModel)]="filter"/>
+    </div>
+  </div>
 </ng-template>
 
 <nz-list [nzDataSource]="events | filterEventitem: filter" [nzRenderItem]="item" [nzItemLayout]="'horizontal'"

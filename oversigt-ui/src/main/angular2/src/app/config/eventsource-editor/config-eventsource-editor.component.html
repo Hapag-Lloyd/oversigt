@@ -31,15 +31,15 @@
       </div>
     </div>
     <div *ngSwitchCase="'sql'" class="clr-control-container">
-        <textarea [(ngModel)]="value" placeholder="Enter SQL code" class="clr-textarea"></textarea>
+        <textarea class="clr-textarea" [(ngModel)]="value" id="prop_{{property.name}}" placeholder="Enter SQL code"></textarea>
     </div>
     <div *ngSwitchCase="'enum'" class="clr-select-wrapper">
-      <select class="clr-select" [(ngModel)]="value">
+      <select class="clr-select" [(ngModel)]="value" id="prop_{{property.name}}">
         <option *ngFor="let si of property.allowedValues" value="{{si}}">{{property.allowedValuesMap[si]}}</option>
       </select>
     </div>
     <div *ngSwitchCase="'duration'" class="clr-select-wrapper">
-      <select class="clr-select" [(ngModel)]="value">
+      <select class="clr-select" [(ngModel)]="value" id="prop_{{property.name}}">
         <option value="PT10S">10 seconds</option>
         <option value="PT20S">20 seconds</option>
         <option value="PT30S">30 seconds</option>

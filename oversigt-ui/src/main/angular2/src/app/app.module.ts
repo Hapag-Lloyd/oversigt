@@ -56,16 +56,17 @@ const appRoutes: Routes = [
     { path: 'dashboards/create',      component: ConfigurationComponent },
     { path: 'createEventSource',      component: ConfigEventsourceCreateComponent },
     { path: 'eventSources',           component: ConfigEventsourcesComponent, children: [
-      { path : ':id',                 component: ConfigEventsourcesDetailsComponent },
+      { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
-    // { path: 'eventSources/:id',    component: ConfigurationComponent },
-    { path: 'logfiles',               component: ConfigLogsLogfileComponent },
-    { path: 'loggers',                component: ConfigLogsLoggerComponent },
-    { path: 'events',                 component: ConfigEventsComponent },
-    { path: 'threads',                component: ConfigThreadsComponent },
+    { path: 'system',                 component: ConfigSystemComponent, children: [
+      { path: 'logfiles',             component: ConfigLogsLogfileComponent },
+      { path: 'loggers',              component: ConfigLogsLoggerComponent },
+      { path: 'events',               component: ConfigEventsComponent },
+      { path: 'threads',              component: ConfigThreadsComponent },
+      { path: 'control',              component: ConfigurationComponent }, // TODO
+    ]},
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
-    { path: 'system',                 component: ConfigSystemComponent },
   ] },
   { path: ':dashboardId',             component: DashboardComponent },
 /*  { path: '**', component: PageNotFoundComponent }*/
