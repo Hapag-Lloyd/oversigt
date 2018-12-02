@@ -27,6 +27,9 @@
     </div>
   </div>
   <div class="ev-content" [class.inMenu]="getActiveChild().length < 10">
-    <router-outlet></router-outlet>
+    <router-outlet #outlet="outlet"></router-outlet>
+    <p *ngIf="!outlet.isActivated">
+      Choose an action by clicking one of the cards on the left.
+    </p>
   </div>
 </div>
