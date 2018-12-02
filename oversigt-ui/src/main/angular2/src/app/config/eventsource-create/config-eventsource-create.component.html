@@ -1,21 +1,30 @@
 <app-header [title]="'Create Event Source'" [additional]="search"></app-header>
 <ng-template #search>
-  <input nz-input placeholder="Filter event sources" [(ngModel)]="searchText" size="50">
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input class="clr-input" type="text" placeholder="Filter event sources" [(ngModel)]="searchText"/>
+    </div>
+  </div>
 </ng-template>
 
-<div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-evenly; align-items: baseline;">
-  <nz-card *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText" nzHoverable style="width: 300px; margin-bottom: 2ex;" nzTitle="{{info.name}}" [nzCover]="coverTemplate"
-    [nzActions]="[actionInfo,actionCreate]">
-    <p *ngIf="info.description !== null">{{info.description}}</p>
-    <p *ngIf="info.description === null">This event source does not have a description.</p>
-    <ng-template #coverTemplate>
-      <!--<img alt="Example image" src="{{info.image}}" />-->
-    </ng-template>
-    <ng-template #actionInfo>
-      <a (click)="showEventSourceInfo(info.key)"><i nz-icon type="info-circle" theme="outline"></i></a>
-    </ng-template>
-    <ng-template #actionCreate>
-      <a (click)="createEventSource(info.key)"><i nz-icon type="plus-circle" theme="outline"></i></a>
-    </ng-template>
-  </nz-card>
+<div class="row">
+  <div *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText" class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
+      (click)="createEventSource(info.key)">
+    <div class="card clickable">
+      <div class="card-header">
+          {{info.name}}
+      </div>
+      <!--<div *ngIf="info.image" class="card-img">
+          <img src="{{info.image}}" alt="Event source preview" />
+      </div>-->
+      <div class="card-block">
+        <div *ngIf="info.description !== null" class="card-text">
+          {{info.description}}
+        </div>
+        <div *ngIf="info.description === null" class="card-text">
+            This event source does not have a description.
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

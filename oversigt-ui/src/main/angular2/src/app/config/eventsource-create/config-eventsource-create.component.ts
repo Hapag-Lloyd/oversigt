@@ -6,7 +6,7 @@ import { NotificationService } from 'src/app/notification.service';
 @Component({
   selector: 'app-config-eventsource-create',
   templateUrl: './config-eventsource-create.component.html',
-  styleUrls: ['./config-eventsource-create.component.css']
+  styleUrls: ['./config-eventsource-create.component.scss']
 })
 export class ConfigEventsourceCreateComponent implements OnInit {
   eventSourceInfos: EventSourceInfo[];

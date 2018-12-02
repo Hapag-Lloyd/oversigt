@@ -7,10 +7,8 @@
       </a>
     </div>
     <div class="header-nav">
-      <a routerLink="/config/eventSources" class="nav-link nav-text">Event Sources</a>
-      <a routerLink="/config/dashboards" class="nav-link nav-text">Dashboards</a>
-      <a routerLink="/config/properties" class="nav-link nav-text">Properties</a>
-      <a routerLink="/config/system" class="nav-link nav-text">System</a>
+      <!-- TODO: highlight active menu item -->
+      <a *ngFor="let item of menuItems" routerLink="{{item.link}}" class="nav-link nav-text">{{item.title}}</a>
     </div>
     <form class="search">
       <label for="search_input">
@@ -21,7 +19,20 @@
       <a (click)="doLogout()" class="nav-link nav-icon"><clr-icon shape="logout"></clr-icon></a>
     </div>
   </header>
-  <router-outlet></router-outlet>
+
+  <nav *ngIf="getSelectedMenuItemChildren().length > 0" class="subnav">
+    <ul class="nav">
+      <li *ngFor="let item of getSelectedMenuItemChildren()" class="nav-item">
+        <a class="nav-link" routerLink="{{item.link}}">{{item.title}}</a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="content-container">
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
 </div>
 
 <ng-template #plain>

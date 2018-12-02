@@ -54,8 +54,9 @@ const appRoutes: Routes = [
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
-    { path: 'createEventSource',      component: ConfigEventsourceCreateComponent },
-    { path: 'eventSources',           component: ConfigEventsourcesComponent, children: [
+    /*{ path: 'createEventSource',      component: ConfigEventsourceCreateComponent },*/
+    { path: 'eventSources',           component: ConfigurationComponent, children: [
+      { path: 'create',               component: ConfigEventsourceCreateComponent },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
     { path: 'system',                 component: ConfigSystemComponent, children: [
@@ -63,7 +64,7 @@ const appRoutes: Routes = [
       { path: 'loggers',              component: ConfigLogsLoggerComponent },
       { path: 'events',               component: ConfigEventsComponent },
       { path: 'threads',              component: ConfigThreadsComponent },
-      { path: 'control',              component: ConfigurationComponent }, // TODO
+      { path: 'server',               component: ConfigurationComponent }, // TODO
     ]},
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
