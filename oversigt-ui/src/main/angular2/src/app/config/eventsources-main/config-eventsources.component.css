@@ -1,0 +1,39 @@
+
+.ev-choice {
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.ev-choice>div:first-child {
+  display: flex;
+  flex-flow: column nowrap;
+  flex: 0 0 12rem;
+  padding-bottom: 1rem;
+  border-right: 1px solid #ccc;
+}
+
+.ev-choice>div.inMenu {
+  margin-left: 0.5rem;
+}
+
+.ev-choice .item {
+  margin-top: 1rem;
+  padding-right: 0.5rem;
+}
+
+.ev-choice .item.active {
+  border-right: 2px solid #bbb;
+}
+
+.ev-choice .card {
+  margin-top: 0;
+}
+
+.inMenu {
+  width: 100%;
+  padding-bottom: 1rem;
+}
+
+
+
+

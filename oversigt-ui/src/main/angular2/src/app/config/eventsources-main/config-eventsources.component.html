@@ -1,9 +1,32 @@
-<router-outlet #outlet="outlet"></router-outlet>
 
-<div [hidden]="outlet.isActivated">
-  <h1>Event Sources</h1>
-  <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
-    <button *ngFor="let info of eventSourceInfos" class="btn btn-default" (click)="selectEventSource(info.id)">{{info.name}}</button>
+<div class="ev-choice">
+  <div [hidden]="getActiveChild().length > 10">
+    <div class="item" [class.active]="getActiveChild() === 'create'">
+      <a class="card clickable" routerLink="./create">
+        <div class="card-header">
+          Create Event source
+        </div>
+        <div class="card-block">
+          <div class="card-text">
+            Use this item to create new event sources.
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="item" [class.active]="getActiveChild() === 'list'">
+      <a class="card clickable" routerLink="./list">
+        <div class="card-header">
+          Configure Event sources
+        </div>
+        <div class="card-block">
+          <div class="card-text">
+            This item enables you to configure exisiting event sources.
+          </div>
+        </div>
+      </a>
+    </div>
   </div>
-
+  <div [class.inMenu]="getActiveChild().length < 10">
+    <router-outlet></router-outlet>
+  </div>
 </div>

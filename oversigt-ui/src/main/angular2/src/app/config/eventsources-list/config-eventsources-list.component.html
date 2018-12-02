@@ -1,0 +1,4 @@
+<h1>Event Sources</h1>
+<div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
+  <a *ngFor="let info of eventSourceInfos" class="btn btn-default" routerLink="../{{info.id}}">{{info.name}}</a>
+</div>

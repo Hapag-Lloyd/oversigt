@@ -247,7 +247,8 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       ok => {
         // TODO aus der Liste der exisierenden EventSources löschen
         this.notification.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.');
-        this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);
+        // TODO: whatever
+        alert('this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);');
         setTimeout(() => {
           this.router.navigateByUrl('/config/eventSources');
         }, 1500);

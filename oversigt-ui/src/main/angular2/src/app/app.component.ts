@@ -10,8 +10,8 @@ export class MenuItem {
 
 const MENU_ITEMS: MenuItem[] = [
   { title: 'Event Sources', link: '/config/eventSources', children: [
-    { title: 'Create Event Source', link: '/config/eventSources/create', children: []},
-    { title: 'Configure Event Sources', link: '/config/eventSources', children: []},
+    /*{ title: 'Create Event Source', link: '/config/eventSources/create', children: []},
+    { title: 'Configure Event Sources', link: '/config/eventSources/list', children: []},*/
   ]},
   { title: 'Dashboards', link: '/config/dashboards', children: []},
   { title: 'Properties', link: '/config/properties', children: []},

@@ -1,0 +1,8 @@
+ 
+.no-content {
+  margin-left: 1rem;
+}
+
+.content + .no-content {
+  display: none;
+}

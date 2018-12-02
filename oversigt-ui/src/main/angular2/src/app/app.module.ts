@@ -38,6 +38,7 @@ import { environment } from 'src/environments/environment';
 import { AuthGuard } from './guards/auth.guard';
 import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
 import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
+import { ConfigEventsourcesListComponent } from './config/eventsources-list/config-eventsources-list.component';
 
 registerLocaleData(en);
 
@@ -54,8 +55,9 @@ const appRoutes: Routes = [
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
-    { path: 'eventSources',           component: ConfigEventsourcesComponent, children: [
-      { path: 'create',               component: ConfigEventsourceCreateComponent },
+    { path: 'eventSources',           component: ConfigEventsourcesComponent, runGuardsAndResolvers: 'always', children: [
+      { path: 'create',               component: ConfigEventsourceCreateComponent, data: { showHtml: true } },
+      { path: 'list',                 component: ConfigEventsourcesListComponent, data: { showHtml: true } },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
     { path: 'system',                 component: ConfigSystemComponent, children: [
@@ -103,10 +105,12 @@ export function initializeApiConfiguration(): Configuration {
     EventsourceButtonComponent,
     ConfigEventsourcesDetailsComponent,
     FilterForRolePipe,
+    ConfigEventsourcesListComponent,
   ],
   imports: [
     RouterModule.forRoot(
       appRoutes,
+      {onSameUrlNavigation: 'reload'},
       // { enableTracing: true } // <-- debugging purposes only
     ), BrowserModule, HttpClientModule,
     ApiModule.forRoot(initializeApiConfiguration),
