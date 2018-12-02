@@ -9,7 +9,7 @@
 
 <div class="row">
   <div *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText" class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
-      (click)="createEventSource(info.key)">
+      (click)="createEventSource(info.key)" title="Create an event source of type '{{info.name}}'">
     <div class="card clickable">
       <div class="card-header">
           {{info.name}}

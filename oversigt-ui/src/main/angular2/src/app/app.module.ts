@@ -54,7 +54,7 @@ const appRoutes: Routes = [
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
-    { path: 'eventSources',           component: ConfigurationComponent, children: [
+    { path: 'eventSources',           component: ConfigEventsourcesComponent, children: [
       { path: 'create',               component: ConfigEventsourceCreateComponent },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
