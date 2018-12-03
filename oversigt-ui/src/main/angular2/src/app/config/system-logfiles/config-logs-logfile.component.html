@@ -1,10 +1,10 @@
 <app-header [title]="'Log Files'" [additional]="filelist"></app-header>
 
 <ng-template #filelist>
-  <button *ngIf="selectedValue && content !== null" (click)="downloadLogfile(selectedValue)" title="Download complete log file from server" class="btn btn-outline btn-icon">
+  <button *ngIf="selectedValue" (click)="downloadLogfile(selectedValue)" title="Download complete log file from server" class="btn btn-outline btn-icon">
     <i nz-icon type="download"></i>
   </button>
-  <button *ngIf="selectedValue && content !== null" (click)="loadLogFileContent(selectedValue)" title="Reload log file content" class="btn btn-outline btn-icon">
+  <button *ngIf="selectedValue" (click)="loadLogFileContent(selectedValue)" title="Reload log file content" class="btn btn-outline btn-icon">
     <i nz-icon type="reload"></i>
   </button>
   <clr-dropdown [clrCloseMenuOnItemClick]="true">
@@ -19,7 +19,7 @@
 </ng-template>
 
 <h3 *ngIf="selectedValue">{{selectedValue}}</h3>
-<pre *ngIf="selectedValue && content; else noLogFile">{{content}}</pre>
+<pre *ngIf="selectedValue; else noLogFile">{{content}}</pre>
 
 <ng-template #noLogFile>
   <pre>Please choose a log file.</pre>
