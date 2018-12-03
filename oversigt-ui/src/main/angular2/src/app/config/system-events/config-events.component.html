@@ -16,7 +16,7 @@
         <clr-dg-cell>{{item.event.id}}</clr-dg-cell>
         <clr-dg-cell><a routerLink="/config/eventSources/{{item.event.id}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
         <clr-dg-row-detail *clrIfExpanded>
-            <pre>{{item.event | json}}</pre>
+            <pre class="event">{{item.event | json}}</pre>
         </clr-dg-row-detail>
     </clr-dg-row>
 </clr-datagrid>
