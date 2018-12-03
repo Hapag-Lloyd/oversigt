@@ -57,11 +57,11 @@ const appRoutes: Routes = [
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
     { path: 'eventSources',           component: ConfigEventsourcesComponent, runGuardsAndResolvers: 'always', children: [
-      { path: 'create',               component: ConfigEventsourceCreateComponent, data: { showHtml: true } },
-      { path: 'list',                 component: ConfigEventsourcesListComponent, data: { showHtml: true } },
+      { path: 'create',               component: ConfigEventsourceCreateComponent },
+      { path: 'list',                 component: ConfigEventsourcesListComponent },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
-    { path: 'system',                 component: ConfigSystemComponent, children: [
+    { path: 'system',                 component: ConfigurationComponent, children: [
       { path: 'logfiles',             component: ConfigLogsLogfileComponent },
       { path: 'loggers',              component: ConfigLogsLoggerComponent },
       { path: 'events',               component: ConfigEventsComponent },

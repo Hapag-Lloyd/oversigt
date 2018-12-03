@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MENU_ITEMS, MenuItem } from 'src/app/app.component';
 
 @Component({
   selector: 'app-configuration',
@@ -7,12 +8,17 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
   styleUrls: ['./main.component.css']
 })
 export class ConfigurationComponent implements OnInit {
+  private menuItems = MENU_ITEMS;
+  menuItem: MenuItem = undefined;
 
   constructor(
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router,
   ) { }
 
   ngOnInit() {
+    const loadedUrl = this.route.snapshot.pathFromRoot.map(p => p.url.map(u => u.path).join('/')).join('/');
+    this.menuItem = this.menuItems.find(mi => mi.link === loadedUrl);
   }
 
   hasSelectedChild(): boolean {

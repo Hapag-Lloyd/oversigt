@@ -9,7 +9,7 @@ export class MenuItem {
   children: MenuItem[];
 }
 
-const MENU_ITEMS: MenuItem[] = [
+export const MENU_ITEMS: MenuItem[] = [
   { title: 'Event Sources', link: '/config/eventSources', children: [
     /*{ title: 'Create Event Source', link: '/config/eventSources/create', children: []},
     { title: 'Configure Event Sources', link: '/config/eventSources/list', children: []},*/
@@ -56,14 +56,25 @@ export class AppComponent implements OnInit {
     return url.startsWith('/config/') || url === '/config';
   }
 
-  getSelectedMenuItemChildren(): MenuItem[] {
+  getSelectedMenuItem(): MenuItem {
     const url = this.router.url;
     const item = this.menuItems.find(c => url.startsWith(c.link));
     if (item !== undefined) {
-      return item.children;
+      return item;
     } else {
-      return [];
+      return null;
     }
+  }
+
+  getSelectedMenuItemChildren(): MenuItem[] {
+    const item = this.getSelectedMenuItem();
+    return item !== null ? item.children : [];
+  }
+
+  getSelectedSubMenuItemLink(): string {
+    const url = this.router.url;
+    const item = this.getSelectedMenuItem().children.find(c => c.link === url);
+    return item !== undefined ? item.link : '';
   }
 
   doLogout() {
