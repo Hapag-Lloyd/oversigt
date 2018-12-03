@@ -16,6 +16,8 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
   values: object[] = [];
   valueToCreate = {};
 
+  showingCreateModal = false;
+
   constructor(
     private route: ActivatedRoute,
     private modalService: NzModalService,

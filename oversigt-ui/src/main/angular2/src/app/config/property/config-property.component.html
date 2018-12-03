@@ -1,6 +1,6 @@
 <app-header *ngIf="propertyType !== null" [title]="propertyType" [additional]="create"></app-header>
 <ng-template #create>
-  <button nz-button nzType="default" (click)="showCreateModal(createContent)"><i nz-icon type="plus-circle"></i></button>
+  <button class="btn btn-outline" (click)="showingCreateModal = true"><clr-icon shape="plus"></clr-icon> New <em>{{propertyType}}</em> entry</button>
 </ng-template>
 
 <table *ngIf="propertyType !== null" class="table">
@@ -24,22 +24,24 @@
   </tbody>
 </table>
 
-<ng-template #createContent>
-  <form nz-form>
-    <div *ngFor="let member of members" nz-row style="margin-bottom: 1ex;">
-      <div *ngIf="member.required" nz-col nzSpan="9">
-        <nz-badge [nzDot]="true">
-          <label>{{member.name}}</label>
-        </nz-badge>
-      </div>
-      <div *ngIf="!member.required" nz-col nzSpan="9">
-        <label>{{member.name}}</label>
-      </div>
-      <div nz-col nzSpan="15">
-        <input *ngIf="member.type !== 'number'" nz-input [(ngModel)]="valueToCreate[member.name]" name="{{member.name}}"
-          type="{{member.type}}" />
-        <nz-input-number *ngIf="member.type === 'number'" [(ngModel)]="valueToCreate[member.name]"></nz-input-number>
-      </div>
+<clr-modal [(clrModalOpen)]="showingCreateModal">
+    <h3 class="modal-title">Create {{propertyType}} entry</h3>
+    <div class="modal-body">
+      <form class="clr-form clr-form-compact">
+        <div *ngFor="let member of members" class="clr-form-control clr-row">
+          <label for="{{member.name}}" class="clr-control-label clr-col-xs-12 clr-col-md-2">{{member.displayName}}</label>
+          <div class="clr-control-container clr-col-xs-12 clr-col-md-10">
+            <div class="clr-input-wrapper">
+              <input type="{{member.type}}" id="{{member.name}}" class="clr-input" />
+              <clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
+            </div>
+            <!--<span class="clr-subtext">Helper Text</span>-->
+          </div>
+        </div>
+      </form>
     </div>
-  </form>
-</ng-template>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" (click)="showingCreateModal = false">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="showingCreateModal = false">Ok</button>
+    </div>
+</clr-modal>
