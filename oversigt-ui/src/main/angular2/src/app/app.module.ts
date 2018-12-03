@@ -68,6 +68,7 @@ const appRoutes: Routes = [
       { path: 'threads',              component: ConfigThreadsComponent },
       { path: 'server',               component: ConfigServerComponent }, // TODO
     ]},
+    { path: 'properties',             component: ConfigurationComponent },
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
   ] },

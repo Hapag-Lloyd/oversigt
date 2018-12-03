@@ -3,28 +3,26 @@
   <button nz-button nzType="default" (click)="showCreateModal(createContent)"><i nz-icon type="plus-circle"></i></button>
 </ng-template>
 
-<nz-table *ngIf="propertyType !== null" #basicTable [nzData]="values" [nzShowPagination]="false" [nzFrontPagination]="false"
-  [nzBordered]="true">
+<table *ngIf="propertyType !== null" class="table">
   <thead>
     <tr>
-      <th *ngFor="let member of members"><i *ngIf="member.icon !== null" nz-icon type="{{member.icon}}"></i>
+      <th *ngFor="let member of members" class="left"><!-- TODO: <i *ngIf="member.icon !== null" nz-icon type="{{member.icon}}"></i>-->
         {{member.displayName}}</th>
-      <th>Actions</th>
+      <th>&nbsp;</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of values">
-      <td *ngFor="let member of members">{{data[member.name]}}</td>
-      <td>
-        <nz-button-group>
-          <button nz-button nzType="default" (click)="showEditModal(createContent, data['id'])"><i nz-icon type="edit"></i></button>
-          <button nz-popconfirm nzType="danger" nzTitle="Do you really want to delete the {{propertyType}} '{{data['name']}}'?"
-            (nzOnConfirm)="deleteValue(data['id'])" nz-button><i nz-icon type="delete"></i></button>
-        </nz-button-group>
+      <td *ngFor="let member of members" class="left">{{data[member.name]}}</td>
+      <td style="width:1%">
+        <div class="btn-group btn-outline btn-icon btn-sm">
+          <button class="btn" (click)="showEditModal(createContent, data['id'])"><clr-icon shape="pencil"></clr-icon></button>
+          <button class="btn btn-danger"><clr-icon shape="trash"></clr-icon></button><!-- TODO: title="Do you really want to delete the {{propertyType}} '{{data['name']}}'?"--><!--(nzOnConfirm)="deleteValue(data['id'])"-->
+        </div>
       </td>
     </tr>
   </tbody>
-</nz-table>
+</table>
 
 <ng-template #createContent>
   <form nz-form>

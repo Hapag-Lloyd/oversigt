@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { UserService } from './user-service.service';
+import { PropertiesService } from './properties-service.service';
 
 export class MenuItem {
   title: string;
@@ -38,11 +39,16 @@ export class AppComponent implements OnInit {
   constructor(
     private router: Router,
     private userService: UserService,
+    private propertiesService: PropertiesService,
   ) {
   }
 
   ngOnInit(): void {
     this.isCollapsed = false;
+    this.propertiesService.loadProperties(props => {
+      const item = this.menuItems.find(mi => mi.title === 'Properties');
+      item.children = props.map(p => <MenuItem>{title: p, link: '/config/properties/' + p, children: []});
+    });
   }
 
   isShowingConfiguration(): boolean {
