@@ -19,7 +19,6 @@ import { ConfigThreadsComponent } from './config/system-threads/config-threads.c
 import { ConfigLogsLogfileComponent } from './config/system-logfiles/config-logs-logfile.component';
 import { ConfigLogsLoggerComponent } from './config/system-loggers/config-logs-logger.component';
 import { ConfigEventsComponent } from './config/system-events/config-events.component';
-import { ConfigMenuComponent } from './config/_menu/config-menu.component';
 import { ConfigEventsourcesComponent } from './config/eventsources-main/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { registerLocaleData } from '@angular/common';
@@ -92,7 +91,6 @@ export function initializeApiConfiguration(): Configuration {
     ConfigSystemComponent,
     ConfigServerComponent,
     ConfigPropertyComponent,
-    ConfigMenuComponent,
     ConfigEventsourcesComponent,
     ConfigEventsourceInfoComponent,
     ConfigEventsourceCreateComponent,
