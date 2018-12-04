@@ -1,4 +1,4 @@
-<a class="btn btn-outline btn-sm" [class.btn-icon]="!showAsText" routerLink="/config/eventSources/{{eventSourceId}}" title="Go to event source">
+<a class="btn btn-outline btn-sm" [class.btn-icon]="!showAsText" routerLink="{{getEventSourceLink(eventSourceId)}}" title="Go to event source">
   <clr-icon *ngIf="!showAsText" shape="link"></clr-icon>
   <ng-container *ngIf="showAsText">{{eventSourceId}}</ng-container>
 </a>

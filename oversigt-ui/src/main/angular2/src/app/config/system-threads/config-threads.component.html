@@ -16,7 +16,7 @@
   <clr-dg-row *ngFor="let item of threadInfos | filterEventitem: filter">
     <clr-dg-cell>{{item.threadInfo.name}}</clr-dg-cell>
     <clr-dg-cell>{{item.threadInfo.state}}</clr-dg-cell>
-    <clr-dg-cell><a *ngIf="isEventSourceThread(item)" routerLink="/config/eventSources/{{getEventSourceId(item)}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
+    <clr-dg-cell><a *ngIf="isEventSourceThread(item)" routerLink="{{getEventSourceLink(getEventSourceId(item))}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
     <ng-container ngProjectAs="clr-dg-row-detail" *ngIf="item.threadInfo.stackTrace.length > 0">
       <clr-dg-row-detail *clrIfExpanded>
         <ul style="font-family: monospace; list-style: none; padding-left: 1ex; color: grey">

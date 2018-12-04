@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SystemService, ThreadInfo } from 'src/oversigt-client';
+import { getLinkForEventSource } from 'src/app/app.component';
 
 export class ThreadInfoComposite {
   threadInfo: ThreadInfo;
@@ -80,5 +81,9 @@ export class ConfigThreadsComponent implements OnInit {
 
   getThreadDetails(info: ThreadInfo): string {
     return '';
+  }
+
+  getEventSourceLink(id: string): string {
+    return getLinkForEventSource(id);
   }
 }

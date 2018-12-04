@@ -8,6 +8,7 @@ import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-e
 import { ClrLoadingState } from '@clr/angular';
 import { NotificationService } from 'src/app/notification.service';
 import { uniqueItems } from 'src/app/utils/arrays';
+import { getLinkForId } from 'src/app/app.component';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -267,7 +268,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO: whatever
         alert('this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);');
         setTimeout(() => {
-          this.router.navigateByUrl('/config/eventSources');
+          this.router.navigateByUrl(getLinkForId('eventsources'));
         }, 1500);
       },
       error => {

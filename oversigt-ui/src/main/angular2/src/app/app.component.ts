@@ -4,26 +4,35 @@ import { UserService } from './user-service.service';
 import { PropertiesService } from './properties-service.service';
 
 export class MenuItem {
+  id: string;
   title: string;
   link: string;
   children: MenuItem[];
 }
 
 export const MENU_ITEMS: MenuItem[] = [
-  { title: 'Event Sources', link: '/config/eventSources', children: [
+  { title: 'Event Sources', link: '/config/eventSources', id: 'eventsources', children: [
     /*{ title: 'Create Event Source', link: '/config/eventSources/create', children: []},
     { title: 'Configure Event Sources', link: '/config/eventSources/list', children: []},*/
   ]},
-  { title: 'Dashboards', link: '/config/dashboards', children: []},
-  { title: 'Properties', link: '/config/properties', children: []},
-  { title: 'System', link: '/config/system', children: [
-    { title: 'Events', link: '/config/system/events', children: []},
-    { title: 'Log Files', link: '/config/system/logfiles', children: []},
-    { title: 'Loggers', link: '/config/system/loggers', children: []},
-    { title: 'Threads', link: '/config/system/threads', children: []},
-    { title: 'Server', link: '/config/system/server', children: []},
+  { title: 'Dashboards', link: '/config/dashboards', id: 'dashboards', children: []},
+  { title: 'Properties', link: '/config/properties', id: 'properties', children: []},
+  { title: 'System', link: '/config/system', id: 'system', children: [
+    { title: 'Events', link: '/config/system/events', id: 'system-events', children: []},
+    { title: 'Log Files', link: '/config/system/logfiles', id: 'system-logfiles', children: []},
+    { title: 'Loggers', link: '/config/system/loggers', id: 'system-loggers', children: []},
+    { title: 'Threads', link: '/config/system/threads', id: 'system-threads', children: []},
+    { title: 'Server', link: '/config/system/server', id: 'system-server', children: []},
   ]},
 ];
+
+export function getLinkForId(id: string): string {
+  return MENU_ITEMS.find(mi => mi.id === id).link;
+}
+
+export function getLinkForEventSource(id: string): string {
+  return getLinkForId('eventsource') + '/' + id;
+}
 
 @Component({
   selector: 'app-root',

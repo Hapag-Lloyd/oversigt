@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SystemService, OversigtEvent } from 'src/oversigt-client';
+import { getLinkForEventSource } from 'src/app/app.component';
 
 export class EventItem {
   event: OversigtEvent;
@@ -41,5 +42,9 @@ export class ConfigEventsComponent implements OnInit {
         // TODO: Error handling
       }
     );
+  }
+
+  getEventSourceLink(id: string): string {
+    return getLinkForEventSource(id);
   }
 }

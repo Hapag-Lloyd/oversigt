@@ -1,4 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { getLinkForEventSource } from '../app.component';
 
 @Component({
   selector: 'app-eventsource-button',
@@ -13,4 +14,7 @@ export class EventsourceButtonComponent implements OnInit {
   ngOnInit() {
   }
 
+  getEventSourceLink(id: string): string {
+    return getLinkForEventSource(id);
+  }
 }

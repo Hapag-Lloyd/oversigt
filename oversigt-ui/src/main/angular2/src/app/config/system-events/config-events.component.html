@@ -14,7 +14,7 @@
 
     <clr-dg-row *ngFor="let item of events | filterEventitem: filter">
         <clr-dg-cell>{{item.event.id}}</clr-dg-cell>
-        <clr-dg-cell><a routerLink="/config/eventSources/{{item.event.id}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
+        <clr-dg-cell><a routerLink="{{getEventSourceLink(item.event.id)}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
         <clr-dg-row-detail *clrIfExpanded>
             <pre class="event">{{item.event | json}}</pre>
         </clr-dg-row-detail>
