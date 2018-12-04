@@ -8,7 +8,7 @@
     </div>
     <div class="header-nav">
       <!-- TODO: highlight active menu item -->
-      <a *ngFor="let item of menuItems" routerLink="{{item.link}}" class="nav-link nav-text" [class.active]="getSelectedMenuItem().link === item.link">{{item.title}}</a>
+      <a *ngFor="let item of menuItems" routerLink="{{item.link}}" class="nav-link nav-text" [class.active]="getSelectedMenuItemLink() === item.link">{{item.title}}</a>
     </div>
     <!-- TODO: <form class="search">
       <label for="search_input">

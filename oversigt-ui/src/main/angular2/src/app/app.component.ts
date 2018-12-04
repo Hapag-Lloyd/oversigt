@@ -66,6 +66,11 @@ export class AppComponent implements OnInit {
     }
   }
 
+  getSelectedMenuItemLink(): string {
+    const item = this.getSelectedMenuItem();
+    return item !== null ? item.link : '';
+    }
+
   getSelectedMenuItemChildren(): MenuItem[] {
     const item = this.getSelectedMenuItem();
     return item !== null ? item.children : [];
