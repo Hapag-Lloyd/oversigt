@@ -1,7 +1,7 @@
-<app-header [title]="'Dashboards'" [level]="1" [additional]="list"></app-header>
+<app-header [hidden]="outlet.isActivated" [title]="'Dashboards'" [level]="1" [additional]="list"></app-header>
 <ng-template #list>
   <ul>
     <li *ngFor="let dashboard of dashboards"><a routerLink="{{dashboard.id}}">{{dashboard.title}}</a></li>
   </ul>
 </ng-template>
-<router-outlet></router-outlet>
+<router-outlet #outlet="outlet"></router-outlet>

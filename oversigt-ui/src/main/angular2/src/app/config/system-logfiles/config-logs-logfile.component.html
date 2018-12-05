@@ -2,10 +2,10 @@
 
 <ng-template #filelist>
   <button *ngIf="selectedValue" (click)="downloadLogfile(selectedValue)" title="Download complete log file from server" class="btn btn-outline btn-icon">
-    <i nz-icon type="download"></i>
+    <clr-icon shape="download-cloud"></clr-icon>
   </button>
   <button *ngIf="selectedValue" (click)="loadLogFileContent(selectedValue)" title="Reload log file content" class="btn btn-outline btn-icon">
-    <i nz-icon type="reload"></i>
+    <clr-icon shape="refresh"></clr-icon>
   </button>
   <clr-dropdown [clrCloseMenuOnItemClick]="true">
     <button type="button" class="btn btn-outline" clrDropdownTrigger>
