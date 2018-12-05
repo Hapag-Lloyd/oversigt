@@ -35,6 +35,11 @@
   margin-top: 0;
 }
 
+.ev-choice .active .card {
+  border-color: rgb(0, 74, 112);
+  box-shadow: rgb(0, 74, 112) 0px 3px 0px 0px;
+}
+
 .inMenu {
   width: 100%;
   padding-bottom: 1rem;
