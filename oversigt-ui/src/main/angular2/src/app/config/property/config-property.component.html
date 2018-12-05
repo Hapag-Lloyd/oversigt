@@ -1,6 +1,6 @@
 <app-header *ngIf="propertyType !== null" [title]="propertyType" [additional]="create"></app-header>
 <ng-template #create>
-  <button class="btn btn-outline" (click)="showingCreateModal = true"><clr-icon shape="plus"></clr-icon> New <em>{{propertyType}}</em> entry</button>
+  <button class="btn btn-outline" (click)="showCreateModal()"><clr-icon shape="plus"></clr-icon> New <em>{{propertyType}}</em> entry</button>
 </ng-template>
 
 <table *ngIf="propertyType !== null" class="table">
@@ -15,33 +15,34 @@
     <tr *ngFor="let data of values">
       <td *ngFor="let member of members" class="left">{{data[member.name]}}</td>
       <td style="width:1%">
-        <div class="btn-group btn-outline btn-icon btn-sm">
-          <button class="btn" (click)="showEditModal(createContent, data['id'])"><clr-icon shape="pencil"></clr-icon></button>
-          <button class="btn btn-danger"><clr-icon shape="trash"></clr-icon></button><!-- TODO: title="Do you really want to delete the {{propertyType}} '{{data['name']}}'?"--><!--(nzOnConfirm)="deleteValue(data['id'])"-->
+        <div class="btn-group btn-icon btn-sm">
+          <button class="btn" (click)="showEditModal(data['id'])" title="Edit '{{data['name']}}'"><clr-icon shape="pencil"></clr-icon></button>
+          <button class="btn btn-danger" (click)="deleteValue(data['id'])" title="Delete '{{data['name']}}'"><clr-icon shape="trash"></clr-icon></button><!-- TODO: title="Do you really want to delete the {{propertyType}} '{{data['name']}}'?"--><!--(nzOnConfirm)="deleteValue(data['id'])"-->
         </div>
       </td>
     </tr>
   </tbody>
 </table>
 
-<clr-modal [(clrModalOpen)]="showingCreateModal">
-    <h3 class="modal-title">Create {{propertyType}} entry</h3>
-    <div class="modal-body">
-      <form class="clr-form clr-form-compact">
-        <div *ngFor="let member of members" class="clr-form-control clr-row">
-          <label for="{{member.name}}" class="clr-control-label clr-col-xs-12 clr-col-md-2">{{member.displayName}}</label>
-          <div class="clr-control-container clr-col-xs-12 clr-col-md-10">
-            <div class="clr-input-wrapper">
-              <input type="{{member.type}}" id="{{member.name}}" class="clr-input" />
-              <clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
-            </div>
-            <!--<span class="clr-subtext">Helper Text</span>-->
+<clr-modal [(clrModalOpen)]="modalShowing" [clrModalClosable]="false">
+  <h3 class="modal-title">{{modalVerb}} {{propertyType}} entry</h3>
+  <div class="modal-body">
+    <form class="clr-form clr-form-compact">
+      <div *ngFor="let member of members" class="clr-form-control clr-row">
+        <label for="{{member.name}}" class="clr-control-label clr-col-xs-12 clr-col-md-3">{{member.displayName}}</label>
+        <div class="clr-control-container clr-col-xs-12 clr-col-md-9">
+          <div class="clr-input-wrapper">
+            <input type="{{member.type}}" id="{{member.name}}" name="{{member.name}}" [(ngModel)]="valueToCreate[member.name]" class="clr-input" />
+            <clr-icon class="clr-validate-icon" shape="exclamation-circle"></clr-icon>
           </div>
+          <!--<span class="clr-subtext">Helper Text</span>-->
         </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-outline" (click)="showingCreateModal = false">Cancel</button>
-      <button type="button" class="btn btn-primary" (click)="showingCreateModal = false">Ok</button>
-    </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button (click)="clickCancelModal()" type="button" class="btn btn-outline">Cancel</button>
+    <button *ngIf="modalVerb === 'Create'" (click)="clickOkInCreateModal()" type="button" class="btn btn-primary" [clrLoading]="modalLoadingState">Create</button>
+    <button *ngIf="modalVerb === 'Edit'"   (click)="clickOkInEditModal()"   type="button" class="btn btn-primary" [clrLoading]="modalLoadingState">Edit</button>
+  </div>
 </clr-modal>

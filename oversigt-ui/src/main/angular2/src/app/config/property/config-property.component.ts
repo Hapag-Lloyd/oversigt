@@ -1,8 +1,13 @@
-import { Component, OnInit, Input, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, TemplateRef, ViewChild, ElementRef } from '@angular/core';
 import { SerializableValueService, SerializablePropertyMember } from 'src/oversigt-client';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { NzModalService, NzMessageService } from 'ng-zorro-antd';
+import { NotificationService } from 'src/app/notification.service';
+import { ClrLoadingState } from '@clr/angular';
+
+export enum ModalVerb {
+  Create = 'Create', Edit = 'Edit'
+}
 
 @Component({
   selector: 'app-config-property',
@@ -10,18 +15,21 @@ import { NzModalService, NzMessageService } from 'ng-zorro-antd';
   styleUrls: ['./config-property.component.css']
 })
 export class ConfigPropertyComponent implements OnInit, OnDestroy {
+  @ViewChild('cancelButton') cancelButton: ElementRef;
+  @ViewChild('okButton') okButton: ElementRef;
   private subscription: Subscription = null;
   propertyType: string;
   members: SerializablePropertyMember[] = [];
   values: object[] = [];
   valueToCreate = {};
 
-  showingCreateModal = false;
+  modalVerb: ModalVerb = ModalVerb.Create;
+  modalShowing = false;
+  modalLoadingState = ClrLoadingState.DEFAULT;
 
   constructor(
     private route: ActivatedRoute,
-    private modalService: NzModalService,
-    private message: NzMessageService,
+    private notification: NotificationService,
     private svs: SerializableValueService,
   ) { }
 
@@ -70,84 +78,97 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
     this.svs.deleteProperty(this.propertyType, id).subscribe(
       ok => {
         this.setValues(this.values.filter(e => e['id'] !== id));
-        this.createSuccessNotification('Property "' + valueToDelete['name'] + '" has been deleted.');
+        this.notification.success('Property "' + valueToDelete['name'] + '" has been deleted.');
       },
       error => alert('There was an error while deleting the property: ' + error)
     );
   }
 
   private getValue(id: number) {
-    return this.values.filter(v => v['id'] === id)[0];
+    return this.values.find(v => v['id'] === id);
   }
 
-  showCreateModal(tplContent: TemplateRef<{}>): void {
-    this.valueToCreate = {};
-    this.showModal('Create', tplContent, () => new Promise((resolve, fail) => {
-        this.svs.createProperty(this.propertyType, this.valueToCreate).subscribe(
-          createdValue => {
-            this.values.push(createdValue);
-            this.setValues(this.values); // sort the stuff...
-            this.createSuccessNotification('Property "' + createdValue['name'] + '" has been created.');
-            resolve();
-          },
-          error => {
-            alert(error.error.errors[0]);
-            fail();
-          }
-        );
-      }));
+  showCreateModal(): void {
+    this.showModal(ModalVerb.Create, {});
   }
 
-  showEditModal(tplContent: TemplateRef<{}>, id: number): void {
-    const _this_ = this;
-    this.valueToCreate = {};
+  showEditModal(id: number): void {
+    this.showModal(ModalVerb.Edit, this.createCopyOf(id));
+  }
+
+  private createCopyOf(id: number): {} {
+    const value = {};
     const valueToEdit = this.getValue(id);
-    for (const member of this.members) {
-      this.valueToCreate[member.name] = valueToEdit[member.name];
-    }
-    this.showModal('Edit', tplContent, () => {
-      const unfilledArguments = [];
-      for (const member of this.members) {
-        if (member.required && !_this_.valueToCreate[member.name]) {
-          unfilledArguments.push(member.name);
+    value['id'] = valueToEdit['id'];
+    this.members.forEach(m => {
+      value[m.name] = valueToEdit[m.name];
+    });
+    return value;
+  }
+
+  private showModal(verb: ModalVerb, value: {}): void {
+    this.valueToCreate = value;
+    this.modalVerb = verb;
+    this.modalLoadingState = ClrLoadingState.DEFAULT;
+    this.modalShowing = true;
+  }
+
+  clickCancelModal(): void {
+    this.modalShowing = false;
+  }
+
+  clickOkInCreateModal(): void {
+    this.modalLoadingState = ClrLoadingState.LOADING;
+    this.svs.createProperty(this.propertyType, this.valueToCreate).subscribe(
+      createdValue => {
+        this.values.push(createdValue);
+        this.setValues(this.values); // sort the stuff...
+        this.notification.success('Property "' + createdValue['name'] + '" has been created.');
+        this.modalLoadingState = ClrLoadingState.SUCCESS;
+        this.modalShowing = false;
+      },
+      error => {
+        this.modalLoadingState = ClrLoadingState.ERROR;
+        if (error.error && error.error.errors && error.error.errors instanceof Array) {
+          error.error.errors.forEach(message => {
+            this.notification.error(message);
+          });
+        } else {
+          // TODO: error handling
+          console.log(error);
+          alert(error);
         }
       }
-      if (unfilledArguments.length === 0) {
-        return new Promise((resolve, fail) => {
-          _this_.svs.updateProperty(_this_.propertyType, id, _this_.valueToCreate).subscribe(
-            changedValue => {
-              for (const member of this.members) {
-                valueToEdit[member.name] = changedValue[member.name];
-              }
-              _this_.setValues(_this_.values); // sort the stuff...
-              _this_.createSuccessNotification('Changes for property "' + changedValue['name'] + '" have been saved.');
-              resolve();
-            },
-            error => {
-              alert(error.error.errors[0]);
-              fail();
-            }
-          );
+    );
+  }
+
+  clickOkInEditModal(): void {
+    this.modalLoadingState = ClrLoadingState.LOADING;
+    const id = this.valueToCreate['id'];
+    delete this.valueToCreate['id'];
+    this.svs.updateProperty(this.propertyType, id, this.valueToCreate).subscribe(
+      editedValue => {
+        const value = this.values.find(v => v['id'] === editedValue['id']);
+        this.members.forEach(m => {
+          value[m.name] = editedValue[m.name];
         });
-      } else {
-        this.message.error('Please fill all required fields. The following field(s) are missing: ' + unfilledArguments.join(', '));
-        return false;
+        this.setValues(this.values); // sort the stuff...
+        this.notification.success('Property "' + editedValue['name'] + '" has been updated.');
+        this.modalLoadingState = ClrLoadingState.SUCCESS;
+        this.modalShowing = false;
+      },
+      error => {
+        this.modalLoadingState = ClrLoadingState.ERROR;
+        if (error.error && error.error.errors && error.error.errors instanceof Array) {
+          error.error.errors.forEach(message => {
+            this.notification.error(message);
+          });
+        } else {
+          // TODO: error handling
+          console.log(error);
+          alert(error);
+        }
       }
-    });
-  }
-
-  private showModal<T>(verb: string, tplContent: TemplateRef<{}>, promise: () => false | Promise<T>) {
-    this.modalService.create({
-      nzTitle: verb + ' ' + this.propertyType + ' entry',
-      nzContent: tplContent,
-      nzMaskClosable: true,
-      nzClosable: false,
-      nzOnOk: promise,
-      nzOnCancel: () => this.valueToCreate = {}
-    });
-  }
-
-  private createSuccessNotification(text: string): void {
-    this.message.success(text);
+    );
   }
 }
