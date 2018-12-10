@@ -8,6 +8,7 @@ import { DashboardService, DashboardInfo } from 'src/oversigt-client';
 })
 export class ConfigDashboardsComponent implements OnInit {
   dashboards: DashboardInfo[] = [];
+  dashboardFilter = '';
 
   constructor(
     private ds: DashboardService,

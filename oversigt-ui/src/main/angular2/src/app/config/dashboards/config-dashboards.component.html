@@ -1,7 +1,16 @@
 <app-header [hidden]="outlet.isActivated" [title]="'Dashboards'" [level]="1" [additional]="list"></app-header>
 <ng-template #list>
-  <ul>
-    <li *ngFor="let dashboard of dashboards"><a routerLink="{{dashboard.id}}">{{dashboard.title}}</a></li>
-  </ul>
+  <div class="clr-input-wrapper">
+    <input class="clr-input" type="text" [(ngModel)]="dashboardFilter" placeholder="Filter dashboards" id="dashboardFilter" name="dashboardFilter"/>
+  </div>
 </ng-template>
 <router-outlet #outlet="outlet"></router-outlet>
+
+<div [hidden]="outlet.isActivated" class="list-group">
+  <div *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter" class="list-group-item content">
+    <a class="btn btn-link" routerLink="{{dashboard.id}}">{{dashboard.title}}</a>
+  </div>
+  <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
+    Your filter did not return any dashboard.
+  </div>
+</div>
