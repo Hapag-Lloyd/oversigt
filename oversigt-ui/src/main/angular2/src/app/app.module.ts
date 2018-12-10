@@ -49,9 +49,9 @@ const appRoutes: Routes = [
                                       canActivate: [AuthGuard],
                                       canActivateChild: [AuthGuard], children: [
     { path: 'createDashboard',        component: ConfigurationComponent },
-    { path: 'dashboards',             component: ConfigDashboardsComponent, children: [
-      { path: ':id',                  component: ConfigDashboardsEditComponent, children: [
-        { path: ':id',                component: ConfigurationComponent }
+    { path: 'dashboards',             component: ConfigDashboardsComponent, runGuardsAndResolvers: 'always', children: [
+      { path: ':dashboardId',         component: ConfigDashboardsEditComponent, children: [
+        { path: ':widgetId',          component: ConfigurationComponent }
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
