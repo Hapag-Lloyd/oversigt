@@ -1,11 +1,41 @@
+.mini-map {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mini-dashboard {
+  margin: 2ex;
+  box-shadow: 0 0 1ex 0 rgba(0, 0, 0, 0.2), 0 0 3ex 0 rgba(0, 0, 0, 0.19);
+  position: relative;
+  width: 15em;
+  height: 10em;
+  flex-shrink: 0;
+}
+
+
 .mini-widget {
   position: absolute;
   border: 1px solid grey;
   text-align: center;
 }
 
-.mini-widget > * {
+.mini-widget>* {
   position: absolute;
   top: 50%;
   transform: translateY(-50%) translateX(-50%);
+}
+
+.mini-info {
+  flex-grow: 1;
+
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
+.mini-info>* {
+  margin: 1ex;
 }

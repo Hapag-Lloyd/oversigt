@@ -36,14 +36,14 @@
     </div>
   </div>
 
-  <div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-start">
-    <div class="mini-dashboard" [style.width.em]="dashboard.columns" [style.height.em]="countRows()" style="margin: 2ex; box-shadow: 0 0 1ex 0 rgba(0, 0, 0, 0.2), 0 0 3ex 0 rgba(0, 0, 0, 0.19); position: relative;">
+  <div class="mini-map">
+    <div class="mini-dashboard" [style.width.em]="dashboard.columns" [style.height.em]="countRows()">
       <div *ngFor="let info of widgetInfos" class="mini-widget" [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
         <span class="badge">{{info.id}}</span>
       </div>
     </div>
-    <div>
-      <div *ngFor="let info of widgetInfos" style="margin: 1ex">
+    <div class="mini-info">
+      <div *ngFor="let info of widgetInfos">
         <span class="badge">{{info.id}}</span>
         <span style="margin-left: 1ex">{{info.name}}</span>
       </div>
