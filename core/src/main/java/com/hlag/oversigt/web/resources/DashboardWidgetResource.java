@@ -52,6 +52,8 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Api(tags = { "Dashboard-Widget" })
 @Path("/dashboards/{dashboardId}/widgets")
@@ -267,6 +269,8 @@ public class DashboardWidgetResource {
 		return ok().build();
 	}
 
+	@AllArgsConstructor
+	@Getter
 	public static class WidgetInfo {
 		@NotNull
 		@Positive
@@ -276,26 +280,30 @@ public class DashboardWidgetResource {
 		private final String name;
 		private final String view;
 
+		@NotNull
+		@PositiveOrZero
+		private final int posX;
+		@NotNull
+		@PositiveOrZero
+		private final int posY;
+		@NotNull
+		@Min(1)
+		@Positive
+		private final int sizeX;
+		@NotNull
+		@Min(1)
+		@Positive
+		private final int sizeY;
+
 		public WidgetInfo(Widget widget) {
-			this(widget.getId(), widget.getName(), widget.getView());
-		}
-
-		public WidgetInfo(int id, String name, String view) {
-			this.id = id;
-			this.name = name;
-			this.view = view;
-		}
-
-		public int getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getView() {
-			return view;
+			this(
+				widget.getId(),
+				widget.getName(),
+				widget.getView(),
+				widget.getPosX(),
+				widget.getPosY(),
+				widget.getSizeX(),
+				widget.getSizeY());
 		}
 	}
 

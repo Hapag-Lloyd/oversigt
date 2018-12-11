@@ -1,0 +1,11 @@
+.mini-widget {
+  position: absolute;
+  border: 1px solid grey;
+  text-align: center;
+}
+
+.mini-widget > * {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(-50%);
+}
