@@ -47,6 +47,10 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     });
   }
 
+  countColumns(): number {
+    return Math.max(this.dashboard.columns, Math.max(...this.widgetInfos.map(i => i.posX + i.sizeX)) - 1);
+  }
+
   countRows(): number {
     return Math.max(...this.widgetInfos.map(i => i.posY + i.sizeY)) - 1;
   }
