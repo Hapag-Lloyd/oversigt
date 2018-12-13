@@ -2,7 +2,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TagInputModule } from 'ngx-chips';
 
 import { AppComponent } from './app.component';
 import { DashboardService, ApiModule, Configuration } from '../oversigt-client';
@@ -115,6 +116,8 @@ export function initializeApiConfiguration(): Configuration {
     JsonSchemaEditorModule,
     ClarityModule,
     ClrFormsNextModule,
+    TagInputModule,
+    ReactiveFormsModule,
   ],
   providers: [DashboardService],
   bootstrap: [AppComponent]

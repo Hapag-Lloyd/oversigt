@@ -113,15 +113,15 @@
 <ng-template #dbOwners>
   <form class="clr-form clr-form-horizontal">
     <div class="card-block">
-      <div class="clr-form-control">
+      <div class="clr-form-control chip-editor">
         <label for="dashboard_owners" class="clr-control-label">Owners</label>
         <div class="clr-control-container">
           <div class="clr-input-wrapper">
-            <input type="text" id="dashboard_owners" name="dashboard_owners" class="clr-input">
+            <tag-input [(ngModel)]='dashboard.owners' [theme]="'oversigt-theme'" [placeholder]="'Add owner'" [inputId]="'dashboard_owners'" [inputClass]="'clr-input'" [hideForm]="true" [modelAsStrings]="true" [ripple]="false"></tag-input>
           </div>
         </div>
       </div>
-      <div class="clr-form-control">
+      <div class="clr-form-control chip-editor">
         <label for="dashboard_editors" class="clr-control-label">Editors</label>
         <div class="clr-control-container">
           <div class="clr-input-wrapper">

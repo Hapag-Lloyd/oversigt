@@ -1,3 +1,5 @@
+@import "oversigt-theme.scss";
+
 .mini-map {
   display: flex;
   flex-flow: row nowrap;
@@ -38,4 +40,8 @@
 
 .mini-info>* {
   margin: 1ex;
+}
+
+.chip-editor .clr-input-wrapper {
+  max-height: unset;
 }

@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-config-dashboards-edit',
   templateUrl: './config-dashboards-edit.component.html',
-  styleUrls: ['./config-dashboards-edit.component.css']
+  styleUrls: ['./config-dashboards-edit.component.scss']
 })
 export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   private subscription: Subscription = null;
