@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
@@ -62,6 +63,9 @@ public class SystemResource {
 
 	@Inject
 	private EventSender eventSender;
+
+	@Inject
+	private Authenticator authenticator;
 
 	@Inject
 	public SystemResource(@Named("Shutdown") Runnable shutdown) {
@@ -235,7 +239,21 @@ public class SystemResource {
 				return ErrorResponse.notFound("The event source does not exist", filter);
 			}
 		}
+	}
 
+	@GET
+	@Path("/users/{userId}/validity")
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "A boolean indicating whether or not the user id is valid", response = boolean.class) })
+	@JwtSecured
+	@ApiOperation(value = "Check a userid's validity", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
+	)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public boolean isUserValid(
+			@PathParam("userId") @ApiParam(value = "The ID of the user to check", required = true) String userId) {
+		return authenticator.isUsernameValid(userId);
 	}
 
 	public static class LoggerInfo {
