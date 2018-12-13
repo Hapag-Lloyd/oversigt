@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo } from 'src/oversigt-client';
+import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo, SystemService } from 'src/oversigt-client';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -15,11 +16,30 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   dashboard: Dashboard = null;
   widgetInfos: WidgetInfo[] = [];
 
+  // for chip editor
+  syncUserIdValidators = [];
+  asyncUserIdValidators = [];
+
   constructor(
     private route: ActivatedRoute,
     private dashboardService: DashboardService,
     private widgetService: DashboardWidgetService,
-  ) { }
+    private systemService: SystemService,
+  ) {
+    const isUserIdValid = (control: FormControl) => {
+      return new Promise(resolve => {
+        const userid = control.value;
+        systemService.isUserValid(userid).subscribe(valid => {
+          resolve(valid);
+        },
+        error => {
+          resolve(false);
+        });
+      });
+    };
+    this.asyncUserIdValidators = [isUserIdValid];
+    this.syncUserIdValidators = [(control: FormControl) => control.value.length > 0];
+  }
 
   ngOnInit() {
     this.subscription = this.route.url.subscribe(_ => {

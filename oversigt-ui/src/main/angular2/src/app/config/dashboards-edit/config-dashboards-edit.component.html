@@ -117,7 +117,8 @@
         <label for="dashboard_owners" class="clr-control-label">Owners</label>
         <div class="clr-control-container">
           <div class="clr-input-wrapper">
-            <tag-input [(ngModel)]='dashboard.owners' [theme]="'oversigt-theme'" [placeholder]="'Add owner'" [inputId]="'dashboard_owners'" [inputClass]="'clr-input'" [hideForm]="true" [modelAsStrings]="true" [ripple]="false"></tag-input>
+            <tag-input [(ngModel)]='dashboard.owners' [inputClass]="'clr-input'" [theme]="'oversigt-theme'" [placeholder]="'Add owner'" [secondaryPlaceholder]="'Specify owners'" [inputId]="'dashboard_owners'" [modelAsStrings]="true" [ripple]="false"></tag-input>
+            <!--[asyncValidators]="asyncUserIdValidators"-->
           </div>
         </div>
       </div>
