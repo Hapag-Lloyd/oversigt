@@ -3,9 +3,7 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import en from '@angular/common/locales/en';
 
-import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
 import { AppComponent } from './app.component';
 import { DashboardService, ApiModule, Configuration } from '../oversigt-client';
 import { WelcomeComponent } from './welcome/welcome.component';
@@ -21,7 +19,6 @@ import { ConfigLogsLoggerComponent } from './config/system-loggers/config-logs-l
 import { ConfigEventsComponent } from './config/system-events/config-events.component';
 import { ConfigEventsourcesComponent } from './config/eventsources-main/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { registerLocaleData } from '@angular/common';
 import { ConfigEventsourceInfoComponent } from './config/eventsource-info/config-eventsource-info.component';
 import { ConfigEventsourceCreateComponent } from './config/eventsource-create/config-eventsource-create.component';
 import { ConfigEventsourceEditorComponent } from './config/eventsource-editor/config-eventsource-editor.component';
@@ -39,8 +36,6 @@ import { AuthGuard } from './guards/auth.guard';
 import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
 import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
 import { ConfigEventsourcesListComponent } from './config/eventsources-list/config-eventsources-list.component';
-
-registerLocaleData(en);
 
 const appRoutes: Routes = [
   { path: '',                         component: WelcomeComponent },
@@ -117,12 +112,11 @@ export function initializeApiConfiguration(): Configuration {
     ApiModule.forRoot(initializeApiConfiguration),
     FormsModule,
     BrowserAnimationsModule,
-    NgZorroAntdModule,
     JsonSchemaEditorModule,
     ClarityModule,
     ClrFormsNextModule,
   ],
-  providers: [DashboardService, { provide: NZ_I18N, useValue: en_US }],
+  providers: [DashboardService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
