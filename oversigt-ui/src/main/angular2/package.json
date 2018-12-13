@@ -20,17 +20,18 @@
     "@angular/platform-browser": "^6.1.0",
     "@angular/platform-browser-dynamic": "^6.1.0",
     "@angular/router": "^6.1.0",
+    "@clr/angular": "^0.13.10",
+    "@clr/icons": "^0.13.10",
+    "@clr/ui": "^0.13.10",
     "@types/jquery": "^3.3.17",
+    "@webcomponents/custom-elements": "^1.0.0",
     "core-js": "^2.5.4",
     "jquery": "^3.3.1",
     "ng-zorro-antd": "^1.7.1",
+    "ngx-chips": "^2.0.0-beta.0",
     "rxjs": "^6.0.0",
     "rxjs-compat": "^6.3.1",
-    "zone.js": "~0.8.26",
-    "@clr/angular": "^0.13.10",
-    "@clr/ui": "^0.13.10",
-    "@clr/icons": "^0.13.10",
-    "@webcomponents/custom-elements": "^1.0.0"
+    "zone.js": "~0.8.26"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.7.0",
