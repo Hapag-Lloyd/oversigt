@@ -7,13 +7,13 @@
         <div class="card-header">
             Dashboard Settings
         </div>
-        <div class="card-block">
-          <ng-container *ngTemplateOutlet="dbSettings"></ng-container>
+        <ng-container *ngTemplateOutlet="dbSettings"></ng-container>
+      </div>
+      <div class="card">
+        <div class="card-header">
+            Dashboard Rights
         </div>
-        <div class="card-footer">
-          <button class="btn btn-sm btn-link">Footer Action 1</button>
-          <button class="btn btn-sm btn-link">Footer Action 2</button>
-        </div>
+        <ng-container *ngTemplateOutlet="dbOwners"></ng-container>
       </div>
     </div>
     <div class="clr-col-12 clr-col-sm-12 clr-col-md-12 clr-col-lg-9 clr-col-xl-7">
@@ -25,76 +25,113 @@
           <ng-container *ngTemplateOutlet="dbWidgets"></ng-container>
         </div>
       </div>
+      <div class="card">
+        <div class="card-header">
+            Widget Settings
+        </div>
+        <div class="card-block">
+          nothing yet
+        </div>
+      </div>
     </div>
   </div>
-
-
 </ng-container>
 
 
 <ng-template #dbSettings>
   <form class="clr-form clr-form-horizontal">
-    <div class="clr-form-control">
-      <label for="dashboard_title" class="clr-control-label">Title</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.title" type="text" id="dashboard_title" name="dashboard_title" placeholder="{{dashboard.id}}" class="clr-input">
+    <div class="card-block">
+      <div class="clr-form-control">
+        <label for="dashboard_title" class="clr-control-label">Title</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.title" type="text" id="dashboard_title" name="dashboard_title" placeholder="{{dashboard.id}}" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_width" class="clr-control-label">Screen width</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.screenWidth" type="number" id="dashboard_width" name="dashboard_width" min="1" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_height" class="clr-control-label">Screen height</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.screenHeight" type="number" id="dashboard_height" name="dashboard_height" min="1" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_columns" class="clr-control-label">Columns</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.columns" type="number" id="dashboard_columns" name="dashboard_columns" min="1" max="30" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_background_color" class="clr-control-label">Background Color</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.backgroundColor" type="color" id="dashboard_background_color" name="dashboard_background_color" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_color_scheme" class="clr-control-label">Color Scheme</label>
+        <div class="clr-select-wrapper">
+          <select [(ngModel)]="dashboard.colorScheme" id="dashboard_color_scheme" name="dashboard_color_scheme" class="clr-select">
+            <option value="COLORED">None</option>
+            <option value="SINGLE_COLOR">Single Color</option>
+            <option value="TILED_VERTICAL_GRADIENT">Tiled vertical gradient</option>
+            <option value="TILED_HORIZONTAL_GRADIENT">Tiled horizontal gradient</option>
+            <option value="VERTICAL_GRADIENT">Vertical gradient</option>
+            <option value="HORIZONTAL_GRADIENT">Horizontal gradient</option>
+          </select>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_color_1" class="clr-control-label">Color</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input [(ngModel)]="dashboard.foregroundColorStart" type="color" id="dashboard_foreground_color_start" name="dashboard_foreground_color_start" class="clr-input">
+            <input [(ngModel)]="dashboard.foregroundColorEnd" type="color" id="dashboard_foreground_color_end" name="dashboard_foreground_color_end" class="clr-input">
+          </div>
         </div>
       </div>
     </div>
-    <div class="clr-form-control">
-      <label for="dashboard_width" class="clr-control-label">Screen width</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.screenWidth" type="number" id="dashboard_width" name="dashboard_width" min="1" class="clr-input">
+    <div class="card-footer">
+      <button class="btn btn-primary">Save</button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #dbOwners>
+  <form class="clr-form clr-form-horizontal">
+    <div class="card-block">
+      <div class="clr-form-control">
+        <label for="dashboard_owners" class="clr-control-label">Owners</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input type="text" id="dashboard_owners" name="dashboard_owners" class="clr-input">
+          </div>
+        </div>
+      </div>
+      <div class="clr-form-control">
+        <label for="dashboard_editors" class="clr-control-label">Editors</label>
+        <div class="clr-control-container">
+          <div class="clr-input-wrapper">
+            <input type="text" id="dashboard_editors" name="dashboard_editors" class="clr-input">
+          </div>
         </div>
       </div>
     </div>
-    <div class="clr-form-control">
-      <label for="dashboard_height" class="clr-control-label">Screen height</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.screenHeight" type="number" id="dashboard_height" name="dashboard_height" min="1" class="clr-input">
-        </div>
-      </div>
-    </div>
-    <div class="clr-form-control">
-      <label for="dashboard_columns" class="clr-control-label">Columns</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.columns" type="number" id="dashboard_columns" name="dashboard_columns" min="1" max="30" class="clr-input">
-        </div>
-      </div>
-    </div>
-    <div class="clr-form-control">
-      <label for="dashboard_background_color" class="clr-control-label">Background Color</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.backgroundColor" type="color" id="dashboard_background_color" name="dashboard_background_color" class="clr-input">
-        </div>
-      </div>
-    </div>
-    <div class="clr-form-control">
-      <label for="dashboard_color_scheme" class="clr-control-label">Color Scheme</label>
-      <div class="clr-select-wrapper">
-        <select [(ngModel)]="dashboard.colorScheme" id="dashboard_color_scheme" name="dashboard_color_scheme" class="clr-select">
-          <option value="COLORED">None</option>
-          <option value="SINGLE_COLOR">Single Color</option>
-          <option value="TILED_VERTICAL_GRADIENT">Tiled vertical gradient</option>
-          <option value="TILED_HORIZONTAL_GRADIENT">Tiled horizontal gradient</option>
-          <option value="VERTICAL_GRADIENT">Vertical gradient</option>
-          <option value="HORIZONTAL_GRADIENT">Horizontal gradient</option>
-        </select>
-      </div>
-    </div>
-    <div class="clr-form-control">
-      <label for="dashboard_color_1" class="clr-control-label">Color</label>
-      <div class="clr-control-container">
-        <div class="clr-input-wrapper">
-          <input [(ngModel)]="dashboard.foregroundColorStart" type="color" id="dashboard_foreground_color_start" name="dashboard_foreground_color_start" class="clr-input">
-          <input [(ngModel)]="dashboard.foregroundColorEnd" type="color" id="dashboard_foreground_color_end" name="dashboard_foreground_color_end" class="clr-input">
-        </div>
-      </div>
+    <div class="card-footer">
+      <button class="btn btn-primary">Update</button>
     </div>
   </form>
 </ng-template>
