@@ -1,8 +1,11 @@
 package com.hlag.oversigt.web.resources;
 
-import static com.hlag.oversigt.web.api.ErrorResponse.*;
+import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
+import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
+import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.*;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
 import java.util.List;
