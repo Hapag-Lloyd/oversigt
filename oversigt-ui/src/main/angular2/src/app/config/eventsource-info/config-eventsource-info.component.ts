@@ -13,9 +13,12 @@ export class ConfigEventsourceInfoComponent extends AbstractValueAccessor implem
   @Input() description: string = null;
   @Input() readOnly = false;
   @Input() inputType = 'text';
-  @Input() secondaryInput: TemplateRef<any> = null;
 
   ngOnInit() {
+  }
+
+  isArray(): boolean {
+    return this.value instanceof Array;
   }
 
 }

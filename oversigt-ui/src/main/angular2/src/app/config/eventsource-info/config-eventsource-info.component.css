@@ -10,6 +10,13 @@ input[readonly] {
   width: 100%;
 }
 
+.clr-input-wrapper {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
 .two-inputs input {
   width: 49%;
 }

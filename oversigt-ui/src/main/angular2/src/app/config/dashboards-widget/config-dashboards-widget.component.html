@@ -10,10 +10,8 @@
         <app-config-eventsource-info name="widget_name" [id]="'widget_name'" [title]="'Name'" [ngModel]="widget.name" [readOnly]="false"></app-config-eventsource-info>
         <app-config-eventsource-info name="widget_title" [id]="'widget_title'" [title]="'Title'" [ngModel]="widget.title" [readOnly]="false"></app-config-eventsource-info>
         <app-config-eventsource-info name="widget_type" [id]="'widget_type'" [title]="'Type'" [ngModel]="widget.type" [readOnly]="true"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_posX" [id]="'widget_posX'" [title]="'Position'" [ngModel]="widget.posX" [inputType]="'number'" [readOnly]="false" [secondaryInput]="posY"></app-config-eventsource-info>
-        <!--<app-config-eventsource-info name="widget_posY" [id]="'widget_posY'" [title]="'PositionY'" [ngModel]="widget.posY" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>-->
-        <app-config-eventsource-info name="widget_sizeX" [id]="'widget_sizeX'" [title]="'SizeX'" [ngModel]="widget.sizeX" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_sizeY" [id]="'widget_sizeY'" [title]="'SizeY'" [ngModel]="widget.sizeY" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_pos" [id]="'widget_pos'" [title]="'Position'" [ngModel]="[widget.posX,widget.posY]" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_size" [id]="'widget_size'" [title]="'Size'" [ngModel]="[widget.sizeX,widget.sizeY]" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
         <app-config-eventsource-info name="widget_backgroundColor" [id]="'widget_backgroundColor'" [title]="'Background Color'" [ngModel]="widget.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
         <app-config-eventsource-info name="widget_style" [id]="'widget_style'" [title]="'Inline CSS'" [ngModel]="widget.style" [readOnly]="false"></app-config-eventsource-info>
         <ng-template #posY>
