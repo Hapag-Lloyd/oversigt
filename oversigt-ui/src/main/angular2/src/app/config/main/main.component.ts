@@ -17,8 +17,10 @@ export class ConfigurationComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    const loadedUrl = this.route.snapshot.pathFromRoot.map(p => p.url.map(u => u.path).join('/')).join('/');
-    this.menuItem = this.menuItems.find(mi => mi.link === loadedUrl);
+    const loadedUrl = this.route.snapshot.pathFromRoot.map(p => p.url.map(u => u.path).join('/')).join('/').replace('//', '/');
+    this.menuItem = this.menuItems.find(mi => {
+      return mi.link === loadedUrl;
+    });
   }
 
   hasSelectedChild(): boolean {

@@ -41,9 +41,9 @@ import { ConfigEventsourcesListComponent } from './config/eventsources-list/conf
 import { ConfigDashboardWidgetComponent } from './config/dashboards-widget/config-dashboards-widget.component';
 
 const appRoutes: Routes = [
-  { path: '',                         component: WelcomeComponent },
-  { path: 'login',                    component: LoginComponent },
-  { path: 'config',                   component: ConfigurationComponent,
+  { path: 'login',                    component: LoginComponent, },
+  { path: '',                         component: ConfigurationComponent, // WelcomeComponent, // },
+  // { path: 'config',                   component: ConfigurationComponent,
                                       canActivate: [AuthGuard],
                                       canActivateChild: [AuthGuard], children: [
     { path: 'createDashboard',        component: ConfigurationComponent },
@@ -69,7 +69,7 @@ const appRoutes: Routes = [
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
   ] },
-  { path: ':dashboardId',             component: DashboardComponent },
+  // { path: ':dashboardId',             component: DashboardComponent },
 /*  { path: '**', component: PageNotFoundComponent }*/
 ];
 

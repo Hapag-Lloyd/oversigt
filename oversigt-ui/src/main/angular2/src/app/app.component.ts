@@ -10,19 +10,21 @@ export class MenuItem {
   children: MenuItem[];
 }
 
+const PREFIX = '';
+
 export const MENU_ITEMS: MenuItem[] = [
-  { title: 'Event Sources', link: '/config/eventSources', id: 'eventsources', children: [
-    /*{ title: 'Create Event Source', link: '/config/eventSources/create', children: []},
-    { title: 'Configure Event Sources', link: '/config/eventSources/list', children: []},*/
+  { title: 'Event Sources', link: PREFIX + '/eventSources', id: 'eventsources', children: [
+    /*{ title: 'Create Event Source', link: PREFIX + '/eventSources/create', children: []},
+    { title: 'Configure Event Sources', link: PREFIX + '/eventSources/list', children: []},*/
   ]},
-  { title: 'Dashboards', link: '/config/dashboards', id: 'dashboards', children: []},
-  { title: 'Properties', link: '/config/properties', id: 'properties', children: []},
-  { title: 'System', link: '/config/system', id: 'system', children: [
-    { title: 'Events', link: '/config/system/events', id: 'system-events', children: []},
-    { title: 'Log Files', link: '/config/system/logfiles', id: 'system-logfiles', children: []},
-    { title: 'Loggers', link: '/config/system/loggers', id: 'system-loggers', children: []},
-    { title: 'Threads', link: '/config/system/threads', id: 'system-threads', children: []},
-    { title: 'Server', link: '/config/system/server', id: 'system-server', children: []},
+  { title: 'Dashboards', link: PREFIX + '/dashboards', id: 'dashboards', children: []},
+  { title: 'Properties', link: PREFIX + '/properties', id: 'properties', children: []},
+  { title: 'System', link: PREFIX + '/system', id: 'system', children: [
+    { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: []},
+    { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', children: []},
+    { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', children: []},
+    { title: 'Threads', link: PREFIX + '/system/threads', id: 'system-threads', children: []},
+    { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', children: []},
   ]},
 ];
 
@@ -56,13 +58,13 @@ export class AppComponent implements OnInit {
     this.isCollapsed = false;
     this.propertiesService.loadProperties(props => {
       const item = this.menuItems.find(mi => mi.title === 'Properties');
-      item.children = props.map(p => <MenuItem>{title: p, link: '/config/properties/' + p, children: []});
+      item.children = props.map(p => <MenuItem>{title: p, link: PREFIX + '/properties/' + p, children: []});
     });
   }
 
   isShowingConfiguration(): boolean {
     const url = this.router.url;
-    return url.startsWith('/config/') || url === '/config';
+    return url.startsWith(PREFIX + '/') || url === '/config';
   }
 
   getSelectedMenuItem(): MenuItem {
