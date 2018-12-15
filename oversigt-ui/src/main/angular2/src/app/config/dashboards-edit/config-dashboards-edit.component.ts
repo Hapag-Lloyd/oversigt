@@ -17,6 +17,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   owners: string[] = [];
   editors: string[] = [];
   widgetInfos: WidgetInfo[] = [];
+  foregroundColors: string[] = [];
 
   // for chip editor
   syncUserIdValidators = [];
@@ -61,6 +62,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
     this.dashboardService.readDashboard(this.dashboardId).subscribe(dashboard => {
       this.dashboard = dashboard;
+      this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
       // TODO: Error handling
     });
     this.widgetService.listWidgets(this.dashboardId).subscribe(widgetInfos => {

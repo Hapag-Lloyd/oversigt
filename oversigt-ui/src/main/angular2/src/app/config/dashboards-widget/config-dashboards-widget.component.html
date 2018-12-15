@@ -7,13 +7,13 @@
           <div style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
       </div>
       <div class="card-block">
-        <app-config-eventsource-info name="widget_name" [id]="'widget_name'" [title]="'Name'" [ngModel]="widget.name" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_title" [id]="'widget_title'" [title]="'Title'" [ngModel]="widget.title" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_type" [id]="'widget_type'" [title]="'Type'" [ngModel]="widget.type" [readOnly]="true"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_pos" [id]="'widget_pos'" [title]="'Position'" [ngModel]="[widget.posX,widget.posY]" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_size" [id]="'widget_size'" [title]="'Size'" [ngModel]="[widget.sizeX,widget.sizeY]" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_backgroundColor" [id]="'widget_backgroundColor'" [title]="'Background Color'" [ngModel]="widget.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
-        <app-config-eventsource-info name="widget_style" [id]="'widget_style'" [title]="'Inline CSS'" [ngModel]="widget.style" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_name" [id]="'widget_name'" [title]="'Name'" [(ngModel)]="widget.name" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_title" [id]="'widget_title'" [title]="'Title'" [(ngModel)]="widget.title" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_type" [id]="'widget_type'" [title]="'Type'" [(ngModel)]="widget.type" [readOnly]="true"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_pos" [id]="'widget_pos'" [title]="'Position'" [(ngModel)]="widgetPosition" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_size" [id]="'widget_size'" [title]="'Size'" [(ngModel)]="widgetSize" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_backgroundColor" [id]="'widget_backgroundColor'" [title]="'Background Color'" [(ngModel)]="widget.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_style" [id]="'widget_style'" [title]="'Inline CSS'" [(ngModel)]="widget.style" [readOnly]="false"></app-config-eventsource-info>
         <ng-template #posY>
           <input class="clr-input" [(ngModel)]="widget.posY" type="number" id="info_widget_posY"/>
         </ng-template>

@@ -14,6 +14,8 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   private widgetId: number = null;
   widget: WidgetDetails = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
+  widgetSize: number[] = null;
+  widgetPosition: number[] = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -42,6 +44,8 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.eventSourceDescriptor = null;
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, true).subscribe(widget => {
       this.widget = widget;
+      this.widgetSize = [widget.sizeX, widget.sizeY];
+      this.widgetPosition = [widget.posX, widget.posY];
       this.eventSourceService.readInstance(widget.eventSourceInstanceId).subscribe(esi => {
         this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
           this.eventSourceDescriptor = esd;
