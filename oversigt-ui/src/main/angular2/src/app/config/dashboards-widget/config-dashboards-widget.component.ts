@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DashboardWidgetService, WidgetDetails } from 'src/oversigt-client';
+import { DashboardWidgetService, WidgetDetails, EventSourceService } from 'src/oversigt-client';
 
 @Component({
   selector: 'app-config-dashboard-widget',
@@ -17,6 +17,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private dashboardWidgetService: DashboardWidgetService,
+    private eventSourceService: EventSourceService,
   ) { }
 
   ngOnInit() {
@@ -36,7 +37,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.dashboardId = this.route.snapshot.parent.paramMap.get('dashboardId');
     this.widgetId = +this.route.snapshot.paramMap.get('widgetId');
 
-    this.widget = null;
+    this.widget = null; // TODO: show loading
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, true).subscribe(widget => {
       this.widget = widget;
     },

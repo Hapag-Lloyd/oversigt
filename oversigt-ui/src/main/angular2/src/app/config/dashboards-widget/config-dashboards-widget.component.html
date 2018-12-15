@@ -1,8 +1,18 @@
 <div *ngIf="widget !== null" class="card">
-  <div class="card-header">
-      {{widget.name}}
-  </div>
-  <div class="card-block">
-    some more detail
-  </div>
+  <form>
+    <div class="card-header">
+        {{widget.name}}
+    </div>
+    <div class="card-block">
+      some more detail
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary">Save</button>
+    </div>
+  </form>
+</div>
+<div *ngIf="widget === null" class="loading">
+  <span class="spinner">
+    Loading...
+  </span>
 </div>
