@@ -14,6 +14,8 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   private dashboardId: string = null;
   dashboard: Dashboard = null;
+  owners: string[] = [];
+  editors: string[] = [];
   widgetInfos: WidgetInfo[] = [];
 
   // for chip editor

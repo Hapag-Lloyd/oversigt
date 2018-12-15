@@ -38,6 +38,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.module';
 import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
 import { ConfigEventsourcesListComponent } from './config/eventsources-list/config-eventsources-list.component';
+import { ConfigDashboardWidgetComponent } from './config/dashboards-widget/config-dashboards-widget.component';
 
 const appRoutes: Routes = [
   { path: '',                         component: WelcomeComponent },
@@ -48,7 +49,7 @@ const appRoutes: Routes = [
     { path: 'createDashboard',        component: ConfigurationComponent },
     { path: 'dashboards',             component: ConfigDashboardsComponent, runGuardsAndResolvers: 'always', children: [
       { path: ':dashboardId',         component: ConfigDashboardsEditComponent, children: [
-        { path: ':widgetId',          component: ConfigurationComponent }
+        { path: ':widgetId',          component: ConfigDashboardWidgetComponent }
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
@@ -104,6 +105,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigEventsourcesDetailsComponent,
     FilterForRolePipe,
     ConfigEventsourcesListComponent,
+    ConfigDashboardWidgetComponent,
   ],
   imports: [
     RouterModule.forRoot(
