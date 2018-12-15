@@ -13,6 +13,7 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
   // the property to handle
   @Input() property: EventSourceProperty;
   @Output() propertyDeletion = new EventEmitter();
+  @Input() fixed = false;
 
   // how to handle disabled values
   @Input() canBeDisabled = false;

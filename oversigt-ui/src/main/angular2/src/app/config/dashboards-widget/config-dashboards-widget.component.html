@@ -3,8 +3,8 @@
     <form class="clr-form-horizontal">
 
       <div class="card-header">
+        <div style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
           {{widget.name}} Configuration
-          <div style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
       </div>
       <div class="card-block">
         <app-config-eventsource-info name="widget_name" [id]="'widget_name'" [title]="'Name'" [(ngModel)]="widget.name" [readOnly]="false"></app-config-eventsource-info>
@@ -24,7 +24,7 @@
       </div>
       <div class="card-block">
         <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="property_{{property.name}}"
-          [property]="property" [(ngModel)]="widget.data[property.name]" [canBeDisabled]="false"></app-config-eventsource-editor>
+          [property]="property" [(ngModel)]="widget.data[property.name]" [canBeDisabled]="false" [fixed]="hasEventSourceProperty(property.name)"></app-config-eventsource-editor>
       </div>
 
       <div class="card-footer">

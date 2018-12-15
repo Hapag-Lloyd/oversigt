@@ -7,39 +7,49 @@
   </div>
   <div class="clr-control-container" [ngSwitch]="property.inputType">
     <div *ngSwitchCase="'text'" class="clr-input-wrapper">
-      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="text" [(ngModel)]="value" id="prop_{{property.name}}"/>
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="text" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'number'" class="clr-input-wrapper">
-      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="number" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'date'" class="clr-input-wrapper">
-      <input clrDate class="clr-input" [disabled]="canBeDisabled && !enabled" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input clrDate class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="date" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'password'" class="clr-input-wrapper">
-      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="password" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'url'" class="clr-input-wrapper">
-      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="url" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'color'" class="clr-input-wrapper">
-      <input class="clr-input" [disabled]="canBeDisabled && !enabled" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <input class="clr-input" [disabled]="fixed || (canBeDisabled && !enabled)" type="color" [(ngModel)]="value" id="prop_{{property.name}}" />
     </div>
     <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
       <div class="toggle-switch">
-        <input [disabled]="canBeDisabled && !enabled" type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <input [disabled]="fixed || (canBeDisabled && !enabled)" type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
         <label for="prop_{{property.name}}"></label>
       </div>
     </div>
     <div *ngSwitchCase="'sql'" class="clr-control-container">
-      <textarea class="clr-textarea" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}" placeholder="Enter SQL code"></textarea>
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <textarea class="clr-textarea" [disabled]="fixed || (canBeDisabled && !enabled)" [(ngModel)]="value" id="prop_{{property.name}}" placeholder="Enter SQL code"></textarea>
     </div>
     <div *ngSwitchCase="'enum'" class="clr-select-wrapper">
-      <select class="clr-select" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}">
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <select class="clr-select" [disabled]="fixed || (canBeDisabled && !enabled)" [(ngModel)]="value" id="prop_{{property.name}}">
         <option *ngFor="let si of property.allowedValues" value="{{si}}">{{property.allowedValuesMap[si]}}</option>
       </select>
     </div>
     <div *ngSwitchCase="'duration'" class="clr-select-wrapper">
-      <select class="clr-select" [disabled]="canBeDisabled && !enabled" [(ngModel)]="value" id="prop_{{property.name}}">
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
+      <select class="clr-select" [disabled]="fixed || (canBeDisabled && !enabled)" [(ngModel)]="value" id="prop_{{property.name}}">
         <option value="PT10S">10 seconds</option>
         <option value="PT20S">20 seconds</option>
         <option value="PT30S">30 seconds</option>
@@ -63,6 +73,7 @@
       </select>
     </div>
     <div *ngSwitchCase="'json'">
+      <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
       <app-json-schema [(ngModel)]="value" [schema]="property.jsonSchema"></app-json-schema>
     </div>
     <pre *ngSwitchDefault>Input of type '{{property.inputType}}' is not yet supported</pre>
@@ -70,3 +81,14 @@
     <span *ngIf="property.description !== null" class="clr-subtext">{{property.description}}</span>
   </div>
 </div>
+
+<ng-template #fixedInfo>
+  <clr-signpost *ngIf="fixed">
+    <clr-icon shape="exclamation-triangle"
+      class="is-solid"
+      clrSignpostTrigger></clr-icon>
+    <clr-signpost-content [clrPosition]="'top-left'" *clrIfOpen>
+      <p style="max-width: 30rem;">The value of this property is fixed by the underlying event source. To change the value edit the event source.</p>
+    </clr-signpost-content>
+  </clr-signpost>
+</ng-template>

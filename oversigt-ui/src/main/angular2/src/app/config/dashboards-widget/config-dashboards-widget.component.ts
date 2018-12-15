@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor } from 'src/oversigt-client';
+// tslint:disable-next-line:max-line-length
+import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor, FullEventSourceInstanceInfo } from 'src/oversigt-client';
 
 @Component({
   selector: 'app-config-dashboard-widget',
@@ -13,6 +14,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   private dashboardId: string = null;
   private widgetId: number = null;
   widget: WidgetDetails = null;
+  eventSourceInstanceInfo: FullEventSourceInstanceInfo = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
   widgetSize: number[] = null;
   widgetPosition: number[] = null;
@@ -47,6 +49,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.widgetSize = [widget.sizeX, widget.sizeY];
       this.widgetPosition = [widget.posX, widget.posY];
       this.eventSourceService.readInstance(widget.eventSourceInstanceId).subscribe(esi => {
+        this.eventSourceInstanceInfo = esi;
         this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
           this.eventSourceDescriptor = esd;
         }); // TODO: error handling
@@ -57,5 +60,9 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       alert(error);
       // TODO: error handling
     });
+  }
+
+  hasEventSourceProperty(propertyName: string): boolean {
+    return this.eventSourceInstanceInfo.instanceDetails.dataItems[propertyName] !== undefined;
   }
 }

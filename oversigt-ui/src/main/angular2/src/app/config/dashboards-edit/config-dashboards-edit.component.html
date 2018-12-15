@@ -89,6 +89,7 @@
 
 <ng-template #dbWidgets>
   <div class="mini-map">
+    <!-- TODO: if navigating away: ask to save -->
     <div class="mini-dashboard" [style.width.em]="countColumns()" [style.height.em]="countRows()">
       <a *ngFor="let info of widgetInfos" routerLink="{{info.id}}" routerLinkActive="selected" class="mini-widget" title="{{info.name}}"
           [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
