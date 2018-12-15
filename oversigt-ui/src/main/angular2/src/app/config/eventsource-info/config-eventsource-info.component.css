@@ -9,3 +9,11 @@ input[readonly] {
 .clr-form-control div {
   width: 100%;
 }
+
+.two-inputs input {
+  width: 49%;
+}
+.two-inputs *:last-child {
+  width: 49%;
+  float: right;
+}

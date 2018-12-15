@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, TemplateRef } from '@angular/core';
 import { AbstractValueAccessor, MakeProvider } from 'src/app/_editor/abstract-value-accessor';
 
 @Component({
@@ -13,6 +13,7 @@ export class ConfigEventsourceInfoComponent extends AbstractValueAccessor implem
   @Input() description: string = null;
   @Input() readOnly = false;
   @Input() inputType = 'text';
+  @Input() secondaryInput: TemplateRef<any> = null;
 
   ngOnInit() {
   }

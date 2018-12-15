@@ -2,8 +2,9 @@
 <div class="clr-form-control">
   <label for="info_{{id}}" class="clr-control-label">{{title}}</label>
   <div class="clr-control-container">
-    <div class="clr-input-wrapper">
+    <div class="clr-input-wrapper" [class.two-inputs]="secondaryInput !== null">
       <input class="clr-input" [(ngModel)]="value" type="{{inputType}}" id="info_{{id}}" [attr.readonly]="readOnly ? 'readonly' : null">
+      <ng-component *ngIf="secondaryInput !== null" [ngTemplateOutlet]="secondaryInput"></ng-component>
     </div>
     <span *ngIf="description !== null" class="clr-subtext">{{description}}</span>
   </div>
