@@ -133,12 +133,12 @@
 <ng-template #dbWidgets>
   <div class="mini-map">
     <div class="mini-dashboard" [style.width.em]="countColumns()" [style.height.em]="countRows()">
-      <div *ngFor="let info of widgetInfos" class="mini-widget" [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
+      <a *ngFor="let info of widgetInfos" routerLink="{{info.id}}" routerLinkActive="selected" class="mini-widget" [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
         <span class="badge">{{info.id}}</span>
-      </div>
+      </a>
     </div>
     <div class="mini-info">
-      <a *ngFor="let info of widgetInfos" routerLink="{{info.id}}" class="widget-link">
+      <a *ngFor="let info of widgetInfos" routerLink="{{info.id}}" class="widget-link" routerLinkActive="selected">
         <span class="badge">{{info.id}}</span>
         <span style="margin-left: 1ex">{{info.name}}</span>
       </a>

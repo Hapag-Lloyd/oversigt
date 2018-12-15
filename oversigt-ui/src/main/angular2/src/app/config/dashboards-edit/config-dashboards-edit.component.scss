@@ -42,8 +42,17 @@
   margin: 1ex;
 }
 
-.mini-info .widget-link {
+.mini-map a {
   display: block;
+}
+
+.mini-map a.selected {
+  color: black;
+  text-decoration: none;
+}
+
+.mini-map a.selected.mini-widget {
+  background-color: rgb(230,230,230);
 }
 
 .chip-editor .clr-input-wrapper {

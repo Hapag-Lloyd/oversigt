@@ -1,17 +1,38 @@
-<div *ngIf="widget !== null" class="card">
-  <form>
-    <div class="card-header">
-        {{widget.name}}
-    </div>
-    <div class="card-block">
-      some more detail
-    </div>
-    <div class="card-footer">
-      <button class="btn btn-primary">Save</button>
-    </div>
-  </form>
+<div *ngIf="widget !== null && eventSourceDescriptor !== null">
+  <div class="card">
+    <form class="clr-form-horizontal">
+
+      <div class="card-header">
+          {{widget.name}} Configuration
+          <div style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
+      </div>
+      <div class="card-block">
+        <app-config-eventsource-info name="widget_name" [id]="'widget_name'" [title]="'Name'" [ngModel]="widget.name" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_title" [id]="'widget_title'" [title]="'Title'" [ngModel]="widget.title" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_type" [id]="'widget_type'" [title]="'Type'" [ngModel]="widget.type" [readOnly]="true"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_posX" [id]="'widget_posX'" [title]="'PositionX'" [ngModel]="widget.posX" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_posY" [id]="'widget_posY'" [title]="'PositionY'" [ngModel]="widget.posY" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_sizeX" [id]="'widget_sizeX'" [title]="'SizeX'" [ngModel]="widget.sizeX" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_sizeY" [id]="'widget_sizeY'" [title]="'SizeY'" [ngModel]="widget.sizeY" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_backgroundColor" [id]="'widget_backgroundColor'" [title]="'Background Color'" [ngModel]="widget.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
+        <app-config-eventsource-info name="widget_style" [id]="'widget_style'" [title]="'Inline CSS'" [ngModel]="widget.style" [readOnly]="false"></app-config-eventsource-info>
+      </div>
+
+      <div class="card-header">
+          {{widget.name}} Display Properties
+      </div>
+      <div class="card-block">
+        <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="property_{{property.name}}"
+          [property]="property" [(ngModel)]="widget.data[property.name]" [canBeDisabled]="false"></app-config-eventsource-editor>
+      </div>
+
+      <div class="card-footer">
+        <button class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
 </div>
-<div *ngIf="widget === null" class="loading">
+<div *ngIf="widget === null || eventSourceDescriptor === null" class="loading">
   <span class="spinner">
     Loading...
   </span>

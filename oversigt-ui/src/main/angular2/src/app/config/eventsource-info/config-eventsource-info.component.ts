@@ -12,6 +12,7 @@ export class ConfigEventsourceInfoComponent extends AbstractValueAccessor implem
   @Input() title: string;
   @Input() description: string = null;
   @Input() readOnly = false;
+  @Input() inputType = 'text';
 
   ngOnInit() {
   }

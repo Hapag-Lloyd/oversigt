@@ -31,7 +31,7 @@ export function getLinkForId(id: string): string {
 }
 
 export function getLinkForEventSource(id: string): string {
-  return getLinkForId('eventsource') + '/' + id;
+  return getLinkForId('eventsources') + '/' + id;
 }
 
 @Component({

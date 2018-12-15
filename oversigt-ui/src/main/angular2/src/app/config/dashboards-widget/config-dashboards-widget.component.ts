@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DashboardWidgetService, WidgetDetails, EventSourceService } from 'src/oversigt-client';
+import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor } from 'src/oversigt-client';
 
 @Component({
   selector: 'app-config-dashboard-widget',
@@ -13,6 +13,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   private dashboardId: string = null;
   private widgetId: number = null;
   widget: WidgetDetails = null;
+  eventSourceDescriptor: EventSourceDescriptor = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -38,8 +39,15 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.widgetId = +this.route.snapshot.paramMap.get('widgetId');
 
     this.widget = null; // TODO: show loading
+    this.eventSourceDescriptor = null;
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, true).subscribe(widget => {
       this.widget = widget;
+      this.eventSourceService.readInstance(widget.eventSourceInstanceId).subscribe(esi => {
+        this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
+          this.eventSourceDescriptor = esd;
+        }); // TODO: error handling
+      } // TODO: error handling
+      );
     },
     error => {
       alert(error);
