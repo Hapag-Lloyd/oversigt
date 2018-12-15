@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
+import { NotifierModule } from 'angular-notifier';
 
 import { AppComponent } from './app.component';
 import { DashboardService, ApiModule, Configuration } from '../oversigt-client';
@@ -118,6 +119,7 @@ export function initializeApiConfiguration(): Configuration {
     ClrFormsNextModule,
     TagInputModule,
     ReactiveFormsModule,
+    NotifierModule,
   ],
   providers: [DashboardService],
   bootstrap: [AppComponent]
