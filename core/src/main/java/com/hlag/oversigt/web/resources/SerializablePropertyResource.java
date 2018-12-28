@@ -47,6 +47,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Api(tags = { "SerializableValue" }, //
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -248,4 +250,14 @@ public class SerializablePropertyResource {
 		return removePasswords(toMemberMap(property), "");
 	}
 
+	/**Class describing a {@link SerializableProperty} class.
+	 * @author Olaf Neumann
+	 *
+	 */
+	@RequiredArgsConstructor
+	@Getter
+	public static class SerializablePropertyDescription {
+		private final String name;
+		private final String description;
+	}
 }

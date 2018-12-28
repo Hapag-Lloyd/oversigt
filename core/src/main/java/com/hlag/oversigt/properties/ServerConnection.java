@@ -3,8 +3,10 @@ package com.hlag.oversigt.properties;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.hlag.oversigt.properties.SerializableProperty.Description;
 import com.hlag.oversigt.util.SneakyException;
 
+@Description("Describes the connection to a server allowing to reuse the connection details in multiple event sources.")
 public class ServerConnection extends SerializableProperty {
 	public static final ServerConnection EMPTY = new ServerConnection(0, "", "");
 

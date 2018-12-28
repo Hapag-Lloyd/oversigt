@@ -1,5 +1,8 @@
 package com.hlag.oversigt.properties;
 
+import com.hlag.oversigt.properties.SerializableProperty.Description;
+
+@Description("A connection to a database. Enter details to the JDBC connection so the connection information can be reused for multiple event sources.")
 public class DatabaseConnection extends SerializableProperty {
 	public static final DatabaseConnection EMPTY = new DatabaseConnection(0, "", "", "");
 
