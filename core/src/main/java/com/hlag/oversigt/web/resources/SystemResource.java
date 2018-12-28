@@ -233,11 +233,13 @@ public class SystemResource {
 			return ok(events).build();
 		} else {
 			Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
-			if (event.isPresent()) {
-				return ok(event.map(Arrays::asList).get()).build();
-			} else {
+			if (!event.isPresent()) {
 				return ErrorResponse.notFound("The event source does not exist", filter);
 			}
+
+			List<OversigtEvent> eventList = Arrays
+					.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
+			return ok(eventList).build();
 		}
 	}
 

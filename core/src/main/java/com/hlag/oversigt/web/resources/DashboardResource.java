@@ -119,17 +119,19 @@ public class DashboardResource {
 	@NoChangeLog
 	@PermitAll
 	public Response readDashboard(@Context SecurityContext secu, @PathParam("dashboardId") String id) {
-		Optional<Map<String, Object>> dashboard = Optional.ofNullable(dashboardController.getDashboard(id))
+		final Optional<Map<String, Object>> dashboard = Optional.ofNullable(dashboardController.getDashboard(id))
 				.map(TypeUtils::toMemberMap);
-		if (dashboard.isPresent() && secu.getUserPrincipal() == null) {
-			dashboard.get().remove("owner");
-			dashboard.get().remove("editors");
-		}
-		if (dashboard.isPresent()) {
-			return ok(dashboard.get()).build();
-		} else {
+		if (!dashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
+
+		final Map<String, Object> dashboardMap = dashboard
+				.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
+		if (secu.getUserPrincipal() == null) {
+			dashboardMap.remove("owner");
+			dashboardMap.remove("editors");
+		}
+		return ok(dashboardMap).build();
 	}
 
 	@PUT

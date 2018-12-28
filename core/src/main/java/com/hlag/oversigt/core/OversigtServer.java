@@ -333,7 +333,8 @@ public class OversigtServer extends AbstractIdleService {
 		Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
 		if (principal.isPresent()) {
 			exchangeHandler.getSession(exchange).ifPresent(s -> s.invalidate(exchange));
-			CHANGE_LOGGER.info("User logged out: " + principal.get().getUsername());
+			CHANGE_LOGGER.info("User logged out: "
+					+ principal.orElseThrow(() -> new RuntimeException("The principal is not present.")).getUsername());
 			HttpUtils.redirect(exchange, "/config", false, true);
 		} else {
 			HttpUtils.internalServerError(exchange);
