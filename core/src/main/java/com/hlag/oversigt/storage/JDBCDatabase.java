@@ -1,7 +1,8 @@
 package com.hlag.oversigt.storage;
 
 import static com.hlag.oversigt.util.StringUtils.list;
-import static com.hlag.oversigt.util.Utils.*;
+import static com.hlag.oversigt.util.Utils.is;
+import static com.hlag.oversigt.util.Utils.map;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -106,8 +107,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 					Optional<Map<String, Object>> foundColumnProperties = columnProperties.stream()
 							.filter(cp -> option.name.equals(cp.get("COLUMN_NAME")))
 							.findFirst();
-					boolean exists = foundColumnProperties.isPresent();
-					if (!exists) {
+					if (!foundColumnProperties.isPresent()) {
 						LOGGER.info("Altering table " + tableName + ". Adding column " + option.name);
 						String sql = getDialect().alterTableAddColumn(tableName, option);
 						executeUpdate(sql);
@@ -115,8 +115,9 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 						columnProperties.remove(foundColumnProperties.get());
 					}
 				}
-				List<String> columnsToDrop = columnProperties.stream().map(m -> (String) m.get("COLUMN_NAME")).collect(
-						Collectors.toList());
+				List<String> columnsToDrop = columnProperties.stream()
+						.map(m -> (String) m.get("COLUMN_NAME"))
+						.collect(Collectors.toList());
 				for (String columnToDrop : columnsToDrop) {
 					LOGGER.info("Altering table " + tableName + ". Dropping column " + columnToDrop);
 					String sql = getDialect().alterTableDropColumn(tableName, columnToDrop);
