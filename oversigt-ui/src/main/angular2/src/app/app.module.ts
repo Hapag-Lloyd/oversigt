@@ -111,7 +111,9 @@ export function initializeApiConfiguration(): Configuration {
       appRoutes,
       {onSameUrlNavigation: 'reload'},
       // { enableTracing: true } // <-- debugging purposes only
-    ), BrowserModule, HttpClientModule,
+    ),
+    BrowserModule,
+    HttpClientModule,
     ApiModule.forRoot(initializeApiConfiguration),
     FormsModule,
     BrowserAnimationsModule,
