@@ -3,6 +3,7 @@ import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo, System
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FormControl } from '@angular/forms';
+import { ClrLoadingState } from '@clr/angular';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -13,11 +14,16 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   private subscription: Subscription = null;
 
   private dashboardId: string = null;
+  dashboardTitle = '';
   dashboard: Dashboard = null;
+  screensize: number[] = [];
+  foregroundColors: string[] = [];
   owners: string[] = [];
   editors: string[] = [];
   widgetInfos: WidgetInfo[] = [];
-  foregroundColors: string[] = [];
+
+  // Loading indicator
+  saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   // for chip editor
   syncUserIdValidators = [];
@@ -61,13 +67,41 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.dashboardId = this.route.snapshot.paramMap.get('dashboardId');
 
     this.dashboardService.readDashboard(this.dashboardId).subscribe(dashboard => {
-      this.dashboard = dashboard;
-      this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
+      this.setDashboard(dashboard);
       // TODO: Error handling
     });
     this.widgetService.listWidgets(this.dashboardId).subscribe(widgetInfos => {
       this.widgetInfos = widgetInfos;
       // TODO: Error handling
+    });
+  }
+
+  private setDashboard(dashboard: Dashboard, withRights: boolean = false): void {
+    this.dashboard = dashboard;
+    this.dashboardTitle = dashboard.title;
+    this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
+    this.screensize = [dashboard.screenWidth, dashboard.screenHeight];
+    if (withRights) {
+      this.owners = dashboard.owners;
+      this.editors = dashboard.editors;
+    }
+  }
+
+  saveDashboardSettings(): void {
+    this.saveDashboardState = ClrLoadingState.LOADING;
+    this.dashboard.foregroundColorStart = this.foregroundColors[0];
+    this.dashboard.foregroundColorEnd   = this.foregroundColors[1];
+    this.dashboard.screenWidth  = this.screensize[0];
+    this.dashboard.screenHeight = this.screensize[1];
+    this.dashboardService.updateDashboard(this.dashboardId, this.dashboard).subscribe(dashboard => {
+      this.setDashboard(dashboard);
+      this.saveDashboardState = ClrLoadingState.SUCCESS;
+    },
+    error => {
+      this.saveDashboardState = ClrLoadingState.ERROR;
+      // TODO: Error handling
+      alert(error);
+      console.log(error);
     });
   }
 
