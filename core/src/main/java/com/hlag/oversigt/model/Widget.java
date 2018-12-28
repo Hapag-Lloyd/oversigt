@@ -12,6 +12,9 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.properties.Color;
 
+import lombok.ToString;
+
+@ToString
 public class Widget implements Comparable<Widget> {
 	private static final Comparator<Widget> COMPARE_BY_NAME = (a, b) -> String.CASE_INSENSITIVE_ORDER
 			.compare(a.getName(), b.getName());
