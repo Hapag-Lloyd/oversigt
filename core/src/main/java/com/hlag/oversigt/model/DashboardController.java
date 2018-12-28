@@ -318,19 +318,21 @@ public class DashboardController {
 
 		// load event sources without class
 		LOGGER.debug("Scanning file system for EventSources...");
-		List<EventSourceDescriptor> descriptorsFromFileSystem_ = loadMultipleEventSourceFromResources(widgetsPaths);
-		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromFileSystem_.size());
+		List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
+		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromResources.size());
 
 		// add properties from views into class' event sources
-		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromFileSystem_.stream()
+		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromResources.stream()
 				.filter(EventSourceDescriptor::isStandAlone)
 				.collect(toList());
 
+		LOGGER.debug("Available view ids: {}",
+				descriptorsFromResources.stream().map(EventSourceDescriptor::getView).sorted().collect(joining(", ")));
 		for (EventSourceDescriptor dfc : descriptorsJavaBased) {
-			EventSourceDescriptor descriptorForView = descriptorsFromFileSystem_.stream()
+			EventSourceDescriptor descriptorForView = descriptorsFromResources.stream()
 					.filter(d -> d.getView().equals(dfc.getView()))
 					.findAny()
-					.get();
+					.orElseThrow(() -> new RuntimeException("No widget found for view id: " + dfc.getView()));
 			descriptorForView.getDataItems()
 					.stream()
 					.filter(di -> !dfc.getDataItemsToHide().contains(di.getName()))
