@@ -66,18 +66,15 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.eventSourceInstanceInfo = esi;
       this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
         this.eventSourceDescriptor = esd;
-        this.saveButtonState = ClrLoadingState.SUCCESS;
       },
       error => {
         console.log(error);
         // TODO: error handling
-        this.saveButtonState = ClrLoadingState.ERROR;
       });
     },
     error => {
       console.log(error);
       // TODO: error handling
-      this.saveButtonState = ClrLoadingState.ERROR;
     });
   }
 
@@ -85,7 +82,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     return this.eventSourceInstanceInfo.instanceDetails.dataItems[propertyName] !== undefined;
   }
 
-  saveConfiguration(): void {
+  saveWidget(): void {
     this.saveButtonState = ClrLoadingState.LOADING;
     this.widget.posX = this.widgetPosition[0];
     this.widget.posY = this.widgetPosition[1];
@@ -94,6 +91,8 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.dashboardWidgetService.updateWidget(this.dashboardId, this.widgetId, this.widget).subscribe(widget => {
       this.setWidgetDetails(widget);
       this.notificationService.success('Widget ' + this.widget.name + ' has been saved.');
+      this.saveButtonState = ClrLoadingState.SUCCESS;
+      // TODO: update parent component (list of widgets on dashboard)
     },
     error => {
       console.log(error);
