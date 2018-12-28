@@ -195,16 +195,24 @@ public class Dashboard {
 		return foregroundColorStart;
 	}
 
+	public void setForegroundColorStart(Color foregroundColorStart) {
+		this.foregroundColorStart = foregroundColorStart;
+	}
+
 	public void setForegroundColorStart(String foregroundColorStart) {
-		this.foregroundColorStart = Color.parse(foregroundColorStart);
+		setForegroundColorStart(Color.parse(foregroundColorStart));
 	}
 
 	public Color getForegroundColorEnd() {
 		return foregroundColorEnd;
 	}
 
+	public void setForegroundColorEnd(Color foregroundColorEnd) {
+		this.foregroundColorEnd = foregroundColorEnd;
+	}
+
 	public void setForegroundColorEnd(String foregroundColorEnd) {
-		this.foregroundColorEnd = Color.parse(foregroundColorEnd);
+		setForegroundColorEnd(Color.parse(foregroundColorEnd));
 	}
 
 	public Collection<String> getOwners() {
