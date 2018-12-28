@@ -235,10 +235,10 @@ public class DashboardController {
 	}
 
 	public void updateWidget(Widget widget) {
-		Dashboard dashboard = getDashboard(widget);
-		if (!dashboard.getWidgets().contains(widget)) {
+		final Dashboard dashboard = getDashboard(widget);
+		final Widget originalWidget = dashboard.getWidget(widget.getId());
+		if (widget != originalWidget) {
 			// adapt properties to original widget
-			Widget originalWidget = dashboard.getWidget(widget.getId());
 			if (originalWidget.getEventSourceInstance() != widget.getEventSourceInstance()) {
 				throw new RuntimeException("The widgets have different EventSourceInstances");
 			}
