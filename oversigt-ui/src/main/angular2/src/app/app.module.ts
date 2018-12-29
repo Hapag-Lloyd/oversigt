@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagInputModule } from 'ngx-chips';
+import { ToastrModule } from 'ngx-toastr';
 
 import { AppComponent } from './app.component';
 import { DashboardService, ApiModule, Configuration } from '../oversigt-client';
@@ -122,6 +123,7 @@ export function initializeApiConfiguration(): Configuration {
     ClrFormsNextModule,
     TagInputModule,
     ReactiveFormsModule,
+    ToastrModule.forRoot(), // ToastrModule added
   ],
   providers: [DashboardService],
   bootstrap: [AppComponent]
