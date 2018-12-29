@@ -260,16 +260,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   deleteEventSource() {
-    // TODO bildschirm blocken
+    // TODO: nachfragen, ob der user wirklich löschen will
+    // TODO: bildschirm blocken
     this.ess.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
-        // TODO aus der Liste der exisierenden EventSources löschen
+        // TODO: aus der Liste der exisierenden EventSources löschen
         this.notification.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.');
-        // TODO: whatever
-        alert('this.configEventSourcesComponent.removeEventSourceInstance(this.parsedInstanceDetails.id);');
+        this.eventSourceDescriptor = null;
         setTimeout(() => {
           this.router.navigateByUrl(getLinkForId('eventsources'));
-        }, 1500);
+        }, 1000);
       },
       error => {
         console.error(error);

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { EventSourceService, EventSourceInfo } from 'src/oversigt-client';
 import { Router } from '@angular/router';
 import { NotificationService } from 'src/app/notification.service';
+import { getLinkForEventSource } from 'src/app/app.component';
 
 @Component({
   selector: 'app-config-eventsource-create',
@@ -44,22 +45,11 @@ export class ConfigEventsourceCreateComponent implements OnInit {
   }
 
   createEventSource(key: string) {
-    let timeDone = false;
-    let createdId: string = null;
-    this.notification.success('Creating event source..');
-    const check = () => {
-      if (timeDone && createdId !== null) {
-        this.router.navigateByUrl('config/eventSources/' + createdId);
-      }
-    };
-    setTimeout(_ => {
-      timeDone = true;
-      check();
-    }, 1000);
+    this.notification.info('Creating event source...');
     this.ess.createInstance(key).subscribe(
       ok => {
-        createdId = ok.id;
-        check();
+        this.notification.success('Event source has been created.');
+        this.router.navigateByUrl(getLinkForEventSource(ok.id));
       },
       error => {
         console.error(error);
