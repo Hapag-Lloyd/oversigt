@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo, SystemService } from 'src/oversigt-client';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ClrLoadingState } from '@clr/angular';
+import { getLinkForDashboards } from 'src/app/app.component';
+import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -24,6 +26,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   // Loading indicator
   saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  deleteDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   // for chip editor
   syncUserIdValidators = [];
@@ -31,9 +34,10 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private dashboardService: DashboardService,
     private widgetService: DashboardWidgetService,
-    private systemService: SystemService,
+    private notification: NotificationService,
   ) {
     const isUserIdValid = (control: FormControl) => {
       return new Promise(resolve => {
@@ -110,6 +114,23 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
       // TODO: Error handling
       alert(error);
       console.log(error);
+    });
+  }
+
+  deleteDashboard(): void {
+    if (!confirm('Do you really want to delete this dashboard?')) {
+      return;
+    }
+
+    this.dashboardService.deleteDashboard(this.dashboardId).subscribe(ok => {
+      this.deleteDashboardState = ClrLoadingState.SUCCESS;
+      this.notification.success('The dashboard "' + this.dashboard.title + '"has been deleted.');
+      this.router.navigateByUrl(getLinkForDashboards());
+    }, error => {
+      this.deleteDashboardState = ClrLoadingState.ERROR;
+      console.log(error);
+      alert(error);
+      // TODO: error handling
     });
   }
 

@@ -36,12 +36,16 @@ export function getLinkForEventSource(id: string): string {
   return getLinkForId('eventsources') + '/' + id;
 }
 
+export function getLinkForDashboards(): string {
+  return getLinkForId('dashboards');
+}
+
 export function getLinkForDashboard(dashboardId: string): string {
-  return getLinkForId('dashboards') + '/' + dashboardId;
+  return getLinkForDashboards() + '/' + dashboardId;
 }
 
 export function getLinkForDashboardWidget(dashboardId: string, widgetId: number): string {
-  return getLinkForId('dashboards') + '/' + dashboardId + '/' + String(widgetId);
+  return getLinkForDashboard(dashboardId) + '/' + String(widgetId);
 }
 
 @Component({
