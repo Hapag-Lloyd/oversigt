@@ -115,6 +115,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.notificationService.success('The widget has been deleted.');
       this.deleteButtonState = ClrLoadingState.SUCCESS;
       this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
+      // TODO: refresh dashboard mini map
     }, error => {
       // TODO: error handling
       this.notificationService.error(error.message);
