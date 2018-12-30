@@ -4,6 +4,7 @@ import { Subject, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getLinkForDashboardWidget } from 'src/app/app.component';
+import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-dashboard-widget-add',
@@ -19,6 +20,7 @@ export class ConfigDashboardWidgetAddComponent implements OnInit {
     private router: Router,
     private eventSourceService: EventSourceService,
     private dashboardWidgetService: DashboardWidgetService,
+    private notification: NotificationService,
   ) { }
 
   ngOnInit() {
@@ -37,6 +39,7 @@ export class ConfigDashboardWidgetAddComponent implements OnInit {
   addWidget(id: string): void {
     const dashboardId = this.route.snapshot.parent.params['dashboardId'];
     this.dashboardWidgetService.createWidget(dashboardId, id).subscribe(widgetDetails => {
+      this.notification.success('The widget has been created.');
       this.router.navigateByUrl(getLinkForDashboardWidget(dashboardId, widgetDetails.id));
     }, error => {
       // TODO: error handling

@@ -36,6 +36,10 @@ export function getLinkForEventSource(id: string): string {
   return getLinkForId('eventsources') + '/' + id;
 }
 
+export function getLinkForDashboard(dashboardId: string): string {
+  return getLinkForId('dashboards') + '/' + dashboardId;
+}
+
 export function getLinkForDashboardWidget(dashboardId: string, widgetId: number): string {
   return getLinkForId('dashboards') + '/' + dashboardId + '/' + String(widgetId);
 }

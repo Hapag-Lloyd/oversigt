@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 // tslint:disable-next-line:max-line-length
 import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor, FullEventSourceInstanceInfo } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/notification.service';
 import { ClrLoadingState } from '@clr/angular';
+import { getLinkForDashboard } from 'src/app/app.component';
 
 @Component({
   selector: 'app-config-dashboard-widget',
@@ -22,9 +23,11 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   widgetPosition: number[] = null;
 
   saveButtonState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  deleteButtonState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private dashboardWidgetService: DashboardWidgetService,
     private eventSourceService: EventSourceService,
     private notificationService: NotificationService,
@@ -98,6 +101,25 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       console.log(error);
       // TODO: error handling
       this.saveButtonState = ClrLoadingState.ERROR;
+    });
+  }
+
+  deleteWidget(): void {
+    if (!confirm('Do you really want to delete this widget?')) {
+      return;
+    }
+
+    this.deleteButtonState = ClrLoadingState.LOADING;
+    this.dashboardWidgetService.deleteWidget(this.dashboardId, this.widgetId).subscribe(ok => {
+      console.log(ok);
+      this.notificationService.success('The widget has been deleted.');
+      this.deleteButtonState = ClrLoadingState.SUCCESS;
+      this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
+    }, error => {
+      // TODO: error handling
+      this.notificationService.error(error.message);
+      console.log(error);
+      this.deleteButtonState = ClrLoadingState.ERROR;
     });
   }
 }
