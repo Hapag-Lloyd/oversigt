@@ -37,12 +37,13 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     private router: Router,
     private dashboardService: DashboardService,
     private widgetService: DashboardWidgetService,
+    private systemService: SystemService,
     private notification: NotificationService,
   ) {
     const isUserIdValid = (control: FormControl) => {
       return new Promise(resolve => {
         const userid = control.value;
-        systemService.isUserValid(userid).subscribe(valid => {
+        this.systemService.isUserValid(userid).subscribe(valid => {
           resolve(valid);
         },
         error => {
