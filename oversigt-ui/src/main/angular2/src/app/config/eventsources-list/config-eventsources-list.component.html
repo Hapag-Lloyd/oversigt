@@ -1,4 +1,4 @@
-<h1>Edit Event Source</h1>
+<app-header [title]="'Edit Event Source'" [level]="1"></app-header>
 <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
   <a *ngFor="let info of eventSourceInfos" class="btn btn-default" routerLink="../{{info.id}}">{{info.name}}</a>
 </div>

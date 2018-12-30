@@ -62,6 +62,14 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     }
   }
 
+  isAddingWidget(): boolean {
+    if (this.route.snapshot.children && this.route.snapshot.children[0]) {
+      const last = this.route.snapshot.children[0].url.map(s => s.path)[0];
+      return last === 'add';
+    }
+    return false;
+  }
+
   private initComponent(): void {
     // find selected dashboard id
     this.dashboardId = this.route.snapshot.paramMap.get('dashboardId');

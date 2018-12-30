@@ -1,0 +1,17 @@
+<app-header [title]="'Create widget'" [level]="2" [additional]="widgetFilter"></app-header>
+
+<ng-template #widgetFilter>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input #searchBox id="search-box" (input)="search(searchBox.value)" class="clr-input" type="text" placeholder="Filter widgets"/>
+    </div>
+  </div>
+</ng-template>
+
+<div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
+  <ul>
+    <li *ngFor="let widget of widgets$ | async" >
+        <span>{{widget.name}}</span>
+    </li>
+  </ul>
+</div>

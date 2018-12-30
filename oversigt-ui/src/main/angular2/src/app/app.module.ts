@@ -39,6 +39,7 @@ import { JsonSchemaEditorModule } from './json-schema-editor/json-schema-editor.
 import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
 import { ConfigEventsourcesListComponent } from './config/eventsources-list/config-eventsources-list.component';
 import { ConfigDashboardWidgetComponent } from './config/dashboards-widget/config-dashboards-widget.component';
+import { ConfigDashboardWidgetAddComponent } from './config/dashboards-widget-add/config-dashboards-widget-add.component';
 
 const appRoutes: Routes = [
   { path: 'login',                    component: LoginComponent, },
@@ -49,7 +50,8 @@ const appRoutes: Routes = [
     { path: 'createDashboard',        component: ConfigurationComponent },
     { path: 'dashboards',             component: ConfigDashboardsComponent, runGuardsAndResolvers: 'always', children: [
       { path: ':dashboardId',         component: ConfigDashboardsEditComponent, children: [
-        { path: ':widgetId',          component: ConfigDashboardWidgetComponent }
+        { path: 'add',                component: ConfigDashboardWidgetAddComponent } ,
+        { path: ':widgetId',          component: ConfigDashboardWidgetComponent } ,
       ] }
     ] },
     { path: 'dashboards/create',      component: ConfigurationComponent },
@@ -106,6 +108,7 @@ export function initializeApiConfiguration(): Configuration {
     FilterForRolePipe,
     ConfigEventsourcesListComponent,
     ConfigDashboardWidgetComponent,
+    ConfigDashboardWidgetAddComponent,
   ],
   imports: [
     RouterModule.forRoot(
