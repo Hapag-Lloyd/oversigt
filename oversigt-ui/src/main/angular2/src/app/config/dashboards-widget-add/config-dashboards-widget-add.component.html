@@ -8,10 +8,14 @@
   </div>
 </ng-template>
 
-<div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
-  <ul>
-    <li *ngFor="let widget of widgets$ | async" >
-        <span>{{widget.name}}</span>
-    </li>
-  </ul>
+<div class="event-source-list">
+  <a *ngFor="let widget of widgets$ | async" class="card clickable content col-lg-3 col-md-6 col-sm-12 col-xs-12" href="#">
+    <div class="card-header">
+      {{widget.name}}
+    </div>
+  </a>
+  <div class="no-content">
+    Your filter did not return any widget.
+  </div>
 </div>
+

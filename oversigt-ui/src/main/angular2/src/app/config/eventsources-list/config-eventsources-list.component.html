@@ -1,4 +1,13 @@
-<app-header [title]="'Edit Event Source'" [level]="1"></app-header>
-<div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline; ">
-  <a *ngFor="let info of eventSourceInfos" class="btn btn-default" routerLink="../{{info.id}}">{{info.name}}</a>
+<app-header [title]="'Edit Event Source'" [level]="1" [additional]="filter"></app-header>
+
+<ng-template #filter>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input #searchBox id="search-box" (input)="search(searchBox.value)" class="clr-input" type="text" placeholder="Filter event sources"/>
+    </div>
+  </div>
+</ng-template>
+
+<div class="event-source-list">
+  <a *ngFor="let info of sources$ |async" class="btn btn-default" routerLink="../{{info.id}}">{{info.name}}</a>
 </div>

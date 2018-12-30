@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EventSourceInstanceInfo, EventSourceService } from 'src/oversigt-client';
+import { Subject, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-config-eventsources-list',
@@ -7,24 +9,24 @@ import { EventSourceInstanceInfo, EventSourceService } from 'src/oversigt-client
   styleUrls: ['./config-eventsources-list.component.css']
 })
 export class ConfigEventsourcesListComponent implements OnInit {
-  eventSourceInfos: EventSourceInstanceInfo[] = [];
+  private searchTerms = new Subject<string>();
+  sources$: Observable<EventSourceInstanceInfo[]>;
 
   constructor(
-    private ess: EventSourceService,
+    private eventSourceService: EventSourceService,
   ) { }
 
   ngOnInit() {
-    this.ess.listInstances().subscribe(
-      infos => {
-        this.eventSourceInfos = infos;
-      },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+    this.sources$ = this.searchTerms.pipe(
+      startWith(''), // initial search value
+      debounceTime(300), // wait 300ms after each keystroke before considering the term
+      distinctUntilChanged(), // ignore new term if same as previous term
+      switchMap((term: string) => this.eventSourceService.listInstances(term)), // let the server search
     );
     // TODO: alle 5 minuten die Liste der EventSources aktualisieren
   }
 
+  search(filter: string): void {
+    this.searchTerms.next(filter);
+  }
 }
