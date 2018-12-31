@@ -17,10 +17,18 @@ input[readonly] {
   align-items: baseline;
 }
 
-.two-inputs input {
-  width: 49%;
+.multi-input {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: baseline;
+  align-content: stretch;
 }
-.two-inputs *:last-child {
-  width: 49%;
-  float: right;
+
+.multi-input > input {
+  flex: 1 1 auto;
+}
+
+.multi-input > input+input {
+  margin-left: 0.5rem;
 }
