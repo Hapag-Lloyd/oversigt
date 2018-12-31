@@ -6,8 +6,14 @@
 </ng-template>
 
 <div [hidden]="outlet.isActivated" class="list-group">
+  <div class="list-group-item create-dashboard">
+    <div class="clr-input-wrapper">
+      <input #createName class="clr-input" type="text" placeholder="dashboard ID" id="createDashboard" name="createDashboard"/>
+    </div>
+    <button (click)="createDashboard(createName.value)" class="btn btn-primary btn-icon" title="Create new dashboard">Create dashboard</button>
+  </div>
   <div *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter" class="list-group-item content">
-    <a class="btn btn-link" routerLink="{{dashboard.id}}">{{dashboard.title}}</a>
+    <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
   </div>
   <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
     Your filter did not return any dashboard.

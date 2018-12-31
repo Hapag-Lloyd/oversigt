@@ -1,7 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DashboardService, DashboardInfo } from 'src/oversigt-client';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { UserService } from 'src/app/user-service.service';
+import { NotificationService } from 'src/app/notification.service';
+import { getLinkForDashboard } from 'src/app/app.component';
 
 @Component({
   selector: 'app-config-dashboards',
@@ -16,7 +19,10 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private ds: DashboardService,
+    private userService: UserService,
+    private notification: NotificationService,
   ) { }
 
   ngOnInit() {
@@ -40,6 +46,19 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
         console.error(error);
         alert(error);
         // TODO: Error handling
+      }
+    );
+  }
+
+  createDashboard(id: string) {
+    this.ds.createDashboard(id, this.userService.getName(), this.userService.hasRole('server.admin')).subscribe(
+      dashboard => {
+        this.notification.success('Dashboard "' + dashboard.id + '" has been created.');
+        this.router.navigateByUrl(getLinkForDashboard(dashboard.id));
+      }, error => {
+        // TODO: error handling
+        console.log(error);
+        alert(error);
       }
     );
   }
