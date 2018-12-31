@@ -10,6 +10,7 @@ import { NotificationService } from 'src/app/notification.service';
 export class ConfigLogsLoggerComponent implements OnInit {
   possibleLogLevels: string[] = [];
   loggerInfos: LoggerInfo[] = [];
+  filter = '';
 
   constructor(
     private ss: SystemService,

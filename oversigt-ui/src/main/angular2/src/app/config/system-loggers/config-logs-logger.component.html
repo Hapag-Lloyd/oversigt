@@ -1,4 +1,11 @@
-<app-header [title]="'Loggers'"></app-header>
+<app-header [title]="'Loggers'" [additional]="filterForm"></app-header>
+<ng-template #filterForm>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input class="clr-input" type="text" placeholder="Filter loggers" [(ngModel)]="filter"/>
+    </div>
+  </div>
+</ng-template>
 
 <table *ngIf="loggerInfos.length > 0" class="table table-noborder table-compact">
   <thead>
@@ -10,7 +17,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of loggerInfos">
+    <tr *ngFor="let data of loggerInfos | filterEventitem: filter">
       <td class="left">{{data.name}}</td>
       <td>{{data.level}}</td>
       <td>{{data.effectiveLevel}}</td>
