@@ -27,6 +27,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   // Loading indicator
   saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   deleteDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  enableDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   // for chip editor
   syncUserIdValidators = [];
@@ -133,6 +134,38 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
       alert(error);
       // TODO: error handling
     });
+  }
+
+  enableDashboard(enabled: boolean): void {
+    this.enableDashboardState = ClrLoadingState.LOADING;
+    this.dashboardService.readDashboard(this.dashboardId).subscribe(
+      dashboard => {
+        dashboard.enabled = enabled;
+        this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
+          ok => {
+            this.enableDashboardState = ClrLoadingState.SUCCESS;
+            if (enabled) {
+              this.notification.success('The dashboard "' + dashboard.title + '" has been enabled.');
+            } else {
+              this.notification.success('The dashboard "' + dashboard.title + '" has been disabled.');
+            }
+            this.dashboard.enabled = ok.enabled;
+          }, error => {
+            // TODO: error handling
+            alert(error);
+            console.log(error);
+            this.enableDashboardState = ClrLoadingState.ERROR;
+            this.notification.error('Error while changing dashboard enabled state.');
+          }
+        );
+      }, error => {
+        // TODO: error handling
+        alert(error);
+        console.log(error);
+        this.enableDashboardState = ClrLoadingState.ERROR;
+        this.notification.error('Error while changing dashboard enabled state.');
+      }
+    );
   }
 
   countColumns(): number {
