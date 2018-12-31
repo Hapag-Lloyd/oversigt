@@ -41,10 +41,12 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this._parsedInstanceDetails = value;
   }
 
-  startingEventSourceState = ClrLoadingState.DEFAULT;
-  stoppingEventSourceState = ClrLoadingState.DEFAULT;
-  enablingEventSourceState = ClrLoadingState.DEFAULT;
-  savingEventSourceState = ClrLoadingState.DEFAULT;
+  startEventSourceState = ClrLoadingState.DEFAULT;
+  stopEventSourceState = ClrLoadingState.DEFAULT;
+  enableEventSourceState = ClrLoadingState.DEFAULT;
+  saveEventSourceState = ClrLoadingState.DEFAULT;
+  deleteEventSourceState = ClrLoadingState.DEFAULT;
+
 
   // List of recently configured event sources
   recentlyUsed: ParsedEventSourceInstanceDetails[] = [];
@@ -53,8 +55,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private notification: NotificationService,
-    private eventSourceSelection: EventsourceSelectionService,
-    private ess: EventSourceService,
+    private eventSourceService: EventSourceService,
   ) { }
 
   ngOnInit() {
@@ -72,17 +73,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   private initComponent() {
     // find selected event source id
     this.eventSourceId = this.route.snapshot.paramMap.get('id');
-    this.eventSourceSelection.selectEventSource(this.eventSourceId);
 
     // Reset component
     this.parsedInstanceDetails = null;
     this.eventSourceDescriptor = null;
 
     // Load data from server
-    this.ess.readInstance(this.eventSourceId).subscribe(
+    this.eventSourceService.readInstance(this.eventSourceId).subscribe(
       fullInfo => {
         this.serviceInfo = fullInfo.serviceInfo;
-        this.ess.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
+        this.eventSourceService.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
           eventSourceDescriptor => {
             this.eventSourceDescriptor = eventSourceDescriptor;
             this.parsedInstanceDetails = this.parseInstanceDetails(fullInfo.instanceDetails);
@@ -151,15 +151,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   saveConfiguration() {
-    this.savingEventSourceState = ClrLoadingState.LOADING;
+    this.saveEventSourceState = ClrLoadingState.LOADING;
     console.log(this.parsedInstanceDetails);
-    this.ess.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
+    this.eventSourceService.updateInstance(this.eventSourceId, this.serializeInstanceDetails(this.parsedInstanceDetails)).subscribe(
       ok => {
-        this.savingEventSourceState = ClrLoadingState.SUCCESS;
+        this.saveEventSourceState = ClrLoadingState.SUCCESS;
         this.notification.success('The configuration has been saved.');
+        // TODO: update event source in list of recently used
       },
       error => {
-        this.savingEventSourceState = ClrLoadingState.ERROR;
+        this.saveEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         this.notification.error('Saving event source configuration failed. See log for details.');
       },
@@ -178,15 +179,15 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   stopEventSource() {
-    this.stoppingEventSourceState = ClrLoadingState.LOADING;
-    this.ess.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
+    this.stopEventSourceState = ClrLoadingState.LOADING;
+    this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
       ok => {
-        this.stoppingEventSourceState = ClrLoadingState.SUCCESS;
+        this.stopEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
         this.serviceInfo.running = false;
       },
       error => {
-        this.stoppingEventSourceState = ClrLoadingState.ERROR;
+        this.stopEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
@@ -196,16 +197,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   startEventSource() {
-    this.startingEventSourceState = ClrLoadingState.LOADING;
-    this.ess.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
+    this.startEventSourceState = ClrLoadingState.LOADING;
+    this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
       ok => {
-        this.startingEventSourceState = ClrLoadingState.SUCCESS;
+        this.startEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
         this.serviceInfo.running = true;
         // TODO nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
       },
       error => {
-        this.startingEventSourceState = ClrLoadingState.ERROR;
+        this.startEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
@@ -228,23 +229,23 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   private changeEnablingState(enabled: boolean, ok: () => void, fail: () => void): void {
     const _this = this;
-    this.enablingEventSourceState = ClrLoadingState.LOADING;
+    this.enableEventSourceState = ClrLoadingState.LOADING;
     // read current state from server
-    this.ess.readInstance(this.parsedInstanceDetails.id).subscribe(
+    this.eventSourceService.readInstance(this.parsedInstanceDetails.id).subscribe(
       instanceInfo => {
         // change enabled state and send back to server
         instanceInfo.instanceDetails.enabled = enabled;
-        _this.ess.updateInstance(_this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
+        _this.eventSourceService.updateInstance(_this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
           success => {
             _this.parsedInstanceDetails.enabled = enabled;
-            _this.enablingEventSourceState = ClrLoadingState.SUCCESS;
+            _this.enableEventSourceState = ClrLoadingState.SUCCESS;
             ok();
           },
           error => {
             console.error(error);
             alert(error);
             // TODO: Error handling
-            _this.enablingEventSourceState = ClrLoadingState.ERROR;
+            _this.enableEventSourceState = ClrLoadingState.ERROR;
             fail();
           }
         );
@@ -253,28 +254,48 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         console.error(error);
         alert(error);
         // TODO: Error handling
-        _this.enablingEventSourceState = ClrLoadingState.ERROR;
+        _this.enableEventSourceState = ClrLoadingState.ERROR;
         fail();
       }
     );
   }
 
   deleteEventSource() {
-    // TODO: nachfragen, ob der user wirklich löschen will
+    if (!confirm('Do you really want to delete the event source "' + this.parsedInstanceDetails.name + '"?')) {
+      return;
+    }
+
     // TODO: bildschirm blocken
-    this.ess.deleteInstance(this.parsedInstanceDetails.id).subscribe(
+    this.deleteEventSourceState = ClrLoadingState.LOADING;
+    this.eventSourceService.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
         // TODO: aus der Liste der exisierenden EventSources löschen
+        // Show user that we had a success
         this.notification.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.');
         this.eventSourceDescriptor = null;
+        this.deleteEventSourceState = ClrLoadingState.SUCCESS;
+
+        // remove source from list of recently used...
+        let recentlyUsedJson = localStorage.getItem('eventsources.recentlyUsed');
+        if (recentlyUsedJson === null || recentlyUsedJson === undefined || recentlyUsedJson === '') {
+          recentlyUsedJson = '[]';
+        }
+        this.recentlyUsed = JSON.parse(recentlyUsedJson);
+        this.recentlyUsed = this.recentlyUsed.filter(item => {
+          return item.id !== this.parsedInstanceDetails.id;
+        });
+        localStorage.setItem('eventsources.recentlyUsed', JSON.stringify(this.recentlyUsed));
+
+        // navigate to the list of event sources
         setTimeout(() => {
-          this.router.navigateByUrl(getLinkForId('eventsources'));
+          this.router.navigateByUrl(getLinkForId('eventsources') + '/list');
         }, 1000);
       },
       error => {
+        this.deleteEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
-        // TODO if the event source is being used by other widgets... show this to the user
+        // TODO: if the event source is being used by other widgets... show this to the user
       }
     );
   }
