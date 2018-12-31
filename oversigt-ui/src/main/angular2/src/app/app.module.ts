@@ -21,7 +21,7 @@ import { ConfigLogsLoggerComponent } from './config/system-loggers/config-logs-l
 import { ConfigEventsComponent } from './config/system-events/config-events.component';
 import { ConfigEventsourcesComponent } from './config/eventsources-main/config-eventsources.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ConfigEventsourceInfoComponent } from './config/eventsource-info/config-eventsource-info.component';
+import { SimpleEditorComponent } from './config/_simple-editor/simple-editor.component';
 import { ConfigEventsourceCreateComponent } from './config/eventsource-create/config-eventsource-create.component';
 import { ConfigEventsourceEditorComponent } from './config/eventsource-editor/config-eventsource-editor.component';
 import { FilterEventsourceinfoPipe } from './pipes/filter-eventsourceinfo.pipe';
@@ -92,7 +92,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigServerComponent,
     ConfigPropertyComponent,
     ConfigEventsourcesComponent,
-    ConfigEventsourceInfoComponent,
+    SimpleEditorComponent,
     ConfigEventsourceCreateComponent,
     ConfigEventsourceEditorComponent,
     FilterEventsourceinfoPipe,

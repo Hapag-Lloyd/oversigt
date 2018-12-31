@@ -39,10 +39,10 @@
 <ng-template #dbSettings>
   <form class="clr-form clr-form-horizontal">
     <div class="card-block">
-      <app-config-eventsource-info name="dashboard_title" [id]="'dashboard_title'" [title]="'Title'" [(ngModel)]="dashboard.title" [readOnly]="false"></app-config-eventsource-info>
-      <app-config-eventsource-info name="dashboard_screen" [id]="'dashboard_screen'" [title]="'Screen Size'" [(ngModel)]="screensize" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
-      <app-config-eventsource-info name="dashboard_columns" [id]="'dashboard_columns'" [title]="'Columns'" [(ngModel)]="dashboard.columns" [inputType]="'number'" [readOnly]="false"></app-config-eventsource-info>
-      <app-config-eventsource-info name="dashboard_background" [id]="'dashboard_background'" [title]="'Background'" [(ngModel)]="dashboard.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
+      <app-simple-editor name="dashboard_title" [id]="'dashboard_title'" [title]="'Title'" [(ngModel)]="dashboard.title" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_screen" [id]="'dashboard_screen'" [title]="'Screen Size'" [(ngModel)]="screensize" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_columns" [id]="'dashboard_columns'" [title]="'Columns'" [(ngModel)]="dashboard.columns" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_background" [id]="'dashboard_background'" [title]="'Background'" [(ngModel)]="dashboard.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
       <div class="clr-form-control">
         <label for="dashboard_color_scheme" class="clr-control-label">Color Scheme</label>
         <div class="clr-select-wrapper">
@@ -56,8 +56,8 @@
           </select>
         </div>
       </div>
-      <app-config-eventsource-info *ngIf="dashboard.colorScheme === 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Color'" [(ngModel)]="foregroundColors[0]" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
-      <app-config-eventsource-info *ngIf="dashboard.colorScheme !== 'COLORED' && dashboard.colorScheme !== 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Colors'" [(ngModel)]="foregroundColors" [inputType]="'color'" [readOnly]="false"></app-config-eventsource-info>
+      <app-simple-editor *ngIf="dashboard.colorScheme === 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Color'" [(ngModel)]="foregroundColors[0]" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor *ngIf="dashboard.colorScheme !== 'COLORED' && dashboard.colorScheme !== 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Colors'" [(ngModel)]="foregroundColors" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
     </div>
     <div class="card-footer">
       <button [clrLoading]="saveDashboardState" (click)="saveDashboardSettings()" class="btn btn-primary">Save</button>

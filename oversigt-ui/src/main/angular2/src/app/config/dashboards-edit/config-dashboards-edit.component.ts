@@ -110,6 +110,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.dashboardService.updateDashboard(this.dashboardId, this.dashboard).subscribe(dashboard => {
       this.setDashboard(dashboard);
       this.saveDashboardState = ClrLoadingState.SUCCESS;
+      this.notification.success('The dashboard configuration has been saved.');
     },
     error => {
       this.saveDashboardState = ClrLoadingState.ERROR;
