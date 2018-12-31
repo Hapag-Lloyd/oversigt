@@ -27,6 +27,10 @@
   </clr-dropdown>
 </div>
 
+<div *ngIf="false" class="modal-backdrop" aria-hidden="true">
+  <span class="spinner">Loading...</span>
+</div>
+
 <!-- Content to be displayed for an event source -->
 <div *ngIf="eventSourceDescriptor !== null" class="eventsource-config-main">
   <div class="system-info">
