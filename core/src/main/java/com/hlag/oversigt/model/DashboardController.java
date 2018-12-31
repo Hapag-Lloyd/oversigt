@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -362,8 +363,18 @@ public class DashboardController {
 		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.put(instance, null));
 	}
 
-	private void removeService(EventSourceInstance instance) {
-		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.remove(instance));
+	private void removeEventSourceInstance(final EventSourceInstance instance) {
+		eventSourceInstances_lock.write(() -> {
+			/* This method is a work around because (why ever)
+			 * <code>eventSourceInstances_internal.remove(instance);</code>
+			 *  didn't work and did not remove the instance from the map. */
+			Map<EventSourceInstance, Service> newMap = eventSourceInstances_internal.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(instance))
+					.collect(LinkedHashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), LinkedHashMap::putAll);
+			eventSourceInstances_internal.clear();
+			eventSourceInstances_internal.putAll(newMap);
+		});
 	}
 
 	public Collection<EventSourceInstance> getEventSourceInstances() {
@@ -375,7 +386,7 @@ public class DashboardController {
 				.stream()
 				.filter(i -> id.equals(i.getId()))
 				.findAny()
-				.get());
+				.get()); // TODO replace by orElseThrow()
 	}
 
 	private EventSourceDescriptor getEventSourceDescriptor(String className, String viewname) {
@@ -742,7 +753,7 @@ public class DashboardController {
 		}
 
 		storage.deleteEventSourceInstance(eventSourceId);
-		removeService(instance);
+		removeEventSourceInstance(instance);
 
 		return null;
 	}

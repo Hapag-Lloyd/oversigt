@@ -143,6 +143,9 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
+			if (obj instanceof String) {
+				return obj.equals(this.getId());
+			}
 			return false;
 		}
 		EventSourceInstance other = (EventSourceInstance) obj;
