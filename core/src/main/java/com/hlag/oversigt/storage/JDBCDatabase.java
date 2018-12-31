@@ -65,7 +65,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 		this.sqlDialect = dialect;
 		this.json = json;
 		try {
-			LOGGER.info("Loading JDBC driver");
+			LOGGER.info("Loading driver for database at location: " + databaseLocation);
 			Class.forName(dialect.getDriverClassName());
 			connection = DriverManager
 					.getConnection(dialect.getJdbcConnectionUrl(databaseLocation, schema, username, password));

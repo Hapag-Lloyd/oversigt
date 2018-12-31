@@ -179,6 +179,24 @@ public class EventSourceInstanceResource {
 		}
 	}
 
+	@GET
+	@Path("/{id}/usage")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = String.class, responseContainer = "List")
+			//, @ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class)
+	})
+	@JwtSecured
+	@ApiOperation(value = "Read event source instance usage")
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public Response readInstanceUsage(@PathParam("id") @NotBlank String instanceId) {
+		try {
+			return ok(controller.getEventSourceInstanceUsage(instanceId)).build();
+		} catch (NoSuchElementException e) {
+			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
+		}
+	}
+
 	@PUT
 	@Path("/{id}")
 	@ApiResponses({ //

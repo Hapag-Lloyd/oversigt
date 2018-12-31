@@ -171,7 +171,14 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   showUsage() {
-    this.notification.error('This function is not implemented yet.');
+    this.eventSourceService.readInstanceUsage(this.eventSourceId).subscribe(
+      dashboards => {
+        alert(dashboards);
+      }, error => {
+        console.error(error);
+        this.notification.error('Unable to read usage data of this event source.');
+      }
+    );
   }
 
   addToDashboard(id: string) {

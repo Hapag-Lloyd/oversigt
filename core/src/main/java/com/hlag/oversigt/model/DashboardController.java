@@ -727,6 +727,16 @@ public class DashboardController {
 		return deleteEventSourceInstance(eventSourceId, false);
 	}
 
+	public Set<String> getEventSourceInstanceUsage(String eventSourceId) {
+		return dashboards.values()
+				.stream()
+				.filter(d -> d.getWidgets()
+						.stream()
+						.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
+				.map(Dashboard::getId)
+				.collect(toSet());
+	}
+
 	public Set<String> deleteEventSourceInstance(String eventSourceId, boolean force) {
 		EventSourceInstance instance = getEventSourceInstance(eventSourceId);
 
@@ -737,13 +747,7 @@ public class DashboardController {
 				.collect(toList());
 
 		if (!force && !widgetsToDelete.isEmpty()) {
-			return dashboards.values()
-					.stream()
-					.filter(d -> d.getWidgets()
-							.stream()
-							.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
-					.map(Dashboard::getId)
-					.collect(toSet());
+			return getEventSourceInstanceUsage(eventSourceId);
 		} else if (force && !widgetsToDelete.isEmpty()) {
 			widgetsToDelete.forEach(this::deleteWidget);
 		}
