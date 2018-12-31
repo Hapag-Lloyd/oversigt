@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 // tslint:disable-next-line:max-line-length
 import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor, FullEventSourceInstanceInfo } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/notification.service';
@@ -13,6 +13,8 @@ import { getLinkForDashboard } from 'src/app/app.component';
   styleUrls: ['./config-dashboards-widget.component.css']
 })
 export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
+  @Output() positionChanged = new Subject();
+
   private subscription: Subscription = null;
   private dashboardId: string = null;
   private widgetId: number = null;
@@ -50,7 +52,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.dashboardId = this.route.snapshot.parent.paramMap.get('dashboardId');
     this.widgetId = +this.route.snapshot.paramMap.get('widgetId');
 
-    this.widget = null; // TODO: show loading
+    this.widget = null;
     this.eventSourceDescriptor = null;
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, true).subscribe(widget => {
       this.setWidgetDetails(widget);
@@ -95,7 +97,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.setWidgetDetails(widget);
       this.notificationService.success('Widget ' + this.widget.name + ' has been saved.');
       this.saveButtonState = ClrLoadingState.SUCCESS;
-      // TODO: update parent component (list of widgets on dashboard)
+      this.positionChanged.next(null);
     },
     error => {
       console.log(error);

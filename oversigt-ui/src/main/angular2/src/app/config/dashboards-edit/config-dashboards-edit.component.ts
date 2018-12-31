@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ComponentRef } from '@angular/core';
 import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo, SystemService } from 'src/oversigt-client';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -6,6 +6,7 @@ import { FormControl } from '@angular/forms';
 import { ClrLoadingState } from '@clr/angular';
 import { getLinkForDashboards } from 'src/app/app.component';
 import { NotificationService } from 'src/app/notification.service';
+import { ConfigDashboardWidgetComponent } from '../dashboards-widget/config-dashboards-widget.component';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -13,7 +14,8 @@ import { NotificationService } from 'src/app/notification.service';
   styleUrls: ['./config-dashboards-edit.component.scss']
 })
 export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
-  private subscription: Subscription = null;
+  private subscriptions: Subscription[] = [];
+  private childSubscription: Subscription = null;
 
   private dashboardId: string = null;
   dashboardTitle = '';
@@ -37,7 +39,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private dashboardService: DashboardService,
-    private widgetService: DashboardWidgetService,
+    private dashboardWidgetService: DashboardWidgetService,
     private systemService: SystemService,
     private notification: NotificationService,
   ) {
@@ -57,14 +59,27 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscription = this.route.url.subscribe(_ => {
+    this.subscriptions.push(this.route.url.subscribe(_ => {
       this.initComponent();
-    });
+    }));
   }
 
   ngOnDestroy() {
-    if (this.subscription !== null) {
-      this.subscription.unsubscribe();
+    this.subscriptions.forEach(s => s.unsubscribe());
+    if (this.childSubscription) {
+      this.childSubscription.unsubscribe();
+    }
+  }
+
+  activateChild(componentRef: ComponentRef<any>): void {
+    if (this.childSubscription) {
+      this.childSubscription.unsubscribe();
+    }
+    if (componentRef instanceof ConfigDashboardWidgetComponent) {
+      const child: ConfigDashboardWidgetComponent = componentRef;
+      this.childSubscription = child.positionChanged.subscribe(event => {
+        this.loadWidgetPositions();
+      });
     }
   }
 
@@ -84,7 +99,11 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
       this.setDashboard(dashboard);
       // TODO: Error handling
     });
-    this.widgetService.listWidgets(this.dashboardId).subscribe(widgetInfos => {
+    this.loadWidgetPositions();
+  }
+
+  private loadWidgetPositions(): void {
+    this.dashboardWidgetService.listWidgets(this.dashboardId).subscribe(widgetInfos => {
       this.widgetInfos = widgetInfos;
       // TODO: Error handling
     });

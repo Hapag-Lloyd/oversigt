@@ -30,7 +30,7 @@
           <ng-container *ngTemplateOutlet="dbWidgets"></ng-container>
         </div>
       </div>
-      <router-outlet #outlet="outlet"></router-outlet>
+      <router-outlet #outlet="outlet" (activate)="activateChild($event)"></router-outlet>
     </div>
   </div>
 </ng-container>
