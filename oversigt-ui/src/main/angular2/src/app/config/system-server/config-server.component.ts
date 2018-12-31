@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { EventSourceService } from 'src/oversigt-client';
+import { EventSourceService, SystemService } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/notification.service';
+import { ClrLoadingState } from '@clr/angular';
 
 @Component({
   selector: 'app-config-server',
@@ -8,20 +9,29 @@ import { NotificationService } from 'src/app/notification.service';
   styleUrls: ['./config-server.component.css']
 })
 export class ConfigServerComponent implements OnInit {
-  restartDrawerVisible = false;
-  restartingEventSources = false;
-  restartPrecent = 0;
+  restartState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   constructor(
-    private ess: EventSourceService,
+    private eventSourceService: EventSourceService,
+    private systemService: SystemService,
     private notification: NotificationService,
   ) {}
 
   ngOnInit() {}
 
-  restartServer(): void {
-    this.restartDrawerVisible = false;
-    alert('restart');
+  shutdownServer(): void {
+    if (!confirm('Do you really want to shut down the server?')) {
+      return;
+    }
+    this.systemService.shutdown().subscribe(
+      ok => {
+        this.notification.info('The server is about to shut down. This configuration page will stop working now.');
+      }, error => {
+        alert(error);
+        console.log(error);
+        // TODO: error handling
+      }
+    );
   }
 
   startEventSources() {
@@ -33,20 +43,21 @@ export class ConfigServerComponent implements OnInit {
   }
 
   changeEventSourceStates(running: boolean, messageWhenDone: string) {
-    this.restartingEventSources = true;
+    this.restartState = ClrLoadingState.LOADING;
     const restarted: {[s: string]: boolean; } = {};
+
     const checkAll = () => {
-      this.restartPrecent = Object.values(restarted).filter(i => i).length / Object.keys(restarted).length;
-      this.restartingEventSources = Object.values(restarted).reduce((a, b) => a && b);
-      if (!this.restartingEventSources) {
+      if (Object.values(restarted).reduce((a, b) => a && b)) {
         this.notification.success(messageWhenDone);
+        this.restartState = ClrLoadingState.SUCCESS;
       }
     };
-    this.ess.listInstances().subscribe(
+    this.eventSourceService.listInstances().subscribe(
       list => {
+        // TODO: filter for event sources that can be started!
         list.forEach(item => restarted[item.id] = false);
         list.forEach(item => {
-          this.ess.setInstanceRunning(item.id, running).subscribe(
+          this.eventSourceService.setInstanceRunning(item.id, running).subscribe(
             success => {
               console.log(item.id, 'done');
             },
@@ -54,6 +65,7 @@ export class ConfigServerComponent implements OnInit {
               console.error(error.error);
               // alert(error);
               // TODO: Error handling
+              // TODO: this.restartState = ClrLoadingState.ERROR;
             },
             () => {
               restarted[item.id] = true;
@@ -66,10 +78,8 @@ export class ConfigServerComponent implements OnInit {
         console.error(error);
         alert(error);
         // TODO: Error handling
+        this.restartState = ClrLoadingState.ERROR;
       }
     );
-    setTimeout(() => {
-      this.restartingEventSources = false;
-    }, 2000);
   }
 }

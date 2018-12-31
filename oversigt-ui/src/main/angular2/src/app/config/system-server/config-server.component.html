@@ -13,8 +13,8 @@
             </div>
             <div class="card-footer">
                 <div class="btn-group btn-primary">
-                  <button class="btn" (click)="startEventSources()" [attr.disabled]="restartingEventSources ? 'disabled' : null" title="Start all event sources">Start all</button>
-                  <button class="btn btn-warning" (click)="stopEventSources()" [attr.disabled]="restartingEventSources ? 'disabled' : null" title="Stop all event sources">Stop all</button>
+                  <button [clrLoading]="restartState" class="btn" (click)="startEventSources()" title="Start all event sources">Start all</button>
+                  <button [clrLoading]="restartState" class="btn btn-warning" (click)="stopEventSources()" title="Stop all event sources">Stop all</button>
                 </div>
             </div>
         </div>
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="card-footer">
-              <button class="btn btn-danger" (click)="restartServer()">Shut down Oversigt</button>
+              <button class="btn btn-danger" (click)="shutdownServer()">Shut down Oversigt</button>
             </div>
         </div>
     </div>
