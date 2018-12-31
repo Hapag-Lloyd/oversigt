@@ -51,6 +51,10 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
   }
 
   createDashboard(id: string) {
+    if (id.trim().length === 0) {
+      this.notification.warning('The ID you entered was empty. Cannot create dashboard.');
+      return;
+    }
     this.ds.createDashboard(id, this.userService.getName(), this.userService.hasRole('server.admin')).subscribe(
       dashboard => {
         this.notification.success('Dashboard "' + dashboard.id + '" has been created.');

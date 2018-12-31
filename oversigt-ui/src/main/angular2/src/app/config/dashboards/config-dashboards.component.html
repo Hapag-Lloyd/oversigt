@@ -10,7 +10,7 @@
     <div class="clr-input-wrapper">
       <input #createName class="clr-input" type="text" placeholder="Dashboard ID" id="createDashboard" name="createDashboard"/>
     </div>
-    <button (click)="createDashboard(createName.value)" class="btn btn-primary btn-icon" title="Create new dashboard">Create dashboard</button>
+    <button (click)="createDashboard(createName.value);createName.value='';" class="btn btn-primary btn-icon" title="Create new dashboard">Create dashboard</button>
   </div>
   <div *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter" class="list-group-item content">
     <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
