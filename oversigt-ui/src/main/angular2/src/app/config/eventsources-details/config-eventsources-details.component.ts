@@ -1,14 +1,15 @@
 import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor } from 'src/oversigt-client';
+import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo } from 'src/oversigt-client';
 import { EventsourceSelectionService } from '../../eventsource-selection.service';
-import { Subscribable, Subscription } from 'rxjs';
+import { Subscribable, Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventsources.component';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
 import { NotificationService } from 'src/app/notification.service';
 import { uniqueItems } from 'src/app/utils/arrays';
 import { getLinkForId } from 'src/app/app.component';
+import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -27,6 +28,9 @@ export class ParsedEventSourceInstanceDetails {
 })
 export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   @ViewChildren(ConfigEventsourceEditorComponent) editors !: QueryList<ConfigEventsourceEditorComponent>;
+
+  private searchTerms = new Subject<string>();
+  sources$: Observable<EventSourceInstanceInfo[]>;
 
   private subscription: Subscription = null;
   eventSourceId: string = null;
@@ -62,6 +66,14 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.subscription = this.route.url.subscribe(_ => {
       this.initComponent();
     });
+
+    // init filter for drop down
+    this.sources$ = this.searchTerms.pipe(
+      startWith(''), // initial search value
+      debounceTime(300), // wait 300ms after each keystroke before considering the term
+      distinctUntilChanged(), // ignore new term if same as previous term
+      switchMap((term: string) => this.eventSourceService.listInstances(term)), // let the server search
+    );
   }
 
   ngOnDestroy() {
@@ -305,5 +317,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         // TODO: if the event source is being used by other widgets... show this to the user
       }
     );
+  }
+
+  searchEventSource(filter: string): void {
+    this.searchTerms.next(filter);
   }
 }
