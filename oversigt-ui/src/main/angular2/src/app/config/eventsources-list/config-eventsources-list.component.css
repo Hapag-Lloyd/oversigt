@@ -1,6 +1,11 @@
 .event-source-list {
-    display: flex; 
-    flex-flow: row wrap; 
-    justify-content: flex-start /*space-between*/; 
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start /*space-between*/;
     align-items: baseline;
 }
+
+.not-running {
+  text-decoration: line-through;
+}
+

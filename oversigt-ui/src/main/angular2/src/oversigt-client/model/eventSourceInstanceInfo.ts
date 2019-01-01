@@ -15,6 +15,7 @@ import { DashboardShortInfo } from './dashboardShortInfo';
 export interface EventSourceInstanceInfo {
     id?: string;
     name?: string;
+    service?: boolean;
     running?: boolean;
     hasError?: boolean;
     usedBy: Array<DashboardShortInfo>;

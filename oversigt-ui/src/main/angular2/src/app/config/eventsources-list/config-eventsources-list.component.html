@@ -9,5 +9,5 @@
 </ng-template>
 
 <div class="event-source-list">
-  <a *ngFor="let info of sources$ |async" class="btn btn-default" routerLink="../{{info.id}}">{{info.name}}</a>
+  <a *ngFor="let info of sources$ |async" class="btn btn-outline" [class.not-running]="info.service && !info.running" [class.btn-warning-outline]="info.hasError" [class.btn-success-outline]="!info.service" routerLink="../{{info.id}}">{{info.name}}</a>
 </div>
