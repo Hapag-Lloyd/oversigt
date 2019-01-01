@@ -26,3 +26,12 @@ clr-dropdown-menu input {
   margin: 0 1rem;
 }
 
+.drop-down-info {
+  margin-left: 1rem;
+  font-size: small;
+}
+
+.drop-down-info + .nothing-found, a + .nothing-found {
+  display: none;
+}
+

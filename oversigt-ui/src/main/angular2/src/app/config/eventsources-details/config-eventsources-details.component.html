@@ -19,8 +19,9 @@
       <input #searchBox (input)="searchEventSource(searchBox.value)" class="clr-input" placeholder="Search..." name="eventSourceSearch" /> <!-- TODO: implement search -->
       <ng-container *ngFor="let info of sources$ | async ; let i = index">
         <a *ngIf="i < 5" routerLink="../{{info.id}}" type="button" clrDropdownItem>{{info.name}}</a>
-        <em *ngIf="i === 5" style="margin-left: 1rem;font-size:small">More event source match...</em>
+        <em *ngIf="i === 5" class="drop-down-info">More event source match...</em>
       </ng-container>
+      <em class="drop-down-info nothing-found">No event sources found</em>
       <div class="dropdown-divider"></div>
       <label class="dropdown-header">Create event source</label>
       <a type="button" clrDropdownItem routerLink="../create">Create new...</a>

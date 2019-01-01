@@ -1,9 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo } from 'src/oversigt-client';
-import { EventsourceSelectionService } from '../../eventsource-selection.service';
-import { Subscribable, Subscription, Subject, Observable } from 'rxjs';
-import { ConfigEventsourcesComponent } from '../eventsources-main/config-eventsources.component';
+import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
 import { NotificationService } from 'src/app/notification.service';
@@ -27,6 +25,7 @@ export class ParsedEventSourceInstanceDetails {
   styleUrls: ['./config-eventsources-details.component.css']
 })
 export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
+  // TODO: Move focus to search field if drop down has been opened.
   @ViewChildren(ConfigEventsourceEditorComponent) editors !: QueryList<ConfigEventsourceEditorComponent>;
 
   private searchTerms = new Subject<string>();
