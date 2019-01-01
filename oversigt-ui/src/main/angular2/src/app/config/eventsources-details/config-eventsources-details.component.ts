@@ -6,7 +6,7 @@ import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-e
 import { ClrLoadingState } from '@clr/angular';
 import { NotificationService } from 'src/app/notification.service';
 import { uniqueItems } from 'src/app/utils/arrays';
-import { getLinkForId } from 'src/app/app.component';
+import { getLinkForId, getLinkForEventSource } from 'src/app/app.component';
 import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 export class ParsedEventSourceInstanceDetails {
@@ -314,6 +314,35 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         console.error(error);
         alert(error);
         // TODO: if the event source is being used by other widgets... show this to the user
+      }
+    );
+  }
+
+  copyEventSource(): void {
+    // 1. Create a new event source of same type
+    // 2. Copy settings to newly created event source
+    this.eventSourceService.createInstance(this.eventSourceDescriptor.key.key).subscribe(
+      eventSource => {
+        const parsedCopy = {...this.parsedInstanceDetails};
+        parsedCopy.name = 'Copy of ' + parsedCopy.name;
+        parsedCopy.enabled = false;
+        parsedCopy.id = eventSource.id;
+        const copy = this.serializeInstanceDetails(parsedCopy);
+        this.eventSourceService.updateInstance(eventSource.id, copy).subscribe(
+          ok => {
+            this.router.navigateByUrl(getLinkForEventSource(copy.id));
+          }, error => {
+            this.notification.error('The event source copy could not be configured.');
+            console.error(error);
+            alert(error);
+            // TODO: error handling
+          }
+        );
+      }, error => {
+        this.notification.error('The event source could not be created.');
+        console.error(error);
+        alert(error);
+        // TODO: error handling
       }
     );
   }
