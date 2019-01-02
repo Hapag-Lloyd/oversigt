@@ -17,7 +17,6 @@ export class ConfigListChildcomponentsComponent implements OnInit {
 
   ngOnInit() {
     const url = this.route.snapshot.url.map(s => s.path).join('/');
-    console.log(url);
   }
 
 }

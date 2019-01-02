@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventSourceInfo } from 'src/oversigt-client';
 import { Router, ActivatedRoute, RouterOutlet } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { EventsourceSelectionService } from '../../eventsource-selection.service';
+import { getLinkForId } from 'src/app/app.component';
 
 @Component({
   selector: 'app-config-eventsources',
@@ -15,10 +14,12 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private eventSourceService: EventSourceService,
   ) {
   }
 
   ngOnInit() {
+    this.navigateToChild();
   }
 
   ngOnDestroy() {
@@ -32,12 +33,21 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  isDetailActive(): boolean {
-    const ar = this.getActiveChild();
-    return ar !== 'list' && ar !== 'create';
-  }
-
-  hasSelectedChild(): boolean {
-    return this.route.snapshot.children.length > 0;
+  private navigateToChild(): void {
+    // TODO: also navigate to child if we navigate to this page from a child page
+    if (this.router.routerState.snapshot.url !== getLinkForId('eventsources')) {
+      return;
+    }
+    this.eventSourceService.listInstances().subscribe(
+      ok => {
+        if (ok.length > 0) {
+          // We already have some sources
+          this.router.navigate(['list'], {relativeTo: this.route, replaceUrl: true});
+        } else {
+          // There are no sources yet
+          this.router.navigate(['create'], {relativeTo: this.route, replaceUrl: true});
+        }
+      }
+    );
   }
 }
