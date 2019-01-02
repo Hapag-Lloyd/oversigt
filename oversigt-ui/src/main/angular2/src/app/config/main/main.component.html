@@ -1,33 +1,61 @@
-<router-outlet #outlet="outlet"></router-outlet>
-
-<div [hidden]="outlet.isActivated">
-  <h1>{{menuItem !== undefined ? menuItem.title : 'Oversigt Configuration'}}</h1>
-  <ng-container *ngIf="menuItem === undefined">
-    <p>Welcome to the Oversigt configuration.</p>
-    <p>
-      This is where you configure the Oversigt server, create dashboards and set
-      up event sources to produce the data you want to display.
-    </p>
-    <p>
-      Use the above menu to go to the primary configuration sections. Each page
-      will show you more possibilities to adjust the settings.
-    </p>
-  </ng-container>
-  <ng-container *ngIf="menuItem !== undefined">
-    <p *ngIf="menuItem.children.length > 0">Please use one of the sub pages to modify the Oversigt settings:</p>
-    <div class="row">
-      <div *ngFor="let item of menuItem.children" class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
-        <a class="card clickable" routerLink="{{item.link}}">
-          <div class="card-header">
-            {{item.title}}
-          </div>
-          <div class="card-block">
-            <div class="card-text">
-                Bla bla
-            </div>
-          </div>
-        </a>
-      </div>
+<div class="main-container">
+  <header class="header header-6">
+    <div class="branding">
+      <a routerLink="/" class="nav-link">
+        <clr-icon shape="box-plot" class="is-solid"></clr-icon>
+        <span class="title">Oversigt</span>
+      </a>
     </div>
-  </ng-container>
+    <div class="header-nav">
+      <a *ngFor="let item of menuItems" routerLink="{{item.link}}" class="nav-link nav-text" [class.active]="getSelectedMenuItemLink() === item.link">{{item.title}}</a>
+    </div>
+    <!-- TODO: <form class="search">
+      <label for="search_input">
+        <input id="search_input" type="text" placeholder="Search for configuration...">
+      </label>
+    </form>-->
+    <div class="header-actions">
+      <clr-dropdown>
+        <button class="nav-icon" clrDropdownTrigger>
+          <clr-icon shape="cog"></clr-icon>
+          <clr-icon shape="caret down"></clr-icon>
+        </button>
+        <clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
+          <a (click)="doLogout()" clrDropdownItem>Log out</a>
+        </clr-dropdown-menu>
+      </clr-dropdown>
+    </div>
+  </header>
+
+  <nav *ngIf="getSelectedMenuItemChildren().length > 0" class="subnav">
+    <ul class="nav">
+      <li *ngFor="let item of getSelectedMenuItemChildren()" class="nav-item" [class.active]="getSelectedSubMenuItemLink() === item.link">
+        <a class="nav-link" routerLink="{{item.link}}">{{item.title}}</a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="content-container">
+    <div class="content-area">
+
+      <!-- START config-content -->
+      <router-outlet #outlet="outlet"></router-outlet>
+
+      <div [hidden]="outlet.isActivated">
+        <h1>{{menuItem !== undefined ? menuItem.title : 'Oversigt Configuration'}}</h1>
+        <ng-container *ngIf="menuItem === undefined">
+          <p>Welcome to the Oversigt configuration.</p>
+          <p>
+            This is where you configure the Oversigt server, create dashboards and set
+            up event sources to produce the data you want to display.
+          </p>
+          <p>
+            Use the above menu to go to the primary configuration sections. Each page
+            will show you more possibilities to adjust the settings.
+          </p>
+        </ng-container>
+      </div>
+      <!-- END config-content -->
+    </div>
+  </div>
 </div>

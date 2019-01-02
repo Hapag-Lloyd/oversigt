@@ -40,6 +40,7 @@ import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
 import { ConfigEventsourcesListComponent } from './config/eventsources-list/config-eventsources-list.component';
 import { ConfigDashboardWidgetComponent } from './config/dashboards-widget/config-dashboards-widget.component';
 import { ConfigDashboardWidgetAddComponent } from './config/dashboards-widget-add/config-dashboards-widget-add.component';
+import { ConfigListChildcomponentsComponent } from './config/list-childcomponents/config-list-childcomponents.component';
 
 const appRoutes: Routes = [
   { path: 'login',                    component: LoginComponent, },
@@ -47,7 +48,6 @@ const appRoutes: Routes = [
   // { path: 'config',                   component: ConfigurationComponent,
                                       canActivate: [AuthGuard],
                                       canActivateChild: [AuthGuard], children: [
-    { path: 'createDashboard',        component: ConfigurationComponent },
     { path: 'dashboards',             component: ConfigDashboardsComponent, runGuardsAndResolvers: 'always', children: [
       { path: ':dashboardId',         component: ConfigDashboardsEditComponent, children: [
         { path: 'add',                component: ConfigDashboardWidgetAddComponent } ,
@@ -60,14 +60,14 @@ const appRoutes: Routes = [
       { path: 'list',                 component: ConfigEventsourcesListComponent },
       { path: ':id',                  component: ConfigEventsourcesDetailsComponent },
     ] },
-    { path: 'system',                 component: ConfigurationComponent, children: [
+    { path: 'system',                 component: ConfigListChildcomponentsComponent, children: [
       { path: 'logfiles',             component: ConfigLogsLogfileComponent },
       { path: 'loggers',              component: ConfigLogsLoggerComponent },
       { path: 'events',               component: ConfigEventsComponent },
       { path: 'threads',              component: ConfigThreadsComponent },
       { path: 'server',               component: ConfigServerComponent }, // TODO
     ]},
-    { path: 'properties',             component: ConfigurationComponent },
+    { path: 'properties',             component: ConfigListChildcomponentsComponent },
     { path: 'properties/:name',       component: ConfigPropertyComponent },
     // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
   ] },
@@ -109,6 +109,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigEventsourcesListComponent,
     ConfigDashboardWidgetComponent,
     ConfigDashboardWidgetAddComponent,
+    ConfigListChildcomponentsComponent,
   ],
   imports: [
     RouterModule.forRoot(

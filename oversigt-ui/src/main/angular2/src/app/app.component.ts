@@ -32,6 +32,10 @@ export function getLinkForId(id: string): string {
   return MENU_ITEMS.find(mi => mi.id === id).link;
 }
 
+export function getLinkForProperty(id: string): string {
+  return getLinkForId('properties') + '/' + id;
+}
+
 export function getLinkForEventSource(id: string): string {
   return getLinkForId('eventsources') + '/' + id;
 }
@@ -55,58 +59,11 @@ export function getLinkForDashboardWidget(dashboardId: string, widgetId: number)
 })
 export class AppComponent implements OnInit {
   title = 'oversigt-ui';
-  isCollapsed: boolean;
-
-  menuItems = MENU_ITEMS;
 
   constructor(
-    private router: Router,
-    private userService: UserService,
-    private propertiesService: PropertiesService,
   ) {
   }
 
   ngOnInit(): void {
-    this.isCollapsed = false;
-    this.propertiesService.loadProperties(props => {
-      const item = this.menuItems.find(mi => mi.title === 'Properties');
-      item.children = props.map(p => <MenuItem>{title: p, link: PREFIX + '/properties/' + p, children: []});
-    });
-  }
-
-  isShowingConfiguration(): boolean {
-    const url = this.router.url;
-    return url.startsWith(PREFIX + '/') || url === '/config';
-  }
-
-  getSelectedMenuItem(): MenuItem {
-    const url = this.router.url;
-    const item = this.menuItems.find(c => url.startsWith(c.link));
-    if (item !== undefined) {
-      return item;
-    } else {
-      return null;
-    }
-  }
-
-  getSelectedMenuItemLink(): string {
-    const item = this.getSelectedMenuItem();
-    return item !== null ? item.link : '';
-    }
-
-  getSelectedMenuItemChildren(): MenuItem[] {
-    const item = this.getSelectedMenuItem();
-    return item !== null ? item.children : [];
-  }
-
-  getSelectedSubMenuItemLink(): string {
-    const url = this.router.url;
-    const item = this.getSelectedMenuItem().children.find(c => c.link === url);
-    return item !== undefined ? item.link : '';
-  }
-
-  doLogout() {
-    this.userService.logOut();
-    this.router.navigateByUrl('/');
   }
 }

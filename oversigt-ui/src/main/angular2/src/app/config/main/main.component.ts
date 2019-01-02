@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MENU_ITEMS, MenuItem } from 'src/app/app.component';
+import { MENU_ITEMS, MenuItem, getLinkForProperty } from 'src/app/app.component';
+import { UserService } from 'src/app/user-service.service';
+import { PropertiesService } from 'src/app/properties-service.service';
 
 @Component({
   selector: 'app-configuration',
@@ -8,15 +10,24 @@ import { MENU_ITEMS, MenuItem } from 'src/app/app.component';
   styleUrls: ['./main.component.css']
 })
 export class ConfigurationComponent implements OnInit {
-  private menuItems = MENU_ITEMS;
   menuItem: MenuItem = undefined;
+
+  menuItems = MENU_ITEMS;
+  isCollapsed: boolean;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private userService: UserService,
+    private propertiesService: PropertiesService,
   ) { }
 
   ngOnInit() {
+    this.isCollapsed = false;
+    this.propertiesService.loadProperties(props => {
+      const item = this.menuItems.find(mi => mi.id === 'properties');
+      item.children = props.map(p => <MenuItem>{title: p, link: getLinkForProperty(p), children: []});
+    });
     const loadedUrl = this.route.snapshot.pathFromRoot.map(p => p.url.map(u => u.path).join('/')).join('/').replace('//', '/');
     this.menuItem = this.menuItems.find(mi => {
       return mi.link === loadedUrl;
@@ -25,5 +36,36 @@ export class ConfigurationComponent implements OnInit {
 
   hasSelectedChild(): boolean {
     return this.route.snapshot.children.length > 0;
+  }
+
+  getSelectedMenuItem(): MenuItem {
+    const url = this.router.url;
+    const item = this.menuItems.find(c => url.startsWith(c.link));
+    if (item !== undefined) {
+      return item;
+    } else {
+      return null;
+    }
+  }
+
+  getSelectedMenuItemLink(): string {
+    const item = this.getSelectedMenuItem();
+    return item !== null ? item.link : '';
+    }
+
+  getSelectedMenuItemChildren(): MenuItem[] {
+    const item = this.getSelectedMenuItem();
+    return item !== null ? item.children : [];
+  }
+
+  getSelectedSubMenuItemLink(): string {
+    const url = this.router.url;
+    const item = this.getSelectedMenuItem().children.find(c => c.link === url);
+    return item !== undefined ? item.link : '';
+  }
+
+  doLogout() {
+    this.userService.logOut();
+    this.router.navigateByUrl('/login');
   }
 }

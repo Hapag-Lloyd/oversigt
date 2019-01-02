@@ -21,7 +21,7 @@ export class PropertiesService {
         },
         error => {
           console.error(error);
-          alert(error);
+          alert('Unable to load properties: ' + JSON.stringify(error));
           // TODO: error handling
         }
       );
