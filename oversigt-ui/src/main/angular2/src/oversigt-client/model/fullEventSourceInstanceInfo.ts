@@ -10,10 +10,10 @@
  * Do not edit the class manually.
  */
 import { EventSourceInstanceDetails } from './eventSourceInstanceDetails';
-import { ServiceInfo } from './serviceInfo';
+import { EventSourceInstanceState } from './eventSourceInstanceState';
 
 
-export interface FullEventSourceInstanceInfo {
+export interface FullEventSourceInstanceInfo { 
     instanceDetails?: EventSourceInstanceDetails;
-    serviceInfo?: ServiceInfo;
+    instanceState?: EventSourceInstanceState;
 }

@@ -12,7 +12,7 @@
 import { StackTraceElement } from './stackTraceElement';
 
 
-export interface ThreadInfo {
+export interface ThreadInfo { 
     name?: string;
     id?: number;
     priority?: number;
@@ -28,5 +28,5 @@ export namespace ThreadInfo {
         WAITING: 'WAITING' as StateEnum,
         TIMEDWAITING: 'TIMED_WAITING' as StateEnum,
         TERMINATED: 'TERMINATED' as StateEnum
-    }
+    };
 }

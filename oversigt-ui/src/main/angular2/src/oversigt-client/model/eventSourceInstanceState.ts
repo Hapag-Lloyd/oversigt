@@ -11,8 +11,11 @@
  */
 
 
-export interface EventSourceInstanceState {
+export interface EventSourceInstanceState { 
     id?: string;
+    serviceClass?: string;
+    createdBy?: string;
+    lastChangedBy?: string;
     running?: boolean;
     lastRun?: Date;
     lastSuccess?: Date;

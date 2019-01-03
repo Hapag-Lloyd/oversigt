@@ -29,6 +29,8 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
 
 @Api(tags = { "EventSource" }, //
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -54,16 +56,7 @@ public class EventSourceStatusResource {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 
-		EventSourceInstanceState state = new EventSourceInstanceState();
-		state.id = instance.getId();
-		state.running = controller.isRunning(instance);
-		state.lastRun = controller.getLastRun(instance);
-		state.lastSuccess = controller.getLastSuccessfulRun(instance);
-		state.lastFailure = controller.getLastFailureDateTime(instance);
-		state.lastException = controller.getLastFailureException(instance);
-		state.lastReason = controller.getLastFailureDescription(instance);
-
-		return ok(state).build();
+		return ok(EventSourceInstanceState.fromInstance(controller, instance)).build();
 	}
 
 	@POST
@@ -91,42 +84,35 @@ public class EventSourceStatusResource {
 		}
 	}
 
+	@Builder
+	@Getter
 	public static class EventSourceInstanceState {
+		public static EventSourceInstanceState fromInstance(DashboardController controller,
+				EventSourceInstance instance) {
+			return EventSourceInstanceState.builder()
+					.id(instance.getId())
+					.serviceClass(instance.getDescriptor().getServiceClassName())
+					.createdBy(instance.getCreatedBy())
+					.lastChangedBy(instance.getLastChangeBy())
+					.running(controller.isRunning(instance))
+					.lastRun(controller.getLastRun(instance))
+					.lastSuccess(controller.getLastSuccessfulRun(instance))
+					.lastFailure(controller.getLastFailureDateTime(instance))
+					.lastReason(controller.getLastFailureDescription(instance))
+					.lastException(controller.getLastFailureException(instance))
+					.build();
+		}
+
 		@NotBlank
-		private String id;
-		private boolean running;
-		private ZonedDateTime lastRun;
-		private ZonedDateTime lastSuccess;
-		private ZonedDateTime lastFailure;
-		private String lastException;
-		private String lastReason;
-
-		public String getId() {
-			return id;
-		}
-
-		public boolean isRunning() {
-			return running;
-		}
-
-		public ZonedDateTime getLastRun() {
-			return lastRun;
-		}
-
-		public ZonedDateTime getLastSuccess() {
-			return lastSuccess;
-		}
-
-		public ZonedDateTime getLastFailure() {
-			return lastFailure;
-		}
-
-		public String getLastException() {
-			return lastException;
-		}
-
-		public String getLastReason() {
-			return lastReason;
-		}
+		private final String id;
+		private final String serviceClass;
+		private final String createdBy;
+		private final String lastChangedBy;
+		private final boolean running;
+		private final ZonedDateTime lastRun;
+		private final ZonedDateTime lastSuccess;
+		private final ZonedDateTime lastFailure;
+		private final String lastException;
+		private final String lastReason;
 	}
 }

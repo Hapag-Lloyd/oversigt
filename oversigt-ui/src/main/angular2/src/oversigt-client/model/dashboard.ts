@@ -11,7 +11,7 @@
  */
 
 
-export interface Dashboard {
+export interface Dashboard { 
     /**
      * The unique ID of the dashboard. It will be used to reference the dashboard.
      */
@@ -70,5 +70,5 @@ export namespace Dashboard {
         TILEDHORIZONTALGRADIENT: 'TILED_HORIZONTAL_GRADIENT' as ColorSchemeEnum,
         VERTICALGRADIENT: 'VERTICAL_GRADIENT' as ColorSchemeEnum,
         HORIZONTALGRADIENT: 'HORIZONTAL_GRADIENT' as ColorSchemeEnum
-    }
+    };
 }

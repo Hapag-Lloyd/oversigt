@@ -11,7 +11,7 @@
  */
 
 
-export interface SerializablePropertyMember {
+export interface SerializablePropertyMember { 
     name?: string;
     displayName?: string;
     type?: SerializablePropertyMember.TypeEnum;
@@ -26,5 +26,5 @@ export namespace SerializablePropertyMember {
         Number: 'number' as TypeEnum,
         Password: 'password' as TypeEnum,
         Color: 'color' as TypeEnum
-    }
+    };
 }

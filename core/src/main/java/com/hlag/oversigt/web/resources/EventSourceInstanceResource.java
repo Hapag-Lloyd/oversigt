@@ -7,7 +7,6 @@ import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,8 +34,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.hlag.oversigt.model.Dashboard;
@@ -53,6 +50,7 @@ import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -172,7 +170,7 @@ public class EventSourceInstanceResource {
 			EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
 			FullEventSourceInstanceInfo result = new FullEventSourceInstanceInfo(
 					new EventSourceInstanceDetails(instance),
-					new ServiceInfo(instance, controller));
+					EventSourceInstanceState.fromInstance(controller, instance));
 			return ok(result).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
@@ -387,43 +385,10 @@ public class EventSourceInstanceResource {
 	}
 
 	@Getter
-	@ToString
-	@NoArgsConstructor
-	public static class ServiceInfo {
-		@JsonProperty(access = Access.READ_ONLY)
-		private String createdBy;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastChangeBy;
-		@JsonProperty(access = Access.READ_ONLY)
-		private boolean running;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastFailureDateTime;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastFailureDescription;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastFailureException;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastRun;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastSuccessfulRun;
-
-		public ServiceInfo(EventSourceInstance instance, DashboardController controller) {
-			this.createdBy = instance.getCreatedBy();
-			this.lastChangeBy = instance.getLastChangeBy();
-			this.running = controller.isRunning(instance);
-			lastFailureDateTime = controller.getLastFailureDateTime(instance);
-			lastFailureDescription = controller.getLastFailureDescription(instance);
-			lastFailureException = controller.getLastFailureException(instance);
-			lastRun = controller.getLastRun(instance);
-			lastSuccessfulRun = controller.getLastSuccessfulRun(instance);
-		}
-	}
-
-	@Getter
 	@AllArgsConstructor
 	@ToString
 	public static class FullEventSourceInstanceInfo {
 		private EventSourceInstanceDetails instanceDetails;
-		private ServiceInfo serviceInfo;
+		private EventSourceInstanceState instanceState;
 	}
 }
