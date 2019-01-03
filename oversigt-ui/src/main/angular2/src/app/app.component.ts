@@ -7,7 +7,8 @@ export class MenuItem {
   id: string;
   title: string;
   link: string;
-  children: MenuItem[];
+  children?: MenuItem[] = [];
+  neededRole?: string;
 }
 
 const PREFIX = '';
@@ -18,7 +19,7 @@ export const MENU_ITEMS: MenuItem[] = [
     { title: 'Configure Event Sources', link: PREFIX + '/eventSources/list', children: []},*/
   ]},
   { title: 'Dashboards', link: PREFIX + '/dashboards', id: 'dashboards', children: []},
-  { title: 'Properties', link: PREFIX + '/properties', id: 'properties', children: []},
+  { title: 'Properties', link: PREFIX + '/properties', id: 'properties'},
   { title: 'System', link: PREFIX + '/system', id: 'system', children: [
     { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: []},
     { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', children: []},

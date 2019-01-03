@@ -62,7 +62,7 @@ export class UserService {
 
   get requestedUrl(): string {
     if (this._requestedUrl === null || this._requestedUrl.length === 0) {
-      return 'config';
+      return '/';
     } else {
       return this._requestedUrl;
     }

@@ -16,11 +16,12 @@
     </form>-->
     <div class="header-actions">
       <clr-dropdown>
-        <button class="nav-icon" clrDropdownTrigger>
-          <clr-icon shape="cog"></clr-icon>
-          <clr-icon shape="caret down"></clr-icon>
+        <button class="nav-text" clrDropdownTrigger>
+            {{getUserName()}}
+            <clr-icon shape="caret down"></clr-icon>
         </button>
         <clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
+          <a *appHasRole="'server.admin'" href="#">test</a>
           <a (click)="doLogout()" clrDropdownItem>Log out</a>
         </clr-dropdown-menu>
       </clr-dropdown>

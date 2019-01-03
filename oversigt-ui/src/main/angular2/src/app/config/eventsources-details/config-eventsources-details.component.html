@@ -23,9 +23,9 @@
       </ng-container>
       <em class="drop-down-info nothing-found">No event sources found</em>
       <div class="dropdown-divider"></div>
-      <label class="dropdown-header">Create event source</label>
-      <a type="button" clrDropdownItem routerLink="../create">Create new...</a>
-      <button type="button" clrDropdownItem (click)="copyEventSource()">Copy this event source</button>
+      <label *appHasRole="'server.dashboard.owner'" class="dropdown-header">Create event source</label>
+      <a *appHasRole="'server.dashboard.owner'" type="button" clrDropdownItem routerLink="../create">Create new...</a>
+      <button *appHasRole="'server.dashboard.owner'" type="button" clrDropdownItem (click)="copyEventSource()">Copy this event source</button>
     </clr-dropdown-menu>
   </clr-dropdown>
 </div>

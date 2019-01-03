@@ -34,6 +34,10 @@ export class ConfigurationComponent implements OnInit {
     });
   }
 
+  getUserName(): string {
+    return this.userService.getName();
+  }
+
   hasSelectedChild(): boolean {
     return this.route.snapshot.children.length > 0;
   }

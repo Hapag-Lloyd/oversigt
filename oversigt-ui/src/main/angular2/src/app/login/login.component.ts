@@ -34,7 +34,11 @@ export class LoginComponent implements OnInit {
     this.user.logIn(this.username, password,
       name => { // success
         this.username = '';
-        this.router.navigateByUrl(this.user.requestedUrl, {replaceUrl: true});
+        let requestedUrl = this.user.requestedUrl;
+        if (requestedUrl === '/login') {
+          requestedUrl = '/';
+        }
+        this.router.navigateByUrl(requestedUrl, {replaceUrl: true});
       }, () => { // fail
         this.message.error('Login failed.');
       }, () => { // done
