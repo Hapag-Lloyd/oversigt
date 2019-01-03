@@ -35,6 +35,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Splitter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Resources;
@@ -255,19 +256,19 @@ public class OversigtServer extends AbstractIdleService {
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
 				// dashboard configuration
-				.get("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.get("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
+				.get("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.post("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.get("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.post("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
 				.get("/{dashboard}/create", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create", securedDashboardCreationHandler)//
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
-				// server configuration
-				.get("/config", securedEventSourceConfigurationHandler)//
-				.post("/config", securedEventSourceConfigurationHandler)//
-				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				// server configuration
+				//				.get("/config", securedEventSourceConfigurationHandler)//
+				//				.post("/config", securedEventSourceConfigurationHandler)//
+				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -284,8 +285,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-		// .addPrefixPath("/config", createConfigUiHandler())
-		;
+				.addPrefixPath("/config", createConfigUiHandler());
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
@@ -327,6 +327,15 @@ public class OversigtServer extends AbstractIdleService {
 
 	private HttpHandler withSession(HttpHandler handler) {
 		return new SessionAttachmentHandler(handler, sessionManager, sessionConfig);
+	}
+
+	private void redirectToConfigPage(HttpServerExchange exchange) {
+		List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
+		if ("config".equals(parts.get(1))) {
+			HttpUtils.redirect(exchange, "/config/dashboards/" + parts.get(0), false, true);
+		} else {
+			HttpUtils.badRequest(exchange);
+		}
 	}
 
 	private void doLogout(HttpServerExchange exchange) {
