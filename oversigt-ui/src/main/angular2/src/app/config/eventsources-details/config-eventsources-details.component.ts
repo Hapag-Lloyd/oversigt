@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EventSourceService, ServiceInfo, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo } from 'src/oversigt-client';
+import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo, EventSourceInstanceState, FullEventSourceInstanceInfo } from 'src/oversigt-client';
 import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
@@ -35,7 +35,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   eventSourceId: string = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
   private _parsedInstanceDetails: ParsedEventSourceInstanceDetails = null;
-  serviceInfo: ServiceInfo = null;
+  instanceState: EventSourceInstanceState = null;
 
   get parsedInstanceDetails(): ParsedEventSourceInstanceDetails {
     return this._parsedInstanceDetails;
@@ -92,7 +92,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     // Load data from server
     this.eventSourceService.readInstance(this.eventSourceId).subscribe(
       fullInfo => {
-        this.serviceInfo = fullInfo.serviceInfo;
+        this.instanceState = fullInfo.instanceState;
         this.eventSourceService.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
           eventSourceDescriptor => {
             this.eventSourceDescriptor = eventSourceDescriptor;
@@ -199,10 +199,10 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   stopEventSource() {
     this.stopEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
-      ok => {
+      newInstanceState => {
         this.stopEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
-        this.serviceInfo.running = false;
+        this.instanceState = newInstanceState;
       },
       error => {
         this.stopEventSourceState = ClrLoadingState.ERROR;
@@ -217,10 +217,10 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   startEventSource() {
     this.startEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
-      ok => {
+      newInstanceState => {
         this.startEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
-        this.serviceInfo.running = true;
+        this.instanceState = newInstanceState;
         // TODO nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
       },
       error => {

@@ -95,11 +95,11 @@
   <app-simple-editor name="esType" [id]="'type'" [title]="'Type'" [ngModel]="eventSourceDescriptor.displayName" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esId" [id]="'id'"   [title]="'Unique ID'" [description]="'The unique ID that identifies this event source.'" [ngModel]="parsedInstanceDetails.id" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esView" [id]="'view'" [title]="'View'" [description]="'This is the widget template that will be used to display your data.'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="serviceInfo.running ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="serviceInfo.createdBy" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="serviceInfo.lastChangeBy" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="serviceInfo.lastSuccessfulRun" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && serviceInfo.lastRun !== serviceInfo.lastSuccessfulRun" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="serviceInfo.lastRun" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="instanceState.running ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="instanceState.createdBy" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="instanceState.lastChangedBy" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="instanceState.lastSuccess" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun !== instanceState.lastSuccess" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="instanceState.lastRun" [readOnly]="true"></app-simple-editor>
 </ng-template>
 
 <ng-template #esControl>
@@ -107,11 +107,11 @@
     <clr-icon shape="floppy" class="is-solid"></clr-icon>
   </button>
   <div class="btn-group btn-default btn-icon">
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !serviceInfo.running"
+    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !instanceState.running"
       class="btn" (click)="startEventSource()" title="Start event source" [clrLoading]="startEventSourceState">
       <clr-icon shape="play" class="is-solid"></clr-icon>
     </button>
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && serviceInfo.running"
+    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && instanceState.running"
       class="btn" (click)="stopEventSource()" title="Stop event source" [clrLoading]="stopEventSourceState">
       <clr-icon shape="stop" class="is-solid"></clr-icon>
     </button>
