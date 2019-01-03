@@ -17,6 +17,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.OPTIONS;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -63,6 +64,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 					Matchers.annotatedWith(GET.class)
 							.or(Matchers.annotatedWith(POST.class))
 							.or(Matchers.annotatedWith(PUT.class))
+							.or(Matchers.annotatedWith(PATCH.class))
 							.or(Matchers.annotatedWith(DELETE.class))
 							.or(Matchers.annotatedWith(HEAD.class))
 							.or(Matchers.annotatedWith(OPTIONS.class)),

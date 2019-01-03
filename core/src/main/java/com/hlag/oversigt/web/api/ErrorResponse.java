@@ -11,9 +11,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+@JsonInclude(Include.NON_NULL)
 public class ErrorResponse {
 	public static Collection<String> getErrorMessages(Exception e) {
 		return Arrays.asList(e instanceof InvocationTargetException
