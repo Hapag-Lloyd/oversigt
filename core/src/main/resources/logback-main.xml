@@ -27,6 +27,7 @@
 	<logger name="com.hlag.oversigt.core" level="INFO" />
 	<logger name="com.hlag.oversigt.core.OversigtEventSender" level="INFO"/>
 	<logger name="com.hlag.oversigt.model" level="INFO"/>
+	<logger name="com.hlag.oversigt.storage" level="INFO"/>
 	
 	<logger name="ro.isdc.wro" level="ERROR" />
 

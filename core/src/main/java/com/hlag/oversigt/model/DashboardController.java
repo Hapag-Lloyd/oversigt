@@ -280,17 +280,17 @@ public class DashboardController {
 			Collection<Path> addonFolders,
 			Collection<String> widgetsPaths) {
 		// load event sources from classes
-		LOGGER.debug("Scanning classpath for EventSources...");
+		LOGGER.info("Scanning packages for EventSources: {} ",
+				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
 		List<EventSourceDescriptor> descriptorsFromClasses_ = //
 				packagesToScan.stream()//
 						.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
 						.map(this::loadEventSourceFromClass)
 						.collect(toList());
-		LOGGER.info("Loaded {} EventSources from package {}",
-				descriptorsFromClasses_.size(),
-				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
+		LOGGER.info("Loaded {} EventSources", descriptorsFromClasses_.size());
 
-		LOGGER.debug("Scanning addon folders for EventSources...");
+		LOGGER.info("Scanning addon folders for EventSources: {}",
+				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(", ")));
 		URL[] jarFileUrls = addonFolders.stream()
 				.map(DashboardController::findAddonJarFiles)
 				.flatMap(Collection::stream)
@@ -309,18 +309,16 @@ public class DashboardController {
 				.findClasses(addonClassLoader, classNamesToLoad, Service.class, EventSource.class)
 				.map(this::loadEventSourceFromClass)
 				.collect(toList());
-		LOGGER.info("Loaded {} EventSources from addon folders {}",
-				descriptorsFromAddons_.size(),
-				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(", ")));
+		LOGGER.info("Loaded {} EventSources", descriptorsFromAddons_.size());
 
 		final List<EventSourceDescriptor> descriptorsJavaBased = new ArrayList<>();
 		descriptorsJavaBased.addAll(descriptorsFromClasses_);
 		descriptorsJavaBased.addAll(descriptorsFromAddons_);
 
 		// load event sources without class
-		LOGGER.debug("Scanning file system for EventSources...");
+		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
 		List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
-		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromResources.size());
+		LOGGER.info("Loaded {} EventSources", descriptorsFromResources.size());
 
 		// add properties from views into class' event sources
 		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromResources.stream()

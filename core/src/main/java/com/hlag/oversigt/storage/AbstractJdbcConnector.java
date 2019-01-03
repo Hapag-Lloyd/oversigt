@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
 @Singleton
 public abstract class AbstractJdbcConnector implements Closeable {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcConnector.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcConnector.class);
 
 	protected abstract Connection getConnection();
 
@@ -58,8 +58,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("Preparing statement: {}", sql);
 			}
-			stmt = getConnection().prepareStatement(sql,
-					returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
+			stmt = getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
 			if (values != null) {
 				for (int i = 0; i < values.length; ++i) {
 					stmt.setObject(i + 1, getDialect().convertValue(values[i]));

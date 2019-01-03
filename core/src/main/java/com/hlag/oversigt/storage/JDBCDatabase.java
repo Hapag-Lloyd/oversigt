@@ -27,6 +27,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -45,6 +48,7 @@ import com.hlag.oversigt.util.TypeUtils;
 
 @Singleton
 public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBConstants {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JDBCDatabase.class);
 	private static final String TYPE_PROPERTY = "PROPERTY";
 	private static final String TYPE_DATA = "DATA";
 
@@ -65,8 +69,9 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 		this.sqlDialect = dialect;
 		this.json = json;
 		try {
-			LOGGER.info("Loading driver for database at location: " + databaseLocation);
+			LOGGER.info("Loading JDBC driver class: " + dialect.getDriverClassName());
 			Class.forName(dialect.getDriverClassName());
+			LOGGER.info("Creating JDBC connection for location '{}' and schema '{}'", databaseLocation, schema);
 			connection = DriverManager
 					.getConnection(dialect.getJdbcConnectionUrl(databaseLocation, schema, username, password));
 			checkTable(TABLE_EVENT_SOURCE, COLUMN_OPTIONS_EVENT_SOURCE);
