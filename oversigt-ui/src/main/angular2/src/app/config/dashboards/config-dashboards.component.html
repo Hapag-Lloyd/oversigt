@@ -6,7 +6,7 @@
 </ng-template>
 
 <div [hidden]="outlet.isActivated" class="list-group">
-  <div class="list-group-item create-dashboard">
+  <div *appHasRole="'server.admin'" class="list-group-item create-dashboard">
     <div class="clr-input-wrapper">
       <input #createName class="clr-input" type="text" placeholder="Dashboard ID" id="createDashboard" name="createDashboard"/>
     </div>

@@ -59,7 +59,7 @@
       <app-simple-editor *ngIf="dashboard.colorScheme === 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Color'" [(ngModel)]="foregroundColors[0]" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
       <app-simple-editor *ngIf="dashboard.colorScheme !== 'COLORED' && dashboard.colorScheme !== 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Colors'" [(ngModel)]="foregroundColors" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
     </div>
-    <div class="card-footer">
+    <div *appHasRole="'dashboard.' + dashboard.id + '.editor'" class="card-footer">
       <button [clrLoading]="saveDashboardState" (click)="saveDashboardSettings()" class="btn btn-primary">Save</button>
       <button *ngIf="!dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(true)" class="btn btn-success">Enable</button>
       <button *ngIf="dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(false)" class="btn btn-warning">Disable</button>
