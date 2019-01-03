@@ -144,7 +144,7 @@ public class DashboardResource {
 			@ApiResponse(code = 403, message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to", response = ErrorResponse.class), //
 			@ApiResponse(code = 404, message = "The dashboard does not exist") //
 	})
-	@ApiOperation(value = "Update dashboard details 3", //
+	@ApiOperation(value = "Partially update dashboard details", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
