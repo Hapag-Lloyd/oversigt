@@ -13,13 +13,13 @@ import { EventSourceKey } from './eventSourceKey';
 import { EventSourceProperty } from './eventSourceProperty';
 
 
-export interface EventSourceDescriptor {
+export interface EventSourceDescriptor { 
     key: EventSourceKey;
     displayName: string;
     description?: string;
     properties: Array<EventSourceProperty>;
     dataItems: Array<EventSourceProperty>;
-    view?: string;
-    eventClassName?: string;
-    serviceClassName?: string;
+    readonly view?: string;
+    readonly eventClassName?: string;
+    readonly serviceClassName?: string;
 }

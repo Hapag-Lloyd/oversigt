@@ -11,13 +11,13 @@
  */
 
 
-export interface ServiceInfo {
-    createdBy?: string;
-    lastChangeBy?: string;
-    running?: boolean;
-    lastFailureDateTime?: Date;
-    lastFailureDescription?: string;
-    lastFailureException?: string;
-    lastRun?: Date;
-    lastSuccessfulRun?: Date;
+export interface ServiceInfo { 
+    readonly createdBy?: string;
+    readonly lastChangeBy?: string;
+    readonly running?: boolean;
+    readonly lastFailureDateTime?: Date;
+    readonly lastFailureDescription?: string;
+    readonly lastFailureException?: string;
+    readonly lastRun?: Date;
+    readonly lastSuccessfulRun?: Date;
 }

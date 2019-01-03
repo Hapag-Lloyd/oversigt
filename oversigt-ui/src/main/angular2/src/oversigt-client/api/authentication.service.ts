@@ -18,6 +18,7 @@ import { CustomHttpUrlEncodingCodec }                        from '../encoder';
 
 import { Observable }                                        from 'rxjs/Observable';
 
+import { AuthData } from '../model/authData';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
 import { Configuration }                                     from '../configuration';
@@ -46,7 +47,7 @@ export class AuthenticationService {
      */
     private canConsumeForm(consumes: string[]): boolean {
         const form = 'multipart/form-data';
-        for (let consume of consumes) {
+        for (const consume of consumes) {
             if (form === consume) {
                 return true;
             }
@@ -63,10 +64,12 @@ export class AuthenticationService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public authenticateUser(username?: string, password?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public authenticateUser(username?: string, password?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public authenticateUser(username?: string, password?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public authenticateUser(username?: string, password?: string, observe?: 'body', reportProgress?: boolean): Observable<AuthData>;
+    public authenticateUser(username?: string, password?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<AuthData>>;
+    public authenticateUser(username?: string, password?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<AuthData>>;
     public authenticateUser(username?: string, password?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
 
         let headers = this.defaultHeaders;
 
@@ -74,13 +77,13 @@ export class AuthenticationService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/x-www-form-urlencoded'
         ];
 
@@ -102,7 +105,7 @@ export class AuthenticationService {
             formParams = formParams.append('password', <any>password) || formParams;
         }
 
-        return this.httpClient.post<any>(`${this.basePath}/authentication/login`,
+        return this.httpClient.post<AuthData>(`${this.basePath}/authentication/login`,
             convertFormParamsToString ? formParams.toString() : formParams,
             {
                 withCredentials: this.configuration.withCredentials,
@@ -125,6 +128,7 @@ export class AuthenticationService {
     public checkToken(token?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<boolean>>;
     public checkToken(token?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
+
         let headers = this.defaultHeaders;
         if (token !== undefined && token !== null) {
             headers = headers.set('token', String(token));
@@ -134,17 +138,59 @@ export class AuthenticationService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
         return this.httpClient.get<boolean>(`${this.basePath}/authentication/check-token`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Get user roles
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public getRoles(observe?: 'body', reportProgress?: boolean): Observable<AuthData>;
+    public getRoles(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<AuthData>>;
+    public getRoles(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<AuthData>>;
+    public getRoles(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // authentication (JsonWebToken) required
+        if (this.configuration.apiKeys["Authorization"]) {
+            headers = headers.set('Authorization', this.configuration.apiKeys["Authorization"]);
+        }
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+
+        return this.httpClient.get<AuthData>(`${this.basePath}/authentication/roles`,
             {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
@@ -166,6 +212,7 @@ export class AuthenticationService {
     public renewToken(token?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
     public renewToken(token?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
+
         let headers = this.defaultHeaders;
         if (token !== undefined && token !== null) {
             headers = headers.set('token', String(token));
@@ -175,13 +222,13 @@ export class AuthenticationService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 

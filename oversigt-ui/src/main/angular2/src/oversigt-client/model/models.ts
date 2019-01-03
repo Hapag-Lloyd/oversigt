@@ -1,3 +1,4 @@
+export * from './authData';
 export * from './dashboard';
 export * from './dashboardInfo';
 export * from './dashboardShortInfo';

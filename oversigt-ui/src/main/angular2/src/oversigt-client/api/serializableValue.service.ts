@@ -48,7 +48,7 @@ export class SerializableValueService {
      */
     private canConsumeForm(consumes: string[]): boolean {
         const form = 'multipart/form-data';
-        for (let consume of consumes) {
+        for (const consume of consumes) {
             if (form === consume) {
                 return true;
             }
@@ -69,9 +69,11 @@ export class SerializableValueService {
     public createProperty(type: string, body?: any, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<{ [key: string]: any; }>>;
     public createProperty(type: string, body?: any, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<{ [key: string]: any; }>>;
     public createProperty(type: string, body?: any, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling createProperty.');
         }
+
 
         let headers = this.defaultHeaders;
 
@@ -84,18 +86,18 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
-        let httpContentTypeSelected:string | undefined = this.configuration.selectHeaderContentType(consumes);
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected != undefined) {
-            headers = headers.set("Content-Type", httpContentTypeSelected);
+            headers = headers.set('Content-Type', httpContentTypeSelected);
         }
 
         return this.httpClient.post<{ [key: string]: any; }>(`${this.basePath}/serializable-values/value/${encodeURIComponent(String(type))}`,
@@ -121,9 +123,11 @@ export class SerializableValueService {
     public deleteProperty(type: string, id: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
     public deleteProperty(type: string, id: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
     public deleteProperty(type: string, id: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling deleteProperty.');
         }
+
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteProperty.');
         }
@@ -139,13 +143,13 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -170,6 +174,7 @@ export class SerializableValueService {
     public listProperties(type: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<{ [key: string]: any; }>>>;
     public listProperties(type: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<{ [key: string]: any; }>>>;
     public listProperties(type: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling listProperties.');
         }
@@ -185,13 +190,13 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -218,22 +223,17 @@ export class SerializableValueService {
 
         let headers = this.defaultHeaders;
 
-        // authentication (JsonWebToken) required
-        if (this.configuration.apiKeys["Authorization"]) {
-            headers = headers.set('Authorization', this.configuration.apiKeys["Authorization"]);
-        }
-
         // to determine the Accept header
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -258,6 +258,7 @@ export class SerializableValueService {
     public readMembers(name: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<SerializablePropertyMember>>>;
     public readMembers(name: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<SerializablePropertyMember>>>;
     public readMembers(name: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling readMembers.');
         }
@@ -273,13 +274,13 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -305,9 +306,11 @@ export class SerializableValueService {
     public readProperty(type: string, id: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<{ [key: string]: any; }>>;
     public readProperty(type: string, id: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<{ [key: string]: any; }>>;
     public readProperty(type: string, id: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling readProperty.');
         }
+
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling readProperty.');
         }
@@ -323,13 +326,13 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -356,12 +359,15 @@ export class SerializableValueService {
     public updateProperty(type: string, id: number, body?: any, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<{ [key: string]: any; }>>;
     public updateProperty(type: string, id: number, body?: any, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<{ [key: string]: any; }>>;
     public updateProperty(type: string, id: number, body?: any, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling updateProperty.');
         }
+
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling updateProperty.');
         }
+
 
         let headers = this.defaultHeaders;
 
@@ -374,18 +380,18 @@ export class SerializableValueService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
-        let httpContentTypeSelected:string | undefined = this.configuration.selectHeaderContentType(consumes);
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected != undefined) {
-            headers = headers.set("Content-Type", httpContentTypeSelected);
+            headers = headers.set('Content-Type', httpContentTypeSelected);
         }
 
         return this.httpClient.put<{ [key: string]: any; }>(`${this.basePath}/serializable-values/value/${encodeURIComponent(String(type))}/${encodeURIComponent(String(id))}`,

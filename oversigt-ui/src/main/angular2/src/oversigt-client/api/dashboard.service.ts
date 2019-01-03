@@ -50,7 +50,7 @@ export class DashboardService {
      */
     private canConsumeForm(consumes: string[]): boolean {
         const form = 'multipart/form-data';
-        for (let consume of consumes) {
+        for (const consume of consumes) {
             if (form === consume) {
                 return true;
             }
@@ -72,21 +72,24 @@ export class DashboardService {
     public createDashboard(dashboardId: string, owner: string, enabled?: boolean, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Dashboard>>;
     public createDashboard(dashboardId: string, owner: string, enabled?: boolean, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Dashboard>>;
     public createDashboard(dashboardId: string, owner: string, enabled?: boolean, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (dashboardId === null || dashboardId === undefined) {
             throw new Error('Required parameter dashboardId was null or undefined when calling createDashboard.');
         }
+
         if (owner === null || owner === undefined) {
             throw new Error('Required parameter owner was null or undefined when calling createDashboard.');
         }
 
+
         let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
-        if (dashboardId !== undefined) {
+        if (dashboardId !== undefined && dashboardId !== null) {
             queryParameters = queryParameters.set('dashboardId', <any>dashboardId);
         }
-        if (owner !== undefined) {
+        if (owner !== undefined && owner !== null) {
             queryParameters = queryParameters.set('owner', <any>owner);
         }
-        if (enabled !== undefined) {
+        if (enabled !== undefined && enabled !== null) {
             queryParameters = queryParameters.set('enabled', <any>enabled);
         }
 
@@ -101,13 +104,13 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -134,6 +137,7 @@ export class DashboardService {
     public deleteDashboard(dashboardId: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
     public deleteDashboard(dashboardId: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
     public deleteDashboard(dashboardId: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (dashboardId === null || dashboardId === undefined) {
             throw new Error('Required parameter dashboardId was null or undefined when calling deleteDashboard.');
         }
@@ -149,13 +153,13 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -186,13 +190,13 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -217,6 +221,7 @@ export class DashboardService {
     public readDashboard(dashboardId: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Dashboard>>;
     public readDashboard(dashboardId: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Dashboard>>;
     public readDashboard(dashboardId: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (dashboardId === null || dashboardId === undefined) {
             throw new Error('Required parameter dashboardId was null or undefined when calling readDashboard.');
         }
@@ -232,13 +237,13 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
 
@@ -264,9 +269,11 @@ export class DashboardService {
     public updateDashboard(dashboardId: string, body?: Dashboard, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Dashboard>>;
     public updateDashboard(dashboardId: string, body?: Dashboard, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Dashboard>>;
     public updateDashboard(dashboardId: string, body?: Dashboard, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (dashboardId === null || dashboardId === undefined) {
             throw new Error('Required parameter dashboardId was null or undefined when calling updateDashboard.');
         }
+
 
         let headers = this.defaultHeaders;
 
@@ -279,21 +286,75 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
-        let httpContentTypeSelected:string | undefined = this.configuration.selectHeaderContentType(consumes);
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected != undefined) {
-            headers = headers.set("Content-Type", httpContentTypeSelected);
+            headers = headers.set('Content-Type', httpContentTypeSelected);
         }
 
         return this.httpClient.put<Dashboard>(`${this.basePath}/dashboards/${encodeURIComponent(String(dashboardId))}`,
+            body,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Update dashboard details 3
+     * 
+     * @param dashboardId 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public updateDashboardPartially(dashboardId: string, body?: any, observe?: 'body', reportProgress?: boolean): Observable<Dashboard>;
+    public updateDashboardPartially(dashboardId: string, body?: any, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Dashboard>>;
+    public updateDashboardPartially(dashboardId: string, body?: any, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Dashboard>>;
+    public updateDashboardPartially(dashboardId: string, body?: any, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        if (dashboardId === null || dashboardId === undefined) {
+            throw new Error('Required parameter dashboardId was null or undefined when calling updateDashboardPartially.');
+        }
+
+
+        let headers = this.defaultHeaders;
+
+        // authentication (JsonWebToken) required
+        if (this.configuration.apiKeys["Authorization"]) {
+            headers = headers.set('Authorization', this.configuration.apiKeys["Authorization"]);
+        }
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.patch<Dashboard>(`${this.basePath}/dashboards/${encodeURIComponent(String(dashboardId))}`,
             body,
             {
                 withCredentials: this.configuration.withCredentials,
@@ -316,9 +377,11 @@ export class DashboardService {
     public updateWidgetPositions(dashboardId: string, body?: Array<WidgetPosition>, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
     public updateWidgetPositions(dashboardId: string, body?: Array<WidgetPosition>, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
     public updateWidgetPositions(dashboardId: string, body?: Array<WidgetPosition>, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
         if (dashboardId === null || dashboardId === undefined) {
             throw new Error('Required parameter dashboardId was null or undefined when calling updateWidgetPositions.');
         }
+
 
         let headers = this.defaultHeaders;
 
@@ -331,18 +394,18 @@ export class DashboardService {
         let httpHeaderAccepts: string[] = [
             'application/json'
         ];
-        let httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
         if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set("Accept", httpHeaderAcceptSelected);
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
         }
 
         // to determine the Content-Type header
-        let consumes: string[] = [
+        const consumes: string[] = [
             'application/json'
         ];
-        let httpContentTypeSelected:string | undefined = this.configuration.selectHeaderContentType(consumes);
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
         if (httpContentTypeSelected != undefined) {
-            headers = headers.set("Content-Type", httpContentTypeSelected);
+            headers = headers.set('Content-Type', httpContentTypeSelected);
         }
 
         return this.httpClient.put<any>(`${this.basePath}/dashboards/${encodeURIComponent(String(dashboardId))}/positions`,
