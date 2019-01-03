@@ -312,7 +312,7 @@ export class DashboardService {
     }
 
     /**
-     * Update dashboard details 3
+     * Partially update dashboard details
      * 
      * @param dashboardId 
      * @param body 

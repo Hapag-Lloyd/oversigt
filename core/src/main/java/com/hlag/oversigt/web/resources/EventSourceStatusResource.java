@@ -69,7 +69,7 @@ public class EventSourceStatusResource {
 	@POST
 	@Path("/{id}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The event source instance has been started or stopped"),
+			@ApiResponse(code = 200, message = "Returns a current event source instance state after changing the state", response = EventSourceInstanceState.class),
 			@ApiResponse(code = 404, message = "The event source instance does not exist", response = ErrorResponse.class),
 			@ApiResponse(code = 412, message = "The event source was not in a suitable state", response = ErrorResponse.class) })
 	@JwtSecured
@@ -83,7 +83,7 @@ public class EventSourceStatusResource {
 			} else {
 				controller.stopInstance(instanceId);
 			}
-			return ok().build();
+			return isInstanceRunning(instanceId);
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (Exception e) {

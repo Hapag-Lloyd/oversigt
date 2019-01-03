@@ -456,9 +456,9 @@ export class EventSourceService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public setInstanceRunning(id: string, running: boolean, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public setInstanceRunning(id: string, running: boolean, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public setInstanceRunning(id: string, running: boolean, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public setInstanceRunning(id: string, running: boolean, observe?: 'body', reportProgress?: boolean): Observable<EventSourceInstanceState>;
+    public setInstanceRunning(id: string, running: boolean, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<EventSourceInstanceState>>;
+    public setInstanceRunning(id: string, running: boolean, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<EventSourceInstanceState>>;
     public setInstanceRunning(id: string, running: boolean, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (id === null || id === undefined) {
@@ -495,7 +495,7 @@ export class EventSourceService {
             'application/json'
         ];
 
-        return this.httpClient.post<any>(`${this.basePath}/event-source/state/${encodeURIComponent(String(id))}`,
+        return this.httpClient.post<EventSourceInstanceState>(`${this.basePath}/event-source/state/${encodeURIComponent(String(id))}`,
             null,
             {
                 params: queryParameters,
