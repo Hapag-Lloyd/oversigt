@@ -22,10 +22,10 @@ export const MENU_ITEMS: MenuItem[] = [
   { title: 'Properties', link: PREFIX + '/properties', id: 'properties'},
   { title: 'System', link: PREFIX + '/system', id: 'system', children: [
     { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: []},
-    { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', children: []},
-    { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', children: []},
+    { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', neededRole: 'server.admin', children: []},
+    { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', neededRole: 'server.admin', children: []},
     { title: 'Threads', link: PREFIX + '/system/threads', id: 'system-threads', children: []},
-    { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', children: []},
+    { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', neededRole: 'server.admin', children: []},
   ]},
 ];
 

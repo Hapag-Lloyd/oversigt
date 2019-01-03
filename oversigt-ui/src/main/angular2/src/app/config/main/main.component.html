@@ -30,9 +30,11 @@
 
   <nav *ngIf="getSelectedMenuItemChildren().length > 0" class="subnav">
     <ul class="nav">
-      <li *ngFor="let item of getSelectedMenuItemChildren()" class="nav-item" [class.active]="getSelectedSubMenuItemLink() === item.link">
-        <a class="nav-link" routerLink="{{item.link}}">{{item.title}}</a>
-      </li>
+      <ng-container *ngFor="let item of getSelectedMenuItemChildren()">
+        <li *appHasRole="item.neededRole" class="nav-item" [class.active]="getSelectedSubMenuItemLink() === item.link">
+          <a class="nav-link" routerLink="{{item.link}}">{{item.title}}</a>
+        </li>
+      </ng-container>
     </ul>
   </nav>
 

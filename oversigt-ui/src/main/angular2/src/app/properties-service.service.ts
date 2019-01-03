@@ -16,7 +16,7 @@ export class PropertiesService {
       this.properties = null;
       this.propertiesService.listPropertyTypes().subscribe(
         list => {
-          this.properties = list;
+          this.properties = list.sort((a, b) => a > b ? 1 : -1);
           callback(list);
         },
         error => {

@@ -8,7 +8,10 @@ export class HasRoleDirective {
   private hasRole = false;
 
   @Input() set appHasRole(role: string) {
-    const hasRole = this.userService.hasRole(role);
+    const hasRole = role === undefined
+                  || role === null
+                  || String(role).trim().length === 0
+                  || this.userService.hasRole(role);
     if (hasRole && !this.hasRole) {
       this.viewContainer.createEmbeddedView(this.templateRef);
       this.hasRole = true;
