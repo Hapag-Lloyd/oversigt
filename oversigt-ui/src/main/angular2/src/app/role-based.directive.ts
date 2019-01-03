@@ -14,11 +14,10 @@ export class HasRoleDirective {
                   || this.userService.hasRole(role);
     if (hasRole && !this.hasRole) {
       this.viewContainer.createEmbeddedView(this.templateRef);
-      this.hasRole = true;
     } else if (!hasRole && this.hasRole) {
       this.viewContainer.clear();
-      this.hasRole = false;
     }
+    this.hasRole = hasRole;
   }
 
   constructor(

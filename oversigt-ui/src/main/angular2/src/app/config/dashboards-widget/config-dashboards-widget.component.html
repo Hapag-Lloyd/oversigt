@@ -27,7 +27,7 @@
           [property]="property" [(ngModel)]="widget.data[property.name]" [canBeDisabled]="false" [fixed]="hasEventSourceProperty(property.name)"></app-config-eventsource-editor>
       </div>
 
-      <div class="card-footer">
+      <div *appHasRole="'dashboard.' + dashboardId + '.editor'" class="card-footer">
         <button class="btn btn-primary" (click)="saveWidget()" [clrLoading]="saveButtonState">Save</button>
         <button class="btn btn-danger" (click)="deleteWidget()" [clrLoading]="deleteButtonState">Delete</button>
       </div>

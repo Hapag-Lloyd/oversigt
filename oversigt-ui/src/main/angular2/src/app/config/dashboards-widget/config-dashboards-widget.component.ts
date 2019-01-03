@@ -16,7 +16,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   @Output() positionChanged = new Subject();
 
   private subscription: Subscription = null;
-  private dashboardId: string = null;
+  dashboardId: string = null;
   private widgetId: number = null;
   widget: WidgetDetails = null;
   eventSourceInstanceInfo: FullEventSourceInstanceInfo = null;

@@ -2,8 +2,10 @@
   <app-header [title]="dashboardTitle" [additional]="addWidget"></app-header>
 
   <ng-template #addWidget>
+    <ng-container *appHasRole="'dashboard.' + dashboard.id + '.editor'">
       <a *ngIf="!isAddingWidget()" routerLink="add" class="btn btn-outline-primary">Add widget</a>
       <a *ngIf="isAddingWidget()" routerLink="." class="btn btn-outline-primary">Cancel</a>
+    </ng-container>
   </ng-template>
 
   <div class="clr-row">
@@ -14,7 +16,7 @@
         </div>
         <ng-container *ngTemplateOutlet="dbSettings"></ng-container>
       </div>
-      <div class="card">
+      <div *appHasRole="'dashboard.' + dashboard.id + '.owner'" class="card">
         <div class="card-header">
             Dashboard Rights
         </div>

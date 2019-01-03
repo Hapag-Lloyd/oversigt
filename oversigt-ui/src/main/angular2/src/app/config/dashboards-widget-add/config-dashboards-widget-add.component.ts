@@ -36,8 +36,12 @@ export class ConfigDashboardWidgetAddComponent implements OnInit {
     this.searchTerms.next(filter);
   }
 
+  getDashboardId(): string {
+    return this.route.snapshot.parent.params['dashboardId'];
+  }
+
   addWidget(id: string): void {
-    const dashboardId = this.route.snapshot.parent.params['dashboardId'];
+    const dashboardId = this.getDashboardId();
     this.dashboardWidgetService.createWidget(dashboardId, id).subscribe(widgetDetails => {
       this.notification.success('The widget has been created.');
       this.router.navigateByUrl(getLinkForDashboardWidget(dashboardId, widgetDetails.id));
