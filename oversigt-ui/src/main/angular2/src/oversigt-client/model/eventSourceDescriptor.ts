@@ -20,6 +20,6 @@ export interface EventSourceDescriptor {
     properties: Array<EventSourceProperty>;
     dataItems: Array<EventSourceProperty>;
     readonly view?: string;
-    readonly eventClassName?: string;
     readonly serviceClassName?: string;
+    readonly eventClassName?: string;
 }

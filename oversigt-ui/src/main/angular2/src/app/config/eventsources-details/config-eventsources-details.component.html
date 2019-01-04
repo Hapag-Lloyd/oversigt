@@ -107,15 +107,15 @@
     <clr-icon shape="floppy" class="is-solid"></clr-icon>
   </button>
   <div *ngIf="eventSourceDescriptor.serviceClassName !== null" class="btn-group btn-default btn-icon">
+    <button class="btn" (click)="parsedInstanceDetails.enabled ? disableEventSource() : enableEventSource()" title="Disable event source"
+      [clrLoading]="enableEventSourceState">
+      <clr-icon shape="power"></clr-icon>
+    </button>
     <button *ngIf="parsedInstanceDetails.enabled"
       class="btn" (click)="instanceState.running ? stopEventSource() : startEventSource()" [title]="(instanceState.running ? 'Stop' : 'Start') + ' event source'"
       [clrLoading]="startStopEventSourceState">
       <clr-icon *ngIf="!instanceState.running" shape="play" class="is-solid"></clr-icon>
       <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
-    </button>
-    <button class="btn" (click)="parsedInstanceDetails.enabled ? disableEventSource() : enableEventSource()" title="Disable event source"
-      [clrLoading]="enableEventSourceState">
-      <clr-icon shape="power"></clr-icon>
     </button>
   </div>
   <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Do you really want to delete this event source?" [clrLoading]="deleteEventSourceState">

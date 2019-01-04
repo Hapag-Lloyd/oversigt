@@ -167,11 +167,7 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response readInstance(@PathParam("id") @NotBlank String instanceId) {
 		try {
-			EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
-			FullEventSourceInstanceInfo result = new FullEventSourceInstanceInfo(
-					new EventSourceInstanceDetails(instance),
-					EventSourceInstanceState.fromInstance(controller, instance));
-			return ok(result).build();
+			return ok(getInstanceInfo(instanceId)).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
@@ -198,7 +194,7 @@ public class EventSourceInstanceResource {
 	@PUT
 	@Path("/{id}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The event source instance has been updated"),
+			@ApiResponse(code = 200, message = "The event source instance has been updated", response = FullEventSourceInstanceInfo.class),
 			@ApiResponse(code = 400, message = "The data is invalid", response = ErrorResponse.class),
 			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
 	@JwtSecured
@@ -259,7 +255,7 @@ public class EventSourceInstanceResource {
 		}
 
 		controller.updateEventSourceInstance(newInstance);
-		return ok(new EventSourceInstanceDetails(newInstance)).build();
+		return ok(getInstanceInfo(instanceId)).build();
 	}
 
 	@DELETE
@@ -283,6 +279,12 @@ public class EventSourceInstanceResource {
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
+	}
+
+	private FullEventSourceInstanceInfo getInstanceInfo(String instanceId) {
+		EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
+		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
+				EventSourceInstanceState.fromInstance(controller, instance));
 	}
 
 	static Map<String, String> getValueMap(Stream<EventSourceProperty> propertyStream,

@@ -515,9 +515,9 @@ export class EventSourceService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'body', reportProgress?: boolean): Observable<FullEventSourceInstanceInfo>;
+    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<FullEventSourceInstanceInfo>>;
+    public updateInstance(id: string, body?: EventSourceInstanceDetails, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<FullEventSourceInstanceInfo>>;
     public updateInstance(id: string, body?: EventSourceInstanceDetails, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (id === null || id === undefined) {
@@ -550,7 +550,7 @@ export class EventSourceService {
             headers = headers.set('Content-Type', httpContentTypeSelected);
         }
 
-        return this.httpClient.put<any>(`${this.basePath}/event-source/instances/${encodeURIComponent(String(id))}`,
+        return this.httpClient.put<FullEventSourceInstanceInfo>(`${this.basePath}/event-source/instances/${encodeURIComponent(String(id))}`,
             body,
             {
                 withCredentials: this.configuration.withCredentials,
