@@ -49,14 +49,12 @@ public class EventSourceStatusResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response isInstanceRunning(@PathParam("id") @NotBlank String instanceId) {
-		EventSourceInstance instance;
 		try {
-			instance = controller.getEventSourceInstance(instanceId);
+			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
+					.build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
-
-		return ok(EventSourceInstanceState.fromInstance(controller, instance)).build();
 	}
 
 	@POST
@@ -76,7 +74,8 @@ public class EventSourceStatusResource {
 			} else {
 				controller.stopInstance(instanceId);
 			}
-			return isInstanceRunning(instanceId);
+			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
+					.build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (Exception e) {

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+// tslint:disable-next-line:max-line-length
 import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo, EventSourceInstanceState, FullEventSourceInstanceInfo } from 'src/oversigt-client';
 import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
@@ -44,8 +45,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this._parsedInstanceDetails = value;
   }
 
-  startEventSourceState = ClrLoadingState.DEFAULT;
-  stopEventSourceState = ClrLoadingState.DEFAULT;
+  startStopEventSourceState = ClrLoadingState.DEFAULT;
   enableEventSourceState = ClrLoadingState.DEFAULT;
   saveEventSourceState = ClrLoadingState.DEFAULT;
   deleteEventSourceState = ClrLoadingState.DEFAULT;
@@ -197,40 +197,39 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   stopEventSource() {
-    this.stopEventSourceState = ClrLoadingState.LOADING;
+    this.startStopEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, false).subscribe(
       newInstanceState => {
-        this.stopEventSourceState = ClrLoadingState.SUCCESS;
-        // TODO reload instance and service details
+        this.startStopEventSourceState = ClrLoadingState.SUCCESS;
         this.instanceState = newInstanceState;
+        this.notification.success('The event source has been stopped.');
       },
       error => {
-        this.stopEventSourceState = ClrLoadingState.ERROR;
+        this.startStopEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
       }
     );
-    this.notification.success('The event source "' + this.parsedInstanceDetails.name + '" has been stopped.');
   }
 
   startEventSource() {
-    this.startEventSourceState = ClrLoadingState.LOADING;
+    this.startStopEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
       newInstanceState => {
-        this.startEventSourceState = ClrLoadingState.SUCCESS;
+        this.startStopEventSourceState = ClrLoadingState.SUCCESS;
         // TODO reload instance and service details
         this.instanceState = newInstanceState;
-        // TODO nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
+        this.notification.success('The event source has been started.');
+        // TODO: nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
       },
       error => {
-        this.startEventSourceState = ClrLoadingState.ERROR;
+        this.startStopEventSourceState = ClrLoadingState.ERROR;
         console.error(error);
         alert(error);
         // TODO: Error handling
       }
     );
-    this.notification.success('The event source "' + this.parsedInstanceDetails.name + '" has been started.');
   }
 
   disableEventSource() {

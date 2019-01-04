@@ -106,27 +106,21 @@
   <button class="btn btn-primary btn-icon" (click)="saveConfiguration()" title="Save event source configuration" [clrLoading]="saveEventSourceState">
     <clr-icon shape="floppy" class="is-solid"></clr-icon>
   </button>
-  <div class="btn-group btn-default btn-icon">
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && !instanceState.running"
-      class="btn" (click)="startEventSource()" title="Start event source" [clrLoading]="startEventSourceState">
-      <clr-icon shape="play" class="is-solid"></clr-icon>
+  <div *ngIf="eventSourceDescriptor.serviceClassName !== null" class="btn-group btn-default btn-icon">
+    <button *ngIf="parsedInstanceDetails.enabled"
+      class="btn" (click)="instanceState.running ? stopEventSource() : startEventSource()" [title]="(instanceState.running ? 'Stop' : 'Start') + ' event source'"
+      [clrLoading]="startStopEventSourceState">
+      <clr-icon *ngIf="!instanceState.running" shape="play" class="is-solid"></clr-icon>
+      <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
     </button>
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled && instanceState.running"
-      class="btn" (click)="stopEventSource()" title="Stop event source" [clrLoading]="stopEventSourceState">
-      <clr-icon shape="stop" class="is-solid"></clr-icon>
-    </button>
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && parsedInstanceDetails.enabled"
-      class="btn" (click)="disableEventSource()" title="Disable event source" [clrLoading]="enableEventSourceState">
+    <button class="btn" (click)="parsedInstanceDetails.enabled ? disableEventSource() : enableEventSource()" title="Disable event source"
+      [clrLoading]="enableEventSourceState">
       <clr-icon shape="power"></clr-icon>
-    </button>
-    <button *ngIf="eventSourceDescriptor.serviceClassName !== null && !parsedInstanceDetails.enabled"
-      class="btn" (click)="enableEventSource()" title="Enable event source" [clrLoading]="enableEventSourceState">
-      <clr-icon shape="power"></clr-icon>
-    </button>
-    <button class="btn btn-danger" (click)="deleteEventSource()" title="Do you really want to delete this event source?" [clrLoading]="deleteEventSourceState">
-      <clr-icon shape="trash"></clr-icon>
     </button>
   </div>
+  <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Do you really want to delete this event source?" [clrLoading]="deleteEventSourceState">
+    <clr-icon shape="trash"></clr-icon>
+  </button>
   <button class="btn btn-default btn-icon"(click)="showUsage()" title="Show event source usage">
     <clr-icon shape="bubble-chart"></clr-icon>
   </button>
