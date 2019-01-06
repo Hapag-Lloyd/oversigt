@@ -20,7 +20,7 @@ import { Observable }                                        from 'rxjs/Observab
 
 import { ErrorResponse } from '../model/errorResponse';
 import { WidgetDetails } from '../model/widgetDetails';
-import { WidgetInfo } from '../model/widgetInfo';
+import { WidgetShortInfo } from '../model/widgetShortInfo';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
 import { Configuration }                                     from '../configuration';
@@ -177,9 +177,9 @@ export class DashboardWidgetService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public listWidgets(dashboardId: string, containing?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<WidgetInfo>>;
-    public listWidgets(dashboardId: string, containing?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<WidgetInfo>>>;
-    public listWidgets(dashboardId: string, containing?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<WidgetInfo>>>;
+    public listWidgets(dashboardId: string, containing?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<WidgetShortInfo>>;
+    public listWidgets(dashboardId: string, containing?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<WidgetShortInfo>>>;
+    public listWidgets(dashboardId: string, containing?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<WidgetShortInfo>>>;
     public listWidgets(dashboardId: string, containing?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (dashboardId === null || dashboardId === undefined) {
@@ -213,7 +213,7 @@ export class DashboardWidgetService {
             'application/json'
         ];
 
-        return this.httpClient.get<Array<WidgetInfo>>(`${this.basePath}/dashboards/${encodeURIComponent(String(dashboardId))}/widgets`,
+        return this.httpClient.get<Array<WidgetShortInfo>>(`${this.basePath}/dashboards/${encodeURIComponent(String(dashboardId))}/widgets`,
             {
                 params: queryParameters,
                 withCredentials: this.configuration.withCredentials,

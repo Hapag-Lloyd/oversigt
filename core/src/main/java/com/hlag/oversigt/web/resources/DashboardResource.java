@@ -58,6 +58,9 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 
 @Api(tags = { "Dashboard" })
 @Path("/dashboards")
@@ -79,7 +82,7 @@ public class DashboardResource {
 		return ok(dashboardController.getDashboardIds()
 				.stream()
 				.map(dashboardController::getDashboard)
-				.map(d -> new DashboardInfo(d.getId(), d.getTitle()))
+				.map(DashboardInfo::fromDashboard)
 				.collect(toList())).build();
 	}
 
@@ -312,7 +315,14 @@ public class DashboardResource {
 		}
 	}
 
+	@Getter
+	@ToString
+	@Builder
 	public static class DashboardInfo {
+		public static DashboardInfo fromDashboard(Dashboard dashboard) {
+			return builder().id(dashboard.getId()).title(dashboard.getTitle()).build();
+		}
+
 		@NotNull
 		@NotEmpty
 		@NotBlank
@@ -321,20 +331,6 @@ public class DashboardResource {
 		@NotEmpty
 		@NotBlank
 		private String title;
-
-		public DashboardInfo(@NotNull @NotEmpty @NotBlank String id, String title) {
-			this.id = id;
-			this.title = title;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getTitle() {
-			return title;
-		}
-
 	}
 
 	public static class WidgetPosition {

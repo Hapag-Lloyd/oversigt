@@ -36,7 +36,6 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
@@ -50,6 +49,7 @@ import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
 import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
 import io.swagger.annotations.Api;
@@ -176,7 +176,7 @@ public class EventSourceInstanceResource {
 	@GET
 	@Path("/{id}/usage")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = DashboardShortInfo.class, responseContainer = "List")
+			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = DashboardInfo.class, responseContainer = "List")
 			//, @ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class)
 	})
 	@JwtSecured
@@ -188,7 +188,7 @@ public class EventSourceInstanceResource {
 			return ok(controller.getEventSourceInstanceUsage(instanceId)
 					.stream()
 					.map(controller::getDashboard)
-					.map(DashboardShortInfo::new)
+					.map(DashboardInfo::fromDashboard)
 					.collect(toList())).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
@@ -331,7 +331,7 @@ public class EventSourceInstanceResource {
 		private boolean running;
 		private boolean hasError;
 		@NotNull
-		private List<@NotNull DashboardShortInfo> usedBy;
+		private List<@NotNull DashboardInfo> usedBy;
 
 		public EventSourceInstanceInfo(EventSourceInstance instance, DashboardController controller) {
 			this.id = instance.getId();
@@ -341,20 +341,8 @@ public class EventSourceInstanceResource {
 			this.hasError = controller.hasException(instance);
 			this.usedBy = new ArrayList<>(controller//
 					.getDashboardsWhereEventSourceIsUsed(instance)
-					.map(DashboardShortInfo::new)
+					.map(DashboardInfo::fromDashboard)
 					.collect(toList()));
-		}
-	}
-
-	@Getter
-	public static class DashboardShortInfo {
-		@NotBlank
-		private final String id;
-		private final String title;
-
-		public DashboardShortInfo(Dashboard dashboard) {
-			this.id = dashboard.getId();
-			this.title = dashboard.getTitle();
 		}
 	}
 

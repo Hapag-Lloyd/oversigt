@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 // tslint:disable-next-line:max-line-length
-import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo, EventSourceInstanceState, FullEventSourceInstanceInfo } from 'src/oversigt-client';
+import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, EventSourceInstanceInfo, EventSourceInstanceState, DashboardInfo, DashboardService } from 'src/oversigt-client';
 import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
@@ -26,18 +26,25 @@ export class ParsedEventSourceInstanceDetails {
   styleUrls: ['./config-eventsources-details.component.css']
 })
 export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
-  // TODO: Move focus to search field if drop down has been opened.
+  // listen for URL changes
+  private subscription: Subscription = null;
+
+  // query sub components when saving the event source data
   @ViewChildren(ConfigEventsourceEditorComponent) editors !: QueryList<ConfigEventsourceEditorComponent>;
 
+  // search field in the drop down button
   private searchTerms = new Subject<string>();
   sources$: Observable<EventSourceInstanceInfo[]>;
 
-  private subscription: Subscription = null;
+  // main event source info
   eventSourceId: string = null;
   eventSourceDescriptor: EventSourceDescriptor = null;
   private _parsedInstanceDetails: ParsedEventSourceInstanceDetails = null;
   instanceState: EventSourceInstanceState = null;
+  usage: DashboardInfo[] = [];
+  addable: DashboardInfo[] = [];
 
+  // parsed instance details for display
   get parsedInstanceDetails(): ParsedEventSourceInstanceDetails {
     return this._parsedInstanceDetails;
   }
@@ -45,11 +52,11 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this._parsedInstanceDetails = value;
   }
 
+  // loading states
   startStopEventSourceState = ClrLoadingState.DEFAULT;
   enableEventSourceState = ClrLoadingState.DEFAULT;
   saveEventSourceState = ClrLoadingState.DEFAULT;
   deleteEventSourceState = ClrLoadingState.DEFAULT;
-
 
   // List of recently configured event sources
   recentlyUsed: ParsedEventSourceInstanceDetails[] = [];
@@ -59,6 +66,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private notification: NotificationService,
     private eventSourceService: EventSourceService,
+    private dashboardService: DashboardService,
   ) { }
 
   ngOnInit() {
@@ -93,11 +101,13 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.eventSourceService.readInstance(this.eventSourceId).subscribe(
       fullInfo => {
         this.instanceState = fullInfo.instanceState;
+        // read details
         this.eventSourceService.getEventSourceDetails(fullInfo.instanceDetails.eventSourceDescriptor).subscribe(
           eventSourceDescriptor => {
             this.eventSourceDescriptor = eventSourceDescriptor;
             this.parsedInstanceDetails = this.parseInstanceDetails(fullInfo.instanceDetails);
 
+            // TODO: move to angular service
             // recently used sources
             let recentlyUsedJson = localStorage.getItem('eventsources.recentlyUsed');
             if (recentlyUsedJson === null || recentlyUsedJson === undefined || recentlyUsedJson === '') {
@@ -111,6 +121,18 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
               // TODO: Check that saved event sources still exist
             }
             localStorage.setItem('eventsources.recentlyUsed', JSON.stringify(this.recentlyUsed));
+          }
+        );
+
+        // read usage
+        // this.dashboardService.li
+        this.eventSourceService.readInstanceUsage(this.eventSourceId).subscribe(
+          dashboards => {
+            this.usage = dashboards;
+          }, error => {
+            console.log(error);
+            alert(error);
+            // TODO: error handling
           }
         );
       }

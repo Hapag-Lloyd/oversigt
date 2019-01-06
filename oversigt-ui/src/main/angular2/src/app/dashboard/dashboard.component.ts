@@ -3,8 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { Configuration,
   DashboardService, DashboardWidgetService, Dashboard,
   ViewService,
-  WidgetDetails, WidgetInfo } from '../../oversigt-client';
-import { DomSanitizer, SafeHtml, SafeStyle, SafeScript } from '@angular/platform-browser';
+  WidgetDetails,
+  WidgetShortInfo} from '../../oversigt-client';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Observable } from 'rxjs/Observable';
 import * as $ from 'jquery';
 
@@ -94,7 +95,7 @@ export class DashboardComponent implements OnInit {
 
   private loadWidgetStuff(
     dashboardId: string,
-    widgetInfo: WidgetInfo,
+    widgetInfo: WidgetShortInfo,
     callback: (Widget) => void
   ): void {
     // Load generic widget data

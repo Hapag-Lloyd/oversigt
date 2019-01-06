@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EventSourceService, EventSourceInstanceInfo, DashboardShortInfo, EventSourceInfo } from 'src/oversigt-client';
-import { Router, ActivatedRoute, RouterOutlet } from '@angular/router';
+import { EventSourceService, EventSourceInstanceInfo } from 'src/oversigt-client';
+import { Router, ActivatedRoute } from '@angular/router';
 import { getLinkForId } from 'src/app/app.component';
 
 @Component({

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ComponentRef } from '@angular/core';
-import { DashboardService, Dashboard, DashboardWidgetService, WidgetInfo, SystemService } from 'src/oversigt-client';
+import { DashboardService, Dashboard, DashboardWidgetService, SystemService, WidgetShortInfo } from 'src/oversigt-client';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FormControl } from '@angular/forms';
@@ -24,7 +24,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   foregroundColors: string[] = [];
   owners: string[] = [];
   editors: string[] = [];
-  widgetInfos: WidgetInfo[] = [];
+  widgetInfos: WidgetShortInfo[] = [];
 
   // Loading indicator
   saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;

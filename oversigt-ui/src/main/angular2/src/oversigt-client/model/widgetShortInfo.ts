@@ -11,7 +11,12 @@
  */
 
 
-export interface DashboardShortInfo {
-    id?: string;
-    title?: string;
+export interface WidgetShortInfo { 
+    id: number;
+    name: string;
+    view?: string;
+    posX: number;
+    posY: number;
+    sizeX: number;
+    sizeY: number;
 }

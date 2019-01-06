@@ -67,7 +67,7 @@ public class DashboardWidgetResource {
 	@GET
 	@Path("/")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returning a list of all widgets", response = WidgetInfo.class, responseContainer = "List"),
+			@ApiResponse(code = 200, message = "Returning a list of all widgets", response = WidgetShortInfo.class, responseContainer = "List"),
 			@ApiResponse(code = 404, message = "The dashboard does not exist") })
 	@JwtSecured(mustBeAuthenticated = false)
 	@ApiOperation(value = "List widgets of a dashboard", //
@@ -114,7 +114,7 @@ public class DashboardWidgetResource {
 				.stream()//
 				.filter(filterName)//
 				.filter(filterSecu)//
-				.map(WidgetInfo::new)//
+				.map(WidgetShortInfo::new)//
 				.toArray())//
 						.build();
 	}
@@ -271,7 +271,7 @@ public class DashboardWidgetResource {
 
 	@AllArgsConstructor
 	@Getter
-	public static class WidgetInfo {
+	public static class WidgetShortInfo {
 		@NotNull
 		@Positive
 		private final int id;
@@ -295,7 +295,7 @@ public class DashboardWidgetResource {
 		@Positive
 		private final int sizeY;
 
-		public WidgetInfo(Widget widget) {
+		public WidgetShortInfo(Widget widget) {
 			this(
 				widget.getId(),
 				widget.getName(),

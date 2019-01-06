@@ -9,7 +9,7 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
-import { DashboardShortInfo } from './dashboardShortInfo';
+import { DashboardInfo } from './dashboardInfo';
 
 
 export interface EventSourceInstanceInfo { 
@@ -17,6 +17,6 @@ export interface EventSourceInstanceInfo {
     name?: string;
     running?: boolean;
     hasError?: boolean;
-    usedBy: Array<DashboardShortInfo>;
+    usedBy: Array<DashboardInfo>;
     service?: boolean;
 }
