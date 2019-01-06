@@ -174,12 +174,17 @@ public class FileUtils {
 
 	public static Optional<String> getExtension(Path path) {
 		if (Files.isRegularFile(path)) {
-			String name = path.getFileName().toString();
-			int lastIndex = name.lastIndexOf('.');
-			if (lastIndex >= 0) {
-				return Optional.of(name.substring(lastIndex + 1));
-			}
+			return getExtension(path.getFileName().toString());
 		}
 		return Optional.empty();
+	}
+
+	public static Optional<String> getExtension(String filename) {
+		int lastIndex = filename.lastIndexOf('.');
+		if (lastIndex >= 0) {
+			return Optional.of(filename.substring(lastIndex + 1));
+		} else {
+			return Optional.empty();
+		}
 	}
 }

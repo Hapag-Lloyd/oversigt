@@ -12,11 +12,14 @@ import static io.undertow.servlet.Servlets.servlet;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
@@ -56,6 +59,7 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.web.DashboardConfigurationHandler;
@@ -285,7 +289,8 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-				.addPrefixPath("/config", createConfigUiHandler());
+				.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
+		;
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
@@ -475,8 +480,49 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
 
-	private HttpHandler createConfigUiHandler() {
-		return Handlers.resource(new ClassPathResourceManager("oversigt-ui"));
+	private HttpHandler createAngularHandler(final String prefix) {
+		final Path basePath;
+		try {
+			basePath = Paths.get(Resources.getResource(prefix).toURI());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(String.format("Unable to find prefix '%s' in resources", prefix), e);
+		}
+		final Path indexHtml = basePath.resolve("index.html");
+		if (!(Files.exists(indexHtml) && Files.isRegularFile(indexHtml))) {
+			throw new RuntimeException(
+					String.format("No file called 'index.html' found for angular handler in prefix '%s'", prefix));
+		}
+		return exchange -> {
+			// Find the file to serve
+			final String relativePath = exchange.getRelativePath()
+					.substring(exchange.getRelativePath().startsWith("/") ? 1 : 0);
+			final Path requestedFile = basePath.resolve(relativePath);
+			final Path fileToServe;
+			if (Files.isRegularFile(requestedFile)) {
+				fileToServe = requestedFile;
+			} else {
+				fileToServe = basePath.resolve("index.html");
+			}
+
+			// actually serve the file
+			final String contentType = FileUtils.getExtension(fileToServe).map(extension -> {
+				switch (extension.toLowerCase()) {
+					case "css":
+						return "text/css";
+					case "html":
+						return "text/html";
+					case "js":
+						return "application/javascript";
+					default:
+						return "application/octet-stream";
+				}
+			}).get();
+			exchange.setStatusCode(StatusCodes.OK);
+			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
+			exchange.getResponseSender().send(ByteBuffer.wrap(Files.readAllBytes(fileToServe)));
+			exchange.endExchange();
+		};
+
 	}
 
 	/**
