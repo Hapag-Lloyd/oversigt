@@ -125,10 +125,19 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         );
 
         // read usage
-        // this.dashboardService.li
-        this.eventSourceService.readInstanceUsage(this.eventSourceId).subscribe(
-          dashboards => {
-            this.usage = dashboards;
+        this.dashboardService.listDashboardIds().subscribe(
+          dashboardList => {
+            this.eventSourceService.readInstanceUsage(this.eventSourceId).subscribe(
+              usageList => {
+                this.usage = usageList;
+                const usageIds = usageList.map(d => d.id);
+                this.addable = dashboardList.filter(d => usageIds.indexOf(d.id) === -1);
+              }, error => {
+                console.log(error);
+                alert(error);
+                // TODO: error handling
+              }
+            );
           }, error => {
             console.log(error);
             alert(error);

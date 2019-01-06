@@ -35,3 +35,6 @@ clr-dropdown-menu input {
   display: none;
 }
 
+clr-dropdown .btn {
+  margin-right: 0.5rem;
+}

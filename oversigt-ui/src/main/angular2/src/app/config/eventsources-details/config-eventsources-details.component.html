@@ -119,27 +119,26 @@
       <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
     </button>
   </div>
-  <button class="btn btn-default btn-icon"(click)="showUsage()" title="Show event source usage">
-    <clr-icon shape="bubble-chart"></clr-icon>
-  </button>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-default" title="Where this event source is used" clrDropdownTrigger>
       Usage
       <clr-icon shape="caret down"></clr-icon>
     </button>
     <clr-dropdown-menu *clrIfOpen>
-      <button type="button" clrDropdownItem>Dashboard 1</button>
-      <button type="button" clrDropdownItem>Dashboard 2</button>
+      <ng-container *ngFor="let dashboard of usage">
+      <a [routerLink]="'/dashboards/' + dashboard.id" type="button" clrDropdownItem>{{dashboard.title}}</a>
+      </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
-      Add
+      Add to...
       <clr-icon shape="caret down"></clr-icon>
     </button>
     <clr-dropdown-menu *clrIfOpen>
-      <button type="button" clrDropdownItem>Dashboard 1</button>
-      <button type="button" clrDropdownItem>Dashboard 2</button>
+      <ng-container *ngFor="let dashboard of addable">
+        <button *appHasRole="'dashboard.' + dashboard.id + '.editor'" type="button" clrDropdownItem>{{dashboard.title}}</button>
+      </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
   <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Do you really want to delete this event source?" [clrLoading]="deleteEventSourceState">
