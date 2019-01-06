@@ -276,24 +276,33 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   private changeEnablingState(enabled: boolean, ok: () => void, fail: () => void): void {
-    const _this = this;
+    // const _this = this;
     this.enableEventSourceState = ClrLoadingState.LOADING;
     // read current state from server
     this.eventSourceService.readInstance(this.parsedInstanceDetails.id).subscribe(
       instanceInfo => {
         // change enabled state and send back to server
         instanceInfo.instanceDetails.enabled = enabled;
-        _this.eventSourceService.updateInstance(_this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
+        this.eventSourceService.updateInstance(this.parsedInstanceDetails.id, instanceInfo.instanceDetails).subscribe(
           success => {
-            _this.parsedInstanceDetails.enabled = enabled;
-            _this.enableEventSourceState = ClrLoadingState.SUCCESS;
+            this.parsedInstanceDetails.enabled = enabled;
+            this.enableEventSourceState = ClrLoadingState.SUCCESS;
+            this.eventSourceService.isInstanceRunning(this.parsedInstanceDetails.id).subscribe(
+              state => {
+                this.instanceState = state;
+              }, error => {
+                console.error(error);
+                alert(error);
+                // TODO: Error handling
+              }
+            );
             ok();
           },
           error => {
             console.error(error);
             alert(error);
             // TODO: Error handling
-            _this.enableEventSourceState = ClrLoadingState.ERROR;
+            this.enableEventSourceState = ClrLoadingState.ERROR;
             fail();
           }
         );
@@ -302,7 +311,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         console.error(error);
         alert(error);
         // TODO: Error handling
-        _this.enableEventSourceState = ClrLoadingState.ERROR;
+        this.enableEventSourceState = ClrLoadingState.ERROR;
         fail();
       }
     );

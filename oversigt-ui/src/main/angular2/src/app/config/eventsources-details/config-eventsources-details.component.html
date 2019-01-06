@@ -95,6 +95,7 @@
   <app-simple-editor name="esType" [id]="'type'" [title]="'Type'" [ngModel]="eventSourceDescriptor.displayName" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esId" [id]="'id'"   [title]="'Unique ID'" [description]="'The unique ID that identifies this event source.'" [ngModel]="parsedInstanceDetails.id" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esView" [id]="'view'" [title]="'View'" [description]="'This is the widget template that will be used to display your data.'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esEnabled" [id]="'enabled'" [title]="'Enabled'" [ngModel]="parsedInstanceDetails.enabled ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="instanceState.running ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="instanceState.createdBy" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="instanceState.lastChangedBy" [readOnly]="true"></app-simple-editor>
@@ -118,7 +119,8 @@
       <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
     </button>
   </div>
-  <clr-dropdown>
+  <!-- TODO: reenable and implement -->
+  <clr-dropdown *ngIf="usage.length > 0">
     <button type="button" class="btn btn-outline-default" title="Where this event source is used" clrDropdownTrigger>
       Used in
       <clr-icon shape="caret down"></clr-icon>
@@ -129,7 +131,7 @@
       </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
-  <clr-dropdown>
+  <clr-dropdown *ngIf="false && addable.length > 0">
     <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
       Add to
       <clr-icon shape="caret down"></clr-icon>
