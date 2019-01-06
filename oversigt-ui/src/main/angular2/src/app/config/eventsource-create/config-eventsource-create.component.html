@@ -14,15 +14,12 @@
       <div class="card-header">
           {{info.name}}
       </div>
-      <!--<div *ngIf="info.image" class="card-img">
-          <img src="{{info.image}}" alt="Event source preview" />
-      </div>-->
-      <div class="card-block">
-        <div *ngIf="info.description !== null" class="card-text">
+      <div *ngIf="info.image" class="card-img">
+        <img src="{{getImageLink(info.image)}}" alt="Event source preview" />
+      </div>
+      <div *ngIf="info.description !== null" class="card-block">
+        <div class="card-text">
           {{info.description}}
-        </div>
-        <div *ngIf="info.description === null" class="card-text">
-            This event source does not have a description.
         </div>
       </div>
       <div class="card-footer">

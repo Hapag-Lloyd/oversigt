@@ -59,8 +59,12 @@ export class ConfigEventsourceCreateComponent implements OnInit {
     );
   }
 
-  showEventSourceInfo(key: string) {
-    this.notification.warning('Not yet implemented.');
+  getImageLink(url: string): string {
+    if (url.indexOf('://') > 0) {
+      return url;
+    } else {
+      return 'http://localhost' + url;
+    }
   }
 
 }
