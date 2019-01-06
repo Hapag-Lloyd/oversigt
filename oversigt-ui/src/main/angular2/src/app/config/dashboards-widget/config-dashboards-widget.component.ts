@@ -13,7 +13,7 @@ import { getLinkForDashboard } from 'src/app/app.component';
   styleUrls: ['./config-dashboards-widget.component.css']
 })
 export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
-  @Output() positionChanged = new Subject();
+  @Output() stateChanged = new Subject();
 
   private subscription: Subscription = null;
   dashboardId: string = null;
@@ -98,7 +98,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.setWidgetDetails(widget);
       this.notificationService.success('Widget ' + this.widget.name + ' has been saved.');
       this.saveButtonState = ClrLoadingState.SUCCESS;
-      this.positionChanged.next(null);
+      this.stateChanged.next(null);
     },
     error => {
       console.log(error);
@@ -109,6 +109,28 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
 
   enableWidget(enabled: boolean): void {
     // TODO: implement
+    this.enableButtonState = ClrLoadingState.LOADING;
+    this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, false).subscribe(
+      widget => {
+        widget.enabled = enabled;
+        this.dashboardWidgetService.updateWidget(this.dashboardId, this.widgetId, widget).subscribe(
+          ok => {
+            this.enableButtonState = ClrLoadingState.SUCCESS;
+            this.widget.enabled = ok.enabled;
+            this.stateChanged.next(null);
+          }, error => {
+            console.log(error);
+            alert(error);
+            // TODO: error handling
+            this.enableButtonState = ClrLoadingState.ERROR;
+          }
+        );
+      }, error => {
+        console.log(error);
+        alert(error);
+        // TODO: error handling
+      }
+    );
   }
 
   deleteWidget(): void {

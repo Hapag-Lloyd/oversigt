@@ -77,7 +77,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     }
     if (componentRef instanceof ConfigDashboardWidgetComponent) {
       const child: ConfigDashboardWidgetComponent = componentRef;
-      this.childSubscription = child.positionChanged.subscribe(event => {
+      this.childSubscription = child.stateChanged.subscribe(event => {
         this.loadWidgetPositions();
       });
     }

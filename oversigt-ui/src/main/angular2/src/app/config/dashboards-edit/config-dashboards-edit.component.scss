@@ -50,6 +50,18 @@
   display: block;
 }
 
+.mini-map .mini-dashboard a.disabled {
+  background-color: rgb(255, 200, 200);
+}
+
+.mini-map .mini-dashboard a.disabled.selected {
+  background-color: rgb(255, 140, 140);
+}
+
+.mini-map .mini-info a.disabled {
+  text-decoration: line-through;
+}
+
 .mini-map a.selected {
   color: black;
   text-decoration: none;

@@ -108,7 +108,8 @@
       </a>
     </div>
     <div class="mini-info">
-      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" class="widget-link" routerLinkActive="selected">
+      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
+          class="widget-link" [class.disabled]="!info.enabled">
         <span class="badge">{{i + 1}}</span>
         <span style="margin-left: 1ex">{{info.name}}</span>
       </a>
