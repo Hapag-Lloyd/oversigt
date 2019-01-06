@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EventSourceService, EventSourceInstanceInfo } from 'src/oversigt-client';
+import { EventSourceService } from 'src/oversigt-client';
 import { Router, ActivatedRoute } from '@angular/router';
 import { getLinkForId } from 'src/app/app.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-config-eventsources',
@@ -9,7 +10,7 @@ import { getLinkForId } from 'src/app/app.component';
   styleUrls: ['./config-eventsources.component.css']
 })
 export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
-  selectedEventSource: EventSourceInstanceInfo = null;
+  private subscription: Subscription = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -19,10 +20,19 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.navigateToChild();
+    this.subscription = this.route.url.subscribe(
+      change => {
+        if (this.getActiveChild().length === 0) {
+          this.navigateToChild();
+        }
+      }
+    );
   }
 
   ngOnDestroy() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   getActiveChild(): string {
@@ -38,7 +48,7 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
     if (this.router.routerState.snapshot.url !== getLinkForId('eventsources')) {
       return;
     }
-    this.eventSourceService.listInstances().subscribe(
+    this.eventSourceService.listInstances('', 1).subscribe(
       ok => {
         if (ok.length > 0) {
           // We already have some sources

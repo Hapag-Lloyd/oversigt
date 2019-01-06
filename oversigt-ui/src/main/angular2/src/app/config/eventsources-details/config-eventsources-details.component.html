@@ -120,18 +120,18 @@
   </div>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-default" title="Where this event source is used" clrDropdownTrigger>
-      Usage
+      Used in
       <clr-icon shape="caret down"></clr-icon>
     </button>
     <clr-dropdown-menu *clrIfOpen>
       <ng-container *ngFor="let dashboard of usage">
-      <a [routerLink]="'/dashboards/' + dashboard.id" type="button" clrDropdownItem>{{dashboard.title}}</a>
+        <a [routerLink]="'/dashboards/' + dashboard.id" type="button" clrDropdownItem>{{dashboard.title}}</a>
       </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
-      Add to...
+      Add to
       <clr-icon shape="caret down"></clr-icon>
     </button>
     <clr-dropdown-menu *clrIfOpen>

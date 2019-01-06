@@ -79,7 +79,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       startWith(''), // initial search value
       debounceTime(300), // wait 300ms after each keystroke before considering the term
       distinctUntilChanged(), // ignore new term if same as previous term
-      switchMap((term: string) => this.eventSourceService.listInstances(term)), // let the server search
+      switchMap((term: string) => this.eventSourceService.listInstances(term, 6)), // let the server search
     );
   }
 
