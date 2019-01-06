@@ -6,3 +6,16 @@
 .content + .no-content {
   display: none;
 }
+
+
+*, *:before, *:after {box-sizing:  border-box !important;}
+
+
+article {
+  column-width: 10rem;
+}
+
+section {
+ display: inline-block;
+ width:  100%; 
+}

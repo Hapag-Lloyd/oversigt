@@ -7,9 +7,8 @@
   </div>
 </ng-template>
 
-<div class="row">
-  <div *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText as result" class="content col-lg-3 col-md-6 col-sm-12 col-xs-12"
-        title="Create an event source of type '{{info.name}}'">
+<article>
+  <section *ngFor="let info of filteredEventSourceInfos | filterEventsourceinfo: searchText as result">
     <div class="card">
       <div class="card-header">
           {{info.name}}
@@ -26,8 +25,5 @@
         <button class="btn btn-sm btn-link" (click)="createEventSource(info.key)">Create Event Source</button>
       </div>
     </div>
-  </div>
-  <div class="no-content">
-    Your filter did not return any event source.
-  </div>
-</div>
+  </section>
+</article>
