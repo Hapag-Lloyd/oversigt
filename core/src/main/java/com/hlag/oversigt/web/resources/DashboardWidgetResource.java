@@ -49,7 +49,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -114,7 +114,7 @@ public class DashboardWidgetResource {
 				.stream()//
 				.filter(filterName)//
 				.filter(filterSecu)//
-				.map(WidgetShortInfo::new)//
+				.map(WidgetShortInfo::fromWidget)//
 				.toArray())//
 						.build();
 	}
@@ -269,9 +269,21 @@ public class DashboardWidgetResource {
 		return ok().build();
 	}
 
-	@AllArgsConstructor
+	@Builder
 	@Getter
 	public static class WidgetShortInfo {
+		public static WidgetShortInfo fromWidget(Widget widget) {
+			return builder().id(widget.getId())
+					.name(widget.getName())
+					.view(widget.getView())
+					.enabled(widget.isEnabled())
+					.posX(widget.getPosX())
+					.posY(widget.getPosY())
+					.sizeX(widget.getSizeX())
+					.sizeY(widget.getSizeY())
+					.build();
+		}
+
 		@NotNull
 		@Positive
 		private final int id;
@@ -279,6 +291,8 @@ public class DashboardWidgetResource {
 		@NotNull
 		private final String name;
 		private final String view;
+
+		private final boolean enabled;
 
 		@NotNull
 		@PositiveOrZero
@@ -294,17 +308,6 @@ public class DashboardWidgetResource {
 		@Min(1)
 		@Positive
 		private final int sizeY;
-
-		public WidgetShortInfo(Widget widget) {
-			this(
-				widget.getId(),
-				widget.getName(),
-				widget.getView(),
-				widget.getPosX(),
-				widget.getPosY(),
-				widget.getSizeX(),
-				widget.getSizeY());
-		}
 	}
 
 	@NoArgsConstructor

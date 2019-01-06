@@ -101,7 +101,8 @@
   <div class="mini-map">
     <!-- TODO: if navigating away: ask to save -->
     <div class="mini-dashboard" [style.width.em]="countColumns()" [style.height.em]="countRows()">
-      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected" class="mini-widget" title="{{info.name}}"
+      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
+          class="mini-widget" title="{{info.name}}" [class.disabled]="!info.enabled"
           [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
         <span class="badge">{{i + 1}}</span>
       </a>

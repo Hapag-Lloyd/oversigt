@@ -15,6 +15,7 @@ export interface WidgetShortInfo {
     id: number;
     name: string;
     view?: string;
+    enabled?: boolean;
     posX: number;
     posY: number;
     sizeX: number;
