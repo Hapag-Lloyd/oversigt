@@ -29,6 +29,8 @@
 
       <div *appHasRole="'dashboard.' + dashboardId + '.editor'" class="card-footer">
         <button class="btn btn-primary" (click)="saveWidget()" [clrLoading]="saveButtonState">Save</button>
+        <button *ngIf="!widget.enabled" (click)="enableWidget(true)" [clrLoading]="enableButtonState" class="btn btn-success">Enable</button>
+        <button *ngIf="widget.enabled" (click)="enableWidget(false)" [clrLoading]="enableButtonState" class="btn btn-warning">Disable</button>
         <button class="btn btn-danger" (click)="deleteWidget()" [clrLoading]="deleteButtonState">Delete</button>
       </div>
     </form>

@@ -25,6 +25,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   widgetPosition: number[] = null;
 
   saveButtonState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  enableButtonState: ClrLoadingState = ClrLoadingState.DEFAULT;
   deleteButtonState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   constructor(
@@ -104,6 +105,10 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       // TODO: error handling
       this.saveButtonState = ClrLoadingState.ERROR;
     });
+  }
+
+  enableWidget(enabled: boolean): void {
+    // TODO: implement
   }
 
   deleteWidget(): void {
