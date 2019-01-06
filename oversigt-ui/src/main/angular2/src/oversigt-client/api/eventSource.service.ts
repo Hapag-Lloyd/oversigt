@@ -18,6 +18,7 @@ import { CustomHttpUrlEncodingCodec }                        from '../encoder';
 
 import { Observable }                                        from 'rxjs/Observable';
 
+import { DashboardShortInfo } from '../model/dashboardShortInfo';
 import { ErrorResponse } from '../model/errorResponse';
 import { EventSourceDescriptor } from '../model/eventSourceDescriptor';
 import { EventSourceInfo } from '../model/eventSourceInfo';
@@ -408,9 +409,9 @@ export class EventSourceService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public readInstanceUsage(id: string, observe?: 'body', reportProgress?: boolean): Observable<Array<string>>;
-    public readInstanceUsage(id: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<string>>>;
-    public readInstanceUsage(id: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<string>>>;
+    public readInstanceUsage(id: string, observe?: 'body', reportProgress?: boolean): Observable<Array<DashboardShortInfo>>;
+    public readInstanceUsage(id: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<DashboardShortInfo>>>;
+    public readInstanceUsage(id: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<DashboardShortInfo>>>;
     public readInstanceUsage(id: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (id === null || id === undefined) {
@@ -438,7 +439,7 @@ export class EventSourceService {
             'application/json'
         ];
 
-        return this.httpClient.get<Array<string>>(`${this.basePath}/event-source/instances/${encodeURIComponent(String(id))}/usage`,
+        return this.httpClient.get<Array<DashboardShortInfo>>(`${this.basePath}/event-source/instances/${encodeURIComponent(String(id))}/usage`,
             {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,

@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiEndpoint: 'http://localhost:80/',
+  apiEndpoint: 'http://localhost:80/api/v1',
   // tslint:disable-next-line:max-line-length
   authorizationKey: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIxNTQwMTI2MDg5NjYxLTc3MTJlZDg0LTRhOWMtNDZhMy1hMWE1LTBiYzQxNzYxOGQzNSIsImlhdCI6MTU0MDEyNjA4OSwic3ViIjoib3ZlcnNpZ3QtYXBpIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvdjEiLCJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNjQwMTQwNDg5fQ.laAyfPSKlGmXhebQsNQaLxZHss-s83Ls16e8lUc7WAs',
 };

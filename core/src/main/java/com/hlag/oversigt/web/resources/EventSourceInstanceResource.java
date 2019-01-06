@@ -176,7 +176,7 @@ public class EventSourceInstanceResource {
 	@GET
 	@Path("/{id}/usage")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = String.class, responseContainer = "List")
+			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = DashboardShortInfo.class, responseContainer = "List")
 			//, @ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class)
 	})
 	@JwtSecured
@@ -185,7 +185,11 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response readInstanceUsage(@PathParam("id") @NotBlank String instanceId) {
 		try {
-			return ok(controller.getEventSourceInstanceUsage(instanceId)).build();
+			return ok(controller.getEventSourceInstanceUsage(instanceId)
+					.stream()
+					.map(controller::getDashboard)
+					.map(DashboardShortInfo::new)
+					.collect(toList())).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}

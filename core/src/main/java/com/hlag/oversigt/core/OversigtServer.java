@@ -268,11 +268,11 @@ public class OversigtServer extends AbstractIdleService {
 				.post("/{dashboard}/create", securedDashboardCreationHandler)//
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
-				//				// server configuration
-				//				.get("/config", securedEventSourceConfigurationHandler)//
-				//				.post("/config", securedEventSourceConfigurationHandler)//
-				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				// server configuration
+				.get("/config", securedEventSourceConfigurationHandler)//
+				.post("/config", securedEventSourceConfigurationHandler)//
+				.get("/config/{page}", securedEventSourceConfigurationHandler)//
+				.post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -289,7 +289,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-				.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
+		//.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
 		;
 
 		// Create Handler for compressing content

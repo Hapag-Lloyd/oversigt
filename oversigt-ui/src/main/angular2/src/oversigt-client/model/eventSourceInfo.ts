@@ -11,9 +11,9 @@
  */
 
 
-export interface EventSourceInfo {
+export interface EventSourceInfo { 
     name: string;
     key: string;
-    description: string;
     image: string;
+    description: string;
 }
