@@ -1,11 +1,11 @@
 <div class="ov-header">
   <ng-container [ngSwitch]="level">
-    <h1 *ngSwitchCase="1">{{title}}</h1>
-    <h2 *ngSwitchCase="2">{{title}}</h2>
-    <h3 *ngSwitchCase="3">{{title}}</h3>
-    <h4 *ngSwitchCase="4">{{title}}</h4>
-    <h5 *ngSwitchCase="5">{{title}}</h5>
-    <h6 *ngSwitchDefault>{{title}}</h6>
+    <h1 *ngSwitchCase="1">{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h1>
+    <h2 *ngSwitchCase="2">{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h2>
+    <h3 *ngSwitchCase="3">{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h3>
+    <h4 *ngSwitchCase="4">{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h4>
+    <h5 *ngSwitchCase="5">{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h5>
+    <h6 *ngSwitchDefault>{{title}} <span *ngIf="!enabled" class="disabled">(disabled)</span></h6>
   </ng-container>
   <!-- TODO: wenn der Viewport zu schmal wird, muss der zweite Teil nach unten -->
   <div *ngIf="additional !== null">

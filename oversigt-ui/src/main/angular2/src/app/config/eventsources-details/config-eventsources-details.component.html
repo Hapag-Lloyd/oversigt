@@ -1,16 +1,15 @@
 <!-- Header stuff -->
-<div class="eventsource-config-header">
-  <h1>
-    <span *ngIf="eventSourceDescriptor !== null">{{parsedInstanceDetails.name}}</span>
-    <span *ngIf="eventSourceDescriptor === null" class="spinner spinner-inline">Loading...</span>
-  </h1>
+<app-header *ngIf="eventSourceDescriptor !== null" [title]="parsedInstanceDetails.name" [enabled]="parsedInstanceDetails.enabled" [additional]="dropdown"></app-header>
+<span *ngIf="eventSourceDescriptor === null" class="spinner spinner-inline">Loading...</span>
+
+<ng-template #dropdown>
   <clr-dropdown>
     <button type="button" class="btn btn-outline-primary" clrDropdownTrigger>
       Switch to other event source
       <clr-icon shape="caret down"></clr-icon>
     </button>
     <clr-dropdown-menu clrPosition="bottom-right" *clrIfOpen>
-      <label *ngIf="recentlyUsed.length > 1" class="dropdown-header">Recently used</label>
+      <label *ngIf="recentlyUsed.length > 1" class="dropdown-header">Recently viewed</label>
       <ng-container *ngFor="let es of recentlyUsed; let i = index">
         <a *ngIf="i !== 0" type="button" clrDropdownItem routerLink="../{{es.id}}">{{es.name}}</a>
       </ng-container>
@@ -29,7 +28,7 @@
       <button *appHasRole="'server.dashboard.owner'" type="button" clrDropdownItem (click)="copyEventSource()">Copy this event source</button>
     </clr-dropdown-menu>
   </clr-dropdown>
-</div>
+</ng-template>
 
 <div *ngIf="false" class="modal-backdrop" aria-hidden="true">
   <span class="spinner">Loading...</span>

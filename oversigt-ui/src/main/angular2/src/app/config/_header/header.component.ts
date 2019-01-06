@@ -8,6 +8,7 @@ import { Component, OnInit, Input, TemplateRef, ViewChild, ViewContainerRef } fr
 export class HeaderComponent implements OnInit {
   @Input() level = 2;
   @Input() title: string;
+  @Input() enabled = true;
   @Input() additional: TemplateRef<void>;
 
   constructor( ) { }

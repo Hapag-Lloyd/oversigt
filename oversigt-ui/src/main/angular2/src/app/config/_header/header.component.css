@@ -3,5 +3,10 @@
   display: flex;
   flex-flow: row wrap-reverse;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
+}
+
+.ov-header .disabled {
+  color: grey;
+  font-size: 80%;
 }
