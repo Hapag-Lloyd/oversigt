@@ -88,11 +88,12 @@ public class EventSourceInstanceResource {
 	@ApiOperation(value = "List existing event source instances")
 	@NoChangeLog
 	public Response listInstances(
-			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") String containing) {
+			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") String containing,
+			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") Integer limit) {
 		Predicate<EventSourceInstance> filter = i -> true;
 
 		if (!Strings.isNullOrEmpty(containing)) {
-			String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
+			final String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
 			filter = i -> i.getName().toLowerCase().contains(searchedContent)
 					|| i.getId().toLowerCase().contains(searchedContent) //
 					|| Optional.ofNullable(i.getFrequency())//
@@ -116,12 +117,15 @@ public class EventSourceInstanceResource {
 									.contains(searchedContent));
 		}
 
-		return ok(controller//
+		Stream<EventSourceInstanceInfo> stream = controller//
 				.getEventSourceInstances()
 				.stream()
 				.filter(filter)
-				.map(instance -> new EventSourceInstanceInfo(instance, controller))
-				.collect(Collectors.toList())).build();
+				.map(instance -> new EventSourceInstanceInfo(instance, controller));
+		if (limit != null && limit > 0) {
+			stream = stream.limit(limit);
+		}
+		return ok(stream.collect(toList())).build();
 	}
 
 	@POST

@@ -309,18 +309,23 @@ export class EventSourceService {
      * List existing event source instances
      * 
      * @param containing Filter to reduce the number of listed instances
+     * @param limit Maximum number of instances to be returned
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public listInstances(containing?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<EventSourceInstanceInfo>>;
-    public listInstances(containing?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<EventSourceInstanceInfo>>>;
-    public listInstances(containing?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<EventSourceInstanceInfo>>>;
-    public listInstances(containing?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public listInstances(containing?: string, limit?: number, observe?: 'body', reportProgress?: boolean): Observable<Array<EventSourceInstanceInfo>>;
+    public listInstances(containing?: string, limit?: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<EventSourceInstanceInfo>>>;
+    public listInstances(containing?: string, limit?: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<EventSourceInstanceInfo>>>;
+    public listInstances(containing?: string, limit?: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
 
 
         let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
         if (containing !== undefined && containing !== null) {
             queryParameters = queryParameters.set('containing', <any>containing);
+        }
+        if (limit !== undefined && limit !== null) {
+            queryParameters = queryParameters.set('limit', <any>limit);
         }
 
         let headers = this.defaultHeaders;
