@@ -77,7 +77,10 @@ const appRoutes: Routes = [
 ];
 
 export function initializeApiConfiguration(): Configuration {
-  return new Configuration({apiKeys: {'Authorization': environment.authorizationKey}});
+  return new Configuration({
+    basePath: environment.apiEndpoint,
+    apiKeys: {'Authorization': environment.authorizationKey}
+  });
 }
 
 @NgModule({
