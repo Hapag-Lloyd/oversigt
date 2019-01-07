@@ -128,20 +128,23 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   saveDashboardSettings(): void {
     this.saveDashboardState = ClrLoadingState.LOADING;
-    this.dashboard.foregroundColorStart = this.foregroundColors[0];
-    this.dashboard.foregroundColorEnd   = this.foregroundColors[1];
-    this.dashboard.screenWidth  = this.screensize[0];
-    this.dashboard.screenHeight = this.screensize[1];
-    this.dashboardService.updateDashboard(this.dashboardId, this.dashboard).subscribe(dashboard => {
-      this.setDashboard(dashboard);
+
+    this.updateDashoard(db => {
+      db.foregroundColorStart = this.foregroundColors[0];
+      db.foregroundColorEnd   = this.foregroundColors[1];
+      db.screenWidth  = this.screensize[0];
+      db.screenHeight = this.screensize[1];
+      db.backgroundColor = this.dashboard.backgroundColor;
+      db.colorScheme = this.dashboard.colorScheme;
+      db.columns = this.dashboard.columns;
+      db.title = this.dashboard.title;
+    }, db => {
+      this.setDashboard(db, false);
       this.saveDashboardState = ClrLoadingState.SUCCESS;
       this.notification.success('The dashboard configuration has been saved.');
-    },
-    error => {
+    }, () => {
       this.saveDashboardState = ClrLoadingState.ERROR;
-      // TODO: Error handling
-      alert(error);
-      console.log(error);
+      this.notification.error('An error occurred while saving the dashboard.');
     });
   }
 
@@ -164,34 +167,20 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   enableDashboard(enabled: boolean): void {
     this.enableDashboardState = ClrLoadingState.LOADING;
-    this.dashboardService.readDashboard(this.dashboardId).subscribe(
-      dashboard => {
-        dashboard.enabled = enabled;
-        this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
-          ok => {
-            this.enableDashboardState = ClrLoadingState.SUCCESS;
-            if (enabled) {
-              this.notification.success('The dashboard "' + dashboard.title + '" has been enabled.');
-            } else {
-              this.notification.success('The dashboard "' + dashboard.title + '" has been disabled.');
-            }
-            this.dashboard.enabled = ok.enabled;
-          }, error => {
-            // TODO: error handling
-            alert(error);
-            console.log(error);
-            this.enableDashboardState = ClrLoadingState.ERROR;
-            this.notification.error('Error while changing dashboard enabled state.');
-          }
-        );
-      }, error => {
-        // TODO: error handling
-        alert(error);
-        console.log(error);
-        this.enableDashboardState = ClrLoadingState.ERROR;
-        this.notification.error('Error while changing dashboard enabled state.');
+    this.updateDashoard(db => {
+      db.enabled = enabled;
+    }, db => {
+      this.enableDashboardState = ClrLoadingState.SUCCESS;
+      this.dashboard.enabled = db.enabled;
+      if (enabled) {
+        this.notification.success('The dashboard "' + db.title + '" has been enabled.');
+      } else {
+        this.notification.success('The dashboard "' + db.title + '" has been disabled.');
       }
-    );
+    }, () => {
+      this.enableDashboardState = ClrLoadingState.ERROR;
+      this.notification.error('An error occurred while changing the dashboard enabled state.');
+    });
   }
 
   updateOwnersAndEditors(): void {
@@ -199,22 +188,33 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     const owners: string[] = this.findUsersIds(this.ownersText);
     const editors: string[] = this.findUsersIds(this.editorsText);
 
+    this.updateDashoard(db => {
+      db.owners = owners;
+      db.editors = editors;
+    }, db => {
+      this.ownersText = db.owners.join(', ');
+      this.editorsText = db.editors.join(', ');
+      this.updateRightsState = ClrLoadingState.SUCCESS;
+      this.notification.success('The rights have been updated.');
+    }, () => {
+      this.updateRightsState = ClrLoadingState.ERROR;
+      this.notification.error('An error occurred while changing the dashboard rights.');
+    });
+  }
+
+  private updateDashoard(update: (dashboard: Dashboard) => void, ok: (dashboard: Dashboard) => void, fail: () => void): void {
     this.dashboardService.readDashboard(this.dashboardId).subscribe(
       dashboard => {
-        dashboard.owners = owners;
-        dashboard.editors = editors;
+        update(dashboard);
         this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
-          ok => {
-            this.ownersText = ok.owners.join(', ');
-            this.editorsText = ok.editors.join(', ');
-            this.updateRightsState = ClrLoadingState.SUCCESS;
-            this.notification.success('The rights have been updated.');
+          newDashboardData => {
+            ok(newDashboardData);
           }, error => {
             // TODO: error handling
             this.updateRightsState = ClrLoadingState.ERROR;
             console.log(error);
             alert(error);
-            this.notification.success('An error occurred while changing the dashboard rights.');
+            fail();
           }
         );
       }, error => {
@@ -222,10 +222,11 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
         this.updateRightsState = ClrLoadingState.ERROR;
         console.log(error);
         alert(error);
-        this.notification.success('An error occurred while changing the dashboard rights.');
+        fail();
       }
     );
   }
+
 
   private findUsersIds(text: string): string[] {
     const regex = /[A-Za-z0-9]+/gi;
