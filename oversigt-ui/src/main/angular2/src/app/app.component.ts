@@ -14,7 +14,7 @@ export class MenuItem {
 const PREFIX = '';
 
 export const MENU_ITEMS: MenuItem[] = [
-  { title: 'Event Sources', link: PREFIX + '/eventSources', id: 'eventsources', children: [
+  { title: 'Event Sources', link: PREFIX + '/eventSources', id: 'eventsources', neededRole: 'server.dashboard.owner', children: [
     /*{ title: 'Create Event Source', link: PREFIX + '/eventSources/create', children: []},
     { title: 'Configure Event Sources', link: PREFIX + '/eventSources/list', children: []},*/
   ]},

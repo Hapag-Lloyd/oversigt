@@ -7,7 +7,10 @@
       </a>
     </div>
     <div class="header-nav">
-      <a *ngFor="let item of menuItems" routerLink="{{item.link}}" class="nav-link nav-text" [class.active]="getSelectedMenuItemLink() === item.link">{{item.title}}</a>
+      <ng-container *ngFor="let item of menuItems">
+        <a *appHasRole="item.neededRole" routerLink="{{item.link}}" class="nav-link nav-text"
+            [class.active]="getSelectedMenuItemLink() === item.link">{{item.title}}</a>
+      </ng-container>
     </div>
     <!-- TODO: <form class="search">
       <label for="search_input">
