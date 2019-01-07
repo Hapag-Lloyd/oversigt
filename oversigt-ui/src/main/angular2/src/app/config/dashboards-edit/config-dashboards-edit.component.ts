@@ -22,14 +22,18 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   dashboard: Dashboard = null;
   screensize: number[] = [];
   foregroundColors: string[] = [];
-  owners: string[] = [];
-  editors: string[] = [];
+  // TODO: implement chips
+  // owners: string[] = [];
+  // editors: string[] = [];
+  ownersText = '';
+  editorsText = '';
   widgetInfos: WidgetShortInfo[] = [];
 
   // Loading indicator
   saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   deleteDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   enableDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  updateRightsState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   // for chip editor
   syncUserIdValidators = [];
@@ -115,8 +119,10 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
     this.screensize = [dashboard.screenWidth, dashboard.screenHeight];
     if (withRights) {
-      this.owners = dashboard.owners;
-      this.editors = dashboard.editors;
+      // this.owners = dashboard.owners;
+      // this.editors = dashboard.editors;
+      this.ownersText = dashboard.owners.join(', ');
+      this.editorsText = dashboard.editors.join(', ');
     }
   }
 
@@ -186,6 +192,49 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
         this.notification.error('Error while changing dashboard enabled state.');
       }
     );
+  }
+
+  updateOwnersAndEditors(): void {
+    this.updateRightsState = ClrLoadingState.LOADING;
+    const owners: string[] = this.findUsersIds(this.ownersText);
+    const editors: string[] = this.findUsersIds(this.editorsText);
+
+    this.dashboardService.readDashboard(this.dashboardId).subscribe(
+      dashboard => {
+        dashboard.owners = owners;
+        dashboard.editors = editors;
+        this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
+          ok => {
+            this.ownersText = ok.owners.join(', ');
+            this.editorsText = ok.editors.join(', ');
+            this.updateRightsState = ClrLoadingState.SUCCESS;
+            this.notification.success('The rights have been updated.');
+          }, error => {
+            // TODO: error handling
+            this.updateRightsState = ClrLoadingState.ERROR;
+            console.log(error);
+            alert(error);
+            this.notification.success('An error occurred while changing the dashboard rights.');
+          }
+        );
+      }, error => {
+        // TODO: error handling
+        this.updateRightsState = ClrLoadingState.ERROR;
+        console.log(error);
+        alert(error);
+        this.notification.success('An error occurred while changing the dashboard rights.');
+      }
+    );
+  }
+
+  private findUsersIds(text: string): string[] {
+    const regex = /[A-Za-z0-9]+/gi;
+    const array: string[] = [];
+    let result: RegExpExecArray | string[];
+    while ( (result = regex.exec(text)) ) {
+      array.push(result[0]);
+    }
+    return array;
   }
 
   countColumns(): number {

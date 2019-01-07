@@ -73,26 +73,11 @@
 <ng-template #dbOwners>
   <form class="clr-form clr-form-horizontal">
     <div class="card-block">
-      <div class="clr-form-control chip-editor">
-        <label for="dashboard_owners" class="clr-control-label">Owners</label>
-        <div class="clr-control-container">
-          <div class="clr-input-wrapper">
-            <tag-input [(ngModel)]="owners" name="dashboard_owners" [inputClass]="'clr-input'" [theme]="'oversigt-theme'" [placeholder]="'Add owner'" [secondaryPlaceholder]="'Specify owners'" [inputId]="'dashboard_owners'" [modelAsStrings]="true" [ripple]="false"></tag-input>
-            <!--[asyncValidators]="asyncUserIdValidators"-->
-          </div>
-        </div>
-      </div>
-      <div class="clr-form-control chip-editor">
-        <label for="dashboard_editors" class="clr-control-label">Editors</label>
-        <div class="clr-control-container">
-          <div class="clr-input-wrapper">
-            <input [(ngModel)]="editors" type="text" id="dashboard_editors" name="dashboard_editors" class="clr-input">
-          </div>
-        </div>
-      </div>
+      <app-simple-editor name="dashboard_owners" [id]="'dashboard_owners'" [title]="'Owners'" [(ngModel)]="ownersText" [description]="'Comma separated list of user ids that shall be owner of this dashboard.'"></app-simple-editor>
+      <app-simple-editor name="dashboard_editors" [id]="'dashboard_editors'" [title]="'Editors'" [(ngModel)]="editorsText" [description]="'Comma separated list of user ids that shall be able to edit this dashboard.'"></app-simple-editor>
     </div>
     <div class="card-footer">
-      <button class="btn btn-primary">Update</button>
+      <button (click)="updateOwnersAndEditors()" [clrLoading]="updateRightsState" class="btn btn-primary">Update</button>
     </div>
   </form>
 </ng-template>
