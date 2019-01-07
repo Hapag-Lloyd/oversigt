@@ -62,9 +62,7 @@ import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.web.DashboardConfigurationHandler;
 import com.hlag.oversigt.web.DashboardCreationHandler;
-import com.hlag.oversigt.web.EventSourceConfigurationHandler;
 import com.hlag.oversigt.web.HttpServerExchangeHandler;
 import com.hlag.oversigt.web.LoginHandler;
 import com.hlag.oversigt.web.WelcomeHandler;
@@ -125,9 +123,9 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final WelcomeHandler welcomeHandler;
 	private final LoginHandler loginHandler;
-	private final DashboardConfigurationHandler dashboardConfigurationHandler;
+	//private final DashboardConfigurationHandler dashboardConfigurationHandler;
 	private final DashboardCreationHandler dashboardCreationHandler;
-	private final EventSourceConfigurationHandler eventSourceConfigurationHandler;
+	//private final EventSourceConfigurationHandler eventSourceConfigurationHandler;
 	private final DashboardController dashboardController;
 	private final Application restApiApplication;
 	private final HttpServerExchangeHandler exchangeHandler;
@@ -163,9 +161,9 @@ public class OversigtServer extends AbstractIdleService {
 			Configuration templateConfiguration,
 			WelcomeHandler welcomeHandler,
 			LoginHandler loginHandler,
-			DashboardConfigurationHandler dashboardConfigurationHandler,
+			//DashboardConfigurationHandler dashboardConfigurationHandler,
 			DashboardCreationHandler dashboardCreationHandler,
-			EventSourceConfigurationHandler eventSourceConfigurationHandler,
+			//EventSourceConfigurationHandler eventSourceConfigurationHandler,
 			DashboardController dashboardController,
 			HttpServerExchangeHandler exchangeHandler,
 			Application restApiApplication,
@@ -178,9 +176,9 @@ public class OversigtServer extends AbstractIdleService {
 		this.templateConfiguration = templateConfiguration;
 		this.welcomeHandler = welcomeHandler;
 		this.loginHandler = loginHandler;
-		this.dashboardConfigurationHandler = dashboardConfigurationHandler;
+		//this.dashboardConfigurationHandler = dashboardConfigurationHandler;
 		this.dashboardCreationHandler = dashboardCreationHandler;
-		this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
+		//this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
 		this.dashboardController = dashboardController;
 		this.exchangeHandler = exchangeHandler;
 		this.restApiApplication = restApiApplication;
@@ -246,9 +244,9 @@ public class OversigtServer extends AbstractIdleService {
 			}
 		});
 
-		final HttpHandler securedEventSourceConfigurationHandler = withLogin(eventSourceConfigurationHandler);
+		//final HttpHandler securedEventSourceConfigurationHandler = withLogin(eventSourceConfigurationHandler);
 		final HttpHandler securedDashboardCreationHandler = withLogin(dashboardCreationHandler);
-		final HttpHandler securedDashboardConfigurationHandler = withLogin(dashboardConfigurationHandler);
+		//final HttpHandler securedDashboardConfigurationHandler = withLogin(dashboardConfigurationHandler);
 
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers//
@@ -269,10 +267,10 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				// server configuration
-				.get("/config", securedEventSourceConfigurationHandler)//
-				.post("/config", securedEventSourceConfigurationHandler)//
-				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.get("/config", securedEventSourceConfigurationHandler)//
+				//				.post("/config", securedEventSourceConfigurationHandler)//
+				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -289,7 +287,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-		//.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
+				.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
 		;
 
 		// Create Handler for compressing content

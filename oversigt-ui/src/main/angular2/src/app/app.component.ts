@@ -53,6 +53,10 @@ export function getLinkForDashboardWidget(dashboardId: string, widgetId: number)
   return getLinkForDashboard(dashboardId) + '/' + String(widgetId);
 }
 
+export function getMenuItemForUrl(url: string): MenuItem {
+  return MENU_ITEMS.find(mi => mi.link === url);
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',

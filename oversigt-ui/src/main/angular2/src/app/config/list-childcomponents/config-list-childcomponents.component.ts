@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { MenuItem } from 'src/app/app.component';
+import { MenuItem, getMenuItemForUrl } from 'src/app/app.component';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
@@ -12,11 +12,14 @@ export class ConfigListChildcomponentsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
   ) { }
 
   ngOnInit() {
     const url = this.route.snapshot.url.map(s => s.path).join('/');
   }
 
+  getSubMenuItems(): MenuItem[] {
+    const item = getMenuItemForUrl('/' + this.route.snapshot.url.map(u => u.path).join('/'));
+    return item ? item.children : [];
+  }
 }

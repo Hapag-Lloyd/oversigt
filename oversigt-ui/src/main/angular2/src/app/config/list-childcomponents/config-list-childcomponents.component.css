@@ -1,0 +1,11 @@
+*, *:before, *:after {box-sizing:  border-box !important;}
+
+
+article {
+  column-width: 14rem;
+}
+
+section {
+ display: inline-block;
+ width:  100%;
+}

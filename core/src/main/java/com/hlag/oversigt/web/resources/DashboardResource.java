@@ -241,6 +241,12 @@ public class DashboardResource {
 			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
 		}
 
+		// check usernames
+		newDashboardData.setOwners(
+				newDashboardData.getOwners().stream().filter(authenticator::isUsernameValid).collect(toList()));
+		newDashboardData.setEditors(
+				newDashboardData.getEditors().stream().filter(authenticator::isUsernameValid).collect(toList()));
+
 		// update dashboard data
 		if (dashboardController.updateDashboard(newDashboardData)) {
 			dashboard = dashboardController.getDashboard(id);

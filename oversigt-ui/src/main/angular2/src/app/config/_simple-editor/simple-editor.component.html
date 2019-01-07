@@ -2,12 +2,17 @@
 <div class="clr-form-control">
   <label for="{{'info_' + id + (isArray() ? '_0' : '')}}" class="clr-control-label">{{title}}</label>
   <div class="clr-control-container">
-    <div *ngIf="!isArray()" class="clr-input-wrapper">
-      <input class="clr-input" [(ngModel)]="value" type="{{inputType}}" id="info_{{id}}" [attr.readonly]="readOnly ? 'readonly' : null">
-    </div>
-    <div *ngIf="isArray()" class="clr-input-wrapper multi-input">
-      <input *ngFor="let item of value; let i = index" class="clr-input" [(ngModel)]="value[i]" type="{{inputType}}" id="info_{{id}}_{{i}}" [attr.readonly]="readOnly ? 'readonly' : null">
-    </div>
+    <ng-container *ngIf="inputType !== 'textarea'">
+      <div *ngIf="!isArray()" class="clr-input-wrapper">
+        <input class="clr-input" [(ngModel)]="value" type="{{inputType}}" id="info_{{id}}" [attr.readonly]="readOnly ? 'readonly' : null"/>
+      </div>
+      <div *ngIf="isArray()" class="clr-input-wrapper multi-input">
+        <input *ngFor="let item of value; let i = index" class="clr-input" [(ngModel)]="value[i]" type="{{inputType}}" id="info_{{id}}_{{i}}" [attr.readonly]="readOnly ? 'readonly' : null"/>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="inputType === 'textarea'">
+      <textarea class="clr-textarea" [(ngModel)]="value" id="info_{{id}}" [attr.readonly]="readOnly ? 'readonly' : null"></textarea>
+    </ng-container>
     <span *ngIf="description !== null" class="clr-subtext">{{description}}</span>
   </div>
 </div>

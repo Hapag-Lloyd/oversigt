@@ -22,14 +22,18 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   dashboard: Dashboard = null;
   screensize: number[] = [];
   foregroundColors: string[] = [];
-  owners: string[] = [];
-  editors: string[] = [];
+  // TODO: implement chips
+  // owners: string[] = [];
+  // editors: string[] = [];
+  ownersText = '';
+  editorsText = '';
   widgetInfos: WidgetShortInfo[] = [];
 
   // Loading indicator
   saveDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   deleteDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   enableDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  updateRightsState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   // for chip editor
   syncUserIdValidators = [];
@@ -115,27 +119,32 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
     this.screensize = [dashboard.screenWidth, dashboard.screenHeight];
     if (withRights) {
-      this.owners = dashboard.owners;
-      this.editors = dashboard.editors;
+      // this.owners = dashboard.owners;
+      // this.editors = dashboard.editors;
+      this.ownersText = dashboard.owners.join(', ');
+      this.editorsText = dashboard.editors.join(', ');
     }
   }
 
   saveDashboardSettings(): void {
     this.saveDashboardState = ClrLoadingState.LOADING;
-    this.dashboard.foregroundColorStart = this.foregroundColors[0];
-    this.dashboard.foregroundColorEnd   = this.foregroundColors[1];
-    this.dashboard.screenWidth  = this.screensize[0];
-    this.dashboard.screenHeight = this.screensize[1];
-    this.dashboardService.updateDashboard(this.dashboardId, this.dashboard).subscribe(dashboard => {
-      this.setDashboard(dashboard);
+
+    this.updateDashoard(db => {
+      db.foregroundColorStart = this.foregroundColors[0];
+      db.foregroundColorEnd   = this.foregroundColors[1];
+      db.screenWidth  = this.screensize[0];
+      db.screenHeight = this.screensize[1];
+      db.backgroundColor = this.dashboard.backgroundColor;
+      db.colorScheme = this.dashboard.colorScheme;
+      db.columns = this.dashboard.columns;
+      db.title = this.dashboard.title;
+    }, db => {
+      this.setDashboard(db, false);
       this.saveDashboardState = ClrLoadingState.SUCCESS;
       this.notification.success('The dashboard configuration has been saved.');
-    },
-    error => {
+    }, () => {
       this.saveDashboardState = ClrLoadingState.ERROR;
-      // TODO: Error handling
-      alert(error);
-      console.log(error);
+      this.notification.error('An error occurred while saving the dashboard.');
     });
   }
 
@@ -158,34 +167,75 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
   enableDashboard(enabled: boolean): void {
     this.enableDashboardState = ClrLoadingState.LOADING;
+    this.updateDashoard(db => {
+      db.enabled = enabled;
+    }, db => {
+      this.enableDashboardState = ClrLoadingState.SUCCESS;
+      this.dashboard.enabled = db.enabled;
+      if (enabled) {
+        this.notification.success('The dashboard "' + db.title + '" has been enabled.');
+      } else {
+        this.notification.success('The dashboard "' + db.title + '" has been disabled.');
+      }
+    }, () => {
+      this.enableDashboardState = ClrLoadingState.ERROR;
+      this.notification.error('An error occurred while changing the dashboard enabled state.');
+    });
+  }
+
+  updateOwnersAndEditors(): void {
+    this.updateRightsState = ClrLoadingState.LOADING;
+    const owners: string[] = this.findUsersIds(this.ownersText);
+    const editors: string[] = this.findUsersIds(this.editorsText);
+
+    this.updateDashoard(db => {
+      db.owners = owners;
+      db.editors = editors;
+    }, db => {
+      this.ownersText = db.owners.join(', ');
+      this.editorsText = db.editors.join(', ');
+      this.updateRightsState = ClrLoadingState.SUCCESS;
+      this.notification.success('The rights have been updated.');
+    }, () => {
+      this.updateRightsState = ClrLoadingState.ERROR;
+      this.notification.error('An error occurred while changing the dashboard rights.');
+    });
+  }
+
+  private updateDashoard(update: (dashboard: Dashboard) => void, ok: (dashboard: Dashboard) => void, fail: () => void): void {
     this.dashboardService.readDashboard(this.dashboardId).subscribe(
       dashboard => {
-        dashboard.enabled = enabled;
+        update(dashboard);
         this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
-          ok => {
-            this.enableDashboardState = ClrLoadingState.SUCCESS;
-            if (enabled) {
-              this.notification.success('The dashboard "' + dashboard.title + '" has been enabled.');
-            } else {
-              this.notification.success('The dashboard "' + dashboard.title + '" has been disabled.');
-            }
-            this.dashboard.enabled = ok.enabled;
+          newDashboardData => {
+            ok(newDashboardData);
           }, error => {
             // TODO: error handling
-            alert(error);
+            this.updateRightsState = ClrLoadingState.ERROR;
             console.log(error);
-            this.enableDashboardState = ClrLoadingState.ERROR;
-            this.notification.error('Error while changing dashboard enabled state.');
+            alert(error);
+            fail();
           }
         );
       }, error => {
         // TODO: error handling
-        alert(error);
+        this.updateRightsState = ClrLoadingState.ERROR;
         console.log(error);
-        this.enableDashboardState = ClrLoadingState.ERROR;
-        this.notification.error('Error while changing dashboard enabled state.');
+        alert(error);
+        fail();
       }
     );
+  }
+
+
+  private findUsersIds(text: string): string[] {
+    const regex = /[A-Za-z0-9]+/gi;
+    const array: string[] = [];
+    let result: RegExpExecArray | string[];
+    while ( (result = regex.exec(text)) ) {
+      array.push(result[0]);
+    }
+    return array;
   }
 
   countColumns(): number {
