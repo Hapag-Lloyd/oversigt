@@ -249,13 +249,32 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.eventSourceService.setInstanceRunning(this.parsedInstanceDetails.id, true).subscribe(
       newInstanceState => {
         this.startStopEventSourceState = ClrLoadingState.SUCCESS;
-        // TODO reload instance and service details
         this.instanceState = newInstanceState;
         this.notification.success('The event source has been started.');
-        // TODO: nach einiger Zeit nochmal Daten laden, um z.B. Exception-Informationen vom Server zu bekommen
+        setTimeout(() => {
+          this.loadEventSourceState();
+        }, 1000);
+        setTimeout(() => {
+          this.loadEventSourceState();
+        }, 5000);
+        setTimeout(() => {
+          this.loadEventSourceState();
+        }, 20000);
       },
       error => {
         this.startStopEventSourceState = ClrLoadingState.ERROR;
+        console.error(error);
+        alert(error);
+        // TODO: Error handling
+      }
+    );
+  }
+
+  private loadEventSourceState(): void {
+    this.eventSourceService.isInstanceRunning(this.parsedInstanceDetails.id).subscribe(
+      state => {
+        this.instanceState = state;
+      }, error => {
         console.error(error);
         alert(error);
         // TODO: Error handling
@@ -287,15 +306,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
           success => {
             this.parsedInstanceDetails.enabled = enabled;
             this.enableEventSourceState = ClrLoadingState.SUCCESS;
-            this.eventSourceService.isInstanceRunning(this.parsedInstanceDetails.id).subscribe(
-              state => {
-                this.instanceState = state;
-              }, error => {
-                console.error(error);
-                alert(error);
-                // TODO: Error handling
-              }
-            );
+            this.loadEventSourceState();
             ok();
           },
           error => {
