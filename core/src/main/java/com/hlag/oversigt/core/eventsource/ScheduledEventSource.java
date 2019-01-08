@@ -66,11 +66,9 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	/**
 	 * Executes one iteration of {@link com.google.common.util.concurrent.AbstractScheduledService}
 	 * Sends event to event bus
-	 *
-	 * @throws Exception
 	 */
 	@Override
-	protected final void runOneIteration() throws Exception {
+	protected final void runOneIteration() {
 		logTrace(getLogger(), "Run one iteration");
 		// if the last iteration (if any) is too short in the past, return immediately so no action will be done.
 		if (!isTimeToRunNextIteration()) {

@@ -87,8 +87,9 @@ public class TimelineEvent extends OversigtEvent {
 		events.add(new Event(name, date, dateLabel, startDate, background, fontColor));
 	}
 
-	/**
-	 * Removes events older than maxAge if more than minCount of events are inside this event.
+	/**Removes events older than maxAge if more than minCount of events are inside this event.
+	 * @param maxAge the maximum age of an event to be allowed
+	 * @param minCount the minimum number of events to keep
 	 */
 	public void removeEvents(TemporalAmount maxAge, int minCount) {
 		final LocalDate now = LocalDate.now(zoneId);
