@@ -62,7 +62,7 @@
 					</execution>
 					<execution>
 						<?m2e ignore?>
-						<id>npm install</id>
+						<id>npm install angular/cli</id>
 						<goals>
 							<goal>exec</goal>
 						</goals>
@@ -81,7 +81,7 @@
 					</execution>
 					<execution>
 						<?m2e ignore?>
-						<id>install angular-cli</id>
+						<id>angular-cli build</id>
 						<goals>
 							<goal>exec</goal>
 						</goals>
