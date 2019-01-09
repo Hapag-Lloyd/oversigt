@@ -81,7 +81,7 @@
 					</execution>
 					<execution>
 						<?m2e ignore?>
-						<id>angular-cli build</id>
+						<id>install angular-cli</id>
 						<goals>
 							<goal>exec</goal>
 						</goals>
