@@ -62,25 +62,6 @@
 					</execution>
 					<execution>
 						<?m2e ignore?>
-						<id>npm install angular/cli</id>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<executable>npm</executable>
-							<arguments>
-								<argument>install</argument>
-								<argument>@angular/cli</argument>
-							</arguments>
-							<workingDirectory>${basedir}/target/angular2</workingDirectory>
-							<target>
-								<echo message="npm install @angular/cli" />
-							</target>
-						</configuration>
-					</execution>
-					<execution>
-						<?m2e ignore?>
 						<id>angular-cli build</id>
 						<goals>
 							<goal>exec</goal>
