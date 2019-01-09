@@ -56,7 +56,26 @@
 							</arguments>
 							<workingDirectory>${basedir}/target/angular2</workingDirectory>
 							<target>
-								<echo message="Npm install" />
+								<echo message="npm install" />
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<?m2e ignore?>
+						<id>npm install</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<executable>npm</executable>
+							<arguments>
+								<argument>install</argument>
+								<argument>@angular/cli</argument>
+							</arguments>
+							<workingDirectory>${basedir}/target/angular2</workingDirectory>
+							<target>
+								<echo message="npm install @angular/cli" />
 							</target>
 						</configuration>
 					</execution>
@@ -68,8 +87,8 @@
 						</goals>
 						<phase>generate-resources</phase>
 						<configuration>
-							<!-- <executable>node_modules/@angular/cli/bin/ng</executable> -->
-							<executable>ng</executable>
+							<executable>node_modules/@angular/cli/bin/ng</executable>
+							<!--<executable>ng</executable>-->
 							<arguments>
 								<argument>build</argument>
 								<argument>--prod</argument>
@@ -77,6 +96,9 @@
 								<argument>/config/</argument>
 							</arguments>
 							<workingDirectory>${basedir}/target/angular2</workingDirectory>
+							<target>
+								<echo message="ng build"/>
+							</target>
 						</configuration>
 					</execution>
 				</executions>
