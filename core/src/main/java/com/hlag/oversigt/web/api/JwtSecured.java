@@ -9,8 +9,7 @@ import javax.ws.rs.NameBinding;
 
 /**
  * @author Olaf Neumann
- * @See https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
- *
+ * @see <a href="https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey">https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey</a>
  */
 @NameBinding
 @Retention(RetentionPolicy.RUNTIME)

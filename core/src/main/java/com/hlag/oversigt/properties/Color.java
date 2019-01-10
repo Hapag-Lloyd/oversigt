@@ -182,8 +182,9 @@ public class Color {
 	}
 
 	private static Color parseString(String string) {
-		if (string.length() == 0)
+		if (string.length() == 0) {
 			return Black;
+		}
 		switch (string.charAt(0)) {
 			case '#':
 				return parseHexColor(string.substring(1));
@@ -275,8 +276,7 @@ public class Color {
 		return rgb;
 	}
 
-	/** Helper method that converts hue to rgb */
-	public static float hueToRgb(float p, float q, float t) {
+	private static float hueToRgb(float p, float q, float t) {
 		if (t < 0f) {
 			t += 1f;
 		}

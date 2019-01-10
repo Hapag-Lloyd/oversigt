@@ -69,7 +69,9 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.TYPE, ElementType.FIELD })
 	public static @interface Description {
-		/** The description of the annotated object */
+		/**The description of the annotated object
+		 * @return the description
+		 */
 		String value();
 	}
 }

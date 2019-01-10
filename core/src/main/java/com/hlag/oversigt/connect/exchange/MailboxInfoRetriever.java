@@ -55,7 +55,7 @@ public class MailboxInfoRetriever {
 	 * @param mailboxName the name of the mailbox to read
 	 * @param folderName the name of the folder within the mailbox to read
 	 * @return the mailbox from the server or <code>null</code> if something fails but does not throw an exception
-	 * @throws Exception
+	 * @throws Exception if the underlying exchange service throws an exception
 	 */
 	public MailboxFolder getMailbox(String mailboxName, String folderName) throws Exception {
 		final Key key = new Key(mailboxName, folderName);

@@ -49,7 +49,7 @@ import lombok.ToString;
 
 /**
  * @author Olaf Neumann
- * @see https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+ * @see <a href="https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey">https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey</a>
  *
  */
 @Api(tags = { "Authentication" })

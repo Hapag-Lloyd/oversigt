@@ -1,0 +1,8 @@
+language: java
+
+env:
+  - NODE_VERSION="8.12.0"
+
+before_install:
+  - nvm install $NODE_VERSION
+  - npm install -g @angular/cli

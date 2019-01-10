@@ -42,11 +42,9 @@ public class NightlyReloaderService extends AbstractScheduledService {
 	/**
 	 * Executes one iteration of {@link com.google.common.util.concurrent.AbstractScheduledService}
 	 * Sends event to event bus
-	 *
-	 * @throws Exception
 	 */
 	@Override
-	protected final void runOneIteration() throws Exception {
+	protected final void runOneIteration() {
 		Collection<String> dashboards = dashboardController.getDashboardIds();
 		if (LOGGER.isDebugEnabled()) {
 			LOGGER.debug("Sending reload event to " + dashboards);
