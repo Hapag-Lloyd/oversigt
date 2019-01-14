@@ -40,7 +40,7 @@ import { ConfigEventsourcesListComponent } from './config/eventsources-list/conf
 import { ConfigDashboardWidgetComponent } from './config/dashboards-widget/config-dashboards-widget.component';
 import { ConfigDashboardWidgetAddComponent } from './config/dashboards-widget-add/config-dashboards-widget-add.component';
 import { ConfigListChildcomponentsComponent } from './config/list-childcomponents/config-list-childcomponents.component';
-import { HasRoleDirective } from './role-based.directive';
+import { HasRoleDirective } from './directives/role-based.directive';
 
 const appRoutes: Routes = [
   { path: 'login',                    component: LoginComponent, },

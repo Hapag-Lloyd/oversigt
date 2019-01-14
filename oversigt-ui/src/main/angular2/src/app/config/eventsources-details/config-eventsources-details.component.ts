@@ -5,10 +5,10 @@ import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, 
 import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
-import { NotificationService } from 'src/app/notification.service';
-import { uniqueItems } from 'src/app/utils/arrays';
+import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForId, getLinkForEventSource } from 'src/app/app.component';
 import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { RecentEventsourcesService } from 'src/app/services/recent-eventsources.service';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -58,15 +58,13 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   saveEventSourceState = ClrLoadingState.DEFAULT;
   deleteEventSourceState = ClrLoadingState.DEFAULT;
 
-  // List of recently configured event sources
-  recentlyUsed: ParsedEventSourceInstanceDetails[] = [];
-
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private notification: NotificationService,
     private eventSourceService: EventSourceService,
     private dashboardService: DashboardService,
+    private recentEventSources: RecentEventsourcesService,
   ) { }
 
   ngOnInit() {
@@ -107,20 +105,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
             this.eventSourceDescriptor = eventSourceDescriptor;
             this.parsedInstanceDetails = this.parseInstanceDetails(fullInfo.instanceDetails);
 
-            // TODO: move to angular service
-            // recently used sources
-            let recentlyUsedJson = localStorage.getItem('eventsources.recentlyUsed');
-            if (recentlyUsedJson === null || recentlyUsedJson === undefined || recentlyUsedJson === '') {
-              recentlyUsedJson = '[]';
-            }
-            this.recentlyUsed = JSON.parse(recentlyUsedJson);
-            this.recentlyUsed.unshift(this.parsedInstanceDetails);
-            this.recentlyUsed = uniqueItems(this.recentlyUsed);
-            while (this.recentlyUsed.length > 8) {
-              this.recentlyUsed.pop();
-              // TODO: Check that saved event sources still exist
-            }
-            localStorage.setItem('eventsources.recentlyUsed', JSON.stringify(this.recentlyUsed));
+            this.recentEventSources.addEventSource(this.parsedInstanceDetails);
           }
         );
 
@@ -199,7 +184,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       ok => {
         this.saveEventSourceState = ClrLoadingState.SUCCESS;
         this.notification.success('The configuration has been saved.');
-        // TODO: update event source in list of recently used
+        this.recentEventSources.addEventSource(this.parsedInstanceDetails);
       },
       error => {
         this.saveEventSourceState = ClrLoadingState.ERROR;
@@ -337,22 +322,11 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.deleteEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
-        // TODO: aus der Liste der exisierenden EventSources löschen
+        this.recentEventSources.removeEventSource(this.parsedInstanceDetails.id);
         // Show user that we had a success
         this.notification.success('Event source "' + this.parsedInstanceDetails.name + '" has been deleted.');
         this.eventSourceDescriptor = null;
         this.deleteEventSourceState = ClrLoadingState.SUCCESS;
-
-        // remove source from list of recently used...
-        let recentlyUsedJson = localStorage.getItem('eventsources.recentlyUsed');
-        if (recentlyUsedJson === null || recentlyUsedJson === undefined || recentlyUsedJson === '') {
-          recentlyUsedJson = '[]';
-        }
-        this.recentlyUsed = JSON.parse(recentlyUsedJson);
-        this.recentlyUsed = this.recentlyUsed.filter(item => {
-          return item.id !== this.parsedInstanceDetails.id;
-        });
-        localStorage.setItem('eventsources.recentlyUsed', JSON.stringify(this.recentlyUsed));
 
         // navigate to the list of event sources
         setTimeout(() => {

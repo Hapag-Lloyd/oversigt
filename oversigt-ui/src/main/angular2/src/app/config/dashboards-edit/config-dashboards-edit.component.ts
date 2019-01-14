@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ClrLoadingState } from '@clr/angular';
 import { getLinkForDashboards } from 'src/app/app.component';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ConfigDashboardWidgetComponent } from '../dashboards-widget/config-dashboards-widget.component';
 
 @Component({

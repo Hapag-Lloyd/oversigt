@@ -1,7 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { UserService } from './user-service.service';
-import { PropertiesService } from './properties-service.service';
 
 export class MenuItem {
   id: string;

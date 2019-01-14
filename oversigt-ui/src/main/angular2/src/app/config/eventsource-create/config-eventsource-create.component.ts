@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EventSourceService, EventSourceInfo } from 'src/oversigt-client';
 import { Router } from '@angular/router';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForEventSource } from 'src/app/app.component';
 
 @Component({

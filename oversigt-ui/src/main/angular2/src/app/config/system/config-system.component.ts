@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { EventSourceService } from 'src/oversigt-client';
-import { NotificationService } from 'src/app/notification.service';
 
 @Component({
   selector: 'app-config-system',
