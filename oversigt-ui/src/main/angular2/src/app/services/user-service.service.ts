@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
 import { Observable } from 'rxjs';
+import { NotificationService } from './notification.service';
+import { Router } from '@angular/router';
 
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
 const USER_ROLES = 'user.roles';
+const CHECK_INTERVAL = 1000 /** 60 * 5*/; // 5 minutes
 
 @Injectable({
   providedIn: 'root'
@@ -17,21 +20,27 @@ export class UserService {
   private _requestedUrl: string = null;
 
   private _checked = false;
+  private _polling = false;
 
   constructor(
     private authentication: AuthenticationService,
     private configuration: Configuration,
+    private notification: NotificationService,
+    private router: Router,
   ) {
     this.__name = localStorage.getItem(USER_NAME);
     this.__token = localStorage.getItem(USER_TOKEN);
     this.__roles = JSON.parse(localStorage.getItem(USER_ROLES));
-    // TODO check if token is still valid - log out if not
   }
 
   isLoggedIn(): boolean | Observable<boolean> {
     if (this._checked) {
       // if we already check we can answer now
-      return this.token !== null && this.token !== '';
+      const loggedIn = this.token !== null && this.token !== '';
+      if (loggedIn) {
+        this.scheduleTokenValidityCheck();
+      }
+      return loggedIn;
     } else {
       if (this.token === null || this.token === undefined || this.token === '') {
         // if we have no token, it's also obvious that we're not logged in
@@ -42,8 +51,9 @@ export class UserService {
           this.authentication.checkToken(this.token).subscribe(
             ok => {
               observer.next(ok);
+              this.scheduleTokenValidityCheck();
             }, error => {
-              this.token = '';
+              this.logOut();
               observer.error(error);
             },
             () => {
@@ -54,6 +64,43 @@ export class UserService {
         });
       }
     }
+  }
+
+  private scheduleTokenValidityCheck(): void {
+    // prevent multiple polling loops
+    if (this._polling) {
+      return;
+    }
+
+    this._polling = true;
+    setTimeout(() => {
+      this._polling = false;
+      this.checkTokenValidity().then(stillValid => {
+        console.log('stillValid', stillValid);
+        if (stillValid) { // stop checking if the token is invalid
+          this.scheduleTokenValidityCheck();
+        } else {
+          this.logOut();
+          this.router.navigateByUrl('/login');
+          this.notification.warning('You have been logged out.');
+        }
+      });
+    }, CHECK_INTERVAL);
+  }
+
+  private checkTokenValidity(): Promise<boolean> {
+    console.log('token check');
+    return new Promise((resolve, reject) => {
+      this.authentication.checkToken(this.token).subscribe(
+        valid => {
+          resolve(valid);
+        },
+        error => {
+          console.log(error);
+          reject(error);
+        }
+      );
+    });
   }
 
   getName(): string {
@@ -108,6 +155,7 @@ export class UserService {
         this.roles = ok.roles;
         this.configuration.apiKeys['Authorization'] = authorization;
         success(ok.displayName);
+        this.scheduleTokenValidityCheck();
       },
       error => {
         if (error.status === 403) {
