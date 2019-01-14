@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthenticationService, Configuration } from 'src/oversigt-client';
+import { Observable } from 'rxjs';
 
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
@@ -15,6 +16,8 @@ export class UserService {
 
   private _requestedUrl: string = null;
 
+  private _checked = false;
+
   constructor(
     private authentication: AuthenticationService,
     private configuration: Configuration,
@@ -25,8 +28,32 @@ export class UserService {
     // TODO check if token is still valid - log out if not
   }
 
-  isLoggedIn(): boolean {
-    return this.token !== null && this.token !== '';
+  isLoggedIn(): boolean | Observable<boolean> {
+    if (this._checked) {
+      // if we already check we can answer now
+      return this.token !== null && this.token !== '';
+    } else {
+      if (this.token === null || this.token === undefined || this.token === '') {
+        // if we have no token, it's also obvious that we're not logged in
+        return false;
+      } else {
+        // otherwise we need to check the token
+        return new Observable<boolean>(observer => {
+          this.authentication.checkToken(this.token).subscribe(
+            ok => {
+              observer.next(ok);
+            }, error => {
+              this.token = '';
+              observer.error(error);
+            },
+            () => {
+              observer.complete();
+              this._checked = true;
+            }
+          );
+        });
+      }
+    }
   }
 
   getName(): string {
