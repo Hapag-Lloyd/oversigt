@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
 const USER_ROLES = 'user.roles';
-const CHECK_INTERVAL = 1000 /** 60 * 5*/; // 5 minutes
+const CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
 
 @Injectable({
   providedIn: 'root'
