@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MENU_ITEMS, MenuItem, getLinkForProperty } from 'src/app/app.component';
-import { UserService } from 'src/app/user-service.service';
-import { PropertiesService } from 'src/app/properties-service.service';
+import { UserService } from 'src/app/services/user-service.service';
+import { PropertiesService } from 'src/app/services/properties-service.service';
 
 @Component({
   selector: 'app-configuration',

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, Subject } from 'rxjs';
 // tslint:disable-next-line:max-line-length
 import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceDescriptor, FullEventSourceInstanceInfo } from 'src/oversigt-client';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
 import { getLinkForDashboard } from 'src/app/app.component';
 

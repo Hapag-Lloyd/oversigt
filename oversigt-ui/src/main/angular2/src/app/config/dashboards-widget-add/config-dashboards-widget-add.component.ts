@@ -4,7 +4,7 @@ import { Subject, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getLinkForDashboardWidget } from 'src/app/app.component';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 
 @Component({
   selector: 'app-config-dashboard-widget-add',

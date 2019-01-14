@@ -5,7 +5,7 @@ import { EventSourceService, EventSourceInstanceDetails, EventSourceDescriptor, 
 import { Subscription, Subject, Observable } from 'rxjs';
 import { ConfigEventsourceEditorComponent } from '../eventsource-editor/config-eventsource-editor.component';
 import { ClrLoadingState } from '@clr/angular';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { uniqueItems } from 'src/app/utils/arrays';
 import { getLinkForId, getLinkForEventSource } from 'src/app/app.component';
 import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';

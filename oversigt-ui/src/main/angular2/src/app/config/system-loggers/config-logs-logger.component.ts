@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { LoggerInfo, SystemService } from 'src/oversigt-client';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 
 @Component({
   selector: 'app-config-logs-logger',

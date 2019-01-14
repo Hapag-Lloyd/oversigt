@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DashboardService, DashboardInfo } from 'src/oversigt-client';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserService } from 'src/app/user-service.service';
-import { NotificationService } from 'src/app/notification.service';
+import { UserService } from 'src/app/services/user-service.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForDashboard } from 'src/app/app.component';
 
 @Component({

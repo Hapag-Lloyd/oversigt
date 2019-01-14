@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { EventSourceService, SystemService } from 'src/oversigt-client';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
 
 @Component({

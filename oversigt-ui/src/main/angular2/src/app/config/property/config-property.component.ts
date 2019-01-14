@@ -2,7 +2,7 @@ import { Component, OnInit, Input, OnDestroy, TemplateRef, ViewChild, ElementRef
 import { SerializableValueService, SerializablePropertyMember } from 'src/oversigt-client';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { NotificationService } from 'src/app/notification.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
 
 export enum ModalVerb {
