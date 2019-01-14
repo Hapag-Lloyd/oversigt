@@ -44,7 +44,6 @@ export class ConfigEventsourcesComponent implements OnInit, OnDestroy {
   }
 
   private navigateToChild(): void {
-    // TODO: also navigate to child if we navigate to this page from a child page
     if (this.router.routerState.snapshot.url !== getLinkForId('eventsources')) {
       return;
     }

@@ -44,7 +44,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
     this.ss.setLogLevel(loggerName, level).subscribe(
       ok => {
         this.loggerInfos.filter(info => info.name === loggerName)[0].level = level;
-        // TODO compute effective level
+        // TODO compute effective level or reload loggers
         this.notification.success('Logger "' + loggerName + '" has been set to level "' + level + '".');
       },
       error => {

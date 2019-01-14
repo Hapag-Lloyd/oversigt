@@ -70,7 +70,6 @@ const appRoutes: Routes = [
     ]},
     { path: 'properties',             component: ConfigListChildcomponentsComponent },
     { path: 'properties/:name',       component: ConfigPropertyComponent },
-    // { path: 'properties/:name',    component: ConfigPropertiesPropertyComponent },
   ] },
   // { path: ':dashboardId',             component: DashboardComponent },
 /*  { path: '**', component: PageNotFoundComponent }*/

@@ -108,7 +108,6 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
   }
 
   enableWidget(enabled: boolean): void {
-    // TODO: implement
     this.enableButtonState = ClrLoadingState.LOADING;
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, false).subscribe(
       widget => {
@@ -144,7 +143,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.notificationService.success('The widget has been deleted.');
       this.deleteButtonState = ClrLoadingState.SUCCESS;
       this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
-      // TODO: refresh dashboard mini map
+      this.stateChanged.next(null);
     }, error => {
       // TODO: error handling
       this.notificationService.error(error.message);

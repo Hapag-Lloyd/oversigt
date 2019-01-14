@@ -52,6 +52,10 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this._parsedInstanceDetails = value;
   }
 
+  get recentlyUsed(): ParsedEventSourceInstanceDetails[] {
+    return this.recentEventSources.getRecentlyUsed(8);
+  }
+
   // loading states
   startStopEventSourceState = ClrLoadingState.DEFAULT;
   enableEventSourceState = ClrLoadingState.DEFAULT;

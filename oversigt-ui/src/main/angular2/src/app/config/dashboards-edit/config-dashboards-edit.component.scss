@@ -4,6 +4,10 @@
   width: 100%;
 }
 
+.info .card:first-child {
+  margin-top: 0;
+}
+
 .mini-map {
   display: flex;
   flex-flow: row nowrap;
