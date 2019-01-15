@@ -35,6 +35,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hlag.oversigt.core.Oversigt;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
@@ -54,10 +55,10 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Getter;
 
 @Api(tags = { "System" })
 @Path("/system")
-@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 public class SystemResource {
 	private final Runnable shutdownRunnable;
 
@@ -80,6 +81,7 @@ public class SystemResource {
 	@ApiOperation(value = "Shut down the server", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) }, //
 			notes = "Shuts down the dashboard server. Once the request has been accepted the shut down will be initiated after two seconds.")
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response shutdown() {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
@@ -100,6 +102,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public List<String> listLogFiles() throws IOException {
 		return FileUtils.closedPathStream(Files.list(Paths.get("log")))//
 				.map(java.nio.file.Path::getFileName)
@@ -116,6 +119,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response getLogFileContent(@PathParam("filename") @NotBlank String filename,
 			@QueryParam("lines") @ApiParam(required = false, defaultValue = "0", value = "Number of lines to read from the log file. Negative value to read from the end of the file.") Integer lineCount)
 			throws IOException {
@@ -153,6 +157,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<LoggerInfo> getLoggers(
 			@QueryParam("configuredLevelsOnly") @ApiParam(required = false, defaultValue = "false", value = "Whether to filter the logger infos") boolean onlyConfigured) {
 		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -175,6 +180,7 @@ public class SystemResource {
 	@ApiOperation(value = "Change the log level", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response setLogLevel(@PathParam("logger") @NotBlank String loggerName,
 			@QueryParam("level") @ApiParam(required = true) @NotBlank String levelName) {
 
@@ -206,6 +212,7 @@ public class SystemResource {
 	@ApiOperation(value = "Get a list the server's threads", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<ThreadInfo> getThreads() {
 		return Thread.getAllStackTraces()
 				.keySet()
@@ -224,7 +231,7 @@ public class SystemResource {
 	@ApiOperation(value = "Retrieve the cached events", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
-	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response getCachedEvents(
 			@QueryParam("eventSourceId") @ApiParam(value = "Optional filter to get only one cached event", required = false) String filter) {
@@ -256,6 +263,16 @@ public class SystemResource {
 	public boolean isUserValid(
 			@PathParam("userId") @ApiParam(value = "The ID of the user to check", required = true) String userId) {
 		return authenticator.isUsernameValid(userId);
+	}
+
+	@GET
+	@Path("/server/info")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Generic information about the server", response = ServerInfo.class) })
+	@ApiOperation(value = "Get server information")
+	@NoChangeLog
+	public ServerInfo getServerInfo() {
+		return new ServerInfo();
 	}
 
 	public static class LoggerInfo {
@@ -318,4 +335,9 @@ public class SystemResource {
 		}
 	}
 
+	@Getter
+	public static class ServerInfo {
+		private final String name = Oversigt.APPLICATION_NAME;
+		private final String version = Oversigt.APPLICATION_VERSION;
+	}
 }

@@ -32,6 +32,8 @@ import ch.qos.logback.classic.LoggerContext;
  * @author noxfireone
  */
 public final class Oversigt {
+	public static final String APPLICATION_NAME = "Oversigt";
+	public static final String APPLICATION_VERSION = "0.6";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);
 
