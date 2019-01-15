@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from 'src/app/services/user-service.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForDashboard } from 'src/app/app.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-dashboards',
@@ -23,6 +24,7 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
     private ds: DashboardService,
     private userService: UserService,
     private notification: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -42,12 +44,7 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
       list => {
         this.dashboards = list.sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1);
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
-    );
+      this.errorHandler.createErrorHandler('Reading dashboards'));
   }
 
   createDashboard(id: string) {
@@ -59,11 +56,7 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
       dashboard => {
         this.notification.success('Dashboard "' + dashboard.id + '" has been created.');
         this.router.navigateByUrl(getLinkForDashboard(dashboard.id));
-      }, error => {
-        // TODO: error handling
-        console.log(error);
-        alert(error);
-      }
-    );
+      },
+      this.errorHandler.createErrorHandler('Creating the dashboard'));
   }
 }

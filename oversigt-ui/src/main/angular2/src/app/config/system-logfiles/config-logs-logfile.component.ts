@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { SystemService } from 'src/oversigt-client';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-logs-logfile',
@@ -12,7 +13,8 @@ export class ConfigLogsLogfileComponent implements OnInit {
   selectedValue: string = null;
 
   constructor(
-    private ss: SystemService
+    private ss: SystemService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -20,11 +22,7 @@ export class ConfigLogsLogfileComponent implements OnInit {
       list => {
         this.logfiles = list.sort((a, b) => a.toLowerCase() < b.toLowerCase() ? 1 : -1);
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      this.errorHandler.createErrorHandler('Listing log files')
     );
   }
 

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SystemService, ThreadInfo } from 'src/oversigt-client';
 import { getLinkForEventSource } from 'src/app/app.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 export class ThreadInfoComposite {
   threadInfo: ThreadInfo;
@@ -33,6 +34,7 @@ export class ConfigThreadsComponent implements OnInit {
 
   constructor(
     private ss: SystemService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -46,12 +48,7 @@ export class ConfigThreadsComponent implements OnInit {
       threads => {
         _this.threadInfos = threads.map(t => new ThreadInfoComposite(t)).sort((a, b) => _this.compare(a, b));
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
-    );
+      this.errorHandler.createErrorHandler('Reading thread information'));
   }
 
   private compare(a: ThreadInfoComposite, b: ThreadInfoComposite): number {

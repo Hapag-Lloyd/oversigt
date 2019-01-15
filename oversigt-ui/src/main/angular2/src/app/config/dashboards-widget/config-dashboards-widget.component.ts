@@ -6,6 +6,7 @@ import { DashboardWidgetService, WidgetDetails, EventSourceService, EventSourceD
 import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
 import { getLinkForDashboard } from 'src/app/app.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-dashboard-widget',
@@ -34,6 +35,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     private dashboardWidgetService: DashboardWidgetService,
     private eventSourceService: EventSourceService,
     private notificationService: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -58,10 +60,7 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.dashboardWidgetService.readWidget(this.dashboardId, this.widgetId, true).subscribe(widget => {
       this.setWidgetDetails(widget);
     },
-    error => {
-      alert(error);
-      // TODO: error handling
-    });
+    this.errorHandler.createErrorHandler('Reading widget information'));
   }
 
   private setWidgetDetails(widget: WidgetDetails): void {
@@ -73,15 +72,9 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
         this.eventSourceDescriptor = esd;
       },
-      error => {
-        console.log(error);
-        // TODO: error handling
-      });
+      this.errorHandler.createErrorHandler('Reading event source structure information'));
     },
-    error => {
-      console.log(error);
-      // TODO: error handling
-    });
+    this.errorHandler.createErrorHandler('Reading event source instance information'));
   }
 
   hasEventSourceProperty(propertyName: string): boolean {
@@ -100,11 +93,9 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.saveButtonState = ClrLoadingState.SUCCESS;
       this.stateChanged.next(null);
     },
-    error => {
-      console.log(error);
-      // TODO: error handling
+    this.errorHandler.createErrorHandler('Updating widget configuration', () => {
       this.saveButtonState = ClrLoadingState.ERROR;
-    });
+    }));
   }
 
   enableWidget(enabled: boolean): void {
@@ -117,19 +108,10 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
             this.enableButtonState = ClrLoadingState.SUCCESS;
             this.widget.enabled = ok.enabled;
             this.stateChanged.next(null);
-          }, error => {
-            console.log(error);
-            alert(error);
-            // TODO: error handling
-            this.enableButtonState = ClrLoadingState.ERROR;
-          }
-        );
-      }, error => {
-        console.log(error);
-        alert(error);
-        // TODO: error handling
-      }
-    );
+          },
+          this.errorHandler.createErrorHandler('Enabling the widget'));
+      },
+      this.errorHandler.createErrorHandler('Reading current widget information'));
   }
 
   deleteWidget(): void {
@@ -144,11 +126,9 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
       this.deleteButtonState = ClrLoadingState.SUCCESS;
       this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
       this.stateChanged.next(null);
-    }, error => {
-      // TODO: error handling
-      this.notificationService.error(error.message);
-      console.log(error);
+    },
+    this.errorHandler.createErrorHandler('Deleting the widget', () => {
       this.deleteButtonState = ClrLoadingState.ERROR;
-    });
+    }));
   }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SystemService, OversigtEvent } from 'src/oversigt-client';
 import { getLinkForEventSource } from 'src/app/app.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 export class EventItem {
   event: OversigtEvent;
@@ -23,6 +24,7 @@ export class ConfigEventsComponent implements OnInit {
 
   constructor(
     private ss: SystemService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -36,11 +38,7 @@ export class ConfigEventsComponent implements OnInit {
       events => {
         _this.events = events.map(e => new EventItem(e));
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      this.errorHandler.createErrorHandler('Loading events')
     );
   }
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SerializableValueService } from 'src/oversigt-client';
+import { ErrorHandlerService } from './error-handler.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,8 @@ export class PropertiesService {
   private properties: string[] = undefined;
 
   constructor(
-    private propertiesService: SerializableValueService
+    private propertiesService: SerializableValueService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   loadProperties(callback: ([]) => void): void {
@@ -19,12 +21,7 @@ export class PropertiesService {
           this.properties = list.sort((a, b) => a > b ? 1 : -1);
           callback(list);
         },
-        error => {
-          console.error(error);
-          alert('Unable to load properties: ' + JSON.stringify(error));
-          // TODO: error handling
-        }
-      );
+        this.errorHandler.createErrorHandler('Listing property types'));
     } else if (this.properties === null) {
       setTimeout(() => {
         this.loadProperties(callback);

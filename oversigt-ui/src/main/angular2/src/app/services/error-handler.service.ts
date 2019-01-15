@@ -10,30 +10,36 @@ export class ErrorHandlerService {
     private notification: NotificationService,
   ) { }
 
-  handleError(error: any, reaction: () => void | string) {
-    console.log(error);
-    const status: number = error.status;
-    switch (status) {
-      case 0: // server not reachable
-      default: // unknown error
-        console.log('Looks like the server was not reachable: ', error.statusText);
-        this.notification.warning('It looks like the Oversigt server is not reachable...');
-        // TODO: show some error page
-        return;
-      case 401: // unauthorized
-        // TODO: maybe we need to log in?
-        break;
-      case 403: // forbidden
-        // TODO: was tun wir hier?
-        break;
-    }
-    if (reaction) {
-      if (typeof reaction === 'string') {
-        this.notification.error(reaction + ' failed');
-      } else {
-        reaction();
+  createErrorHandler(reaction: string | (() => void), callback?: (() => void)): (error: any) => void {
+    return (error) => {
+      console.log(error);
+      const status: number = +error.status;
+      switch (status) {
+        case 0: // server not reachable
+        default: // unknown error
+          console.log('Looks like the server was not reachable: ', error.statusText);
+          this.notification.warning('It looks like the Oversigt server is not reachable...');
+          this.showErrorPage();
+          return;
+        case 401: // unauthorized
+          alert('You tried to perform an action you are not authorized to.');
+          // TODO: maybe we need to log in?
+          break;
+        case 403: // forbidden
+          // TODO: was tun wir hier?
+          break;
       }
-    }
+      if (reaction) {
+        if (typeof reaction === 'string') {
+          this.notification.error(reaction.trim() + ' failed');
+        } else {
+          reaction();
+        }
+      }
+      if (callback) {
+        callback();
+      }
+    };
   }
 
   createZeroHandler(handler: (code: number) => void): (error: any) => void {
@@ -51,6 +57,6 @@ export class ErrorHandlerService {
 
 
   private showErrorPage(): void {
-    // TODO: show error page
+    // TODO: note current URL and show error page.
   }
 }

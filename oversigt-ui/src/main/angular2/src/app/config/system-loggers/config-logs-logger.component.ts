@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { LoggerInfo, SystemService } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/services/notification.service';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-logs-logger',
@@ -14,7 +15,8 @@ export class ConfigLogsLoggerComponent implements OnInit {
 
   constructor(
     private ss: SystemService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -22,21 +24,13 @@ export class ConfigLogsLoggerComponent implements OnInit {
       levels => {
         this.possibleLogLevels = levels;
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      this.errorHandler.createErrorHandler('Listing log levels')
     );
     this.ss.getLoggers(false).subscribe(
       loggers => {
         this.loggerInfos = loggers;
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      this.errorHandler.createErrorHandler('List loggers')
     );
   }
 
@@ -47,11 +41,7 @@ export class ConfigLogsLoggerComponent implements OnInit {
         // TODO compute effective level or reload loggers
         this.notification.success('Logger "' + loggerName + '" has been set to level "' + level + '".');
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      this.errorHandler.createErrorHandler('Updating log level')
     );
   }
 

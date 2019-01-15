@@ -100,9 +100,8 @@ export class UserService {
           resolve(valid);
         },
         error => {
-          console.log(error);
-          reject(error);
-          // TODO: handle error
+          console.log('Error while checking token validity', error);
+          resolve(false);
         }
       );
     });
@@ -186,9 +185,9 @@ export class UserService {
     this.authentication.renewToken(this.token).subscribe(
       newToken => {
         console.log(newToken);
+        // TODO: renew token
       }
     );
-    // TODO: renew token
   }
 
   hasRole(roleName: string): boolean {

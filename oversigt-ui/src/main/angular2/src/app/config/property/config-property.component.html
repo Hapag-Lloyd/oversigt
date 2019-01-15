@@ -6,7 +6,7 @@
 <table *ngIf="propertyType !== null" class="table">
   <thead>
     <tr>
-      <th *ngFor="let member of members" class="left"><!-- TODO: icon <i *ngIf="member.icon !== null" shape="{{member.icon}}"></i>-->
+      <th *ngFor="let member of members" class="left">
         {{member.displayName}}</th>
       <th *appHasRole="'server.dashboard.owner'">&nbsp;</th>
     </tr>
@@ -17,7 +17,7 @@
       <td *appHasRole="'server.dashboard.owner'" style="width:1%">
         <div class="btn-group btn-icon btn-sm">
           <button class="btn" (click)="showEditModal(data['id'])" title="Edit '{{data['name']}}'"><clr-icon shape="pencil"></clr-icon></button>
-          <button class="btn btn-danger" (click)="deleteValue(data['id'])" title="Delete '{{data['name']}}'"><clr-icon shape="trash"></clr-icon></button><!-- TODO: Do you really want to delete the {{propertyType}} '{{data['name']}}'? -->
+          <button class="btn btn-danger" (click)="deleteValue(data['id'])" title="Delete '{{data['name']}}'"><clr-icon shape="trash"></clr-icon></button>
         </div>
       </td>
     </tr>

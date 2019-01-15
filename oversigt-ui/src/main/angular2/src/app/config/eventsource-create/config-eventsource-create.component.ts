@@ -3,6 +3,7 @@ import { EventSourceService, EventSourceInfo } from 'src/oversigt-client';
 import { Router } from '@angular/router';
 import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForEventSource } from 'src/app/app.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-eventsource-create',
@@ -19,6 +20,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
     private router: Router,
     private ess: EventSourceService,
     private notification: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -27,12 +29,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
         this.eventSourceInfos = list.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1);
         this.filter();
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
-    );
+      this.errorHandler.createErrorHandler('Listing available event sources'));
   }
 
   filter(): void {
@@ -51,12 +48,7 @@ export class ConfigEventsourceCreateComponent implements OnInit {
         this.notification.success('Event source has been created.');
         this.router.navigateByUrl(getLinkForEventSource(ok.id));
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
-    );
+      this.errorHandler.createErrorHandler('Creating the event source instance'));
   }
 
   getImageLink(url: string): string {

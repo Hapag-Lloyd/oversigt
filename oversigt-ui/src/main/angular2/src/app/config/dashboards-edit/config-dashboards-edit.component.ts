@@ -7,6 +7,7 @@ import { ClrLoadingState } from '@clr/angular';
 import { getLinkForDashboards } from 'src/app/app.component';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ConfigDashboardWidgetComponent } from '../dashboards-widget/config-dashboards-widget.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -46,6 +47,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     private dashboardWidgetService: DashboardWidgetService,
     private systemService: SystemService,
     private notification: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) {
     const isUserIdValid = (control: FormControl) => {
       return new Promise(resolve => {
@@ -101,16 +103,16 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
 
     this.dashboardService.readDashboard(this.dashboardId).subscribe(dashboard => {
       this.setDashboard(dashboard);
-      // TODO: Error handling
-    });
+    },
+    this.errorHandler.createErrorHandler('Reading dashboard information'));
     this.loadWidgetPositions();
   }
 
   private loadWidgetPositions(): void {
     this.dashboardWidgetService.listWidgets(this.dashboardId).subscribe(widgetInfos => {
       this.widgetInfos = widgetInfos;
-      // TODO: Error handling
-    });
+    },
+    this.errorHandler.createErrorHandler('Loading widget positions'));
   }
 
   private setDashboard(dashboard: Dashboard, withRights: boolean = false): void {
@@ -157,12 +159,10 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
       this.deleteDashboardState = ClrLoadingState.SUCCESS;
       this.notification.success('The dashboard "' + this.dashboard.title + '"has been deleted.');
       this.router.navigateByUrl(getLinkForDashboards());
-    }, error => {
+    },
+    this.errorHandler.createErrorHandler('Deleting the dashboard', () => {
       this.deleteDashboardState = ClrLoadingState.ERROR;
-      console.log(error);
-      alert(error);
-      // TODO: error handling
-    });
+    }));
   }
 
   enableDashboard(enabled: boolean): void {
@@ -209,21 +209,17 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
         this.dashboardService.updateDashboard(this.dashboardId, dashboard).subscribe(
           newDashboardData => {
             ok(newDashboardData);
-          }, error => {
-            // TODO: error handling
+          },
+          this.errorHandler.createErrorHandler('Updating dashboard information', () => {
             this.updateRightsState = ClrLoadingState.ERROR;
-            console.log(error);
-            alert(error);
             fail();
-          }
+          })
         );
-      }, error => {
-        // TODO: error handling
+      },
+      this.errorHandler.createErrorHandler('Reading current dashboard information', () => {
         this.updateRightsState = ClrLoadingState.ERROR;
-        console.log(error);
-        alert(error);
         fail();
-      }
+      })
     );
   }
 

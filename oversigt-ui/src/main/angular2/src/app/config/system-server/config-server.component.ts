@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { EventSourceService, SystemService } from 'src/oversigt-client';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-server',
@@ -15,6 +16,7 @@ export class ConfigServerComponent implements OnInit {
     private eventSourceService: EventSourceService,
     private systemService: SystemService,
     private notification: NotificationService,
+    private errorHandler: ErrorHandlerService,
   ) {}
 
   ngOnInit() {}
@@ -26,11 +28,8 @@ export class ConfigServerComponent implements OnInit {
     this.systemService.shutdown().subscribe(
       ok => {
         this.notification.info('The server is about to shut down. This configuration page will stop working now.');
-      }, error => {
-        alert(error);
-        console.log(error);
-        // TODO: error handling
-      }
+      },
+      this.errorHandler.createErrorHandler('Shutting down the server')
     );
   }
 
@@ -74,12 +73,9 @@ export class ConfigServerComponent implements OnInit {
           );
         });
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
+      this.errorHandler.createErrorHandler('Listing event sources', () => {
         this.restartState = ClrLoadingState.ERROR;
-      }
+      })
     );
   }
 }

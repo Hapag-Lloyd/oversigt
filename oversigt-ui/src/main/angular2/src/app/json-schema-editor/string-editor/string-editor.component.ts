@@ -37,7 +37,7 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
         case 'text':
         case null:
         case '':
-        case 'hostname': // TODO maybe better editor?
+        case 'hostname':
           this.inputType = 'text';
           break;
         case 'color':
@@ -48,6 +48,9 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
           break;
         case 'password':
           this.inputType = 'password';
+          break;
+        case 'email':
+          this.inputType = 'email';
           break;
         default:
           this.inputType = this.schemaObject.format;
