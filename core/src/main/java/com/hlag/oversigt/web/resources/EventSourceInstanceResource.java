@@ -89,12 +89,15 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response listInstances(
 			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") String containing,
-			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") Integer limit) {
-		Predicate<EventSourceInstance> filter = i -> true;
+			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") Integer limit,
+			@QueryParam("onlyStartable") @ApiParam(required = false, value = "Only return instances that can be started") Boolean onlyStartable) {
+
+		Predicate<EventSourceInstance> containingFilter = i -> true;
+		Predicate<EventSourceInstance> startableFilter = i -> true;
 
 		if (!Strings.isNullOrEmpty(containing)) {
 			final String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
-			filter = i -> i.getName().toLowerCase().contains(searchedContent)
+			containingFilter = i -> i.getName().toLowerCase().contains(searchedContent)
 					|| i.getId().toLowerCase().contains(searchedContent) //
 					|| Optional.ofNullable(i.getFrequency())//
 							.map(Object::toString)
@@ -117,10 +120,15 @@ public class EventSourceInstanceResource {
 									.contains(searchedContent));
 		}
 
+		if (onlyStartable != null && onlyStartable) {
+			startableFilter = i -> i.getDescriptor().getEventClass() != null;
+		}
+
 		Stream<EventSourceInstanceInfo> stream = controller//
 				.getEventSourceInstances()
 				.stream()
-				.filter(filter)
+				.filter(containingFilter)
+				.filter(startableFilter)
 				.map(instance -> new EventSourceInstanceInfo(instance, controller));
 		if (limit != null && limit > 0) {
 			stream = stream.limit(limit);
