@@ -3,6 +3,8 @@ import { AuthenticationService, Configuration } from 'src/oversigt-client';
 import { Observable } from 'rxjs';
 import { NotificationService } from './notification.service';
 import { Router } from '@angular/router';
+import { ErrorHandlerService } from './error-handler.service';
+import { errorHandler } from '@angular/platform-browser/src/browser';
 
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
@@ -27,6 +29,7 @@ export class UserService {
     private configuration: Configuration,
     private notification: NotificationService,
     private router: Router,
+    private errorHandler: ErrorHandlerService,
   ) {
     this.__name = localStorage.getItem(USER_NAME);
     this.__token = localStorage.getItem(USER_TOKEN);
@@ -76,10 +79,12 @@ export class UserService {
     setTimeout(() => {
       this._polling = false;
       this.checkTokenValidity().then(stillValid => {
-        console.log('stillValid', stillValid);
         if (stillValid) { // stop checking if the token is invalid
+          console.log('Token is still valid.');
           this.scheduleTokenValidityCheck();
+          this.renewToken();
         } else {
+          console.log('Token is not valid any more. Logging out.');
           this.logOut();
           this.router.navigateByUrl('/login');
           this.notification.warning('You have been logged out.');
@@ -89,7 +94,6 @@ export class UserService {
   }
 
   private checkTokenValidity(): Promise<boolean> {
-    console.log('token check');
     return new Promise((resolve, reject) => {
       this.authentication.checkToken(this.token).subscribe(
         valid => {
@@ -98,6 +102,7 @@ export class UserService {
         error => {
           console.log(error);
           reject(error);
+          // TODO: handle error
         }
       );
     });
@@ -146,7 +151,7 @@ export class UserService {
     this._requestedUrl = url;
   }
 
-  public logIn(username: string, password: string, success: (name: string) => void, fail: () => void, done: () => void): void {
+  public logIn(username: string, password: string, success: (name: string) => void, fail: () => void): void {
     this.authentication.authenticateUser(username, password).subscribe(
       ok => {
         const authorization = 'Bearer ' + ok.token;
@@ -157,15 +162,17 @@ export class UserService {
         success(ok.displayName);
         this.scheduleTokenValidityCheck();
       },
-      error => {
-        if (error.status === 403) {
-          fail();
-        } else {
-          console.error(error);
-          // TODO: Error handling
+      this.errorHandler.createZeroHandler(status => {
+        switch (status) {
+          case 403:
+            this.notification.error('It looks like your credentials where wrong.');
+            break;
+          case 0:
+            // TODO: what now?
+            break;
         }
-      },
-      done
+        fail();
+      })
     );
   }
 
@@ -173,6 +180,15 @@ export class UserService {
     this.token = '';
     this.name = '';
     this.roles = [];
+  }
+
+  private renewToken(): void {
+    this.authentication.renewToken(this.token).subscribe(
+      newToken => {
+        console.log(newToken);
+      }
+    );
+    // TODO: renew token
   }
 
   hasRole(roleName: string): boolean {
