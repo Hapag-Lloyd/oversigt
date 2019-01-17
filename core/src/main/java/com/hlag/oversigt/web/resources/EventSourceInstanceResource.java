@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -97,27 +96,7 @@ public class EventSourceInstanceResource {
 
 		if (!Strings.isNullOrEmpty(containing)) {
 			final String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
-			containingFilter = i -> i.getName().toLowerCase().contains(searchedContent)
-					|| i.getId().toLowerCase().contains(searchedContent) //
-					|| Optional.ofNullable(i.getFrequency())//
-							.map(Object::toString)
-							.orElse("")
-							.toLowerCase()
-							.contains(searchedContent)
-					|| i.getDescriptor()//
-							.getProperties()
-							.stream()
-							.filter(i::hasPropertyValue)
-							.anyMatch(p -> i.getPropertyValueString(p)//
-									.toLowerCase()
-									.contains(searchedContent))
-					|| i.getDescriptor()//
-							.getDataItems()
-							.stream()
-							.filter(i::hasPropertyValue)
-							.anyMatch(p -> i.getPropertyValueString(p)//
-									.toLowerCase()
-									.contains(searchedContent));
+			containingFilter = EventSourceInstance.createFilter(searchedContent);
 		}
 
 		if (onlyStartable != null && onlyStartable) {

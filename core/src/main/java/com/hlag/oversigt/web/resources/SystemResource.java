@@ -1,6 +1,7 @@
 package com.hlag.oversigt.web.resources;
 
 import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
@@ -31,6 +33,8 @@ import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
@@ -38,6 +42,9 @@ import com.google.inject.name.Named;
 import com.hlag.oversigt.core.Oversigt;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
@@ -55,6 +62,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
 import lombok.Getter;
 
 @Api(tags = { "System" })
@@ -67,6 +75,11 @@ public class SystemResource {
 
 	@Inject
 	private Authenticator authenticator;
+
+	@Inject
+	private DashboardController dashboardController;
+	@Inject
+	private SerializablePropertyController spController;
 
 	@Inject
 	public SystemResource(@Named("Shutdown") Runnable shutdown) {
@@ -160,16 +173,19 @@ public class SystemResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<LoggerInfo> getLoggers(
 			@QueryParam("configuredLevelsOnly") @ApiParam(required = false, defaultValue = "false", value = "Whether to filter the logger infos") boolean onlyConfigured) {
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 		Predicate<LoggerInfo> filter = l -> true;
 		if (onlyConfigured) {
 			filter = l -> l.level != null;
 		}
-		return context.getLoggerList()//
-				.stream()
+		return getLoggerStream()//
 				.map(LoggerInfo::new)
 				.filter(filter)
 				.collect(Collectors.toList());
+	}
+
+	private Stream<Logger> getLoggerStream() {
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		return context.getLoggerList().stream();
 	}
 
 	@PUT
@@ -275,6 +291,70 @@ public class SystemResource {
 		return new ServerInfo();
 	}
 
+	@GET
+	@Path("/server/all-objects")
+	@ApiResponses({ @ApiResponse(code = 200, message = "Search all server objects", response = ServerInfo.class) })
+	@ApiOperation(value = "Server wide search for objects")
+	@NoChangeLog
+	public Response searchAllObjects(
+			@QueryParam("query") @ApiParam(value = "Text to search for", required = true) final String rawSearchString) {
+		if (rawSearchString == null || rawSearchString.trim().length() == 0) {
+			return ErrorResponse.badRequest("The search text must not be empty.");
+		}
+
+		// prepare search
+		final String searchString = rawSearchString.toLowerCase();
+		final List<SearchResult> results = new ArrayList<>();
+
+		// TODO implement dynamic search registration
+
+		// search for dashboards
+		results.addAll(dashboardController.getDashboardIds()
+				.stream()
+				.map(dashboardController::getDashboard)
+				.filter(d -> d.getTitle().toLowerCase().contains(searchString)
+						|| d.getId().toLowerCase().contains(searchString))
+				.map(d -> SearchResult.builder().title(d.getTitle()).id(d.getId()).type("dashboard").build())
+				.collect(toList()));
+
+		// search for event sources
+		results.addAll(dashboardController.getEventSourceInstances()
+				.stream()
+				.filter(EventSourceInstance.createFilter(searchString))
+				.map(i -> SearchResult.builder().title(i.getName()).id(i.getId()).type("event-source").build())
+				.collect(toList()));
+
+		// search for properties
+		spController.getClasses()
+				.stream()
+				.flatMap(spController::streamProperties)
+				.filter(p -> SerializablePropertyResource//
+						.toMapWithoutPassword(p)
+						.values()
+						.stream()
+						.filter(v -> v != null)
+						.map(Object::toString)
+						.map(String::toLowerCase)
+						.anyMatch(s -> s.contains(searchString)))
+				.map(p -> SearchResult.builder()
+						.title(p.getName())
+						.id(Integer.toString(p.getId()))
+						.type("serializable-property")
+						.subtype(p.getClass().getSimpleName())
+						.build())
+				.collect(Collectors.toList());
+
+		// search for loggers
+		results.addAll(getLoggerStream()//
+				.map(Logger::getName)
+				.map(String::toLowerCase)
+				.filter(name -> name.contains(searchString))
+				.map(name -> SearchResult.builder().title(name).id(name).type("logger").build())
+				.collect(toList()));
+
+		return ok(results).build();
+	}
+
 	public static class LoggerInfo {
 		private final String name;
 		private final Level level;
@@ -339,5 +419,16 @@ public class SystemResource {
 	public static class ServerInfo {
 		private final String name = Oversigt.APPLICATION_NAME;
 		private final String version = Oversigt.APPLICATION_VERSION;
+	}
+
+	@Builder
+	@Getter
+	@JsonInclude(content = Include.NON_NULL)
+	public static class SearchResult {
+		private final String title;
+		private final String id;
+		private final String type;
+		@Nullable
+		private final String subtype;
 	}
 }

@@ -251,7 +251,7 @@ public class SerializablePropertyResource {
 		return errors;
 	}
 
-	private static Map<String, Object> toMapWithoutPassword(SerializableProperty property) {
+	static Map<String, Object> toMapWithoutPassword(SerializableProperty property) {
 		return removePasswords(toMemberMap(property), "");
 	}
 
