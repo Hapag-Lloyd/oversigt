@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ClrLoadingState } from '@clr/angular';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 export enum ModalVerb {
   Create = 'Create', Edit = 'Edit'
@@ -31,6 +32,7 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private notification: NotificationService,
     private svs: SerializableValueService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -65,26 +67,29 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
           values => this.setValues(values)
         );
       },
-      error => {
-        console.error('Cannot load property type "' + this.propertyType + '"' + error);
+      this.errorHandler.createErrorHandler('Loading property information', () => {
         this.propertyType = null;
         this.members = [];
-      }
+      })
     );
   }
 
   deleteValue(id: number): void {
     const valueToDelete = this.getValue(id);
+    if (!confirm('Do you really want to delete the property "' + valueToDelete.name + '"?')) {
+      return;
+    }
+
     this.svs.deleteProperty(this.propertyType, id).subscribe(
       ok => {
         this.setValues(this.values.filter(e => e['id'] !== id));
         this.notification.success('Property "' + valueToDelete['name'] + '" has been deleted.');
       },
-      error => alert('There was an error while deleting the property: ' + error)
+      this.errorHandler.createErrorHandler('Deleting property "' + valueToDelete.name + '"')
     );
   }
 
-  private getValue(id: number) {
+  private getValue(id: number): any {
     return this.values.find(v => v['id'] === id);
   }
 
@@ -127,18 +132,9 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
         this.modalLoadingState = ClrLoadingState.SUCCESS;
         this.modalShowing = false;
       },
-      error => {
+      this.errorHandler.createErrorHandler('Creating property', () => {
         this.modalLoadingState = ClrLoadingState.ERROR;
-        if (error.error && error.error.errors && error.error.errors instanceof Array) {
-          error.error.errors.forEach(message => {
-            this.notification.error(message);
-          });
-        } else {
-          // TODO: error handling
-          console.log(error);
-          alert(error);
-        }
-      }
+      })
     );
   }
 
@@ -157,18 +153,9 @@ export class ConfigPropertyComponent implements OnInit, OnDestroy {
         this.modalLoadingState = ClrLoadingState.SUCCESS;
         this.modalShowing = false;
       },
-      error => {
+      this.errorHandler.createErrorHandler('Changing the property values', () => {
         this.modalLoadingState = ClrLoadingState.ERROR;
-        if (error.error && error.error.errors && error.error.errors instanceof Array) {
-          error.error.errors.forEach(message => {
-            this.notification.error(message);
-          });
-        } else {
-          // TODO: error handling
-          console.log(error);
-          alert(error);
-        }
-      }
+      })
     );
   }
 }

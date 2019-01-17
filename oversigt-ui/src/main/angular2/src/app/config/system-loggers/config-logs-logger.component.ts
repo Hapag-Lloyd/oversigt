@@ -26,11 +26,15 @@ export class ConfigLogsLoggerComponent implements OnInit {
       },
       this.errorHandler.createErrorHandler('Listing log levels')
     );
+    this.loadLoggerStatus();
+  }
+
+  private loadLoggerStatus(): void {
     this.ss.getLoggers(false).subscribe(
       loggers => {
         this.loggerInfos = loggers;
       },
-      this.errorHandler.createErrorHandler('List loggers')
+      this.errorHandler.createErrorHandler('Reading logger infos')
     );
   }
 
@@ -38,8 +42,8 @@ export class ConfigLogsLoggerComponent implements OnInit {
     this.ss.setLogLevel(loggerName, level).subscribe(
       ok => {
         this.loggerInfos.filter(info => info.name === loggerName)[0].level = level;
-        // TODO compute effective level or reload loggers
         this.notification.success('Logger "' + loggerName + '" has been set to level "' + level + '".');
+        this.loadLoggerStatus();
       },
       this.errorHandler.createErrorHandler('Updating log level')
     );

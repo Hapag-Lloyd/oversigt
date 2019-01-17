@@ -31,11 +31,12 @@ export class ErrorHandlerService {
           // TODO: was tun wir hier?
           break;
       }
-      // TODO: if there are detail messages, show them somehow
       if (reaction) {
         if (typeof reaction === 'string') {
-          this.notification.error(reaction.trim() + ' failed');
+          this.notification.error(reaction.trim() + ' failed: ' + this.getMessage(error));
+          this.showDetails(error);
         } else {
+          this.showDetails(error);
           reaction();
         }
       }
@@ -43,6 +44,11 @@ export class ErrorHandlerService {
         callback();
       }
     };
+  }
+
+  private showDetails(error: HttpErrorResponse): void {
+    const details = this.getDetails(error);
+    details.forEach(alert); // TODO: improve details display
   }
 
   createZeroHandler(handler: (message: string) => void): (error: any) => void {
@@ -62,7 +68,10 @@ export class ErrorHandlerService {
   private logError(error: HttpErrorResponse): void {
     const message = this.getMessage(error);
     const details = this.getDetails(error);
-    console.error('The request failed with code', error.status, 'with server message', message, ' - details:', ...details);
+    console.error('The request failed with code', error.status,
+      '(', error.message, ')',
+      'with server message', message,
+      ' - details:', ...details);
   }
 
   private getMessage(error: HttpErrorResponse): string {
