@@ -39,8 +39,7 @@ export class LoginComponent implements OnInit {
           requestedUrl = '/';
         }
         this.router.navigateByUrl(requestedUrl, {replaceUrl: true});
-      }, () => { // fail
-        this.message.error('Login failed.');
+      }, () => {
         this.loginButtonEnabled = true;
       }
     );

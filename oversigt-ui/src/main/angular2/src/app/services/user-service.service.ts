@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { NotificationService } from './notification.service';
 import { Router } from '@angular/router';
 import { ErrorHandlerService } from './error-handler.service';
-import { errorHandler } from '@angular/platform-browser/src/browser';
 
 const USER_NAME = 'user.name';
 const USER_TOKEN = 'user.token';
@@ -161,15 +160,8 @@ export class UserService {
         success(ok.displayName);
         this.scheduleTokenValidityCheck();
       },
-      this.errorHandler.createZeroHandler(status => {
-        switch (status) {
-          case 403:
-            this.notification.error('It looks like your credentials where wrong.');
-            break;
-          case 0:
-            // TODO: what now?
-            break;
-        }
+      this.errorHandler.createZeroHandler(message => {
+        this.notification.error('Login failed: ' + message);
         fail();
       })
     );

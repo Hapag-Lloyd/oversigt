@@ -2,7 +2,6 @@ package com.hlag.oversigt.web.resources;
 
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +33,7 @@ import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.Utils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
+import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
@@ -95,7 +95,7 @@ public class Authentication {
 					.build();
 		} catch (Exception e) {
 			LOGGER.warn("MAYBE " + username + " - tried to authenticate", e);
-			return status(Response.Status.FORBIDDEN).build();
+			return ErrorResponse.forbidden("The user and password combination is unknown.");
 		}
 	}
 

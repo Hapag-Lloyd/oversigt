@@ -31,6 +31,7 @@
   </clr-dropdown>
 </ng-template>
 
+<!-- TODO: enable if deleting -->
 <div *ngIf="false" class="modal-backdrop" aria-hidden="true">
   <span class="spinner">Loading...</span>
 </div>
@@ -122,7 +123,6 @@
       <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
     </button>
   </div>
-  <!-- TODO: reenable and implement -->
   <clr-dropdown *ngIf="usage.length > 0">
     <button type="button" class="btn btn-outline-default" title="Where this event source is used" clrDropdownTrigger>
       Used in
@@ -134,6 +134,7 @@
       </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
+  <!-- TODO: reenable and implement -->
   <clr-dropdown *ngIf="false && addable.length > 0">
     <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
       Add to
@@ -145,7 +146,7 @@
       </ng-container>
     </clr-dropdown-menu>
   </clr-dropdown>
-  <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Do you really want to delete this event source?" [clrLoading]="deleteEventSourceState">
+  <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Delete this event source" [clrLoading]="deleteEventSourceState">
     <clr-icon shape="trash"></clr-icon>
   </button>
 </ng-template>
