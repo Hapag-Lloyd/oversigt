@@ -310,13 +310,15 @@ export class EventSourceService {
      * 
      * @param containing Filter to reduce the number of listed instances
      * @param limit Maximum number of instances to be returned
+     * @param onlyStartable Only return instances that can be started
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public listInstances(containing?: string, limit?: number, observe?: 'body', reportProgress?: boolean): Observable<Array<EventSourceInstanceInfo>>;
-    public listInstances(containing?: string, limit?: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<EventSourceInstanceInfo>>>;
-    public listInstances(containing?: string, limit?: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<EventSourceInstanceInfo>>>;
-    public listInstances(containing?: string, limit?: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public listInstances(containing?: string, limit?: number, onlyStartable?: boolean, observe?: 'body', reportProgress?: boolean): Observable<Array<EventSourceInstanceInfo>>;
+    public listInstances(containing?: string, limit?: number, onlyStartable?: boolean, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<EventSourceInstanceInfo>>>;
+    public listInstances(containing?: string, limit?: number, onlyStartable?: boolean, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<EventSourceInstanceInfo>>>;
+    public listInstances(containing?: string, limit?: number, onlyStartable?: boolean, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
 
 
 
@@ -326,6 +328,9 @@ export class EventSourceService {
         }
         if (limit !== undefined && limit !== null) {
             queryParameters = queryParameters.set('limit', <any>limit);
+        }
+        if (onlyStartable !== undefined && onlyStartable !== null) {
+            queryParameters = queryParameters.set('onlyStartable', <any>onlyStartable);
         }
 
         let headers = this.defaultHeaders;

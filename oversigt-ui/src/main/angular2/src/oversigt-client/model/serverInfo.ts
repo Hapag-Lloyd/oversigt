@@ -11,9 +11,7 @@
  */
 
 
-export interface EventSourceInfo { 
-    name: string;
-    key: string;
-    description: string;
-    image: string;
+export interface ServerInfo { 
+    name?: string;
+    version?: string;
 }
