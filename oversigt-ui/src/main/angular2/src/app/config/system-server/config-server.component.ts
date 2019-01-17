@@ -51,21 +51,16 @@ export class ConfigServerComponent implements OnInit {
         this.restartState = ClrLoadingState.SUCCESS;
       }
     };
-    this.eventSourceService.listInstances().subscribe(
+    const preMessage = running ? 'Starting event source ' : 'Stopping event source ';
+    this.eventSourceService.listInstances('', 0, true).subscribe(
       list => {
-        // TODO: filter for event sources that can be started!
         list.forEach(item => restarted[item.id] = false);
         list.forEach(item => {
           this.eventSourceService.setInstanceRunning(item.id, running).subscribe(
             success => {
               console.log(item.id, 'done');
             },
-            error => {
-              console.error(error.error);
-              // alert(error);
-              // TODO: Error handling
-              // TODO: this.restartState = ClrLoadingState.ERROR;
-            },
+            this.errorHandler.createErrorHandler(preMessage + item.id),
             () => {
               restarted[item.id] = true;
               checkAll();

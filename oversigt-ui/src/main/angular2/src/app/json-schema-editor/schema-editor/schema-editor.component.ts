@@ -31,7 +31,7 @@ export function createObjectFromProperty(property: JsonSchemaProperty) {
       } else if (property.enumSource === undefined) {
         return '';
       } else {
-        // TODO respect values that are already in the array
+        // TODO: respect values that are already in the array
         return property.enumSource[0].source[0].value;
       }
     case 'number':
