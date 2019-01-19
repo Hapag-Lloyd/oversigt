@@ -2,7 +2,7 @@ package com.hlag.oversigt.properties;
 
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
-@Description("A connection to a database. Enter details to the JDBC connection so the connection information can be reused for multiple event sources.")
+@Description("A connection to a database. This defines which JDBC driver will be used and where the database is located.")
 public class DatabaseConnection extends SerializableProperty {
 	public static final DatabaseConnection EMPTY = new DatabaseConnection(0, "", "", "");
 

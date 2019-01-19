@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
-@Description("Details for an HTTP proxy allowing to reuse the values for multiple event sources.")
+@Description("Details for an HTTP proxy to access other network parts - e.g. the internet.")
 public class HttpProxy extends SerializableProperty {
 	public static final HttpProxy EMPTY = new HttpProxy(0, "", "", 0);
 

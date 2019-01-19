@@ -15,7 +15,7 @@ import com.hlag.oversigt.properties.SerializableProperty.Description;
  * @author neumaol
  *
  */
-@Description("Store credentials to access a resource using these objects. The password will be stored in a way that others are able to reuse the credentials without being able to read the values.")
+@Description("Store credentials to access a resource using them. The password will be stored in a way that others can use it without being able to read it.")
 public class Credentials extends SerializableProperty {
 	public static final Credentials EMPTY = new Credentials(0, "", "", "", "");
 

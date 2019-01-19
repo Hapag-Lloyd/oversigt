@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { SerializableValueService } from 'src/oversigt-client';
+import { SerializableValueService, SerializablePropertyDescription } from 'src/oversigt-client';
 import { ErrorHandlerService } from './error-handler.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PropertiesService {
-  private properties: string[] = undefined;
+  private properties: SerializablePropertyDescription[] = undefined;
 
   constructor(
     private propertiesService: SerializableValueService,
@@ -18,7 +18,7 @@ export class PropertiesService {
       this.properties = null;
       this.propertiesService.listPropertyTypes().subscribe(
         list => {
-          this.properties = list.sort((a, b) => a > b ? 1 : -1);
+          this.properties = list.sort((a, b) => a.name > b.name ? 1 : -1);
           callback(list);
         },
         this.errorHandler.createErrorHandler('Listing property types'));

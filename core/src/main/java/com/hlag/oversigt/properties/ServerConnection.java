@@ -6,7 +6,7 @@ import java.net.URL;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 import com.hlag.oversigt.util.SneakyException;
 
-@Description("Describes the connection to a server allowing to reuse the connection details in multiple event sources.")
+@Description("Details for a server connection containing a hostname and a port.")
 public class ServerConnection extends SerializableProperty {
 	public static final ServerConnection EMPTY = new ServerConnection(0, "", "");
 
