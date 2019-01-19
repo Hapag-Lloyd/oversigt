@@ -19,6 +19,7 @@ import { CustomHttpUrlEncodingCodec }                        from '../encoder';
 import { Observable }                                        from 'rxjs/Observable';
 
 import { ErrorResponse } from '../model/errorResponse';
+import { SerializablePropertyDescription } from '../model/serializablePropertyDescription';
 import { SerializablePropertyMember } from '../model/serializablePropertyMember';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -216,9 +217,9 @@ export class SerializableValueService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public listPropertyTypes(observe?: 'body', reportProgress?: boolean): Observable<Array<string>>;
-    public listPropertyTypes(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<string>>>;
-    public listPropertyTypes(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<string>>>;
+    public listPropertyTypes(observe?: 'body', reportProgress?: boolean): Observable<Array<SerializablePropertyDescription>>;
+    public listPropertyTypes(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<SerializablePropertyDescription>>>;
+    public listPropertyTypes(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<SerializablePropertyDescription>>>;
     public listPropertyTypes(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         let headers = this.defaultHeaders;
@@ -237,7 +238,7 @@ export class SerializableValueService {
             'application/json'
         ];
 
-        return this.httpClient.get<Array<string>>(`${this.basePath}/serializable-values/type`,
+        return this.httpClient.get<Array<SerializablePropertyDescription>>(`${this.basePath}/serializable-values/type`,
             {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,

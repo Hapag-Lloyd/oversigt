@@ -13,6 +13,7 @@ export * from './fullEventSourceInstanceInfo';
 export * from './loggerInfo';
 export * from './oversigtConfiguration';
 export * from './oversigtEvent';
+export * from './serializablePropertyDescription';
 export * from './serializablePropertyMember';
 export * from './serverInfo';
 export * from './stackTraceElement';

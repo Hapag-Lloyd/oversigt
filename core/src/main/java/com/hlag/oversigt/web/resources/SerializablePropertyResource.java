@@ -47,8 +47,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Api(tags = { "SerializableValue" })
 @Path("/serializable-values")
@@ -61,12 +61,17 @@ public class SerializablePropertyResource {
 	@GET
 	@Path("/type")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of available types", response = String.class, responseContainer = "List") })
-	//@JwtSecured
+			@ApiResponse(code = 200, message = "Returns a list of available types", response = SerializablePropertyDescription.class, responseContainer = "List") })
 	@ApiOperation(value = "List available property types")
 	@NoChangeLog
-	public List<String> listPropertyTypes() {
-		return spController.getClasses().stream().map(Class::getSimpleName).collect(Collectors.toList());
+	public List<SerializablePropertyDescription> listPropertyTypes() {
+		return spController.getClasses()
+				.stream()
+				.map(c -> SerializablePropertyDescription.builder()
+						.name(c.getSimpleName())
+						.description(spController.getDescription(c.getSimpleName()))
+						.build())
+				.collect(Collectors.toList());
 	}
 
 	@GET
@@ -259,7 +264,7 @@ public class SerializablePropertyResource {
 	 * @author Olaf Neumann
 	 *
 	 */
-	@RequiredArgsConstructor
+	@Builder
 	@Getter
 	public static class SerializablePropertyDescription {
 		private final String name;
