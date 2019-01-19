@@ -6,6 +6,7 @@ export class MenuItem {
   link: string;
   children?: MenuItem[] = [];
   neededRole?: string;
+  description?: string;
 }
 
 const PREFIX = '';
@@ -18,12 +19,12 @@ export const MENU_ITEMS: MenuItem[] = [
   { title: 'Dashboards', link: PREFIX + '/dashboards', id: 'dashboards', children: []},
   { title: 'Properties', link: PREFIX + '/properties', id: 'properties'},
   { title: 'System', link: PREFIX + '/system', id: 'system', children: [
-    { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: []},
-    { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', neededRole: 'server.admin', children: []},
-    { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', neededRole: 'server.admin', children: []},
-    { title: 'Threads', link: PREFIX + '/system/threads', id: 'system-threads', children: []},
-    { title: 'Configuration', link: PREFIX + '/system/config', id: 'system-config', neededRole: 'server.admin', children: []},
-    { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', neededRole: 'server.admin', children: []},
+    { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: [], description: 'Show events the event sources have created.'},
+    { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', neededRole: 'server.admin', children: [], description: 'Configure the logging facility of the server.'},
+    { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', neededRole: 'server.admin', children: [], description: 'Display log file content.'},
+    { title: 'Threads', link: PREFIX + '/system/threads', id: 'system-threads', children: [], description: 'Display all running threads of the server with their current state.'},
+    { title: 'Configuration', link: PREFIX + '/system/config', id: 'system-config', neededRole: 'server.admin', children: [], description: 'Display the server configuration.'},
+    { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', neededRole: 'server.admin', children: [], description: 'Control basic server functionality.'},
   ]},
 ];
 

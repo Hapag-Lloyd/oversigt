@@ -10,7 +10,12 @@
         </div>
         <div class="card-block">
           <div class="card-text">
+            <ng-container *ngIf="item.description">
+              {{item.description}}
+            </ng-container>
+            <ng-container *ngIf="!item.description">
               Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+            </ng-container>
           </div>
         </div>
       </a>
