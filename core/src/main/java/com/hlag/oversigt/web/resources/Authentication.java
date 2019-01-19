@@ -100,6 +100,34 @@ public class Authentication {
 	}
 
 	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/renew")
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "Token successfully renewed", response = AuthData.class), //
+			@ApiResponse(code = 403, message = "Token renewal failed") //
+	})
+	@ApiOperation("Renew the authentication token")
+	@NoChangeLog
+	public Response renewToken(
+			@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false, value = "The JWT to renew") String token) {
+		String newToken = null;
+		try {
+			Principal principal = authentication.validateToken(token);
+			newToken = authentication.issueToken(principal);
+
+			return ok(new AuthData(principal.getName(), newToken, findRolesForUser(principal)),
+					MediaType.APPLICATION_JSON).build();
+		} catch (Exception e) {
+		}
+		if (newToken != null) {
+			return ok(createTokenMap(newToken)).build();
+		} else {
+			return Response.status(Status.FORBIDDEN).build();
+		}
+	}
+
+	@GET
 	@Path("/roles")
 	@Produces(MediaType.APPLICATION_JSON)
 	@ApiResponses({ //
@@ -111,7 +139,6 @@ public class Authentication {
 	@JwtSecured
 	public Response getRoles() {
 		return ok(new AuthData(findRolesForUser((Principal) securityContext.getUserPrincipal()))).build();
-
 	}
 
 	private Set<String> findRolesForUser(final Principal principal) {
@@ -124,31 +151,6 @@ public class Authentication {
 						.map(Role::getName))
 				.filter(principal::hasRole)
 				.collect(toSet());
-	}
-
-	@GET
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/renew")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "Token successfully renewed"), //
-			@ApiResponse(code = 403, message = "Token renewal failed") //
-	})
-	@ApiOperation("Renew the authentication token")
-	@NoChangeLog
-	public Response renewToken(
-			@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false, value = "The JWT to renew") String token) {
-		String newToken = null;
-		try {
-			Principal principal = authentication.validateToken(token);
-			newToken = authentication.issueToken(principal);
-		} catch (Exception e) {
-		}
-		if (newToken != null) {
-			return ok(createTokenMap(newToken)).build();
-		} else {
-			return Response.status(Status.FORBIDDEN).build();
-		}
 	}
 
 	@GET

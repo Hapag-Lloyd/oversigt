@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -87,9 +88,9 @@ public class EventSourceInstanceResource {
 	@ApiOperation(value = "List existing event source instances")
 	@NoChangeLog
 	public Response listInstances(
-			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") String containing,
-			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") Integer limit,
-			@QueryParam("onlyStartable") @ApiParam(required = false, value = "Only return instances that can be started") Boolean onlyStartable) {
+			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") @Nullable String containing,
+			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") @Nullable Integer limit,
+			@QueryParam("onlyStartable") @ApiParam(required = false, value = "Only return instances that can be started") @Nullable Boolean onlyStartable) {
 
 		Predicate<EventSourceInstance> containingFilter = i -> true;
 		Predicate<EventSourceInstance> startableFilter = i -> true;

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AuthenticationService, Configuration } from 'src/oversigt-client';
+import { AuthenticationService, Configuration, AuthData } from 'src/oversigt-client';
 import { Observable } from 'rxjs';
 import { NotificationService } from './notification.service';
 import { Router } from '@angular/router';
@@ -152,11 +152,7 @@ export class UserService {
   public logIn(username: string, password: string, success: (name: string) => void, fail: () => void): void {
     this.authentication.authenticateUser(username, password).subscribe(
       ok => {
-        const authorization = 'Bearer ' + ok.token;
-        this.token = ok.token;
-        this.name = ok.displayName;
-        this.roles = ok.roles;
-        this.configuration.apiKeys['Authorization'] = authorization;
+        this.setAuthData(ok);
         success(ok.displayName);
         this.scheduleTokenValidityCheck();
       },
@@ -173,11 +169,20 @@ export class UserService {
     this.roles = [];
   }
 
+  private setAuthData(data: AuthData): void {
+    this.token = data.token;
+    this.name = data.displayName;
+    this.roles = data.roles;
+
+    const authorization = 'Bearer ' + data.token;
+    this.configuration.apiKeys['Authorization'] = authorization;
+  }
+
   private renewToken(): void {
     this.authentication.renewToken(this.token).subscribe(
-      newToken => {
-        console.log(newToken);
-        // TODO: renew token
+      ok => {
+        console.log('New token received');
+        this.setAuthData(ok);
       }
     );
   }
