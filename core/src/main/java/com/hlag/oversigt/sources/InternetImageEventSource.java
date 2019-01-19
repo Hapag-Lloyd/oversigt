@@ -7,7 +7,7 @@ import com.hlag.oversigt.sources.event.StyleEvent;
 import com.hlag.oversigt.util.Tuple;
 
 @EventSource(view = "ImageView", displayName = "Internet Image", description = "Load an image from the internet by parsing a web site and show the image in the dashboard.", dataItems = {
-		"width" })
+		"width" }, hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
 	@Override
 	protected StyleEvent produceEvent() {
