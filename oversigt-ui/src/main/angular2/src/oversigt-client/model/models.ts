@@ -11,6 +11,7 @@ export * from './eventSourceKey';
 export * from './eventSourceProperty';
 export * from './fullEventSourceInstanceInfo';
 export * from './loggerInfo';
+export * from './oversigtConfiguration';
 export * from './oversigtEvent';
 export * from './serializablePropertyMember';
 export * from './serverInfo';

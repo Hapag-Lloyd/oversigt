@@ -22,6 +22,7 @@ export const MENU_ITEMS: MenuItem[] = [
     { title: 'Log Files', link: PREFIX + '/system/logfiles', id: 'system-logfiles', neededRole: 'server.admin', children: []},
     { title: 'Loggers', link: PREFIX + '/system/loggers', id: 'system-loggers', neededRole: 'server.admin', children: []},
     { title: 'Threads', link: PREFIX + '/system/threads', id: 'system-threads', children: []},
+    { title: 'Configuration', link: PREFIX + '/system/config', id: 'system-config', neededRole: 'server.admin', children: []},
     { title: 'Server', link: PREFIX + '/system/server', id: 'system-server', neededRole: 'server.admin', children: []},
   ]},
 ];

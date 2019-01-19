@@ -20,6 +20,7 @@ import { Observable }                                        from 'rxjs/Observab
 
 import { ErrorResponse } from '../model/errorResponse';
 import { LoggerInfo } from '../model/loggerInfo';
+import { OversigtConfiguration } from '../model/oversigtConfiguration';
 import { OversigtEvent } from '../model/oversigtEvent';
 import { ServerInfo } from '../model/serverInfo';
 import { ThreadInfo } from '../model/threadInfo';
@@ -411,6 +412,48 @@ export class SystemService {
         ];
 
         return this.httpClient.get<Array<string>>(`${this.basePath}/system/logfiles`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Read the current server configuration
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public readConfiguration(observe?: 'body', reportProgress?: boolean): Observable<OversigtConfiguration>;
+    public readConfiguration(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<OversigtConfiguration>>;
+    public readConfiguration(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<OversigtConfiguration>>;
+    public readConfiguration(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // authentication (JsonWebToken) required
+        if (this.configuration.apiKeys["Authorization"]) {
+            headers = headers.set('Authorization', this.configuration.apiKeys["Authorization"]);
+        }
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+
+        return this.httpClient.get<OversigtConfiguration>(`${this.basePath}/system/configuration`,
             {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,

@@ -42,6 +42,7 @@ import { PrettyPrintPipe } from './pipes/prettyprint.pipe';
 import { FilterEventitemPipe } from './pipes/filter-eventitem.pipe';
 import { FilterForRolePipe } from './pipes/filter-for-role.pipe';
 import { HasRoleDirective } from './directives/role-based.directive';
+import { ConfigServerConfigurationComponent } from './config/system-server-configuration/config-server-configuration.component';
 
 const appRoutes: Routes = [
   { path: 'login',                    component: LoginComponent, },
@@ -66,6 +67,7 @@ const appRoutes: Routes = [
       { path: 'loggers',              component: ConfigLogsLoggerComponent },
       { path: 'events',               component: ConfigEventsComponent },
       { path: 'threads',              component: ConfigThreadsComponent },
+      { path: 'config',               component: ConfigServerConfigurationComponent },
       { path: 'server',               component: ConfigServerComponent },
     ]},
     { path: 'properties',             component: ConfigListChildcomponentsComponent },
@@ -114,6 +116,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigDashboardWidgetAddComponent,
     ConfigListChildcomponentsComponent,
     HasRoleDirective,
+    ConfigServerConfigurationComponent,
   ],
   imports: [
     RouterModule.forRoot(
