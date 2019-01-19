@@ -9,5 +9,13 @@
 </ng-template>
 
 <div class="event-source-list">
-  <a *ngFor="let info of sources$ |async" class="btn btn-outline" [class.not-running]="info.service && !info.running" [class.btn-warning-outline]="info.hasError" [class.btn-success-outline]="!info.service" routerLink="../{{info.id}}">{{info.name}}</a>
+  <a *ngFor="let info of sources$ |async" class="btn btn-outline" [class.not-running]="info.service && !info.running" [class.not-enabled]="info.service && !info.enabled" [class.btn-warning-outline]="info.hasError" [class.btn-success-outline]="!info.service" routerLink="../{{info.id}}">{{info.name}}</a>
+</div>
+
+<app-header title="Legend" level="3"></app-header>
+<div class="event-source-list">
+    <button class="btn btn-outline btn-sm not-running" title="The event source is not running.">Not running</button>
+    <button class="btn btn-outline btn-sm not-enabled" title="The event source is not enabled.">Not enabled</button>
+    <button class="btn btn-outline btn-sm btn-warning-outline" title="The event source has thrown an error.">Has error</button>
+    <button class="btn btn-outline btn-sm btn-success-outline" title="This event source does not run on a server but is client only.">Stand alone</button>
 </div>

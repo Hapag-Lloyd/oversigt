@@ -34,31 +34,38 @@ export class ConfigServerComponent implements OnInit {
   }
 
   startEventSources() {
-    this.changeEventSourceStates(true, 'Event sources started.');
+    this.changeEventSourceStates(true, 'event sources started.');
   }
 
   stopEventSources() {
-    this.changeEventSourceStates(false, 'Event sources stopped.');
+    this.changeEventSourceStates(false, 'event sources stopped.');
   }
 
   changeEventSourceStates(running: boolean, messageWhenDone: string) {
     this.restartState = ClrLoadingState.LOADING;
     const restarted: {[s: string]: boolean; } = {};
+    const idsDone: string[] = [];
 
     const checkAll = () => {
-      if (Object.values(restarted).reduce((a, b) => a && b)) {
-        this.notification.success(messageWhenDone);
+      if (Object.keys(restarted).length === 0 || Object.values(restarted).reduce((a, b) => a && b)) {
+        this.notification.success(Object.keys(restarted).length + ' ' + messageWhenDone);
         this.restartState = ClrLoadingState.SUCCESS;
       }
     };
     const preMessage = running ? 'Starting event source ' : 'Stopping event source ';
     this.eventSourceService.listInstances('', 0, true).subscribe(
       list => {
+        // filter for event sources we can start
+        list = list.filter(item => item.service && item.enabled && item.running !== running);
+        console.log('Starting/ stopping', list.map(i => i.name + ' (' + i.id + ')'));
+        // prepare status collection
         list.forEach(item => restarted[item.id] = false);
+        // start or stop the event sources
         list.forEach(item => {
           this.eventSourceService.setInstanceRunning(item.id, running).subscribe(
             success => {
-              console.log(item.id, 'done');
+              console.log('Done: ', item.id);
+              idsDone.push(item.id);
             },
             this.errorHandler.createErrorHandler(preMessage + item.id),
             () => {
@@ -67,6 +74,7 @@ export class ConfigServerComponent implements OnInit {
             }
           );
         });
+        checkAll();
       },
       this.errorHandler.createErrorHandler('Listing event sources', () => {
         this.restartState = ClrLoadingState.ERROR;

@@ -320,6 +320,7 @@ public class EventSourceInstanceResource {
 		@NotBlank
 		private String name;
 		private boolean isService;
+		private boolean enabled;
 		private boolean running;
 		private boolean hasError;
 		@NotNull
@@ -329,6 +330,7 @@ public class EventSourceInstanceResource {
 			this.id = instance.getId();
 			this.name = instance.getName();
 			this.isService = instance.getDescriptor().getServiceClass() != null;
+			this.enabled = instance.isEnabled();
 			this.running = controller.isRunning(instance);
 			this.hasError = controller.hasException(instance);
 			this.usedBy = new ArrayList<>(controller//
