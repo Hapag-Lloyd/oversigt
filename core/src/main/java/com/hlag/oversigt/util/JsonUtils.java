@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,16 +92,30 @@ public class JsonUtils {
 		return gson.fromJson(json, type);
 	}
 
+	/**Remove  keys from the JSON string
+	 * @param json the JSON to work on
+	 * @param filter determine whether a key should stay in the JSON or not. If the {@link Predicate} returns <code>false</code> the key will be removed.
+	 *  @return the stripped JSON
+	 */
+	public String removeKeysFromJson(String json, Predicate<String> filter) {
+		return toJson(removeKeys(gson.fromJson(json, Object.class), filter));
+	}
+
+	/**Remove all keys from the JSON string that contain the phrase "password" (not case sensitive)
+	 * @param json the JSON to work on
+	 * @param filter determine whether a key should stay in the JSON or not. If the {@link Predicate} returns <code>false</code> the key will be removed.
+	 *  @return the stripped JSON
+	 */
 	public String removePasswordsFromJson(String string) {
-		return toJson(removePassword(gson.fromJson(string, Object.class)));
+		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Object removePassword(Object json) {
+	private Object removeKeys(Object json, Predicate<String> filter) {
 		if (json instanceof Collection) {
-			removePassword((Collection<?>) json);
+			removeKeys((Collection<?>) json, filter);
 		} else if (json instanceof Map) {
-			removePassword((Map<String, Object>) json);
+			removeKeys((Map<String, Object>) json, filter);
 		} else if (json instanceof Double) {
 			long l = ((Double) json).longValue();
 			if ((double) l == (Double) json) {
@@ -110,18 +125,18 @@ public class JsonUtils {
 		return json;
 	}
 
-	private void removePassword(Collection<?> json) {
+	private void removeKeys(Collection<?> json, Predicate<String> filter) {
 		for (Object e : json) {
-			removePassword(e);
+			removeKeys(e, filter);
 		}
 	}
 
-	private void removePassword(Map<String, Object> json) {
+	private void removeKeys(Map<String, Object> json, Predicate<String> filter) {
 		for (Entry<String, Object> e : json.entrySet()) {
-			if (e.getKey().toLowerCase().contains("password")) {
+			if (!filter.test(e.getKey())) {
 				e.setValue(null);
 			} else {
-				e.setValue(removePassword(e.getValue()));
+				e.setValue(removeKeys(e.getValue(), filter));
 			}
 		}
 	}
@@ -159,8 +174,9 @@ public class JsonUtils {
 				props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
 		List<Integer> ids = new ArrayList<>(
 				props.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
-		List<Map<String, Object>> maps = props.stream().map(p -> map("value", p.getId(), "title", p.getName())).collect(
-				Collectors.toList());
+		List<Map<String, Object>> maps = props.stream()
+				.map(p -> map("value", p.getId(), "title", p.getName()))
+				.collect(Collectors.toList());
 		try {
 			if (clazz.getDeclaredField("EMPTY") != null) {
 				names.add(0, "\u00a0");

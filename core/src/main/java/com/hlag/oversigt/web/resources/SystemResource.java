@@ -28,6 +28,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -40,6 +41,7 @@ import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.OversigtConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.DashboardController;
@@ -48,6 +50,7 @@ import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -82,6 +85,11 @@ public class SystemResource {
 	private SerializablePropertyController spController;
 
 	@Inject
+	private OversigtConfiguration configuration;
+	@Inject
+	private JsonUtils json;
+
+	@Inject
 	public SystemResource(@Named("Shutdown") Runnable shutdown) {
 		this.shutdownRunnable = shutdown;
 	}
@@ -104,6 +112,24 @@ public class SystemResource {
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();
+	}
+
+	@GET
+	@Path("/configuration")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Server configuration.", response = OversigtConfiguration.class) })
+	@JwtSecured
+	@ApiOperation(value = "Read the current server configuration", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
+	)
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response readConfiguration() throws IOException {
+		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
+			final String key = s.toLowerCase();
+			return !(key.contains("password") || key.contains("secret"));
+		});
+
+		return ok(configJson).type(MediaType.APPLICATION_JSON).build();
 	}
 
 	@GET

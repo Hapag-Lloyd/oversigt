@@ -819,7 +819,12 @@ public class DashboardController {
 				//method.invoke(eventSource, string);
 				return string;
 			} else if (SerializableProperty.class.isAssignableFrom(type)) {
-				return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
+				try {
+					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
+				} catch (NumberFormatException ignore) {
+					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
+					return spController.getEmpty((Class<SerializableProperty>) type);
+				}
 			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				Object value = json.fromJson(string, type);
 				return value;
