@@ -102,9 +102,7 @@ public class JsonUtils {
 	}
 
 	/**Remove all keys from the JSON string that contain the phrase "password" (not case sensitive)
-	 * @param json the JSON to work on
-	 * @param filter determine whether a key should stay in the JSON or not. If the {@link Predicate} returns <code>false</code> the key will be removed.
-	 *  @return the stripped JSON
+	 * @param string the JSON to work on
 	 */
 	public String removePasswordsFromJson(String string) {
 		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
