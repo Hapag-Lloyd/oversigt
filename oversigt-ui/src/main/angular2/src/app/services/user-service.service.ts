@@ -52,6 +52,7 @@ export class UserService {
         return new Observable<boolean>(observer => {
           this.authentication.checkToken(this.token).subscribe(
             ok => {
+              this.relogIn();
               observer.next(ok);
               this.scheduleTokenValidityCheck();
             }, error => {
@@ -167,6 +168,11 @@ export class UserService {
     this.token = '';
     this.name = '';
     this.roles = [];
+  }
+
+  private relogIn(): void {
+    console.log('re-login');
+    this.setAuthData({token: this.token, displayName: this.name, roles: this.roles});
   }
 
   private setAuthData(data: AuthData): void {
