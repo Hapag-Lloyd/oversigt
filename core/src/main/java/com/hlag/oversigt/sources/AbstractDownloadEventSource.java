@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -238,8 +240,20 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 				|| status == 308 // permanent redirect // TODO safe new URL
 		) {
 			// create new connection new new URL
-			URL url = new URL(connection.getHeaderField("Location"));
-			// TODO handle relative redirects
+			final URI uri;
+			try {
+				uri = new URI(connection.getHeaderField("Location"));
+			} catch (URISyntaxException e) {
+				throw new IOException("Invalid redirect", e);
+			}
+			final URL url;
+			if (uri.isAbsolute()) {
+				url = uri.toURL();
+			} else {
+				url = new URL(connection.getURL(), connection.getHeaderField("Location"));
+			}
+
+			// set correct HTTP method
 			final String method;
 			URLConnection newConnection = url.openConnection();
 			if (newConnection instanceof HttpURLConnection) {
