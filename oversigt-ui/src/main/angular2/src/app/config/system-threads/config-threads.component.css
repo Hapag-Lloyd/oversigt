@@ -1,0 +1,11 @@
+.stacktrace {
+  color: #444444;
+}
+
+.methodname {
+  background-color: rgb(220, 222, 225);
+}
+
+.sourceposition {
+  color: grey;
+}

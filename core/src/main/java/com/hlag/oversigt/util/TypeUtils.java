@@ -177,11 +177,11 @@ public class TypeUtils {
 		}
 	}
 
-	private static String get(Method method, Object target) {
+	private static Object get(Method method, Object target) {
 		try {
 			Object object = method.invoke(target);
 			if (object != null) {
-				return object.toString();
+				return object/* TODO why did we convert to string here? .toString()*/;
 			} else {
 				return null;
 			}
@@ -419,8 +419,10 @@ public class TypeUtils {
 	}
 
 	public static boolean isDebug() {
-		return java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf(
-				"jdwp") >= 0;
+		return java.lang.management.ManagementFactory.getRuntimeMXBean()
+				.getInputArguments()
+				.toString()
+				.indexOf("jdwp") >= 0;
 	}
 
 	private static final Comparator<Method> CLASS_DEPTH_COMPARATOR = (a,

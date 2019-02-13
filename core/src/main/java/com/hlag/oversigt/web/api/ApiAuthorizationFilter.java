@@ -146,7 +146,8 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 		// matrix params
 
-		return param.get();
+		return param.orElseThrow(() -> new /*TODO better exception*/RuntimeException(
+				"The parameter " + parameterName + " is not present."));
 	}
 
 	private static Set<String> getPlaceholders(String roleString) {

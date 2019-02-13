@@ -12,11 +12,14 @@ import static io.undertow.servlet.Servlets.servlet;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
@@ -35,6 +38,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Splitter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Resources;
@@ -55,11 +59,10 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
+import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.web.DashboardConfigurationHandler;
 import com.hlag.oversigt.web.DashboardCreationHandler;
-import com.hlag.oversigt.web.EventSourceConfigurationHandler;
 import com.hlag.oversigt.web.HttpServerExchangeHandler;
 import com.hlag.oversigt.web.LoginHandler;
 import com.hlag.oversigt.web.WelcomeHandler;
@@ -120,9 +123,9 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final WelcomeHandler welcomeHandler;
 	private final LoginHandler loginHandler;
-	private final DashboardConfigurationHandler dashboardConfigurationHandler;
+	//private final DashboardConfigurationHandler dashboardConfigurationHandler;
 	private final DashboardCreationHandler dashboardCreationHandler;
-	private final EventSourceConfigurationHandler eventSourceConfigurationHandler;
+	//private final EventSourceConfigurationHandler eventSourceConfigurationHandler;
 	private final DashboardController dashboardController;
 	private final Application restApiApplication;
 	private final HttpServerExchangeHandler exchangeHandler;
@@ -158,9 +161,9 @@ public class OversigtServer extends AbstractIdleService {
 			Configuration templateConfiguration,
 			WelcomeHandler welcomeHandler,
 			LoginHandler loginHandler,
-			DashboardConfigurationHandler dashboardConfigurationHandler,
+			//DashboardConfigurationHandler dashboardConfigurationHandler,
 			DashboardCreationHandler dashboardCreationHandler,
-			EventSourceConfigurationHandler eventSourceConfigurationHandler,
+			//EventSourceConfigurationHandler eventSourceConfigurationHandler,
 			DashboardController dashboardController,
 			HttpServerExchangeHandler exchangeHandler,
 			Application restApiApplication,
@@ -173,9 +176,9 @@ public class OversigtServer extends AbstractIdleService {
 		this.templateConfiguration = templateConfiguration;
 		this.welcomeHandler = welcomeHandler;
 		this.loginHandler = loginHandler;
-		this.dashboardConfigurationHandler = dashboardConfigurationHandler;
+		//this.dashboardConfigurationHandler = dashboardConfigurationHandler;
 		this.dashboardCreationHandler = dashboardCreationHandler;
-		this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
+		//this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
 		this.dashboardController = dashboardController;
 		this.exchangeHandler = exchangeHandler;
 		this.restApiApplication = restApiApplication;
@@ -241,9 +244,9 @@ public class OversigtServer extends AbstractIdleService {
 			}
 		});
 
-		final HttpHandler securedEventSourceConfigurationHandler = withLogin(eventSourceConfigurationHandler);
+		//final HttpHandler securedEventSourceConfigurationHandler = withLogin(eventSourceConfigurationHandler);
 		final HttpHandler securedDashboardCreationHandler = withLogin(dashboardCreationHandler);
-		final HttpHandler securedDashboardConfigurationHandler = withLogin(dashboardConfigurationHandler);
+		//final HttpHandler securedDashboardConfigurationHandler = withLogin(dashboardConfigurationHandler);
 
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers//
@@ -255,19 +258,19 @@ public class OversigtServer extends AbstractIdleService {
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
 				// dashboard configuration
-				.get("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config", securedDashboardConfigurationHandler)//
-				.get("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
-				.post("/{dashboard}/config/{page}", securedDashboardConfigurationHandler)//
+				.get("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.post("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.get("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.post("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
 				.get("/{dashboard}/create", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create", securedDashboardCreationHandler)//
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				// server configuration
-				.get("/config", securedEventSourceConfigurationHandler)//
-				.post("/config", securedEventSourceConfigurationHandler)//
-				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.get("/config", securedEventSourceConfigurationHandler)//
+				//				.post("/config", securedEventSourceConfigurationHandler)//
+				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
+				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -283,7 +286,9 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/assets", createAssetsHandler())
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
-				.addPrefixPath(MAPPING_API, createApiHandler());
+				.addPrefixPath(MAPPING_API, createApiHandler())
+				.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
+		;
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
@@ -327,11 +332,21 @@ public class OversigtServer extends AbstractIdleService {
 		return new SessionAttachmentHandler(handler, sessionManager, sessionConfig);
 	}
 
+	private void redirectToConfigPage(HttpServerExchange exchange) {
+		List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
+		if ("config".equals(parts.get(1))) {
+			HttpUtils.redirect(exchange, "/config/dashboards/" + parts.get(0), false, true);
+		} else {
+			HttpUtils.badRequest(exchange);
+		}
+	}
+
 	private void doLogout(HttpServerExchange exchange) {
 		Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
 		if (principal.isPresent()) {
 			exchangeHandler.getSession(exchange).ifPresent(s -> s.invalidate(exchange));
-			CHANGE_LOGGER.info("User logged out: " + principal.get().getUsername());
+			CHANGE_LOGGER.info("User logged out: "
+					+ principal.orElseThrow(() -> new RuntimeException("The principal is not present.")).getUsername());
 			HttpUtils.redirect(exchange, "/config", false, true);
 		} else {
 			HttpUtils.internalServerError(exchange);
@@ -461,6 +476,51 @@ public class OversigtServer extends AbstractIdleService {
 
 	private HttpHandler createSwaggerUiHandler() {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
+	}
+
+	private HttpHandler createAngularHandler(final String prefix) {
+		final Path basePath;
+		try {
+			basePath = Paths.get(Resources.getResource(prefix).toURI());
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(String.format("Unable to find prefix '%s' in resources", prefix), e);
+		}
+		final Path indexHtml = basePath.resolve("index.html");
+		if (!(Files.exists(indexHtml) && Files.isRegularFile(indexHtml))) {
+			throw new RuntimeException(
+					String.format("No file called 'index.html' found for angular handler in prefix '%s'", prefix));
+		}
+		return exchange -> {
+			// Find the file to serve
+			final String relativePath = exchange.getRelativePath()
+					.substring(exchange.getRelativePath().startsWith("/") ? 1 : 0);
+			final Path requestedFile = basePath.resolve(relativePath);
+			final Path fileToServe;
+			if (Files.isRegularFile(requestedFile)) {
+				fileToServe = requestedFile;
+			} else {
+				fileToServe = basePath.resolve("index.html");
+			}
+
+			// actually serve the file
+			final String contentType = FileUtils.getExtension(fileToServe).map(extension -> {
+				switch (extension.toLowerCase()) {
+					case "css":
+						return "text/css";
+					case "html":
+						return "text/html";
+					case "js":
+						return "application/javascript";
+					default:
+						return "application/octet-stream";
+				}
+			}).get();
+			exchange.setStatusCode(StatusCodes.OK);
+			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);
+			exchange.getResponseSender().send(ByteBuffer.wrap(Files.readAllBytes(fileToServe)));
+			exchange.endExchange();
+		};
+
 	}
 
 	/**

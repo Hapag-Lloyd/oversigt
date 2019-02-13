@@ -1,0 +1,13 @@
+
+.ov-header {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.ov-header .disabled {
+  color: grey;
+  font-size: 80%;
+}

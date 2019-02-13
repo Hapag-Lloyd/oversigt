@@ -1,0 +1,24 @@
+<ng-container *appHasRole="'dashboard.' + getDashboardId() + '.editor'">
+
+  <app-header [title]="'Add widget'" [level]="2" [additional]="widgetFilter"></app-header>
+
+  <ng-template #widgetFilter>
+    <div class="clr-control-container">
+      <div class="clr-input-wrapper">
+        <input #searchBox id="search-box" (input)="search(searchBox.value)" class="clr-input" type="text" placeholder="Filter widgets"/>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="event-source-list">
+    <a *ngFor="let widget of widgets$ | async" (click)="addWidget(widget.id)" class="card clickable content col-lg-3 col-md-6 col-sm-12 col-xs-12">
+      <div class="card-header">
+        {{widget.name}}
+      </div>
+    </a>
+    <div class="no-content">
+      Your filter did not return any widget.
+    </div>
+  </div>
+
+</ng-container>

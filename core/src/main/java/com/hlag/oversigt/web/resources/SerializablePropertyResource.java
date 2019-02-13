@@ -47,9 +47,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
 
-@Api(tags = { "SerializableValue" }, //
-		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Api(tags = { "SerializableValue" })
 @Path("/serializable-values")
 public class SerializablePropertyResource {
 	@Inject
@@ -60,12 +61,17 @@ public class SerializablePropertyResource {
 	@GET
 	@Path("/type")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of available types", response = String.class, responseContainer = "List") })
-	@JwtSecured
+			@ApiResponse(code = 200, message = "Returns a list of available types", response = SerializablePropertyDescription.class, responseContainer = "List") })
 	@ApiOperation(value = "List available property types")
 	@NoChangeLog
-	public List<String> listPropertyTypes() {
-		return spController.getClasses().stream().map(Class::getSimpleName).collect(Collectors.toList());
+	public List<SerializablePropertyDescription> listPropertyTypes() {
+		return spController.getClasses()
+				.stream()
+				.map(c -> SerializablePropertyDescription.builder()
+						.name(c.getSimpleName())
+						.description(spController.getDescription(c.getSimpleName()))
+						.build())
+				.collect(Collectors.toList());
 	}
 
 	@GET
@@ -74,7 +80,8 @@ public class SerializablePropertyResource {
 			@ApiResponse(code = 200, message = "Returns details of the requested serializable property", response = SerializablePropertyMember.class, responseContainer = "List"),
 			@ApiResponse(code = 404, message = "The requested serializable property type does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property details")
+	@ApiOperation(value = "Read serializable property details", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response readMembers(@PathParam("name") @NotBlank String className) {
 		try {
@@ -89,7 +96,8 @@ public class SerializablePropertyResource {
 	@ApiResponses({
 			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class, responseContainer = "List") })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property values")
+	@ApiOperation(value = "Read serializable property values", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response listProperties(@PathParam("type") @NotBlank String className) {
 		try {
@@ -107,7 +115,8 @@ public class SerializablePropertyResource {
 			@ApiResponse(code = 201, message = "Serializable property has been created", response = Map.class),
 			@ApiResponse(code = 404, message = "Serializable property type does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Create serializable property values")
+	@ApiOperation(value = "Create serializable property values", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response createProperty(@Context UriInfo uri,
 			@PathParam("type") @NotBlank String className,
@@ -142,7 +151,8 @@ public class SerializablePropertyResource {
 			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property values")
+	@ApiOperation(value = "Read serializable property values", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response readProperty(@PathParam("type") @NotBlank String className, @PathParam("id") @Positive int id) {
 		Class<? extends SerializableProperty> clazz;
@@ -166,7 +176,8 @@ public class SerializablePropertyResource {
 			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Update serializable property values")
+	@ApiOperation(value = "Update serializable property values", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response updateProperty(@Context UriInfo uri,
 			@PathParam("type") @NotBlank String className,
@@ -203,7 +214,8 @@ public class SerializablePropertyResource {
 			@ApiResponse(code = 200, message = "Serializable property has been deleted"),
 			@ApiResponse(code = 404, message = "Serializable property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Delete serializable property values")
+	@ApiOperation(value = "Delete serializable property values", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response deleteProperty(@PathParam("type") @NotBlank String className, @PathParam("id") @Positive int id) {
 		Class<? extends SerializableProperty> clazz;
@@ -244,8 +256,18 @@ public class SerializablePropertyResource {
 		return errors;
 	}
 
-	private static Map<String, Object> toMapWithoutPassword(SerializableProperty property) {
+	static Map<String, Object> toMapWithoutPassword(SerializableProperty property) {
 		return removePasswords(toMemberMap(property), "");
 	}
 
+	/**Class describing a {@link SerializableProperty} class.
+	 * @author Olaf Neumann
+	 *
+	 */
+	@Builder
+	@Getter
+	public static class SerializablePropertyDescription {
+		private final String name;
+		private final String description;
+	}
 }

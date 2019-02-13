@@ -123,29 +123,33 @@ public class FileUtils {
 
 		FileSystem fileSystem = getFileSystem(URI.create(uriString));
 		LinkedList<Path> paths = new LinkedList<>();
-		try (JarInputStream jis = new JarInputStream(Files.newInputStream(zip))) {
+		try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
 			JarEntry entry = null;
-			while ((entry = jis.getNextJarEntry()) != null) {
+			while ((entry = jarInputStream.getNextJarEntry()) != null) {
 				paths.add(fileSystem.getPath(entry.getName()));
 			}
 
-			Optional<String> classpath = Optional.of(jis)
+			// take the JAR entry...
+			Optional.of(jarInputStream)
+					// ... and extract the manifest entry...
 					.map(JarInputStream::getManifest)
+					// ... read its main attributes ...
 					.map(Manifest::getMainAttributes)
-					.map(ma -> ma.getValue("Class-Path"));
-			if (classpath.isPresent()) {
-				List<String> jarClasspathEntries = Splitter//
-						.on(CharMatcher.whitespace())
-						.omitEmptyStrings()
-						.splitToList(classpath.get());
-				List<Path> jarResources = jarClasspathEntries.stream()
-						.map(zip.toAbsolutePath().getParent()::resolve)
-						.filter(Files::exists)
-						.map(FileUtils::listResourcesFromJar)
-						.flatMap(Collection::stream)
-						.collect(toList());
-				paths.addAll(jarResources);
-			}
+					// ... take the ClassPath entry ...
+					.map(attributes -> attributes.getValue("Class-Path"))
+					// ... split it on whitespaces. Then you have a list of new relative class path entries.
+					.map(classpath -> Splitter//
+							.on(CharMatcher.whitespace())
+							.omitEmptyStrings()
+							.splitToList(classpath))
+					// take them, resolve the corresponding files and recursivly call this method
+					.map(jarClasspathEntries -> jarClasspathEntries.stream()
+							.map(zip.toAbsolutePath().getParent()::resolve)
+							.filter(Files::exists)
+							.map(FileUtils::listResourcesFromJar)
+							.flatMap(Collection::stream)
+							.collect(toList()))
+					.ifPresent(paths::addAll);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -162,18 +166,25 @@ public class FileUtils {
 	}
 
 	private static List<String> getClasspathEntries() {
-		return Splitter.on(File.pathSeparatorChar).omitEmptyStrings().trimResults().splitToList(
-				System.getProperty("java.class.path"));
+		return Splitter.on(File.pathSeparatorChar)
+				.omitEmptyStrings()
+				.trimResults()
+				.splitToList(System.getProperty("java.class.path"));
 	}
 
 	public static Optional<String> getExtension(Path path) {
 		if (Files.isRegularFile(path)) {
-			String name = path.getFileName().toString();
-			int lastIndex = name.lastIndexOf('.');
-			if (lastIndex >= 0) {
-				return Optional.of(name.substring(lastIndex + 1));
-			}
+			return getExtension(path.getFileName().toString());
 		}
 		return Optional.empty();
+	}
+
+	public static Optional<String> getExtension(String filename) {
+		int lastIndex = filename.lastIndexOf('.');
+		if (lastIndex >= 0) {
+			return Optional.of(filename.substring(lastIndex + 1));
+		} else {
+			return Optional.empty();
+		}
 	}
 }

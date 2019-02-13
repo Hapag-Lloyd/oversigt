@@ -1,0 +1,153 @@
+<!-- Header stuff -->
+<app-header *ngIf="eventSourceDescriptor !== null" [title]="parsedInstanceDetails.name"
+    [enabled]="instanceState.serviceClass === null || parsedInstanceDetails.enabled" [additional]="dropdown"></app-header>
+<span *ngIf="eventSourceDescriptor === null" class="spinner spinner-inline">Loading...</span>
+
+<ng-template #dropdown>
+  <clr-dropdown>
+    <button type="button" class="btn btn-outline-primary" clrDropdownTrigger>
+      Switch to other event source
+      <clr-icon shape="caret down"></clr-icon>
+    </button>
+    <clr-dropdown-menu clrPosition="bottom-right" *clrIfOpen>
+      <label *ngIf="recentlyUsed.length > 1" class="dropdown-header">Recently viewed</label>
+      <ng-container *ngFor="let es of recentlyUsed; let i = index">
+        <a *ngIf="i !== 0" type="button" clrDropdownItem routerLink="../{{es.id}}">{{es.name}}</a>
+      </ng-container>
+      <div *ngIf="recentlyUsed.length > 1" class="dropdown-divider"></div>
+      <label class="dropdown-header">Search for event source</label>
+      <!-- TODO: move focus to search field when menu opens -->
+      <input #searchBox (input)="searchEventSource(searchBox.value)" class="clr-input" placeholder="Search..." name="eventSourceSearch" />
+      <ng-container *ngFor="let info of sources$ | async ; let i = index">
+        <a *ngIf="i < 5" routerLink="../{{info.id}}" type="button" clrDropdownItem>{{info.name}}</a>
+        <em *ngIf="i === 5" class="drop-down-info">More event source match...</em>
+      </ng-container>
+      <em class="drop-down-info nothing-found">No event sources found</em>
+      <div *appHasRole="'server.dashboard.owner'" class="dropdown-divider"></div>
+      <label *appHasRole="'server.dashboard.owner'" class="dropdown-header">Create event source</label>
+      <a *appHasRole="'server.dashboard.owner'" type="button" clrDropdownItem routerLink="../create">Create new...</a>
+      <button *appHasRole="'server.dashboard.owner'" type="button" clrDropdownItem (click)="copyEventSource()">Copy this event source</button>
+    </clr-dropdown-menu>
+  </clr-dropdown>
+</ng-template>
+
+<!-- TODO: enable if deleting -->
+<div *ngIf="false" class="modal-backdrop" aria-hidden="true">
+  <span class="spinner">Loading...</span>
+</div>
+
+<!-- Content to be displayed for an event source -->
+<div *ngIf="eventSourceDescriptor !== null" class="eventsource-config-main">
+  <div class="system-info info">
+    <div class="card">
+      <div class="card-header">Control</div>
+      <div class="card-block">
+        <ng-container *ngTemplateOutlet="esControl"></ng-container>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Base Info</div>
+      <div class="card-block">
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esBaseInfo"></ng-container>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="es-info info">
+    <div class="card">
+      <div class="card-header">Event Source Properties</div>
+      <div class="card-block">
+        Properties are used to configure the event source. All properties apply to every instance of this event source and thus change every widget created from this event source.
+      </div>
+      <div class="card-block">
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esProperties"></ng-container>
+        </form>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Widget Properties</div>
+      <div class="card-block">
+        Data Items are configuration properties that can be adjusted for each widget.
+      </div>
+      <div class="card-block">
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esDataItems"></ng-container>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<ng-template #esProperties>
+  <app-simple-editor name="esName" [id]="'name'" [title]="'Event Source Name'" [(ngModel)]="parsedInstanceDetails.name"></app-simple-editor>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
+</ng-template>
+
+<ng-template #esDataItems>
+  <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.dataItems" name="{{property.name}}"
+    [property]="property" [(ngModel)]="parsedInstanceDetails.dataItems[property.name]"
+    [canBeDisabled]="true" (propertyDeletion)="deleteDataItem(property.name)" ></app-config-eventsource-editor>
+</ng-template>
+
+<ng-template #esBaseInfo>
+  <app-simple-editor name="esType" [id]="'type'" [title]="'Type'" [ngModel]="eventSourceDescriptor.displayName" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esId" [id]="'id'"   [title]="'Unique ID'" [description]="'The unique ID that identifies this event source.'" [ngModel]="parsedInstanceDetails.id" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esView" [id]="'view'" [title]="'View'" [description]="'This is the widget template that will be used to display your data.'" [(ngModel)]="eventSourceDescriptor.view" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esEnabled" [id]="'enabled'" [title]="'Enabled'" [ngModel]="parsedInstanceDetails.enabled ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="instanceState.running ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="instanceState.createdBy" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="instanceState.lastChangedBy" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="instanceState.lastSuccess" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="instanceState.lastRun" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastReason" name="esLastReason" [id]="'last_reason'" [title]="'Last failure reason'" [ngModel]="instanceState.lastReason" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastException" name="esLastException" [id]="'last_exception'" [title]="'Last exception'" [ngModel]="instanceState.lastException" [readOnly]="true" [inputType]="'textarea'"></app-simple-editor>
+</ng-template>
+
+<ng-template #esControl>
+  <button class="btn btn-primary btn-icon" (click)="saveConfiguration()" title="Save event source configuration" [clrLoading]="saveEventSourceState">
+    <clr-icon shape="floppy" class="is-solid"></clr-icon>
+  </button>
+  <div *ngIf="eventSourceDescriptor.serviceClassName !== null" class="btn-group btn-default btn-icon">
+    <button class="btn" (click)="parsedInstanceDetails.enabled ? disableEventSource() : enableEventSource()" title="Disable event source"
+      [clrLoading]="enableEventSourceState">
+      <clr-icon shape="power"></clr-icon>
+    </button>
+    <button *ngIf="parsedInstanceDetails.enabled"
+      class="btn" (click)="instanceState.running ? stopEventSource() : startEventSource()" [title]="(instanceState.running ? 'Stop' : 'Start') + ' event source'"
+      [clrLoading]="startStopEventSourceState">
+      <clr-icon *ngIf="!instanceState.running" shape="play" class="is-solid"></clr-icon>
+      <clr-icon *ngIf="instanceState.running" shape="stop" class="is-solid"></clr-icon>
+    </button>
+  </div>
+  <clr-dropdown *ngIf="usage.length > 0">
+    <button type="button" class="btn btn-outline-default" title="Where this event source is used" clrDropdownTrigger>
+      Used in
+      <clr-icon shape="caret down"></clr-icon>
+    </button>
+    <clr-dropdown-menu *clrIfOpen>
+      <ng-container *ngFor="let dashboard of usage">
+        <a [routerLink]="'/dashboards/' + dashboard.id" type="button" clrDropdownItem>{{dashboard.title}}</a>
+      </ng-container>
+    </clr-dropdown-menu>
+  </clr-dropdown>
+  <!-- TODO: reenable and implement -->
+  <clr-dropdown *ngIf="false && addable.length > 0">
+    <button type="button" class="btn btn-outline-default" title="Add event source to dashboard" clrDropdownTrigger>
+      Add to
+      <clr-icon shape="caret down"></clr-icon>
+    </button>
+    <clr-dropdown-menu *clrIfOpen>
+      <ng-container *ngFor="let dashboard of addable">
+        <button *appHasRole="'dashboard.' + dashboard.id + '.editor'" type="button" clrDropdownItem>{{dashboard.title}}</button>
+      </ng-container>
+    </clr-dropdown-menu>
+  </clr-dropdown>
+  <button class="btn btn-danger btn-icon" (click)="deleteEventSource()" title="Delete this event source" [clrLoading]="deleteEventSourceState">
+    <clr-icon shape="trash"></clr-icon>
+  </button>
+</ng-template>
+

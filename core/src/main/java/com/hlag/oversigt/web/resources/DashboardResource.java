@@ -1,10 +1,14 @@
 package com.hlag.oversigt.web.resources;
 
-import static com.hlag.oversigt.web.api.ErrorResponse.*;
+import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
+import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
+import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Response.*;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +24,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,6 +58,9 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 
 @Api(tags = { "Dashboard" })
 @Path("/dashboards")
@@ -74,7 +82,7 @@ public class DashboardResource {
 		return ok(dashboardController.getDashboardIds()
 				.stream()
 				.map(dashboardController::getDashboard)
-				.map(d -> new DashboardInfo(d.getId(), d.getTitle()))
+				.map(DashboardInfo::fromDashboard)
 				.collect(toList())).build();
 	}
 
@@ -116,16 +124,79 @@ public class DashboardResource {
 	@NoChangeLog
 	@PermitAll
 	public Response readDashboard(@Context SecurityContext secu, @PathParam("dashboardId") String id) {
-		Optional<Map<String, Object>> dashboard = Optional.ofNullable(dashboardController.getDashboard(id))
+		final Optional<Map<String, Object>> dashboard = Optional.ofNullable(dashboardController.getDashboard(id))
 				.map(TypeUtils::toMemberMap);
-		if (dashboard.isPresent() && secu.getUserPrincipal() == null) {
-			dashboard.get().remove("owner");
-			dashboard.get().remove("editors");
-		}
-		if (dashboard.isPresent()) {
-			return ok(dashboard.get()).build();
-		} else {
+		if (!dashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
+		}
+
+		final Map<String, Object> dashboardMap = dashboard
+				.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
+		if (secu.getUserPrincipal() == null) {
+			dashboardMap.remove("owner");
+			dashboardMap.remove("editors");
+		}
+		return ok(dashboardMap).build();
+	}
+
+	@PATCH
+	@Path("/{dashboardId}")
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class), //
+			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
+			@ApiResponse(code = 403, message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to", response = ErrorResponse.class), //
+			@ApiResponse(code = 404, message = "The dashboard does not exist") //
+	})
+	@ApiOperation(value = "Partially update dashboard details", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@JwtSecured
+	@RolesAllowed("dashboard.{dashboardId}.editor")
+	public Response updateDashboardPartially(@Context SecurityContext securityContext,
+			@PathParam("dashboardId") @NotNull String id,
+			Map<String, Object> newDashboardData) throws ApiValidationException {
+		// load current dashboard from storage
+		final Dashboard dashboard = dashboardController.getDashboard(id);
+		if (dashboard == null) {
+			return notFound("A dashboard with id '" + id + "' does not exist.");
+		}
+
+		// clone it to work on it
+		final Dashboard newDashboard = dashboard.clone();
+
+		// check dashboard id
+		if (newDashboardData.containsKey("id")
+				&& (!id.equals(newDashboardData.get("id")) || !id.equals(newDashboard.getId()))) {
+			return badRequest("The dashboard ID does not match");
+		}
+
+		// check if the change is allowed
+		final List<String> allowedChangeElements = Arrays.asList("id", "enabled");
+		if (newDashboardData.keySet().stream().anyMatch(key -> !allowedChangeElements.contains(key))) {
+			return badRequest("Currently the only allowed attribute for change is: 'enabled'");
+		}
+
+		// Check if the user changed the enabled state of the dashboard. Only server admins may perform that action
+		if (newDashboardData.containsKey("enabled")
+				&& Boolean.parseBoolean(newDashboardData.get("enabled").toString()) != newDashboard.isEnabled()
+				&& !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {
+			return forbidden(
+					"Only server admins are allowed to change a dashboard's enabled state. Please contact a server admin.");
+		}
+
+		//		// if the owner has changed the user needs to be at least dashboard owner
+		//		if (!newDashboardData.getOwners().equals(dashboard.getOwners())
+		//				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName())) {
+		//			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
+		//		}
+
+		// update dashboard data
+		if (newDashboardData.containsKey("enabled")) {
+			newDashboard.setEnabled(Boolean.parseBoolean(newDashboardData.get("enabled").toString()));
+		}
+		if (dashboardController.updateDashboard(newDashboard)) {
+			return ok(dashboardController.getDashboard(id)).build();
+		} else {
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -169,6 +240,12 @@ public class DashboardResource {
 				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName())) {
 			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
 		}
+
+		// check usernames
+		newDashboardData.setOwners(
+				newDashboardData.getOwners().stream().filter(authenticator::isUsernameValid).collect(toList()));
+		newDashboardData.setEditors(
+				newDashboardData.getEditors().stream().filter(authenticator::isUsernameValid).collect(toList()));
 
 		// update dashboard data
 		if (dashboardController.updateDashboard(newDashboardData)) {
@@ -244,7 +321,14 @@ public class DashboardResource {
 		}
 	}
 
+	@Getter
+	@ToString
+	@Builder
 	public static class DashboardInfo {
+		public static DashboardInfo fromDashboard(Dashboard dashboard) {
+			return builder().id(dashboard.getId()).title(dashboard.getTitle()).build();
+		}
+
 		@NotNull
 		@NotEmpty
 		@NotBlank
@@ -253,20 +337,6 @@ public class DashboardResource {
 		@NotEmpty
 		@NotBlank
 		private String title;
-
-		public DashboardInfo(@NotNull @NotEmpty @NotBlank String id, String title) {
-			this.id = id;
-			this.title = title;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getTitle() {
-			return title;
-		}
-
 	}
 
 	public static class WidgetPosition {

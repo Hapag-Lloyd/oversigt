@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,6 +38,7 @@ import com.hlag.oversigt.properties.HttpProxy;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
+import com.hlag.oversigt.util.ThrowingBiFunction;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
 
@@ -191,18 +195,102 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return connection;
 	}
 
-	protected Tuple<byte[], String> downloadBytes(URLConnection connection) throws IOException {
-		try (InputStream in = connection.getInputStream()) {
-			return new Tuple<>(ByteStreams.toByteArray(in), connection.getContentType());
+	protected Tuple<byte[], String> downloadBytes(URLConnection connectionToRead) throws IOException {
+		return read(connectionToRead, //
+				(connection, inputStream) -> //
+				new Tuple<>(ByteStreams.toByteArray(inputStream), connection.getContentType()));
+	}
+
+	protected String downloadString(URLConnection connectionToRead) throws IOException {
+		return read(connectionToRead, //
+				(connection, inputStream) -> //
+				IOUtils.toString(inputStream, Objects.toString(connection.getContentEncoding(), "UTF-8")));
+	}
+
+	private <R> R read(final URLConnection inputConnection,
+			final ThrowingBiFunction<URLConnection, InputStream, R> inputStreamConsumer) throws IOException {
+		final URLConnection connectionToRead = handleRedirects(inputConnection);
+		try (InputStream in = connectionToRead.getInputStream()) {
+			return inputStreamConsumer.apply(connectionToRead, in);
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException("Error while reading data from connection.", e);
 		}
 	}
 
-	protected String downloadString(URLConnection connection) throws IOException {
-		try (InputStream in = connection.getInputStream()) {
-			String encoding = connection.getContentEncoding();
-			encoding = encoding == null ? "UTF-8" : encoding;
-			return IOUtils.toString(in, encoding);
+	private URLConnection handleRedirects(URLConnection connection) throws IOException {
+		if (connection instanceof HttpURLConnection) {
+			return handleRedirects((HttpURLConnection) connection);
+		} else {
+			return connection;
 		}
+	}
+
+	private URLConnection handleRedirects(final HttpURLConnection connection) throws IOException {
+		int status = connection.getResponseCode();
+		if (status == HttpURLConnection.HTTP_OK) {
+			return connection;
+		}
+
+		if (status == HttpURLConnection.HTTP_MOVED_PERM //
+				|| status == HttpURLConnection.HTTP_MOVED_TEMP //
+				|| status == HttpURLConnection.HTTP_SEE_OTHER//
+				|| status == 307 // temporary redirect
+				|| status == 308 // permanent redirect // TODO safe new URL
+		) {
+			// create new connection new new URL
+			final URI uri;
+			try {
+				uri = new URI(connection.getHeaderField("Location"));
+			} catch (URISyntaxException e) {
+				throw new IOException("Invalid redirect", e);
+			}
+			final URL url;
+			if (uri.isAbsolute()) {
+				url = uri.toURL();
+			} else {
+				url = new URL(connection.getURL(), connection.getHeaderField("Location"));
+			}
+
+			// set correct HTTP method
+			final String method;
+			URLConnection newConnection = url.openConnection();
+			if (newConnection instanceof HttpURLConnection) {
+				HttpURLConnection httpConnection = (HttpURLConnection) newConnection;
+				if (status == HttpURLConnection.HTTP_SEE_OTHER) {
+					httpConnection.setRequestMethod("GET");
+				} else {
+					httpConnection.setRequestMethod(connection.getRequestMethod());
+				}
+				method = httpConnection.getRequestMethod();
+			} else {
+				method = null;
+			}
+
+			// copy settings from old connection
+			newConnection.setAllowUserInteraction(connection.getAllowUserInteraction());
+			newConnection.setConnectTimeout(connection.getConnectTimeout());
+			newConnection.setDefaultUseCaches(connection.getDefaultUseCaches());
+			newConnection.setDoInput(connection.getDoInput());
+			newConnection.setDoOutput(connection.getDoOutput());
+			newConnection.setIfModifiedSince(connection.getIfModifiedSince());
+			newConnection.setReadTimeout(connection.getReadTimeout());
+			newConnection.setUseCaches(connection.getUseCaches());
+			connection.getRequestProperties()
+					.entrySet()
+					.stream()
+					.filter(e -> !Arrays.asList("Host", "Connection").contains(e.getKey()))
+					.filter(e -> method == null || !e.getKey().startsWith(method + " "))
+					.forEach(e -> e //
+							.getValue()
+							.forEach(v -> newConnection.addRequestProperty(e.getKey(), v)));
+
+			// done
+			return handleRedirects(newConnection);
+		}
+
+		throw new IOException("Return code " + status + " from URL: " + connection.getURL());
 	}
 
 	@Property(name = "Internet Addresses", description = "The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.", json = true)

@@ -1,0 +1,13 @@
+
+.content + .no-content {
+  display: none;
+}
+
+a.event {
+  cursor: pointer;
+}
+
+pre.event {
+  width: 100%;
+  max-width: 100%;
+}

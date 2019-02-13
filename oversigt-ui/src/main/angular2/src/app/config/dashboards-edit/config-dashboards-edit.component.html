@@ -1,0 +1,105 @@
+<ng-container *ngIf="dashboard !== null">
+  <app-header [title]="dashboardTitle" [enabled]="dashboard.enabled" [additional]="addWidget"></app-header>
+
+  <ng-template #addWidget>
+    <ng-container *appHasRole="'dashboard.' + dashboard.id + '.editor'">
+      <a *ngIf="!isAddingWidget()" routerLink="add" class="btn btn-outline-primary">Add widget</a>
+      <a *ngIf="isAddingWidget()" routerLink="." class="btn btn-outline-primary">Cancel</a>
+    </ng-container>
+  </ng-template>
+
+  <div class="clr-row">
+    <div class="clr-col-12 clr-col-sm-12 clr-col-md-8 clr-col-lg-6 clr-col-xl-5 info">
+      <div class="card">
+        <div class="card-header">
+            Dashboard Settings
+        </div>
+        <ng-container *ngTemplateOutlet="dbSettings"></ng-container>
+      </div>
+      <div *appHasRole="'dashboard.' + dashboard.id + '.owner'" class="card">
+        <div class="card-header">
+            Dashboard Rights
+        </div>
+        <ng-container *ngTemplateOutlet="dbOwners"></ng-container>
+      </div>
+    </div>
+    <div class="clr-col-12 clr-col-sm-12 clr-col-md-12 clr-col-lg-9 clr-col-xl-7 info">
+      <div *ngIf="!isAddingWidget()" class="card">
+        <div class="card-header">
+            Widgets
+        </div>
+        <div class="card-block">
+          <ng-container *ngTemplateOutlet="dbWidgets"></ng-container>
+        </div>
+      </div>
+      <router-outlet #outlet="outlet" (activate)="activateChild($event)"></router-outlet>
+    </div>
+  </div>
+</ng-container>
+
+
+<ng-template #dbSettings>
+  <form class="clr-form clr-form-horizontal">
+    <div class="card-block">
+      <app-simple-editor name="dashboard_title" [id]="'dashboard_title'" [title]="'Title'" [(ngModel)]="dashboard.title" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_screen" [id]="'dashboard_screen'" [title]="'Screen Size'" [(ngModel)]="screensize" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_columns" [id]="'dashboard_columns'" [title]="'Columns'" [(ngModel)]="dashboard.columns" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor name="dashboard_background" [id]="'dashboard_background'" [title]="'Background'" [(ngModel)]="dashboard.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
+      <div class="clr-form-control">
+        <label for="dashboard_color_scheme" class="clr-control-label">Color Scheme</label>
+        <div class="clr-select-wrapper">
+          <select [(ngModel)]="dashboard.colorScheme" id="dashboard_color_scheme" name="dashboard_color_scheme" class="clr-select">
+            <option value="COLORED">None</option>
+            <option value="SINGLE_COLOR">Single Color</option>
+            <option value="TILED_VERTICAL_GRADIENT">Tiled vertical gradient</option>
+            <option value="TILED_HORIZONTAL_GRADIENT">Tiled horizontal gradient</option>
+            <option value="VERTICAL_GRADIENT">Vertical gradient</option>
+            <option value="HORIZONTAL_GRADIENT">Horizontal gradient</option>
+          </select>
+        </div>
+      </div>
+      <app-simple-editor *ngIf="dashboard.colorScheme === 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Color'" [(ngModel)]="foregroundColors[0]" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
+      <app-simple-editor *ngIf="dashboard.colorScheme !== 'COLORED' && dashboard.colorScheme !== 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Colors'" [(ngModel)]="foregroundColors" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
+    </div>
+    <div *appHasRole="'dashboard.' + dashboard.id + '.editor'" class="card-footer">
+      <button [clrLoading]="saveDashboardState" (click)="saveDashboardSettings()" class="btn btn-primary">Save</button>
+      <ng-container *appHasRole="'server.admin'">
+        <button *ngIf="!dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(true)" class="btn btn-success">Enable</button>
+        <button *ngIf="dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(false)" class="btn btn-warning">Disable</button>
+      </ng-container>
+      <button [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete</button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #dbOwners>
+  <form class="clr-form clr-form-horizontal">
+    <div class="card-block">
+      <app-simple-editor name="dashboard_owners" [id]="'dashboard_owners'" [title]="'Owners'" [(ngModel)]="ownersText" [description]="'Comma separated list of user ids that shall be owner of this dashboard.'"></app-simple-editor>
+      <app-simple-editor name="dashboard_editors" [id]="'dashboard_editors'" [title]="'Editors'" [(ngModel)]="editorsText" [description]="'Comma separated list of user ids that shall be able to edit this dashboard.'"></app-simple-editor>
+    </div>
+    <div class="card-footer">
+      <button (click)="updateOwnersAndEditors()" [clrLoading]="updateRightsState" class="btn btn-primary">Update</button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #dbWidgets>
+  <div class="mini-map">
+    <!-- TODO: if navigating away: ask to save -->
+    <div class="mini-dashboard" [style.width.em]="countColumns()" [style.height.em]="countRows()">
+      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
+          class="mini-widget" title="{{info.name}}" [class.disabled]="!info.enabled"
+          [style.top.em]="info.posY - 1" [style.left.em]="info.posX - 1" [style.width.em]="info.sizeX" [style.height.em]="info.sizeY">
+        <span class="badge">{{i + 1}}</span>
+      </a>
+    </div>
+    <div class="mini-info">
+      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
+          class="widget-link" [class.disabled]="!info.enabled">
+        <span class="badge">{{i + 1}}</span>
+        <span style="margin-left: 1ex">{{info.name}}</span>
+      </a>
+    </div>
+  </div>
+</ng-template>

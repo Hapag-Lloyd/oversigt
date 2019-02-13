@@ -104,8 +104,9 @@ class OversigtModule extends AbstractModule {
 		binder().requireExplicitBindings();
 
 		// some interesting values
-		binder().bind(String.class).annotatedWith(Names.named("application-id")).toInstance(
-				UUID.randomUUID().toString());
+		binder().bind(String.class)
+				.annotatedWith(Names.named("application-id"))
+				.toInstance(UUID.randomUUID().toString());
 
 		// Jira
 		binder().requestStaticInjection(AsynchronousHttpClientFactory.class);
@@ -143,6 +144,7 @@ class OversigtModule extends AbstractModule {
 
 		// GSON
 		Gson gson = new GsonBuilder()//
+				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
 				.registerTypeAdapter(Color.class, deserializer(Color::parse))
@@ -188,6 +190,7 @@ class OversigtModule extends AbstractModule {
 
 		// binds properties
 		OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
+		binder().bind(OversigtConfiguration.class).toInstance(configuration);
 		configuration.bindProperties(binder(), options.isDebugFallback(), options.getLdapBindPasswordFallback());
 		if (options != null) {
 			Names.bindProperties(binder(), options.getProperties());
@@ -244,7 +247,7 @@ class OversigtModule extends AbstractModule {
 		return jsonpathConfiguration;
 	}
 
-	private static OversigtConfiguration readConfiguration(String resourceUrlString, Gson gson) {
+	OversigtConfiguration readConfiguration(String resourceUrlString, Gson gson) {
 		try {
 			URL configUrl = Resources.getResource(resourceUrlString);
 			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);

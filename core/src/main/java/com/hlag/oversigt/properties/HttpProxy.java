@@ -5,13 +5,15 @@ import java.net.Proxy.Type;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
+import com.hlag.oversigt.properties.SerializableProperty.Description;
 
+@Description("Details for an HTTP proxy to access other network parts - e.g. the internet.")
 public class HttpProxy extends SerializableProperty {
 	public static final HttpProxy EMPTY = new HttpProxy(0, "", "", 0);
 
-	@Member(icon = "folder-close", size = 4)
+	@Member(icon = "hdd", size = 4)
 	private String hostname;
-	@Member(icon = "asterisk", size = 2)
+	@Member(icon = "ellipsis", size = 2)
 	private int port;
 
 	public HttpProxy(int id, String name, String host, int port) {

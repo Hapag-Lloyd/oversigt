@@ -11,11 +11,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.properties.SerializableProperty.Description;
 import com.hlag.oversigt.storage.Storage;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SneakyException;
@@ -78,6 +81,17 @@ public class SerializablePropertyController {
 
 	public Set<Class<? extends SerializableProperty>> getClasses() {
 		return classToEmpty.keySet();
+	}
+
+	public String getDescription(String name) {
+		return getDescription(getClass(name));
+	}
+
+	private String getDescription(@Nullable final Class<? extends SerializableProperty> clazz) {
+		return Optional.ofNullable(clazz)
+				.map(c -> c.getAnnotation(Description.class))
+				.map(Description::value)
+				.orElse("");
 	}
 
 	@Deprecated

@@ -1,0 +1,47 @@
+<div *ngIf="value !== null; else nullValue" class="schema-string-editor">
+  <label *ngIf="showTitle" class="clr-control-label">{{schemaObject.title}}</label>
+  <div class="clr-control-container" [ngSwitch]="editorType">
+    <div *ngSwitchCase="'input'" class="clr-input-wrapper">
+      <input class="clr-input" type="{{inputType}}" [(ngModel)]="value"/>
+    </div>
+    <div *ngSwitchCase="'number'" class="clr-input-wrapper">
+      <input class="clr-input" type="number" [(ngModel)]="value"/>
+    </div>
+    <div *ngSwitchCase="'select'" class="clr-select-wrapper">
+      <select class="clr-select" [(ngModel)]="value">
+        <option *ngFor="let value of values" value="{{value}}">{{valueToTitle[value]}}</option>
+      </select>
+    </div>
+    <pre *ngSwitchDefault>No editor for format '{{editorType}}'</pre>
+  </div>
+</div>
+
+<!--
+    <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
+      <div class="toggle-switch">
+        <input type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <label for="prop_{{property.name}}"></label>
+      </div>
+    </div>
+  -->
+
+
+
+
+
+
+
+
+
+<ng-template #nullValue>
+  <div class="alert alert-danger" role="alert">
+      <div class="alert-items">
+          <div class="alert-item static">
+              <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+              </div>
+              <span class="alert-text">StringEditor value is null</span>
+          </div>
+      </div>
+  </div>
+</ng-template>

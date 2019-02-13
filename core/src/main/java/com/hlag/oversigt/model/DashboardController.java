@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -235,10 +236,10 @@ public class DashboardController {
 	}
 
 	public void updateWidget(Widget widget) {
-		Dashboard dashboard = getDashboard(widget);
-		if (!dashboard.getWidgets().contains(widget)) {
+		final Dashboard dashboard = getDashboard(widget);
+		final Widget originalWidget = dashboard.getWidget(widget.getId());
+		if (widget != originalWidget) {
 			// adapt properties to original widget
-			Widget originalWidget = dashboard.getWidget(widget.getId());
 			if (originalWidget.getEventSourceInstance() != widget.getEventSourceInstance()) {
 				throw new RuntimeException("The widgets have different EventSourceInstances");
 			}
@@ -279,17 +280,17 @@ public class DashboardController {
 			Collection<Path> addonFolders,
 			Collection<String> widgetsPaths) {
 		// load event sources from classes
-		LOGGER.debug("Scanning classpath for EventSources...");
+		LOGGER.info("Scanning packages for EventSources: {} ",
+				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
 		List<EventSourceDescriptor> descriptorsFromClasses_ = //
 				packagesToScan.stream()//
 						.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
 						.map(this::loadEventSourceFromClass)
 						.collect(toList());
-		LOGGER.info("Loaded {} EventSources from package {}",
-				descriptorsFromClasses_.size(),
-				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
+		LOGGER.info("Loaded {} EventSources", descriptorsFromClasses_.size());
 
-		LOGGER.debug("Scanning addon folders for EventSources...");
+		LOGGER.info("Scanning addon folders for EventSources: {}",
+				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(", ")));
 		URL[] jarFileUrls = addonFolders.stream()
 				.map(DashboardController::findAddonJarFiles)
 				.flatMap(Collection::stream)
@@ -308,18 +309,16 @@ public class DashboardController {
 				.findClasses(addonClassLoader, classNamesToLoad, Service.class, EventSource.class)
 				.map(this::loadEventSourceFromClass)
 				.collect(toList());
-		LOGGER.info("Loaded {} EventSources from addon folders {}",
-				descriptorsFromAddons_.size(),
-				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(", ")));
+		LOGGER.info("Loaded {} EventSources", descriptorsFromAddons_.size());
 
 		final List<EventSourceDescriptor> descriptorsJavaBased = new ArrayList<>();
 		descriptorsJavaBased.addAll(descriptorsFromClasses_);
 		descriptorsJavaBased.addAll(descriptorsFromAddons_);
 
 		// load event sources without class
-		LOGGER.debug("Scanning file system for EventSources...");
+		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
 		List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
-		LOGGER.info("Loaded {} EventSources from Resources", descriptorsFromResources.size());
+		LOGGER.info("Loaded {} EventSources", descriptorsFromResources.size());
 
 		// add properties from views into class' event sources
 		List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem = descriptorsFromResources.stream()
@@ -362,8 +361,18 @@ public class DashboardController {
 		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.put(instance, null));
 	}
 
-	private void removeService(EventSourceInstance instance) {
-		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.remove(instance));
+	private void removeEventSourceInstance(final EventSourceInstance instance) {
+		eventSourceInstances_lock.write(() -> {
+			/* This method is a work around because (why ever)
+			 * <code>eventSourceInstances_internal.remove(instance);</code>
+			 *  didn't work and did not remove the instance from the map. */
+			Map<EventSourceInstance, Service> newMap = eventSourceInstances_internal.entrySet()
+					.stream()
+					.filter(e -> !e.getKey().equals(instance))
+					.collect(LinkedHashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), LinkedHashMap::putAll);
+			eventSourceInstances_internal.clear();
+			eventSourceInstances_internal.putAll(newMap);
+		});
 	}
 
 	public Collection<EventSourceInstance> getEventSourceInstances() {
@@ -375,7 +384,7 @@ public class DashboardController {
 				.stream()
 				.filter(i -> id.equals(i.getId()))
 				.findAny()
-				.get());
+				.get()); // TODO replace by orElseThrow()
 	}
 
 	private EventSourceDescriptor getEventSourceDescriptor(String className, String viewname) {
@@ -716,6 +725,16 @@ public class DashboardController {
 		return deleteEventSourceInstance(eventSourceId, false);
 	}
 
+	public Set<String> getEventSourceInstanceUsage(String eventSourceId) {
+		return dashboards.values()
+				.stream()
+				.filter(d -> d.getWidgets()
+						.stream()
+						.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
+				.map(Dashboard::getId)
+				.collect(toSet());
+	}
+
 	public Set<String> deleteEventSourceInstance(String eventSourceId, boolean force) {
 		EventSourceInstance instance = getEventSourceInstance(eventSourceId);
 
@@ -726,13 +745,7 @@ public class DashboardController {
 				.collect(toList());
 
 		if (!force && !widgetsToDelete.isEmpty()) {
-			return dashboards.values()
-					.stream()
-					.filter(d -> d.getWidgets()
-							.stream()
-							.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
-					.map(Dashboard::getId)
-					.collect(toSet());
+			return getEventSourceInstanceUsage(eventSourceId);
 		} else if (force && !widgetsToDelete.isEmpty()) {
 			widgetsToDelete.forEach(this::deleteWidget);
 		}
@@ -742,7 +755,7 @@ public class DashboardController {
 		}
 
 		storage.deleteEventSourceInstance(eventSourceId);
-		removeService(instance);
+		removeEventSourceInstance(instance);
 
 		return null;
 	}
@@ -806,7 +819,12 @@ public class DashboardController {
 				//method.invoke(eventSource, string);
 				return string;
 			} else if (SerializableProperty.class.isAssignableFrom(type)) {
-				return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
+				try {
+					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
+				} catch (NumberFormatException ignore) {
+					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
+					return spController.getEmpty((Class<SerializableProperty>) type);
+				}
 			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				Object value = json.fromJson(string, type);
 				return value;

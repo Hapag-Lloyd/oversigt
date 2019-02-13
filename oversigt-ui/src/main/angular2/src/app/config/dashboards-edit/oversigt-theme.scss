@@ -1,0 +1,42 @@
+@import "~node_modules/ngx-chips/core/styles/core/_core.scss";
+
+$oversigt-primary: #1779ba;
+$oversigt-primary-dark: darken($oversigt-primary, 10%);
+
+// this is the container's theme
+$oversigt-theme: (
+    container-border-bottom: 1px solid $oversigt-primary
+);
+
+// this is the tag's theme
+$oversigt-tag-theme: (
+    background: $oversigt-primary,
+    background-focused: $oversigt-primary-dark,
+    background-active: $oversigt-primary-dark,
+    background-hover: $oversigt-primary-dark,
+    color: #fff,
+    color-hover: #fff,
+    border-radius: 3px
+);
+
+// this is the delete icon's theme
+$oversigt-icon-theme: (
+    fill: #fff,
+    fill-focus: #eee,
+    transition: all 0.35s
+);
+
+// apply theme to the container
+::ng-deep .ng2-tag-input.oversigt-theme {
+    @include tag-input-theme($oversigt-theme);
+}
+
+// apply theme to the tags
+::ng-deep .ng2-tag-input.oversigt-theme tag {
+    @include tag-theme($oversigt-tag-theme);
+}
+
+// apply theme to the delete icon
+::ng-deep .ng2-tag-input.oversigt-theme tag delete-icon {
+    @include icon-theme($oversigt-icon-theme);
+}

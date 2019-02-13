@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -143,6 +144,9 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
+			if (obj instanceof String) {
+				return obj.equals(this.getId());
+			}
 			return false;
 		}
 		EventSourceInstance other = (EventSourceInstance) obj;
@@ -169,5 +173,28 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 				+ (descriptor.getServiceClass() != null
 						? " (" + descriptor.getServiceClass().getSimpleName() + ")"
 						: "");
+	}
+
+	public static Predicate<EventSourceInstance> createFilter(String filter) {
+		return i -> i.getName().toLowerCase().contains(filter) || i.getId().toLowerCase().contains(filter) //
+				|| Optional.ofNullable(i.getFrequency())//
+						.map(Object::toString)
+						.orElse("")
+						.toLowerCase()
+						.contains(filter)
+				|| i.getDescriptor()//
+						.getProperties()
+						.stream()
+						.filter(i::hasPropertyValue)
+						.anyMatch(p -> i.getPropertyValueString(p)//
+								.toLowerCase()
+								.contains(filter))
+				|| i.getDescriptor()//
+						.getDataItems()
+						.stream()
+						.filter(i::hasPropertyValue)
+						.anyMatch(p -> i.getPropertyValueString(p)//
+								.toLowerCase()
+								.contains(filter));
 	}
 }

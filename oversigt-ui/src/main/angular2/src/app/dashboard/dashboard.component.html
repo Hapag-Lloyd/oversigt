@@ -1,0 +1,41 @@
+
+<div *ngIf="state === 'SHOW_DASHBOARD'" class="dashboard"
+    [style.backgroundColor]="dashboardInfo.backgroundColor"
+    >
+  <p>dashboard {{dashboardInfo.title}} works!</p>
+  <ul class="widgetList">
+    <li *ngFor="let widget of widgets"
+        class="gs-w"
+        id="{{widget.details.eventSourceInstanceId}}"
+        [attr.data-id]="widget.id"
+        [style.left.px]="widget.getX()"
+        [style.top.px]="widget.getY()"
+        [style.width.px]="widget.getWidth()"
+        [style.height.px]="widget.getHeight()"
+        >
+        <div [innerHTML]="widget.getInnerCss()"></div>
+        <div class="widget widget-{{widget.getClass()}} {{widget.details.eventSourceInstanceId}} {{widget.details.type}}"
+            [attr.data-id]="widget.details.eventSourceInstanceId"
+            [attr.data-title]="widget.details.title"
+            [innerHTML]="widget.getInnerHtml()"
+            >
+        </div>
+        <div [innerHTML]="widget.getInnerJs()"></div>
+    </li>
+  </ul>
+
+  <p>width: {{tileBaseWidth}}</p>
+  <p>height: {{tileBaseHeight}}</p>
+</div>
+
+<div *ngIf="state === 'CREATE_DASHBOARD'">
+    The dashboard does not exist. But you can create it.
+</div>
+
+<div *ngIf="state === 'ERROR'">
+    An error occurred while loading the dashboard.
+</div>
+
+<div *ngIf="state === 'NOT_LOADED'">
+    The dashboard is currently being loaded...
+</div>

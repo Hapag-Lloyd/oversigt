@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Binder;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.security.Authenticator;
@@ -41,12 +42,14 @@ import io.undertow.server.session.SessionManager;
  *
  * @author avarabyeu
  */
+@Singleton
 public class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
 
 	private static void bind(Binder binder, String name, Object value) {
-		binder.bindConstant().annotatedWith(Names.named(name)).to(
-				Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
+		binder.bindConstant()
+				.annotatedWith(Names.named(name))
+				.to(Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
 	}
 
 	private boolean debug = false;
@@ -69,8 +72,9 @@ public class OversigtConfiguration {
 		bind(binder, "api.secret.base64", api.jwtSecretBase64);
 		bind(binder, "api.ttl", api.jwtTimeToLive);
 		bind(binder, "rateLimit", eventManager.rateLimit);
-		binder.bind(Duration.class).annotatedWith(Names.named("discardEventsAfter")).toInstance(
-				eventManager.discardEventsAfter);
+		binder.bind(Duration.class)
+				.annotatedWith(Names.named("discardEventsAfter"))
+				.toInstance(eventManager.discardEventsAfter);
 		bind(binder, "templateNumberFormat", templateNumberFormat);
 		bind(binder, "databaseLocation", database.location);
 		bind(binder, "databaseName", database.name);

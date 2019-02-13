@@ -31,9 +31,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.hlag.oversigt.model.Dashboard;
@@ -52,6 +49,11 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Api(tags = { "Dashboard-Widget" })
 @Path("/dashboards/{dashboardId}/widgets")
@@ -65,7 +67,7 @@ public class DashboardWidgetResource {
 	@GET
 	@Path("/")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returning a list of all widgets", response = WidgetInfo.class, responseContainer = "List"),
+			@ApiResponse(code = 200, message = "Returning a list of all widgets", response = WidgetShortInfo.class, responseContainer = "List"),
 			@ApiResponse(code = 404, message = "The dashboard does not exist") })
 	@JwtSecured(mustBeAuthenticated = false)
 	@ApiOperation(value = "List widgets of a dashboard", //
@@ -112,7 +114,7 @@ public class DashboardWidgetResource {
 				.stream()//
 				.filter(filterName)//
 				.filter(filterSecu)//
-				.map(WidgetInfo::new)//
+				.map(WidgetShortInfo::fromWidget)//
 				.toArray())//
 						.build();
 	}
@@ -198,7 +200,7 @@ public class DashboardWidgetResource {
 		if (widget.getId() != details.getId() || details.getId() != widgetId) {
 			return ErrorResponse.badRequest("The ID does not match");
 		}
-		if (widget.getEventSourceInstance().getId().equals(details.getEventSourceInstanceId())) {
+		if (!widget.getEventSourceInstance().getId().equals(details.getEventSourceInstanceId())) {
 			return ErrorResponse.badRequest("The event source instance id does not match");
 		}
 		HashSet<String> unnessaccaryDataItems = new HashSet<>(details.getData().keySet());
@@ -267,7 +269,21 @@ public class DashboardWidgetResource {
 		return ok().build();
 	}
 
-	public static class WidgetInfo {
+	@Builder
+	@Getter
+	public static class WidgetShortInfo {
+		public static WidgetShortInfo fromWidget(Widget widget) {
+			return builder().id(widget.getId())
+					.name(widget.getName())
+					.view(widget.getView())
+					.enabled(widget.isEnabled())
+					.posX(widget.getPosX())
+					.posY(widget.getPosY())
+					.sizeX(widget.getSizeX())
+					.sizeY(widget.getSizeY())
+					.build();
+		}
+
 		@NotNull
 		@Positive
 		private final int id;
@@ -276,50 +292,8 @@ public class DashboardWidgetResource {
 		private final String name;
 		private final String view;
 
-		public WidgetInfo(Widget widget) {
-			this(widget.getId(), widget.getName(), widget.getView());
-		}
-
-		public WidgetInfo(int id, String name, String view) {
-			this.id = id;
-			this.name = name;
-			this.view = view;
-		}
-
-		public int getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getView() {
-			return view;
-		}
-	}
-
-	public static class WidgetDetails {
-		@NotNull
-		@Positive
-		private final int id;
-		@NotBlank
-		@NotNull
-		private final String eventSourceInstanceId;
-		@NotNull
-		private final String type;
-		@NotBlank
-		@NotNull
-		private final String title;
-		@NotBlank
-		@NotNull
-		private final String name;
-		@NotNull
-		@NotBlank
-		private final String view;
-
-		@NotNull
 		private final boolean enabled;
+
 		@NotNull
 		@PositiveOrZero
 		private final int posX;
@@ -334,14 +308,55 @@ public class DashboardWidgetResource {
 		@Min(1)
 		@Positive
 		private final int sizeY;
+	}
+
+	@NoArgsConstructor
+	@Getter
+	@Setter
+	@ToString
+	public static class WidgetDetails {
 		@NotNull
-		private final Color backgroundColor;
+		@Positive
+		private int id;
+		@NotBlank
+		@NotNull
+		private String eventSourceInstanceId;
+		@NotNull
+		private String type;
+		@NotBlank
+		@NotNull
+		private String title;
+		@NotBlank
+		@NotNull
+		private String name;
+		@NotNull
+		@NotBlank
+		private String view;
 
 		@NotNull
-		private final String style;
+		private boolean enabled;
+		@NotNull
+		@PositiveOrZero
+		private int posX;
+		@NotNull
+		@PositiveOrZero
+		private int posY;
+		@NotNull
+		@Min(1)
+		@Positive
+		private int sizeX;
+		@NotNull
+		@Min(1)
+		@Positive
+		private int sizeY;
+		@NotNull
+		private Color backgroundColor;
 
 		@NotNull
-		private final Map<@NotBlank String, @NotBlank String> data;
+		private String style;
+
+		@NotNull
+		private Map<@NotBlank String, @NotBlank String> data;
 
 		WidgetDetails(Widget widget, boolean showAllDatas) {
 			this(
@@ -393,67 +408,6 @@ public class DashboardWidgetResource {
 			this.backgroundColor = backgroundColor;
 			this.style = style;
 			this.data = new LinkedHashMap<>(data);
-		}
-
-		public int getId() {
-			return id;
-		}
-
-		public String getEventSourceInstanceId() {
-			return eventSourceInstanceId;
-		}
-
-		public String getType() {
-			return type;
-		}
-
-		public String getTitle() {
-			return title;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getView() {
-			return view;
-		}
-
-		public boolean isEnabled() {
-			return enabled;
-		}
-
-		public int getPosX() {
-			return posX;
-		}
-
-		public int getPosY() {
-			return posY;
-		}
-
-		public int getSizeX() {
-			return sizeX;
-		}
-
-		public int getSizeY() {
-			return sizeY;
-		}
-
-		public Color getBackgroundColor() {
-			return backgroundColor;
-		}
-
-		public String getStyle() {
-			return style;
-		}
-
-		public Map<String, String> getData() {
-			return data;
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 }

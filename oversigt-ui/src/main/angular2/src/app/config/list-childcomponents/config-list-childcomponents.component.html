@@ -1,0 +1,24 @@
+
+<router-outlet #outlet="outlet"></router-outlet>
+
+<article [hidden]="outlet.isActivated">
+  <ng-container *ngFor="let item of getSubMenuItems()">
+    <section *appHasRole="item.neededRole">
+      <a class="card clickable" [routerLink]="item.link">
+        <div class="card-header">
+            {{item.title}}
+        </div>
+        <div class="card-block">
+          <div class="card-text">
+            <ng-container *ngIf="item.description">
+              {{item.description}}
+            </ng-container>
+            <ng-container *ngIf="!item.description">
+              Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+            </ng-container>
+          </div>
+        </div>
+      </a>
+    </section>
+  </ng-container>
+</article>

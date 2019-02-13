@@ -1,0 +1,12 @@
+<div id="fullscreen_bg" class="fullscreen_bg">
+  <div class="container">
+    <form class="form-signin" method="post">
+      <h1 class="form-signin-heading text-muted">Oversigt Log In</h1>
+      <input [(ngModel)]="username" type="text" name="username" class="form-control" placeholder="Username" required="required"
+        autofocus="autofocus">
+      <input [(ngModel)]="password" type="password" name="password" class="form-control" placeholder="Password"
+        required="required">
+      <button class="btn btn-lg btn-primary btn-block" (click)="doLogin()" [disabled]="!loginButtonEnabled">Log In</button>
+    </form>
+  </div>
+</div>

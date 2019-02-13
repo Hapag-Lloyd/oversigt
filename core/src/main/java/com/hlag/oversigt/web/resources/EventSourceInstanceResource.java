@@ -7,19 +7,18 @@ import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -35,11 +34,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
@@ -53,6 +49,8 @@ import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
+import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -90,40 +88,32 @@ public class EventSourceInstanceResource {
 	@ApiOperation(value = "List existing event source instances")
 	@NoChangeLog
 	public Response listInstances(
-			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") String containing) {
-		Predicate<EventSourceInstance> filter = i -> true;
+			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") @Nullable String containing,
+			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") @Nullable Integer limit,
+			@QueryParam("onlyStartable") @ApiParam(required = false, value = "Only return instances that can be started") @Nullable Boolean onlyStartable) {
+
+		Predicate<EventSourceInstance> containingFilter = i -> true;
+		Predicate<EventSourceInstance> startableFilter = i -> true;
 
 		if (!Strings.isNullOrEmpty(containing)) {
-			String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
-			filter = i -> i.getName().toLowerCase().contains(searchedContent)
-					|| i.getId().toLowerCase().contains(searchedContent) //
-					|| Optional.ofNullable(i.getFrequency())//
-							.map(Object::toString)
-							.orElse("")
-							.toLowerCase()
-							.contains(searchedContent)
-					|| i.getDescriptor()//
-							.getProperties()
-							.stream()
-							.filter(i::hasPropertyValue)
-							.anyMatch(p -> i.getPropertyValueString(p)//
-									.toLowerCase()
-									.contains(searchedContent))
-					|| i.getDescriptor()//
-							.getDataItems()
-							.stream()
-							.filter(i::hasPropertyValue)
-							.anyMatch(p -> i.getPropertyValueString(p)//
-									.toLowerCase()
-									.contains(searchedContent));
+			final String searchedContent = Strings.nullToEmpty(containing).toLowerCase();
+			containingFilter = EventSourceInstance.createFilter(searchedContent);
 		}
 
-		return ok(controller//
+		if (onlyStartable != null && onlyStartable) {
+			startableFilter = i -> i.getDescriptor().getEventClass() != null;
+		}
+
+		Stream<EventSourceInstanceInfo> stream = controller//
 				.getEventSourceInstances()
 				.stream()
-				.filter(filter)
-				.map(instance -> new EventSourceInstanceInfo(instance, controller))
-				.collect(Collectors.toList())).build();
+				.filter(containingFilter)
+				.filter(startableFilter)
+				.map(instance -> new EventSourceInstanceInfo(instance, controller));
+		if (limit != null && limit > 0) {
+			stream = stream.limit(limit);
+		}
+		return ok(stream.collect(toList())).build();
 	}
 
 	@POST
@@ -169,11 +159,29 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response readInstance(@PathParam("id") @NotBlank String instanceId) {
 		try {
-			EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
-			FullEventSourceInstanceInfo result = new FullEventSourceInstanceInfo(
-					new EventSourceInstanceDetails(instance),
-					new ServiceInfo(instance, controller));
-			return ok(result).build();
+			return ok(getInstanceInfo(instanceId)).build();
+		} catch (NoSuchElementException e) {
+			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
+		}
+	}
+
+	@GET
+	@Path("/{id}/usage")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = DashboardInfo.class, responseContainer = "List")
+			//, @ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class)
+	})
+	@JwtSecured
+	@ApiOperation(value = "Read event source instance usage")
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public Response readInstanceUsage(@PathParam("id") @NotBlank String instanceId) {
+		try {
+			return ok(controller.getEventSourceInstanceUsage(instanceId)
+					.stream()
+					.map(controller::getDashboard)
+					.map(DashboardInfo::fromDashboard)
+					.collect(toList())).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
@@ -182,7 +190,7 @@ public class EventSourceInstanceResource {
 	@PUT
 	@Path("/{id}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The event source instance has been updated"),
+			@ApiResponse(code = 200, message = "The event source instance has been updated", response = FullEventSourceInstanceInfo.class),
 			@ApiResponse(code = 400, message = "The data is invalid", response = ErrorResponse.class),
 			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
 	@JwtSecured
@@ -243,7 +251,7 @@ public class EventSourceInstanceResource {
 		}
 
 		controller.updateEventSourceInstance(newInstance);
-		return ok(new EventSourceInstanceDetails(newInstance)).build();
+		return ok(getInstanceInfo(instanceId)).build();
 	}
 
 	@DELETE
@@ -267,6 +275,12 @@ public class EventSourceInstanceResource {
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
+	}
+
+	private FullEventSourceInstanceInfo getInstanceInfo(String instanceId) {
+		EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
+		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
+				EventSourceInstanceState.fromInstance(controller, instance));
 	}
 
 	static Map<String, String> getValueMap(Stream<EventSourceProperty> propertyStream,
@@ -305,30 +319,24 @@ public class EventSourceInstanceResource {
 		private String id;
 		@NotBlank
 		private String name;
+		private boolean isService;
+		private boolean enabled;
 		private boolean running;
+		private boolean hasError;
 		@NotNull
-		private List<@NotNull DashboardShortInfo> usedBy;
+		private List<@NotNull DashboardInfo> usedBy;
 
 		public EventSourceInstanceInfo(EventSourceInstance instance, DashboardController controller) {
 			this.id = instance.getId();
 			this.name = instance.getName();
+			this.isService = instance.getDescriptor().getServiceClass() != null;
+			this.enabled = instance.isEnabled();
 			this.running = controller.isRunning(instance);
+			this.hasError = controller.hasException(instance);
 			this.usedBy = new ArrayList<>(controller//
 					.getDashboardsWhereEventSourceIsUsed(instance)
-					.map(DashboardShortInfo::new)
+					.map(DashboardInfo::fromDashboard)
 					.collect(toList()));
-		}
-	}
-
-	@Getter
-	public static class DashboardShortInfo {
-		@NotBlank
-		private final String id;
-		private final String title;
-
-		public DashboardShortInfo(Dashboard dashboard) {
-			this.id = dashboard.getId();
-			this.title = dashboard.getTitle();
 		}
 	}
 
@@ -365,43 +373,10 @@ public class EventSourceInstanceResource {
 	}
 
 	@Getter
-	@ToString
-	@NoArgsConstructor
-	public static class ServiceInfo {
-		@JsonProperty(access = Access.READ_ONLY)
-		private String createdBy;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastChangeBy;
-		@JsonProperty(access = Access.READ_ONLY)
-		private boolean running;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastFailureDateTime;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastFailureDescription;
-		@JsonProperty(access = Access.READ_ONLY)
-		private String lastFailureException;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastRun;
-		@JsonProperty(access = Access.READ_ONLY)
-		private ZonedDateTime lastSuccessfulRun;
-
-		public ServiceInfo(EventSourceInstance instance, DashboardController controller) {
-			this.createdBy = instance.getCreatedBy();
-			this.lastChangeBy = instance.getLastChangeBy();
-			this.running = controller.isRunning(instance);
-			lastFailureDateTime = controller.getLastFailureDateTime(instance);
-			lastFailureDescription = controller.getLastFailureDescription(instance);
-			lastFailureException = controller.getLastFailureException(instance);
-			lastRun = controller.getLastRun(instance);
-			lastSuccessfulRun = controller.getLastSuccessfulRun(instance);
-		}
-	}
-
-	@Getter
 	@AllArgsConstructor
 	@ToString
 	public static class FullEventSourceInstanceInfo {
 		private EventSourceInstanceDetails instanceDetails;
-		private ServiceInfo serviceInfo;
+		private EventSourceInstanceState instanceState;
 	}
 }

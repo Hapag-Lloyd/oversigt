@@ -122,6 +122,10 @@ public class Utils {
 		return x -> !predicate.test(x);
 	}
 
+	public static <T> Predicate<T> notNull() {
+		return x -> x != null;
+	}
+
 	public static boolean is(Object object) {
 		if (object instanceof Boolean) {
 			return ((Boolean) object).booleanValue();

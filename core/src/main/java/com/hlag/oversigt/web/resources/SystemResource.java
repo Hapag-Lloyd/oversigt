@@ -1,6 +1,7 @@
 package com.hlag.oversigt.web.resources;
 
 import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
@@ -26,19 +28,29 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.OversigtConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -53,15 +65,29 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
+import lombok.Builder;
+import lombok.Getter;
 
 @Api(tags = { "System" })
 @Path("/system")
-@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 public class SystemResource {
 	private final Runnable shutdownRunnable;
 
 	@Inject
 	private EventSender eventSender;
+
+	@Inject
+	private Authenticator authenticator;
+
+	@Inject
+	private DashboardController dashboardController;
+	@Inject
+	private SerializablePropertyController spController;
+
+	@Inject
+	private OversigtConfiguration configuration;
+	@Inject
+	private JsonUtils json;
 
 	@Inject
 	public SystemResource(@Named("Shutdown") Runnable shutdown) {
@@ -76,6 +102,7 @@ public class SystemResource {
 	@ApiOperation(value = "Shut down the server", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) }, //
 			notes = "Shuts down the dashboard server. Once the request has been accepted the shut down will be initiated after two seconds.")
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response shutdown() {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
@@ -88,6 +115,24 @@ public class SystemResource {
 	}
 
 	@GET
+	@Path("/configuration")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Server configuration.", response = OversigtConfiguration.class) })
+	@JwtSecured
+	@ApiOperation(value = "Read the current server configuration", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
+	)
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response readConfiguration() throws IOException {
+		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
+			final String key = s.toLowerCase();
+			return !(key.contains("password") || key.contains("secret"));
+		});
+
+		return ok(configJson).type(MediaType.APPLICATION_JSON).build();
+	}
+
+	@GET
 	@Path("/logfiles")
 	@ApiResponses({
 			@ApiResponse(code = 200, message = "A list of available log files will be transferred.", response = String.class, responseContainer = "list") })
@@ -96,6 +141,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public List<String> listLogFiles() throws IOException {
 		return FileUtils.closedPathStream(Files.list(Paths.get("log")))//
 				.map(java.nio.file.Path::getFileName)
@@ -112,6 +158,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response getLogFileContent(@PathParam("filename") @NotBlank String filename,
 			@QueryParam("lines") @ApiParam(required = false, defaultValue = "0", value = "Number of lines to read from the log file. Negative value to read from the end of the file.") Integer lineCount)
 			throws IOException {
@@ -149,18 +196,22 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<LoggerInfo> getLoggers(
 			@QueryParam("configuredLevelsOnly") @ApiParam(required = false, defaultValue = "false", value = "Whether to filter the logger infos") boolean onlyConfigured) {
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 		Predicate<LoggerInfo> filter = l -> true;
 		if (onlyConfigured) {
 			filter = l -> l.level != null;
 		}
-		return context.getLoggerList()//
-				.stream()
+		return getLoggerStream()//
 				.map(LoggerInfo::new)
 				.filter(filter)
 				.collect(Collectors.toList());
+	}
+
+	private Stream<Logger> getLoggerStream() {
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		return context.getLoggerList().stream();
 	}
 
 	@PUT
@@ -171,6 +222,7 @@ public class SystemResource {
 	@ApiOperation(value = "Change the log level", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response setLogLevel(@PathParam("logger") @NotBlank String loggerName,
 			@QueryParam("level") @ApiParam(required = true) @NotBlank String levelName) {
 
@@ -202,6 +254,7 @@ public class SystemResource {
 	@ApiOperation(value = "Get a list the server's threads", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<ThreadInfo> getThreads() {
 		return Thread.getAllStackTraces()
 				.keySet()
@@ -220,7 +273,7 @@ public class SystemResource {
 	@ApiOperation(value = "Retrieve the cached events", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
-	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response getCachedEvents(
 			@QueryParam("eventSourceId") @ApiParam(value = "Optional filter to get only one cached event", required = false) String filter) {
@@ -229,13 +282,103 @@ public class SystemResource {
 			return ok(events).build();
 		} else {
 			Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
-			if (event.isPresent()) {
-				return ok(event.map(Arrays::asList).get()).build();
-			} else {
+			if (!event.isPresent()) {
 				return ErrorResponse.notFound("The event source does not exist", filter);
 			}
+
+			List<OversigtEvent> eventList = Arrays
+					.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
+			return ok(eventList).build();
+		}
+	}
+
+	@GET
+	@Path("/users/{userId}/validity")
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "A boolean indicating whether or not the user id is valid", response = boolean.class) })
+	@JwtSecured
+	@ApiOperation(value = "Check a userid's validity", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
+	)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public boolean isUserValid(
+			@PathParam("userId") @ApiParam(value = "The ID of the user to check", required = true) String userId) {
+		return authenticator.isUsernameValid(userId);
+	}
+
+	@GET
+	@Path("/server/info")
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Generic information about the server", response = ServerInfo.class) })
+	@ApiOperation(value = "Get server information")
+	@NoChangeLog
+	public ServerInfo getServerInfo() {
+		return new ServerInfo();
+	}
+
+	@GET
+	@Path("/server/all-objects")
+	@ApiResponses({ @ApiResponse(code = 200, message = "Search all server objects", response = ServerInfo.class) })
+	@ApiOperation(value = "Server wide search for objects")
+	@NoChangeLog
+	public Response searchAllObjects(
+			@QueryParam("query") @ApiParam(value = "Text to search for", required = true) final String rawSearchString) {
+		if (rawSearchString == null || rawSearchString.trim().length() == 0) {
+			return ErrorResponse.badRequest("The search text must not be empty.");
 		}
 
+		// prepare search
+		final String searchString = rawSearchString.toLowerCase();
+		final List<SearchResult> results = new ArrayList<>();
+
+		// TODO implement dynamic search registration
+
+		// search for dashboards
+		results.addAll(dashboardController.getDashboardIds()
+				.stream()
+				.map(dashboardController::getDashboard)
+				.filter(d -> d.getTitle().toLowerCase().contains(searchString)
+						|| d.getId().toLowerCase().contains(searchString))
+				.map(d -> SearchResult.builder().title(d.getTitle()).id(d.getId()).type("dashboard").build())
+				.collect(toList()));
+
+		// search for event sources
+		results.addAll(dashboardController.getEventSourceInstances()
+				.stream()
+				.filter(EventSourceInstance.createFilter(searchString))
+				.map(i -> SearchResult.builder().title(i.getName()).id(i.getId()).type("event-source").build())
+				.collect(toList()));
+
+		// search for properties
+		spController.getClasses()
+				.stream()
+				.flatMap(spController::streamProperties)
+				.filter(p -> SerializablePropertyResource//
+						.toMapWithoutPassword(p)
+						.values()
+						.stream()
+						.filter(v -> v != null)
+						.map(Object::toString)
+						.map(String::toLowerCase)
+						.anyMatch(s -> s.contains(searchString)))
+				.map(p -> SearchResult.builder()
+						.title(p.getName())
+						.id(Integer.toString(p.getId()))
+						.type("serializable-property")
+						.subtype(p.getClass().getSimpleName())
+						.build())
+				.collect(Collectors.toList());
+
+		// search for loggers
+		results.addAll(getLoggerStream()//
+				.map(Logger::getName)
+				.map(String::toLowerCase)
+				.filter(name -> name.contains(searchString))
+				.map(name -> SearchResult.builder().title(name).id(name).type("logger").build())
+				.collect(toList()));
+
+		return ok(results).build();
 	}
 
 	public static class LoggerInfo {
@@ -298,4 +441,20 @@ public class SystemResource {
 		}
 	}
 
+	@Getter
+	public static class ServerInfo {
+		private final String name = Oversigt.APPLICATION_NAME;
+		private final String version = Oversigt.APPLICATION_VERSION;
+	}
+
+	@Builder
+	@Getter
+	@JsonInclude(content = Include.NON_NULL)
+	public static class SearchResult {
+		private final String title;
+		private final String id;
+		private final String type;
+		@Nullable
+		private final String subtype;
+	}
 }

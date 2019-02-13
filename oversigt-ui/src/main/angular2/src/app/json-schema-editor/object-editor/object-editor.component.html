@@ -1,0 +1,18 @@
+<div *ngIf="value !== null; else nullValue" class="object-parent">
+  <div *ngFor="let name of getPropertyNames()" class="object-child object-child-{{getProperty(name).type}}">
+    <app-json-schema [schemaObject]="getProperty(name)" [(ngModel)]="value[name]" [showTitles]="showTitles" [showMainTitle]="true"></app-json-schema>
+  </div>
+</div>
+
+<ng-template #nullValue>
+  <div class="alert alert-danger" role="alert">
+      <div class="alert-items">
+          <div class="alert-item static">
+              <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+              </div>
+              <span class="alert-text">ObjectEditor value is null</span>
+          </div>
+      </div>
+  </div>
+</ng-template>

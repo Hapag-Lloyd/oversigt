@@ -52,12 +52,26 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@Target(value = { ElementType.FIELD })
+	@Target(ElementType.FIELD)
 	public static @interface Member {
 		String icon() default "tag";
 
 		int size() default 2;
 
 		boolean mayBeEmpty() default false;
+	}
+
+	/**
+	 * Use this annotation to add an description to the annotated object. Unlike JavaDoc this description can be inspected at runtime.
+	 *
+	 * @author Olaf Neumann
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.TYPE, ElementType.FIELD })
+	public static @interface Description {
+		/**The description of the annotated object
+		 * @return the description
+		 */
+		String value();
 	}
 }

@@ -1,0 +1,84 @@
+// @import "oversigt-theme.scss";
+
+.clr-select-wrapper, .clr-select {
+  width: 100%;
+}
+
+.info .card:first-child {
+  margin-top: 0;
+}
+
+.mini-map {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mini-dashboard {
+  margin: 2ex;
+  box-shadow: 0 0 1ex 0 rgba(0, 0, 0, 0.2), 0 0 3ex 0 rgba(0, 0, 0, 0.19);
+  position: relative;
+  width: 15em;
+  height: 10em;
+  flex-shrink: 0;
+}
+
+
+.mini-widget {
+  position: absolute;
+  border: 1px solid grey;
+  text-align: center;
+}
+
+.mini-widget>* {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(-50%);
+}
+
+.mini-info {
+  flex-grow: 1;
+
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+}
+
+.mini-info>* {
+  margin: 1ex;
+}
+
+.mini-map a {
+  display: block;
+}
+
+.mini-map .mini-dashboard a.disabled {
+  background-color: rgb(255, 200, 200);
+}
+
+.mini-map .mini-dashboard a.disabled.selected {
+  background-color: rgb(255, 140, 140);
+}
+
+.mini-map .mini-info a.disabled {
+  text-decoration: line-through;
+}
+
+.mini-map a.selected {
+  color: black;
+  text-decoration: none;
+}
+
+.mini-map a.selected.mini-widget {
+  background-color: rgb(230,230,230);
+}
+
+.mini-map a.mini-widget:hover {
+  background-color: rgb(210,210,210);
+}
+
+.chip-editor .clr-input-wrapper {
+  max-height: unset;
+}

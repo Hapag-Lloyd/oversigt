@@ -23,13 +23,24 @@
 		<url>https://www.hapag-lloyd.com/</url>
 	</organization>
 
+	<developers>
+		<developer>
+			<name>Hapag-Lloyd AG</name>
+			<url>https://www.hapag-lloyd.com/</url>
+		</developer>
+	</developers>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
+
 	<modules>
 		<module>core</module>
+		<module>oversigt-ui</module>
 	</modules>
 
 	<build>
@@ -54,6 +65,10 @@
 				<plugin>
 					<artifactId>maven-dependency-plugin</artifactId>
 					<version>3.1.1</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>3.0.1</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-deploy-plugin</artifactId>
@@ -102,6 +117,34 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+
+		<plugins>
+			<!-- Package sources -->
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>jar-no-fork</goal>
+							<!-- <goal>test-jar-no-fork</goal> -->
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Validate documentation -->
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>jar</goal>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 
 	<reporting>

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
-public class Dashboard {
+public class Dashboard implements Cloneable {
 	private static Set<String> newSet(String... items) {
 		return newSet(Arrays.asList(items));
 	}
@@ -195,16 +195,24 @@ public class Dashboard {
 		return foregroundColorStart;
 	}
 
+	public void setForegroundColorStart(Color foregroundColorStart) {
+		this.foregroundColorStart = foregroundColorStart;
+	}
+
 	public void setForegroundColorStart(String foregroundColorStart) {
-		this.foregroundColorStart = Color.parse(foregroundColorStart);
+		setForegroundColorStart(Color.parse(foregroundColorStart));
 	}
 
 	public Color getForegroundColorEnd() {
 		return foregroundColorEnd;
 	}
 
+	public void setForegroundColorEnd(Color foregroundColorEnd) {
+		this.foregroundColorEnd = foregroundColorEnd;
+	}
+
 	public void setForegroundColorEnd(String foregroundColorEnd) {
-		this.foregroundColorEnd = Color.parse(foregroundColorEnd);
+		setForegroundColorEnd(Color.parse(foregroundColorEnd));
 	}
 
 	public Collection<String> getOwners() {
@@ -256,5 +264,23 @@ public class Dashboard {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+	}
+
+	@Override
+	public Dashboard clone() {
+		Dashboard dashboard = new Dashboard(getId(),
+				getTitle(),
+				isEnabled(),
+				getScreenWidth(),
+				getScreenHeight(),
+				getColumns(),
+				getBackgroundColor(),
+				getColorScheme(),
+				getForegroundColorStart(),
+				getForegroundColorEnd(),
+				getOwners(),
+				getEditors());
+		dashboard.getModifiableWidgets().addAll(getWidgets());
+		return dashboard;
 	}
 }

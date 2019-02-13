@@ -1,7 +1,8 @@
 package com.hlag.oversigt.storage;
 
 import static com.hlag.oversigt.util.StringUtils.list;
-import static com.hlag.oversigt.util.Utils.*;
+import static com.hlag.oversigt.util.Utils.is;
+import static com.hlag.oversigt.util.Utils.map;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -26,6 +27,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,6 +48,7 @@ import com.hlag.oversigt.util.TypeUtils;
 
 @Singleton
 public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBConstants {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JDBCDatabase.class);
 	private static final String TYPE_PROPERTY = "PROPERTY";
 	private static final String TYPE_DATA = "DATA";
 
@@ -64,8 +69,9 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 		this.sqlDialect = dialect;
 		this.json = json;
 		try {
-			LOGGER.info("Loading JDBC driver");
+			LOGGER.info("Loading JDBC driver class: " + dialect.getDriverClassName());
 			Class.forName(dialect.getDriverClassName());
+			LOGGER.info("Creating JDBC connection for location '{}' and schema '{}'", databaseLocation, schema);
 			connection = DriverManager
 					.getConnection(dialect.getJdbcConnectionUrl(databaseLocation, schema, username, password));
 			checkTable(TABLE_EVENT_SOURCE, COLUMN_OPTIONS_EVENT_SOURCE);
@@ -106,8 +112,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 					Optional<Map<String, Object>> foundColumnProperties = columnProperties.stream()
 							.filter(cp -> option.name.equals(cp.get("COLUMN_NAME")))
 							.findFirst();
-					boolean exists = foundColumnProperties.isPresent();
-					if (!exists) {
+					if (!foundColumnProperties.isPresent()) {
 						LOGGER.info("Altering table " + tableName + ". Adding column " + option.name);
 						String sql = getDialect().alterTableAddColumn(tableName, option);
 						executeUpdate(sql);
@@ -115,8 +120,9 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 						columnProperties.remove(foundColumnProperties.get());
 					}
 				}
-				List<String> columnsToDrop = columnProperties.stream().map(m -> (String) m.get("COLUMN_NAME")).collect(
-						Collectors.toList());
+				List<String> columnsToDrop = columnProperties.stream()
+						.map(m -> (String) m.get("COLUMN_NAME"))
+						.collect(Collectors.toList());
 				for (String columnToDrop : columnsToDrop) {
 					LOGGER.info("Altering table " + tableName + ". Dropping column " + columnToDrop);
 					String sql = getDialect().alterTableDropColumn(tableName, columnToDrop);
