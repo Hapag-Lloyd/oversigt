@@ -92,17 +92,26 @@ public class JsonUtils {
 		return gson.fromJson(json, type);
 	}
 
-	/**Remove  keys from the JSON string
-	 * @param json the JSON to work on
-	 * @param filter determine whether a key should stay in the JSON or not. If the {@link Predicate} returns <code>false</code> the key will be removed.
-	 *  @return the stripped JSON
+	/**
+	 * Remove keys from the JSON string
+	 *
+	 * @param json
+	 *            the JSON to work on
+	 * @param filter
+	 *            determine whether a key should stay in the JSON or not. If the {@link Predicate}
+	 *            returns <code>false</code> the key will be removed.
+	 * @return the stripped JSON
 	 */
 	public String removeKeysFromJson(String json, Predicate<String> filter) {
 		return toJson(removeKeys(gson.fromJson(json, Object.class), filter));
 	}
 
-	/**Remove all keys from the JSON string that contain the phrase "password" (not case sensitive)
-	 * @param string the JSON to work on
+	/**
+	 * Remove all keys from the JSON string that contain the phrase "password" (not case sensitive)
+	 *
+	 * @param string
+	 *            the JSON to work on
+	 * @return the JSON without keys containing "password" (not case sensitive)
 	 */
 	public String removePasswordsFromJson(String string) {
 		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
