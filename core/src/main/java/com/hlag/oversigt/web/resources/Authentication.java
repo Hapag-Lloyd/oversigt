@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.security.RoleProvider;
@@ -61,8 +60,6 @@ public class Authentication {
 	private ApiAuthenticationUtils authentication;
 	@Inject
 	private RoleProvider roleProvider;
-	@Inject
-	private DashboardController dashboardController;
 
 	@Context
 	private SecurityContext securityContext;
