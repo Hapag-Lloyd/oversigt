@@ -67,7 +67,7 @@
         <button *ngIf="!dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(true)" class="btn btn-success">Enable</button>
         <button *ngIf="dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(false)" class="btn btn-warning">Disable</button>
       </ng-container>
-      <button [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete</button>
+      <button *appHasRole="'dashboard.' + dashboard.id + '.owner'" [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete</button>
     </div>
   </form>
 </ng-template>

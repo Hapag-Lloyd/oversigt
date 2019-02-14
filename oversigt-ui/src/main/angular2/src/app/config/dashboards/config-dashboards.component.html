@@ -12,9 +12,12 @@
     </div>
     <button (click)="createDashboard(createName.value);createName.value='';" class="btn btn-primary btn-icon" title="Create new dashboard">Create dashboard</button>
   </div>
-  <div *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter" class="list-group-item content">
-    <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
-  </div>
+  <ng-container *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter">
+    <div *appHasRole="'dashboard.' + dashboard.id + '.editor'" class="list-group-item content">
+      <!-- FIXME: if search-filter is not empty and but role-filter removes all lines the 'empty-message' will not be displayed -->
+      <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
+    </div>
+  </ng-container>
   <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
     Your filter did not return any dashboard.
   </div>

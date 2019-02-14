@@ -32,6 +32,12 @@ public class RoleProvider {
 						.map(Role::getDashboardOwnerRole)
 						.collect(Collectors.toSet()),
 				Role.DASHBOARD_OWNER);
+		addWithDefaultRole(roles,
+				storage.getOwnedDashboardIds(userid)
+						.stream()
+						.map(Role::getDashboardEditorRole)
+						.collect(Collectors.toSet()),
+				Role.DASHBOARD_EDITOR);
 
 		addWithDefaultRole(roles,
 				storage.getEditableDashboardIds(userid)
