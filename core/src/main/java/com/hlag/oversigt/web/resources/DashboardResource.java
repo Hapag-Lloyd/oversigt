@@ -4,6 +4,7 @@ import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
 import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
 import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -216,28 +218,31 @@ public class DashboardResource {
 			@PathParam("dashboardId") @NotNull String id,
 			Dashboard newDashboardData) throws ApiValidationException {
 		// load current dashboard from storage
-		Dashboard dashboard = dashboardController.getDashboard(id);
+		final Dashboard originalDashboard = dashboardController.getDashboard(id);
+
+		// Checks
+		// ======
 
 		// does it exist?
-		if (dashboard == null) {
+		if (originalDashboard == null) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
 
 		// check dashboard id
-		if (!id.equals(newDashboardData.getId()) || !id.equals(dashboard.getId())) {
+		if (!id.equals(newDashboardData.getId()) || !id.equals(originalDashboard.getId())) {
 			return badRequest("The dashboard ID does not match");
 		}
 
 		// Check if the user changed the enabled state of the dashboard. Only server admins may perform that action
-		if (newDashboardData.isEnabled() != dashboard.isEnabled()
+		if (newDashboardData.isEnabled() != originalDashboard.isEnabled()
 				&& !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {
 			return forbidden(
 					"Only server admins are allowed to change a dashboard's enabled state. Please contact a server admin.");
 		}
 
 		// if the owner has changed the user needs to be at least dashboard owner
-		if (!newDashboardData.getOwners().equals(dashboard.getOwners())
-				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName())) {
+		if (!newDashboardData.getOwners().equals(originalDashboard.getOwners())
+				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(originalDashboard.getId()).getName())) {
 			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
 		}
 
@@ -247,10 +252,25 @@ public class DashboardResource {
 		newDashboardData.setEditors(
 				newDashboardData.getEditors().stream().filter(authenticator::isUsernameValid).collect(toList()));
 
+		// Prepare changes
+		// ===============
+		final Set<String> users = Stream
+				.concat(originalDashboard.getOwners().stream(), originalDashboard.getEditors().stream())
+				.collect(toSet());
+
 		// update dashboard data
+		// =====================
 		if (dashboardController.updateDashboard(newDashboardData)) {
-			dashboard = dashboardController.getDashboard(id);
-			return ok(dashboard).build();
+			// return dashboard info
+			// =====================
+			final Dashboard changedDashboard = dashboardController.getDashboard(id);
+
+			// reload user rights
+			users.addAll(Stream.concat(changedDashboard.getOwners().stream(), changedDashboard.getEditors().stream())
+					.collect(toSet()));
+			users.forEach(authenticator::reloadRoles);
+
+			return ok(changedDashboard).build();
 		} else {
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}

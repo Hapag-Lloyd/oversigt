@@ -523,8 +523,8 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 	public List<String> getOwnedDashboardIds(String userid) {
 		return loadWithOneLike(TABLE_DASHBOARD,
 				"ID",
-				new String[] { "ENABLED" },
-				new Object[] { true },
+				new String[] { /* "ENABLED" */ },
+				new Object[] { /* true */ },
 				"OWNER",
 				"%," + userid + ",%");
 	}
@@ -533,8 +533,8 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBCo
 	public List<String> getEditableDashboardIds(String userid) {
 		return loadWithOneLike(TABLE_DASHBOARD,
 				"ID",
-				new String[] { "ENABLED" },
-				new Object[] { true },
+				new String[] { /* "ENABLED" */ },
+				new Object[] { /* true */ },
 				"EDITOR",
 				"%," + userid + ",%");
 	}

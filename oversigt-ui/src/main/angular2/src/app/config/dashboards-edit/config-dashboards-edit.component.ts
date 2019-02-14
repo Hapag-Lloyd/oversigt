@@ -102,7 +102,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.dashboardId = this.route.snapshot.paramMap.get('dashboardId');
 
     this.dashboardService.readDashboard(this.dashboardId).subscribe(dashboard => {
-      this.setDashboard(dashboard);
+      this.setDashboard(dashboard, true);
     },
     this.errorHandler.createErrorHandler('Reading dashboard information'));
     this.loadWidgetPositions();
@@ -115,12 +115,12 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     this.errorHandler.createErrorHandler('Loading widget positions'));
   }
 
-  private setDashboard(dashboard: Dashboard, withRights: boolean = false): void {
+  private setDashboard(dashboard: Dashboard, updateOwnersAndEditors: boolean): void {
     this.dashboard = dashboard;
     this.dashboardTitle = dashboard.title;
     this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];
     this.screensize = [dashboard.screenWidth, dashboard.screenHeight];
-    if (withRights) {
+    if (updateOwnersAndEditors) {
       // this.owners = dashboard.owners;
       // this.editors = dashboard.editors;
       this.ownersText = dashboard.owners.join(', ');

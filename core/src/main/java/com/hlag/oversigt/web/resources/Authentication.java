@@ -6,7 +6,6 @@ import static javax.ws.rs.core.Response.ok;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -30,6 +29,7 @@ import com.google.inject.Inject;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.security.RoleProvider;
 import com.hlag.oversigt.util.Utils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
@@ -49,8 +49,8 @@ import lombok.ToString;
 
 /**
  * @author Olaf Neumann
- * @see <a href="https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey">https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey</a>
- *
+ * @see <a href=
+ *      "https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey">https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey</a>
  */
 @Api(tags = { "Authentication" })
 @Path("/authentication")
@@ -59,6 +59,8 @@ public class Authentication {
 
 	@Inject
 	private ApiAuthenticationUtils authentication;
+	@Inject
+	private RoleProvider roleProvider;
 	@Inject
 	private DashboardController dashboardController;
 
@@ -142,14 +144,10 @@ public class Authentication {
 	}
 
 	private Set<String> findRolesForUser(final Principal principal) {
-		return Utils.concat(
-				Stream.of(Role.ROLE_NAME_SERVER_ADMIN,
-						Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER,
-						Role.ROLE_NAME_GENERAL_DASHBOARD_EDITOR),
-				Utils.concat(dashboardController.getDashboardIds().stream().map(Role::getDashboardOwnerRole),
-						dashboardController.getDashboardIds().stream().map(Role::getDashboardEditorRole))
-						.map(Role::getName))
-				.filter(principal::hasRole)
+		return roleProvider//
+				.getRoles(principal.getUsername())
+				.stream()
+				.map(Role::getName)
 				.collect(toSet());
 	}
 
