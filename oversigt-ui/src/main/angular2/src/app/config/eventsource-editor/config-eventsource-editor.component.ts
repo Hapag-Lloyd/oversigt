@@ -89,6 +89,7 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
           });
         },
         error => {
+          // TODO: error handling
           console.error(error);
           alert(error);
         }

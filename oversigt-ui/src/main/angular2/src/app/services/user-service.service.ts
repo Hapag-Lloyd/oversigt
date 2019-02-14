@@ -154,6 +154,7 @@ export class UserService {
     this.authentication.authenticateUser(username, password).subscribe(
       ok => {
         this.setAuthData(ok);
+        console.log('Logged in.', 'User name', ok.displayName, 'Roles', ok.roles);
         success(ok.displayName);
         this.scheduleTokenValidityCheck();
       },
@@ -189,6 +190,9 @@ export class UserService {
       ok => {
         console.log('New token received');
         this.setAuthData(ok);
+      }, error => {
+        console.error('Error while refreshing token.', error);
+        // TODO: handle error
       }
     );
   }

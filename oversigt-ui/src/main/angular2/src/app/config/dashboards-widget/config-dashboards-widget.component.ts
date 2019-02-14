@@ -121,7 +121,6 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
 
     this.deleteButtonState = ClrLoadingState.LOADING;
     this.dashboardWidgetService.deleteWidget(this.dashboardId, this.widgetId).subscribe(ok => {
-      console.log(ok);
       this.notificationService.success('The widget has been deleted.');
       this.deleteButtonState = ClrLoadingState.SUCCESS;
       this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
