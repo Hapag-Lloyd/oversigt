@@ -6,7 +6,7 @@ import { Configuration,
   WidgetDetails,
   WidgetShortInfo} from '../../oversigt-client';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import * as $ from 'jquery';
 
 const TILE_DISTANCE = 5;
