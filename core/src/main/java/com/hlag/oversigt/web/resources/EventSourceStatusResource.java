@@ -15,6 +15,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.security.Role;
@@ -35,6 +36,7 @@ import lombok.Getter;
 @Api(tags = { "EventSource" }, //
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/state")
+@Singleton
 public class EventSourceStatusResource {
 	@Inject
 	private DashboardController controller;

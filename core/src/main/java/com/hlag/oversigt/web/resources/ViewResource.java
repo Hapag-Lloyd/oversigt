@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.io.Resources;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.util.SneakyException;
 import com.hlag.oversigt.util.Wro4jExecutor;
 import com.hlag.oversigt.web.api.ErrorResponse;
@@ -32,6 +33,7 @@ import ro.isdc.wro.model.resource.ResourceType;
 
 @Api(tags = { "View" })
 @Path("/views/{viewId}")
+@Singleton
 public class ViewResource {
 	@GET
 	@Path("/html")

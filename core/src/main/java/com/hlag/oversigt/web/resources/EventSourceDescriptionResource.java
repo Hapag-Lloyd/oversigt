@@ -13,6 +13,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceKey;
@@ -32,6 +33,7 @@ import io.swagger.annotations.Authorization;
 @Api(tags = { "EventSource" }, authorizations = {
 		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/descriptions")
+@Singleton
 public class EventSourceDescriptionResource {
 	@Inject
 	private DashboardController dashboardController;

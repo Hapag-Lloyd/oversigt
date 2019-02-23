@@ -36,6 +36,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
@@ -45,7 +46,6 @@ import com.hlag.oversigt.model.InvalidKeyException;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -67,6 +67,7 @@ import lombok.ToString;
 @Api(tags = { "EventSource" }, authorizations = {
 		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/instances")
+@Singleton
 public class EventSourceInstanceResource {
 	private static JsonUtils json = null;
 	@Inject
@@ -156,21 +157,13 @@ public class EventSourceInstanceResource {
 			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read event source instance")
-	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_EDITOR)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response readInstance(@PathParam("id") @NotBlank String instanceId) {
 		try {
 			// read object
-			Map<String, Object> map = TypeUtils.toMemberMap(getInstanceInfo(instanceId));
-
-			//			// check permissions
-			//			final Principal principal = (Principal) securityContext.getUserPrincipal();
-			//			if (!principal.hasRole(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)) {
-			//				map.keySet().retainAll(Arrays.asList("instanceDetails"));
-			//			}
-
-			// return result
-			return ok(map).build();
+			FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);
+			return ok(info).build();
 		} catch (NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
@@ -288,7 +281,7 @@ public class EventSourceInstanceResource {
 		}
 	}
 
-	private FullEventSourceInstanceInfo getInstanceInfo(String instanceId) {
+	FullEventSourceInstanceInfo getInstanceInfo(String instanceId) {
 		EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
 		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
 				EventSourceInstanceState.fromInstance(controller, instance));

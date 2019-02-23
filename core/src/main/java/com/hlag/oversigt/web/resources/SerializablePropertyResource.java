@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
@@ -52,6 +53,7 @@ import lombok.Getter;
 
 @Api(tags = { "SerializableValue" })
 @Path("/serializable-values")
+@Singleton
 public class SerializablePropertyResource {
 	@Inject
 	private DashboardController dController;
@@ -260,9 +262,10 @@ public class SerializablePropertyResource {
 		return removePasswords(toMemberMap(property), "");
 	}
 
-	/**Class describing a {@link SerializableProperty} class.
+	/**
+	 * Class describing a {@link SerializableProperty} class.
+	 * 
 	 * @author Olaf Neumann
-	 *
 	 */
 	@Builder
 	@Getter

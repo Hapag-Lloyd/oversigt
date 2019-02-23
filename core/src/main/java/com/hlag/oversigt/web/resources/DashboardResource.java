@@ -40,6 +40,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.Widget;
@@ -66,6 +67,7 @@ import lombok.ToString;
 
 @Api(tags = { "Dashboard" })
 @Path("/dashboards")
+@Singleton
 public class DashboardResource {
 	@Inject
 	private DashboardController dashboardController;

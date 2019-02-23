@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.Oversigt;
 import com.hlag.oversigt.core.OversigtConfiguration;
@@ -70,6 +71,7 @@ import lombok.Getter;
 
 @Api(tags = { "System" })
 @Path("/system")
+@Singleton
 public class SystemResource {
 	private final Runnable shutdownRunnable;
 
