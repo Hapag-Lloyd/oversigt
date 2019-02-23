@@ -68,6 +68,7 @@
         <button *ngIf="dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(false)" class="btn btn-warning">Disable</button>
       </ng-container>
       <button *appHasRole="'dashboard.' + dashboard.id + '.owner'" [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete dashboard</button>
+      <!-- TODO: if navigating away: ask to save -->
     </div>
   </form>
 </ng-template>
@@ -86,7 +87,6 @@
 
 <ng-template #dbWidgets>
   <div class="mini-map">
-    <!-- TODO: if navigating away: ask to save -->
     <div class="mini-dashboard" [style.width.em]="countColumns()" [style.height.em]="countRows()">
       <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
           class="mini-widget" title="{{info.name}}" [class.disabled]="!info.enabled"

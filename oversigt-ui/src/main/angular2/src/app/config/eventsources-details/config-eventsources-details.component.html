@@ -1,7 +1,12 @@
 <!-- Header stuff -->
 <app-header *ngIf="eventSourceDescriptor !== null" [title]="parsedInstanceDetails.name"
     [enabled]="instanceState.serviceClass === null || parsedInstanceDetails.enabled" [additional]="dropdown"></app-header>
-<span *ngIf="eventSourceDescriptor === null" class="spinner spinner-inline">Loading...</span>
+<div *ngIf="eventSourceDescriptor === null" class="loading">
+  <span class="spinner">
+    Loading...
+  </span>
+</div>
+
 
 <ng-template #dropdown>
   <clr-dropdown>
@@ -31,8 +36,8 @@
   </clr-dropdown>
 </ng-template>
 
-<!-- TODO: enable if deleting -->
-<div *ngIf="false" class="modal-backdrop" aria-hidden="true">
+<!-- ClrLoadingState.LOADING === 1 -->
+<div *ngIf="deleteEventSourceState === 1" class="modal-backdrop" aria-hidden="true">
   <span class="spinner">Loading...</span>
 </div>
 

@@ -2,6 +2,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { EventSourceProperty, SerializableValueService } from 'src/oversigt-client';
 import { MakeProvider } from '../../_editor/abstract-value-accessor';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
   selector: 'app-config-eventsource-editor',
@@ -44,20 +45,10 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
   get value(): any { return this._value; }
   set value(value: any) {
     this.setValue(value, value !== undefined);
-    /*this.enabled = value !== undefined;
-    if (value !== this._value) {
-      this._value = value;
-      this.onChange(value);
-    }*/
   }
 
   writeValue(value: any) {
     this.setValue(value, value !== undefined);
-    /*this.enabled = value !== undefined;
-    if (value !== this._value) {
-      this._value = value;
-      this.onChange(value);
-    }*/
   }
 
   onChange = (_) => {};
@@ -67,6 +58,7 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
 
   constructor(
     private svs: SerializableValueService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -88,11 +80,7 @@ export class ConfigEventsourceEditorComponent implements OnInit, ControlValueAcc
             _this.property.allowedValuesMap[i['id']] = i['name'];
           });
         },
-        error => {
-          // TODO: error handling
-          console.error(error);
-          alert(error);
-        }
+        this.errorHandler.createErrorHandler('Reading property information')
       );
     }
   }
