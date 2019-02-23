@@ -12,13 +12,10 @@ export class MenuItem {
 const PREFIX = '';
 
 export const MENU_ITEMS: MenuItem[] = [
-  { title: 'Event Sources', link: PREFIX + '/eventSources', id: 'eventsources', neededRole: 'server.dashboard.owner', children: [
-    /*{ title: 'Create Event Source', link: PREFIX + '/eventSources/create', children: []},
-    { title: 'Configure Event Sources', link: PREFIX + '/eventSources/list', children: []},*/
-  ]},
+  { title: 'Event Sources', link: PREFIX + '/eventSources', id: 'eventsources', neededRole: 'server.dashboard.owner', children: []},
   { title: 'Dashboards', link: PREFIX + '/dashboards', id: 'dashboards', children: []},
   { title: 'Properties', link: PREFIX + '/properties', id: 'properties'},
-  { title: 'System', link: PREFIX + '/system', id: 'system', children: [
+  { title: 'System', link: PREFIX + '/system', id: 'system', neededRole: 'server.dashboard.owner', children: [
     // tslint:disable-next-line:max-line-length
     { title: 'Events', link: PREFIX + '/system/events', id: 'system-events', children: [], description: 'Show events the event sources have created.'},
     // tslint:disable-next-line:max-line-length
