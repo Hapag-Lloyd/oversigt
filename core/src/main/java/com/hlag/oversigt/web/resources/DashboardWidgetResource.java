@@ -33,6 +33,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceProperty;
@@ -42,6 +43,7 @@ import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.EventSourceInstanceResource.FullEventSourceInstanceInfo;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -57,9 +59,12 @@ import lombok.ToString;
 
 @Api(tags = { "Dashboard-Widget" })
 @Path("/dashboards/{dashboardId}/widgets")
+@Singleton
 public class DashboardWidgetResource {
 	@Inject
 	private DashboardController controller;
+	@Inject
+	private EventSourceInstanceResource eventSourceInstanceResource;
 
 	@Context
 	private UriInfo uri;
@@ -172,6 +177,24 @@ public class DashboardWidgetResource {
 		}
 	}
 
+	@GET
+	@Path("/{id}/event-source-instance")
+	@ApiResponses({ //
+			@ApiResponse(code = 200, message = "The event source instance information for the specified widget", response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 404, message = "Data does not exist", response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = "Read event source instance for widget", //
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed("dashboard.{dashboardId}.editor")
+	public Response readEventSourceInstanceForWidget(@PathParam("dashboardId") @NotNull String dashboardId,
+			@PathParam("id") @Positive int widgetId) {
+		Dashboard dashboard = controller.getDashboard(dashboardId);
+		Widget widget = dashboard.getWidget(widgetId);
+		FullEventSourceInstanceInfo info = eventSourceInstanceResource
+				.getInstanceInfo(widget.getEventSourceInstance().getId());
+		return ok(info).build();
+	}
+
 	@PUT
 	@Path("/{id}")
 	@ApiResponses({ //
@@ -185,12 +208,12 @@ public class DashboardWidgetResource {
 			@PathParam("id") @Positive int widgetId,
 			@NotNull WidgetDetails details) {
 
-		Dashboard dashboard = controller.getDashboard(dashboardId);
+		final Dashboard dashboard = controller.getDashboard(dashboardId);
 		if (dashboard == null) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
-		Widget widget;
+		final Widget widget;
 		try {
 			widget = dashboard.getWidget(widgetId);
 		} catch (NoSuchElementException e) {
