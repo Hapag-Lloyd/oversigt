@@ -17,12 +17,12 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
   valueToTitle: {[key: string]: string} = {};
 
   ngOnInit() {
-    // TODO handle unique items
+    // TODO: handle unique items
 
     if (this.schemaObject.enumSource !== undefined && this.schemaObject.enumSource.length === 1) {
       this.editorType = 'select';
       const enumSource = this.schemaObject.enumSource[0];
-      // TODO use interpreter code here
+      // TODO: use interpreter code here
       const valueIndex = enumSource.value.replace(/{/g, '').replace(/}/g, '').substring('item.'.length);
       const titleIndex = enumSource.title.replace(/{/g, '').replace(/}/g, '').substring('item.'.length);
       this.values = enumSource.source.map(item => item[valueIndex]);

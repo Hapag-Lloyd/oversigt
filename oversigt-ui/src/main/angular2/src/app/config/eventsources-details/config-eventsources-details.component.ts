@@ -9,6 +9,7 @@ import { NotificationService } from 'src/app/services/notification.service';
 import { getLinkForId, getLinkForEventSource } from 'src/app/app.component';
 import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { RecentEventsourcesService } from 'src/app/services/recent-eventsources.service';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -69,6 +70,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     private eventSourceService: EventSourceService,
     private dashboardService: DashboardService,
     private recentEventSources: RecentEventsourcesService,
+    private errorHandler: ErrorHandlerService,
   ) { }
 
   ngOnInit() {
@@ -121,17 +123,11 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
                 this.usage = usageList;
                 const usageIds = usageList.map(d => d.id);
                 this.addable = dashboardList.filter(d => usageIds.indexOf(d.id) === -1);
-              }, error => {
-                console.log(error);
-                alert(error);
-                // TODO: error handling
-              }
+              },
+              this.errorHandler.createErrorHandler('Reading event source instance')
             );
-          }, error => {
-            console.log(error);
-            alert(error);
-            // TODO: error handling
-          }
+          },
+          this.errorHandler.createErrorHandler('Listing dashboards')
         );
       }
     );
@@ -224,12 +220,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         this.instanceState = newInstanceState;
         this.notification.success('The event source has been stopped.');
       },
-      error => {
+      this.errorHandler.createErrorHandler('Stopping the event source', () => {
         this.startStopEventSourceState = ClrLoadingState.ERROR;
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      })
     );
   }
 
@@ -250,12 +243,9 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
           this.loadEventSourceState();
         }, 20000);
       },
-      error => {
+      this.errorHandler.createErrorHandler('Starting the event source', () => {
         this.startStopEventSourceState = ClrLoadingState.ERROR;
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      })
     );
   }
 
@@ -263,11 +253,8 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
     this.eventSourceService.isInstanceRunning(this.parsedInstanceDetails.id).subscribe(
       state => {
         this.instanceState = state;
-      }, error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
-      }
+      },
+      this.errorHandler.createErrorHandler('Reading instance information')
     );
   }
 
@@ -298,22 +285,16 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
             this.loadEventSourceState();
             ok();
           },
-          error => {
-            console.error(error);
-            alert(error);
-            // TODO: Error handling
+          this.errorHandler.createErrorHandler('Changing event source state', () => {
             this.enableEventSourceState = ClrLoadingState.ERROR;
             fail();
-          }
+          })
         );
       },
-      error => {
-        console.error(error);
-        alert(error);
-        // TODO: Error handling
+      this.errorHandler.createErrorHandler('Reading event source information', () => {
         this.enableEventSourceState = ClrLoadingState.ERROR;
         fail();
-      }
+      })
     );
   }
 
@@ -322,7 +303,6 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // TODO: bildschirm blocken
     this.deleteEventSourceState = ClrLoadingState.LOADING;
     this.eventSourceService.deleteInstance(this.parsedInstanceDetails.id).subscribe(
       ok => {
@@ -359,19 +339,11 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
         this.eventSourceService.updateInstance(eventSource.id, copy).subscribe(
           ok => {
             this.router.navigateByUrl(getLinkForEventSource(copy.id));
-          }, error => {
-            this.notification.error('The event source copy could not be configured.');
-            console.error(error);
-            alert(error);
-            // TODO: error handling
-          }
+          },
+          this.errorHandler.createErrorHandler('Configuring the event source copy')
         );
-      }, error => {
-        this.notification.error('The event source could not be created.');
-        console.error(error);
-        alert(error);
-        // TODO: error handling
-      }
+      },
+      this.errorHandler.createErrorHandler('Creating event source copy')
     );
   }
 

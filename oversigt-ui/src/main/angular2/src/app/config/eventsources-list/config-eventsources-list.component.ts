@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EventSourceInstanceInfo, EventSourceService } from 'src/oversigt-client';
 import { Subject, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
@@ -8,8 +8,9 @@ import { debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/o
   templateUrl: './config-eventsources-list.component.html',
   styleUrls: ['./config-eventsources-list.component.css']
 })
-export class ConfigEventsourcesListComponent implements OnInit {
+export class ConfigEventsourcesListComponent implements OnInit, OnDestroy {
   private searchTerms = new Subject<string>();
+  private lastSearchTerm = '';
   sources$: Observable<EventSourceInstanceInfo[]>;
 
   constructor(
@@ -23,10 +24,24 @@ export class ConfigEventsourcesListComponent implements OnInit {
       distinctUntilChanged(), // ignore new term if same as previous term
       switchMap((term: string) => this.eventSourceService.listInstances(term)), // let the server search
     );
-    // TODO: alle 5 minuten die Liste der EventSources aktualisieren
+    this.scheduleRefresh();
+  }
+
+  ngOnDestroy() {
+    this.lastSearchTerm = null;
   }
 
   search(filter: string): void {
+    this.lastSearchTerm = filter;
     this.searchTerms.next(filter);
+  }
+
+  private scheduleRefresh() {
+    setTimeout(() => {
+      if (this.lastSearchTerm !== null) {
+        this.searchTerms.next(this.lastSearchTerm);
+        this.scheduleRefresh();
+      }
+    }, 60 * 1000);
   }
 }
