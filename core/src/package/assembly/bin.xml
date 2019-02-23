@@ -50,6 +50,15 @@
 				<include>stop.sh</include>
 			</includes>
 		</fileSet>
+		<!-- Add a simple starter -->
+		<fileSet>
+			<directory>${project.basedir}/src/main/starter</directory>
+			<outputDirectory></outputDirectory>
+			<includes>
+				<include>run.bat</include>
+				<include>run.sh</include>
+			</includes>
+		</fileSet>
 		<!-- Add all needed resources -->
 		<fileSet>
 			<directory>${project.basedir}/src/main/resources</directory>
