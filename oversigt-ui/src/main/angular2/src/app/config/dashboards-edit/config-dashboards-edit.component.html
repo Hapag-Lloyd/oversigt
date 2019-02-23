@@ -62,12 +62,12 @@
       <app-simple-editor *ngIf="dashboard.colorScheme !== 'COLORED' && dashboard.colorScheme !== 'SINGLE_COLOR'" name="dashboard_color" [id]="'dashboard_color'" [title]="'Colors'" [(ngModel)]="foregroundColors" [inputType]="'color'" [readOnly]="false"></app-simple-editor>
     </div>
     <div *appHasRole="'dashboard.' + dashboard.id + '.editor'" class="card-footer">
-      <button [clrLoading]="saveDashboardState" (click)="saveDashboardSettings()" class="btn btn-primary">Save</button>
+      <button [clrLoading]="saveDashboardState" (click)="saveDashboardSettings()" class="btn btn-primary">Save dashboard</button>
       <ng-container *appHasRole="'server.admin'">
         <button *ngIf="!dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(true)" class="btn btn-success">Enable</button>
         <button *ngIf="dashboard.enabled" [clrLoading]="enableDashboardState" (click)="enableDashboard(false)" class="btn btn-warning">Disable</button>
       </ng-container>
-      <button *appHasRole="'dashboard.' + dashboard.id + '.owner'" [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete</button>
+      <button *appHasRole="'dashboard.' + dashboard.id + '.owner'" [clrLoading]="deleteDashboardState" (click)="deleteDashboard()" class="btn btn-danger">Delete dashboard</button>
     </div>
   </form>
 </ng-template>
@@ -95,11 +95,26 @@
       </a>
     </div>
     <div class="mini-info">
-      <a *ngFor="let info of widgetInfos; let i = index" routerLink="{{info.id}}" routerLinkActive="selected"
-          class="widget-link" [class.disabled]="!info.enabled">
-        <span class="badge">{{i + 1}}</span>
-        <span style="margin-left: 1ex">{{info.name}}</span>
-      </a>
+      <div>
+        <h5>Enabled:</h5>
+        <ng-container *ngFor="let info of widgetInfos; let i = index">
+          <a *ngIf="info.enabled" routerLink="{{info.id}}" routerLinkActive="selected"
+              class="widget-link" [class.disabled]="!info.enabled">
+            <span class="badge">{{i + 1}}</span>
+            <span>{{info.name}}</span>
+          </a>
+        </ng-container>
+      </div>
+      <div>
+        <h5>Disabled:</h5>
+        <ng-container *ngFor="let info of widgetInfos; let i = index">
+          <a *ngIf="!info.enabled" routerLink="{{info.id}}" routerLinkActive="selected"
+              class="widget-link" [class.disabled]="!info.enabled">
+            <span class="badge">{{i + 1}}</span>
+            <span>{{info.name}}</span>
+          </a>
+        </ng-container>
+      </div>
     </div>
   </div>
 </ng-template>

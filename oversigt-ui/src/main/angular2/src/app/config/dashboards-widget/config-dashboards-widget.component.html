@@ -3,7 +3,7 @@
     <form class="clr-form-horizontal">
 
       <div class="card-header">
-        <div style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
+        <div *appHasRole="'dashboard.' + dashboardId + '.owner'" style="float:right"><app-eventsource-button [eventSourceId]="widget.eventSourceInstanceId"></app-eventsource-button></div>
           {{widget.name}} Configuration
       </div>
       <div class="card-block">
@@ -28,10 +28,10 @@
       </div>
 
       <div *appHasRole="'dashboard.' + dashboardId + '.editor'" class="card-footer">
-        <button class="btn btn-primary" (click)="saveWidget()" [clrLoading]="saveButtonState">Save</button>
+        <button class="btn btn-primary" (click)="saveWidget()" [clrLoading]="saveButtonState">Save widget</button>
         <button *ngIf="!widget.enabled" (click)="enableWidget(true)" [clrLoading]="enableButtonState" class="btn btn-success">Enable</button>
         <button *ngIf="widget.enabled" (click)="enableWidget(false)" [clrLoading]="enableButtonState" class="btn btn-warning">Disable</button>
-        <button class="btn btn-danger" (click)="deleteWidget()" [clrLoading]="deleteButtonState">Delete</button>
+        <button class="btn btn-danger" (click)="deleteWidget()" [clrLoading]="deleteButtonState">Delete widget</button>
       </div>
     </form>
   </div>

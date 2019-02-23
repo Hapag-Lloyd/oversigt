@@ -67,14 +67,15 @@ export class ConfigDashboardWidgetComponent implements OnInit, OnDestroy {
     this.widget = widget;
     this.widgetSize = [widget.sizeX, widget.sizeY];
     this.widgetPosition = [widget.posX, widget.posY];
-    this.eventSourceService.readInstance(widget.eventSourceInstanceId).subscribe(esi => {
-      this.eventSourceInstanceInfo = esi;
-      this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
-        this.eventSourceDescriptor = esd;
+    this.dashboardWidgetService.readEventSourceInstanceForWidget(this.dashboardId, widget.id).subscribe(esi => {
+        this.eventSourceInstanceInfo = esi;
+        this.eventSourceService.getEventSourceDetails(esi.instanceDetails.eventSourceDescriptor).subscribe(esd => {
+          this.eventSourceDescriptor = esd;
+        },
+        this.errorHandler.createErrorHandler('Reading event source structure information'));
       },
-      this.errorHandler.createErrorHandler('Reading event source structure information'));
-    },
-    this.errorHandler.createErrorHandler('Reading event source instance information'));
+      this.errorHandler.createErrorHandler('Reading event source instance information')
+    );
   }
 
   hasEventSourceProperty(propertyName: string): boolean {
