@@ -4,6 +4,7 @@
   <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitles]="showTitles"></app-json-object>
   <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
   <app-json-string *ngSwitchCase="'number'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
+  <app-json-string *ngSwitchCase="'boolean'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
   <pre *ngSwitchDefault>No editor for schema type "{{schemaObject.type}}"</pre>
 </div>
 

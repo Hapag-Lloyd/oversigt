@@ -9,3 +9,11 @@
 .clr-control-container, .clr-control-container div, .clr-control-container div * {
   width: 100%;
 }
+
+.checkbox {
+  padding-left: 0.25rem;
+}
+
+.checkbox, .checkbox label {
+  margin-right: 0;
+}

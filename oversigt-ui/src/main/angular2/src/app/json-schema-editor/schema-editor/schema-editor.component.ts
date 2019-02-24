@@ -44,6 +44,8 @@ export function createObjectFromProperty(property: JsonSchemaProperty) {
         obj[p] = createObjectFromProperty(property.properties[p]);
       });
       return obj;
+    case 'boolean':
+      return false;
   }
   console.error('Unknown type: ', property.type);
 }

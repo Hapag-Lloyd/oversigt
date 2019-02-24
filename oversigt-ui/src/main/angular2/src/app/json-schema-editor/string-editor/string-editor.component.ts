@@ -32,6 +32,8 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
       }
     } else if (this.schemaObject.type === 'number') {
       this.editorType = 'number';
+    } else if (this.schemaObject.type === 'boolean') {
+      this.editorType = 'boolean';
     } else {
       switch (this.schemaObject.format) {
         case 'text':
