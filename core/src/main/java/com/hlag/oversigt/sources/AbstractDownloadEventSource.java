@@ -50,8 +50,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
 
-	private InternetAddress[] urls = new InternetAddress[] { new InternetAddress("http://dilbert.com",
-			"<img[^>]*src=\\\"(https?:\\/\\/assets\\.amuniversal\\.com\\/[a-zA-Z0-9]+)\\\"[^>]*\\/?>") };
+	private InternetAddress[] urls = new InternetAddress[] {
+			new InternetAddress("http://dilbert.com",
+					"<img[^>]*src=\"(?:https?:)?(//assets\\.amuniversal\\.com/[a-zA-Z0-9]+)\"[^>]*/?>"),
+			new InternetAddress("https:${1.1}", "") };
 
 	private HttpHeader[] httpHeaders = new HttpHeader[0];
 
