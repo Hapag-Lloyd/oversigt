@@ -15,6 +15,7 @@ export class StringEditorComponent extends AbstractValueAccessor implements OnIn
   inputType = null;
   values: string[];
   valueToTitle: {[key: string]: string} = {};
+  id = Math.round(Math.random() * 10000);
 
   ngOnInit() {
     // TODO: handle unique items

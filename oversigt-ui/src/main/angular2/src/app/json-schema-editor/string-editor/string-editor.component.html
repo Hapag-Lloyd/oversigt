@@ -9,8 +9,8 @@
     </div>
     <div *ngSwitchCase="'boolean'" class="checkbox">
       <div class="checkbox">
-        <input type="checkbox" id="{{schemaObject.title}}" [(ngModel)]="value">
-        <label for="{{schemaObject.title}}"></label>
+        <input type="checkbox" id="{{schemaObject.title}}_{{id}}" [(ngModel)]="value">
+        <label for="{{schemaObject.title}}_{{id}}"></label>
       </div>
     </div>
     <div *ngSwitchCase="'select'" class="clr-select-wrapper">
