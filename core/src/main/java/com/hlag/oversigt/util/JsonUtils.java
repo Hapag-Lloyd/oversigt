@@ -195,7 +195,7 @@ public class JsonUtils {
 		return map("type",
 				"string",
 				"uniqueItems",
-				true,
+				true, // TODO check whether this should always be true
 				//				"enum",
 				//				names,
 				"oversigt-ids",
@@ -233,7 +233,7 @@ public class JsonUtils {
 			return map("type",
 					"string",
 					"uniqueItems",
-					true,
+					true, // TODO check whether this should always be true
 					"oversigt-ids",
 					getEnumConstants((Class<Enum<?>>) clazz),
 					"enumSource",
