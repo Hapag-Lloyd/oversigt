@@ -69,9 +69,11 @@
 						</goals>
 						<phase>generate-resources</phase>
 						<configuration>
-							<executable>node_modules/@angular/cli/bin/ng</executable>
-							<!--<executable>ng</executable>-->
+							<!-- <executable>node_modules/@angular/cli/bin/ng</executable> -->
+							<!-- <executable>ng</executable> -->
+							<executable>node</executable>
 							<arguments>
+								<argument>node_modules/@angular/cli/bin/ng</argument>
 								<argument>build</argument>
 								<argument>--prod</argument>
 								<argument>--base-href</argument>
