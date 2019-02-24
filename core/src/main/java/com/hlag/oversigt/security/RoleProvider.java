@@ -29,6 +29,8 @@ public class RoleProvider {
 
 		if (adminUserIds.contains(userid.toLowerCase().trim())) {
 			roles.add(Role.SERVER_ADMIN);
+			roles.add(Role.DASHBOARD_OWNER);
+			roles.add(Role.DASHBOARD_EDITOR);
 			addWithDefaultRole(roles,
 					controller.getDashboardIds().stream().map(Role::getDashboardOwnerRole),
 					Role.DASHBOARD_OWNER);
