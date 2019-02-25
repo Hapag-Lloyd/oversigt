@@ -92,8 +92,8 @@ public class Authentication {
 			Utils.logChange(principal, "logged in");
 
 			// Return the token on the response
-			return ok(new AuthData(principal.getName(), token, findRolesForUser(principal)), MediaType.APPLICATION_JSON)
-					.build();
+			return ok(new AuthData(principal.getUsername(), principal.getName(), token, findRolesForUser(principal)),
+					MediaType.APPLICATION_JSON).build();
 		} catch (Exception e) {
 			LOGGER.warn("MAYBE " + username + " - tried to authenticate", e);
 			return ErrorResponse.forbidden("The user and password combination is unknown.");
@@ -117,7 +117,7 @@ public class Authentication {
 			Principal principal = authentication.validateToken(token);
 			newToken = authentication.issueToken(principal);
 
-			return ok(new AuthData(principal.getName(), newToken, findRolesForUser(principal)),
+			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
 		} catch (Exception e) {
 		}
@@ -171,6 +171,7 @@ public class Authentication {
 	@ToString
 	@AllArgsConstructor
 	public static class AuthData {
+		private String userId;
 		private String displayName;
 		private String token;
 		@NotNull

@@ -253,6 +253,7 @@ public class DashboardResource {
 				newDashboardData.getOwners().stream().filter(authenticator::isUsernameValid).collect(toList()));
 		newDashboardData.setEditors(
 				newDashboardData.getEditors().stream().filter(authenticator::isUsernameValid).collect(toList()));
+		// TODO notify changed users
 
 		// Prepare changes
 		// ===============

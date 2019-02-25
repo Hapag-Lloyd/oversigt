@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { DashboardService, DashboardInfo } from 'src/oversigt-client';
+import { DashboardService, DashboardInfo, Dashboard } from 'src/oversigt-client';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from 'src/app/services/user-service.service';
@@ -52,8 +52,8 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
       this.notification.warning('The ID you entered was empty. Cannot create dashboard.');
       return;
     }
-    this.ds.createDashboard(id, this.userService.getName(), this.userService.hasRole('server.admin')).subscribe(
-      dashboard => {
+    this.ds.createDashboard(id, this.userService.getUserId(), this.userService.hasRole('server.admin')).subscribe(
+      (dashboard: Dashboard) => {
         this.notification.success('Dashboard "' + dashboard.id + '" has been created.');
         this.router.navigateByUrl(getLinkForDashboard(dashboard.id));
       },

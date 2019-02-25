@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { ErrorHandlerService } from './error-handler.service';
 
 const USER_NAME = 'user.name';
+const USER_ID = 'user.id';
 const USER_TOKEN = 'user.token';
 const USER_ROLES = 'user.roles';
 const CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
@@ -15,6 +16,7 @@ const CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
 })
 export class UserService {
   private __name: string = null;
+  private __userid: string = null;
   private __token: string = null;
   private __roles: string[] = [];
 
@@ -30,6 +32,7 @@ export class UserService {
     private router: Router,
     private errorHandler: ErrorHandlerService,
   ) {
+    this.__userid = localStorage.getItem(USER_ID);
     this.__name = localStorage.getItem(USER_NAME);
     this.__token = localStorage.getItem(USER_TOKEN);
     this.__roles = JSON.parse(localStorage.getItem(USER_ROLES));
@@ -111,6 +114,10 @@ export class UserService {
     return this.name;
   }
 
+  getUserId(): string {
+    return this.userid;
+  }
+
   private get name(): string {
     return this.__name;
   }
@@ -118,6 +125,15 @@ export class UserService {
   private set name(name: string) {
     this.__name = name;
     localStorage.setItem(USER_NAME, name);
+  }
+
+  private get userid(): string {
+    return this.__userid;
+  }
+
+  private set userid(userid: string) {
+    this.__userid = userid;
+    localStorage.setItem(USER_ID, userid);
   }
 
   private get token(): string {
@@ -168,12 +184,13 @@ export class UserService {
   public logOut() {
     this.token = '';
     this.name = '';
+    this.userid = '';
     this.roles = [];
   }
 
   private relogIn(): void {
     console.log('re-login');
-    this.setAuthData({token: this.token, displayName: this.name, roles: this.roles});
+    this.setAuthData({userId: this.userid, token: this.token, displayName: this.name, roles: this.roles});
   }
 
   private setAuthData(data: AuthData): void {
