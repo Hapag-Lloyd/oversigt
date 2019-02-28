@@ -24,7 +24,6 @@ import com.hlag.oversigt.properties.DatabaseConnection;
 
 /**
  * @author Olaf Neumann
- *
  */
 public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 	protected static final Logger DB_LOGGER = LoggerFactory.getLogger("db");
@@ -52,7 +51,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		this.credentials = credentials;
 	}
 
-	@Property(name = "Query interval", description = "How often should this event source call the database?", needsRestart = false)
+	@Property(name = "Query interval", description = "How often should this event source call the database?")
 	public Duration getDatabaseQueryInterval() {
 		return databaseQueryInterval;
 	}
