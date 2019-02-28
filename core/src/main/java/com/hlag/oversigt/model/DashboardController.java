@@ -85,6 +85,7 @@ import com.hlag.oversigt.util.SimpleReadWriteLock;
 import com.hlag.oversigt.util.SneakyException;
 import com.hlag.oversigt.util.StringUtils;
 import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
 
 @Singleton
@@ -162,9 +163,12 @@ public class DashboardController {
 	 * Creates a new dashboard instance, persists it in the storage and makes it available for other
 	 * users.
 	 *
-	 * @param id the ID of the dashboard to be created
-	 * @param owner the owner of the dashboard to be created
-	 * @param enabled <code>true</code> if the dashboard should be enabled by default
+	 * @param id
+	 *            the ID of the dashboard to be created
+	 * @param owner
+	 *            the owner of the dashboard to be created
+	 * @param enabled
+	 *            <code>true</code> if the dashboard should be enabled by default
 	 * @return the newly created dashboard object or <code>null</code> if a dashboard with the given
 	 *         ID already exists.
 	 */
@@ -363,9 +367,11 @@ public class DashboardController {
 
 	private void removeEventSourceInstance(final EventSourceInstance instance) {
 		eventSourceInstances_lock.write(() -> {
-			/* This method is a work around because (why ever)
-			 * <code>eventSourceInstances_internal.remove(instance);</code>
-			 *  didn't work and did not remove the instance from the map. */
+			/*
+			 * This method is a work around because (why ever)
+			 * <code>eventSourceInstances_internal.remove(instance);</code> didn't work and did not
+			 * remove the instance from the map.
+			 */
 			Map<EventSourceInstance, Service> newMap = eventSourceInstances_internal.entrySet()
 					.stream()
 					.filter(e -> !e.getKey().equals(instance))
@@ -717,7 +723,8 @@ public class DashboardController {
 	/**
 	 * Delete an event source instance if the instance is not used any more
 	 *
-	 * @param eventSourceId the ID of the event source to remove
+	 * @param eventSourceId
+	 *            the ID of the event source to remove
 	 * @return <code>null</code> if the removal was successful or the names of all dashboards
 	 *         containing widgets that use this event source instance
 	 */
@@ -952,9 +959,7 @@ public class DashboardController {
 			}
 			hint = tmpClass.getAnnotation(JsonHint.class);
 		}
-		final boolean json = getOrDefault(property, Property::json, false) //
-				|| JsonBasedData.class.isAssignableFrom(clazz)
-				|| clazz.isArray() && JsonBasedData.class.isAssignableFrom(clazz.getComponentType());
+		final boolean json = !UiUtils.hasDedicatedEditor(clazz);
 		final String jsonSchema = json ? this.json.toJsonSchema(clazz, hint) : null;
 
 		final String inputType = getType(name,

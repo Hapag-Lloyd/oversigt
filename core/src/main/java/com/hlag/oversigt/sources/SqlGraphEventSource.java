@@ -116,11 +116,11 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		this.sqlStatement = sqlStatement;
 	}
 
+	@Property(name = "Titles", description = "Names of the values to display", needsRestart = true)
 	public String[] getTitles() {
 		return titles;
 	}
 
-	@Property(name = "Titles", description = "Names of the values to display", needsRestart = true, json = true)
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public void setTitles(String[] titles) {
 		this.titles = titles;

@@ -107,9 +107,8 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 	}
 
 	/**
-	 * Returns all matching DisplayOptions of an issue
-	 * The returned set is ordered by known categories first and unknown DisplayOptions last.
-	 * For no further ordering is guaranteed.
+	 * Returns all matching DisplayOptions of an issue The returned set is ordered by known
+	 * categories first and unknown DisplayOptions last. For no further ordering is guaranteed.
 	 */
 	private Set<DisplayOption> getDisplayOptions(Issue issue) {
 		// Collect attribute values to match
@@ -177,7 +176,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		this.query = query;
 	}
 
-	@Property(name = "Aggregate values by", json = true)
+	@Property(name = "Aggregate values by")
 	public AggregationType[] getAggregationTypes() {
 		return aggregationTypes.toArray(new AggregationType[0]);
 	}
@@ -189,7 +188,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
-	@Property(name = "Display Options", description = "Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.", json = true)
+	@Property(name = "Display Options", description = "Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.")
 	public DisplayOption[] getDisplayOptions() {
 		if (displayOptions == null) {
 			return new DisplayOption[0];
@@ -201,7 +200,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		this.displayOptions = displayOptions;
 	}
 
-	@Property(name = "Default Display Option", description = "Optionally all unmapped display values can be displayed by this color. By defining a Default Display Option display value, all unmapped display values are mapped to just one entry with that specified display value.", json = true)
+	@Property(name = "Default Display Option", description = "Optionally all unmapped display values can be displayed by this color. By defining a Default Display Option display value, all unmapped display values are mapped to just one entry with that specified display value.")
 	public DisplayOption getDefaultDisplayOption() {
 		return defaultDisplayOption;
 	}
@@ -278,8 +277,9 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			i -> i.getAssignee() == null ? null : i.getAssignee().getDisplayName()),
 		COMPONENTS( //
 			"Components",
-			i -> StreamSupport.stream(i.getComponents().spliterator(), false).map(BasicComponent::getName).collect(
-					Collectors.toSet()),
+			i -> StreamSupport.stream(i.getComponents().spliterator(), false)
+					.map(BasicComponent::getName)
+					.collect(Collectors.toSet()),
 			(i, v) -> v),
 		ISSUE_TYPE( //
 			"Issue Type",

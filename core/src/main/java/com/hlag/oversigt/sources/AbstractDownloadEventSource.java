@@ -295,7 +295,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		throw new IOException("Return code " + status + " from URL: " + connection.getURL());
 	}
 
-	@Property(name = "Internet Addresses", description = "The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.", json = true)
+	@Property(name = "Internet Addresses", description = "The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.")
 	public InternetAddress[] getUrls() {
 		return urls;
 	}
@@ -313,7 +313,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.credentials = credentials;
 	}
 
-	@Property(name = "HTTP Headers", description = "Possible HTTP headers to be sent to the server", json = true)
+	@Property(name = "HTTP Headers", description = "Possible HTTP headers to be sent to the server")
 	public HttpHeader[] getHttpHeaders() {
 		return httpHeaders != null ? httpHeaders : new HttpHeader[0];
 	}

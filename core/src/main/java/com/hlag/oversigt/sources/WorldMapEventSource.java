@@ -66,7 +66,7 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 		this.query = query;
 	}
 
-	@Property(name = "Type Mappings", description = "Change the color (type) of a point based on column values", json = true)
+	@Property(name = "Type Mappings", description = "Change the color (type) of a point based on column values")
 	public TypeMapping[] getTypeMappings() {
 		if (typeMappings != null) {
 			return typeMappings;

@@ -137,7 +137,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		//		}
 	}
 
-	@Property(name = "JSONPath Expressions", description = "The path to the values to be shown. If more than one item is returned one single value will be chosen randomly.", json = true)
+	@Property(name = "JSONPath Expressions", description = "The path to the values to be shown. If more than one item is returned one single value will be chosen randomly.")
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public String[] getPathExpressions() {
 		return pathExpressions;

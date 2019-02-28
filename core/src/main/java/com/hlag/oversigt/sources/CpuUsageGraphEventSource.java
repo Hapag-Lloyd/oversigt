@@ -140,8 +140,10 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 			// Read stdout
 			try (BufferedReader reader = Files.newBufferedReader(stdout)) {
-				List<String> lines = reader.lines().map(String::trim).filter(l -> !l.isEmpty()).collect(
-						Collectors.toList());
+				List<String> lines = reader.lines()
+						.map(String::trim)
+						.filter(l -> !l.isEmpty())
+						.collect(Collectors.toList());
 
 				if (lines.size() < 2) {
 					getLogger().error("Expected at least 2 filled lines in stdout of PsExec, got: " + lines.size());
@@ -175,7 +177,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		}
 	}
 
-	@Property(name = "Servers", description = "The servers to check.", needsRestart = true, json = true)
+	@Property(name = "Servers", description = "The servers to check.", needsRestart = true)
 	public Server[] getServers() {
 		if (servers != null) {
 			return servers;

@@ -33,7 +33,7 @@ public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> exte
 		this.limit = limit;
 	}
 
-	@Property(name = "Users to suppress", description = "If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.", json = true)
+	@Property(name = "Users to suppress", description = "If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.")
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public String[] getUsersToSuppress() {
 		return usersToSuppress != null ? usersToSuppress : new String[0];
@@ -43,7 +43,7 @@ public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> exte
 		this.usersToSuppress = usersToSuppress;
 	}
 
-	@Property(name = "Name mappings", description = "Some users have different user names. Use these mappings to map all the known user names to one single name.", json = true)
+	@Property(name = "Name mappings", description = "Some users have different user names. Use these mappings to map all the known user names to one single name.")
 	public NameMapping[] getNameMappings() {
 		return nameMappings != null ? nameMappings : new NameMapping[0];
 	}

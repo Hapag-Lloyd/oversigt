@@ -1,6 +1,8 @@
 package com.hlag.oversigt.sources;
 
-import static com.hlag.oversigt.util.Utils.*;
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logError;
+import static com.hlag.oversigt.util.Utils.logTrace;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -75,7 +77,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		this.defaultValue = defaultValue;
 	}
 
-	@Property(name = "Value Extraction", description = "Specify the values to extract and how to extract them.", json = true)
+	@Property(name = "Value Extraction", description = "Specify the values to extract and how to extract them.")
 	public ValueExtraction[] getValueExtractions() {
 		return valueExtractions;
 	}

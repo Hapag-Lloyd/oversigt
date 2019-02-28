@@ -201,11 +201,11 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 				.orElse(apiName);
 	}
 
+	@Property(name = "Holiday Name Correction", description = "Some holiday names are not the common used names. If you wish to change that name displayd in the UI please change it here.")
 	public HolidayNameCorrection[] getHolidayNameCorrections() {
 		return corrections;
 	}
 
-	@Property(name = "Holiday Name Correction", description = "Some holiday names are not the common used names. If you wish to change that name displayd in the UI please change it here.", json = true)
 	public void setHolidayNameCorrections(HolidayNameCorrection[] corrections) {
 		this.corrections = corrections;
 	}
@@ -309,7 +309,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		this.holidayArea = holidayArea;
 	}
 
-	@Property(name = "Birthdays", description = "Add any birthdays to be displayed in the timeline view", json = true)
+	@Property(name = "Birthdays", description = "Add any birthdays to be displayed in the timeline view")
 	public Birthday[] getBirthdays() {
 		return birthdays;
 	}

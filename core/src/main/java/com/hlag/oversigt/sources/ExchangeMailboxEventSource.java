@@ -214,7 +214,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	}
 
 	// TODO this property should be a property of the Widget, not of the EventSource. The EventSource needs to differentiate the categories, but it should be up to the Widget, how the categories are displayed
-	@Property(name = "Display Options", description = "Optional mapping of original display values to originated display options, such as value and color.", json = true)
+	@Property(name = "Display Options", description = "Optional mapping of original display values to originated display options, such as value and color.")
 	public DisplayOption[] getDisplayOptions() {
 		if (displayOptions == null) {
 			return new DisplayOption[0];
@@ -226,7 +226,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		this.displayOptions = displayOptions;
 	}
 
-	@Property(name = "Default Display Option", description = "Optionally all unmapped display values can be displayed by this value and color.", json = true)
+	@Property(name = "Default Display Option", description = "Optionally all unmapped display values can be displayed by this value and color.")
 	public DisplayOption getDefaultDisplayOption() {
 		return defaultDisplayOption;
 	}
