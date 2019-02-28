@@ -139,7 +139,7 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 		this.reloadInterval = reloadInterval;
 	}
 
-	@Property(name = "Show Date Column", description = "Determines whether the widget should show the date column or not", needsRestart = false)
+	@Property(name = "Show Date Column", description = "Determines whether the widget should show the date column or not")
 	public boolean isShowDateColumn() {
 		return showDateColumn;
 	}

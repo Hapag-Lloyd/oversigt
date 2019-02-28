@@ -74,7 +74,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 				rs -> IntStream.range(1, rs.getMetaData().getColumnCount() + 1)
 						.mapToObj(SneakyException.sneakyInt(rs::getLong))
 						.collect(toList()),
-				sqlStatement);
+				getSqlStatement());
 
 		if (!data.isEmpty()) {
 			values.put(ZonedDateTime.now(ZoneOffset.UTC), data.get(0));
@@ -107,7 +107,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		this.labelFormat = labelFormat;
 	}
 
-	@Property(name = "SQL", description = "SQL Statement returning one row", needsRestart = true, type = "sql")
+	@Property(name = "SQL", description = "SQL Statement returning one row", type = "sql")
 	public String getSqlStatement() {
 		return sqlStatement;
 	}
@@ -116,7 +116,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		this.sqlStatement = sqlStatement;
 	}
 
-	@Property(name = "Titles", description = "Names of the values to display", needsRestart = true)
+	@Property(name = "Titles", description = "Names of the values to display")
 	public String[] getTitles() {
 		return titles;
 	}

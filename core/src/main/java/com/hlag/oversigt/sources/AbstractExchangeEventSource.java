@@ -41,7 +41,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	private Credentials credentials = Credentials.EMPTY;
 	private ZoneId zoneId = ZoneId.systemDefault();
 
-	@Property(name = "Exchange Server", description = "The exchange server to connect to.", needsRestart = true)
+	@Property(name = "Exchange Server", description = "The exchange server to connect to.")
 	public final ServerConnection getServerConnection() {
 		return serverConnection;
 	}
@@ -59,7 +59,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		this.credentials = credentials;
 	}
 
-	@Property(name = "Time Zone", needsRestart = true, description = "The time zone that will be used for displayed dates and times")
+	@Property(name = "Time Zone", description = "The time zone that will be used for displayed dates and times")
 	public ZoneId getZoneId() {
 		return zoneId;
 	}

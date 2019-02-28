@@ -68,7 +68,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		return value.toString();
 	}
 
-	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match", type = "text")
+	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match")
 	public String getDefaultValue() {
 		return defaultValue;
 	}

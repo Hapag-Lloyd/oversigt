@@ -94,12 +94,15 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		Optional<ExchangeService> service = createExchangeService();
 		if (service.isPresent()) {
 			/*
-			 * start search two month in the past to fetch all running all day appointments, 5 month to handle a maternity leave for up to 2.5 months.
-			 * running all day events are also shown if they started in the past and continue to now or the future.
+			 * start search two month in the past to fetch all running all day appointments, 5 month
+			 * to handle a maternity leave for up to 2.5 months. running all day events are also
+			 * shown if they started in the past and continue to now or the future.
 			 */
 			CalendarView calendarView = getCalendarView(now.minusMonths(5).atStartOfDay(getZoneId()),
-					now.plus(getMaximumPointInFuture()).plus(getMaximumPointInFuture()).plusDays(1).atStartOfDay(
-							getZoneId()));
+					now.plus(getMaximumPointInFuture())
+							.plus(getMaximumPointInFuture())
+							.plusDays(1)
+							.atStartOfDay(getZoneId()));
 
 			FindItemsResults<Appointment> findResults;
 			try {
@@ -228,32 +231,32 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		this.minimumEventCount = minimumEventCount;
 	}
 
-	@Property(name = "Color for Mailbox Handling", type = "color")
+	@Property(name = "Color for Mailbox Handling")
 	public Color getColorMailbox() {
 		return colorMailbox;
 	}
 
-	@Property(name = "Color for \"Today\"", type = "color")
+	@Property(name = "Color for \"Today\"")
 	public Color getColorToday() {
 		return colorToday;
 	}
 
-	@Property(name = "Color for Out Of Office", type = "color")
+	@Property(name = "Color for Out Of Office")
 	public Color getColorOutOfOffice() {
 		return colorOutOfOffice;
 	}
 
-	@Property(name = "Color for Appointments", type = "color")
+	@Property(name = "Color for Appointments")
 	public Color getColorAppointment() {
 		return colorAppointment;
 	}
 
-	@Property(name = "Color for Birthdays", type = "color")
+	@Property(name = "Color for Birthdays")
 	public Color getColorBirthday() {
 		return colorBirthday;
 	}
 
-	@Property(name = "Color for national holiday", type = "color")
+	@Property(name = "Color for national holiday")
 	public Color getColorHoliday() {
 		return colorHoliday;
 	}

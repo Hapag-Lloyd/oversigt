@@ -177,7 +177,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		}
 	}
 
-	@Property(name = "Servers", description = "The servers to check.", needsRestart = true)
+	@Property(name = "Servers", description = "The servers to check.")
 	public Server[] getServers() {
 		if (servers != null) {
 			return servers;
