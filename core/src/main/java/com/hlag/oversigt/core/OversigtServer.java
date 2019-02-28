@@ -11,6 +11,7 @@ import static io.undertow.servlet.Servlets.servlet;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -98,8 +99,7 @@ import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
 
 /**
- * HTTP Server Controller. Bootstraps server and specifies all needed mappings
- * and request handlers
+ * HTTP Server Controller. Bootstraps server and specifies all needed mappings and request handlers
  *
  * @author avarabyeu
  * @author Olaf Neumann
@@ -258,10 +258,18 @@ public class OversigtServer extends AbstractIdleService {
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
 				// dashboard configuration
-				.get("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
-				.post("/{dashboard}/config", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
-				.get("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
-				.post("/{dashboard}/config/{page}", this::redirectToConfigPage/* securedDashboardConfigurationHandler*/)//
+				.get("/{dashboard}/config", this::redirectToConfigPage/*
+																		 * securedDashboardConfigurationHandler
+																		 */)//
+				.post("/{dashboard}/config", this::redirectToConfigPage/*
+																		 * securedDashboardConfigurationHandler
+																		 */)//
+				.get("/{dashboard}/config/{page}", this::redirectToConfigPage/*
+																				 * securedDashboardConfigurationHandler
+																				 */)//
+				.post("/{dashboard}/config/{page}", this::redirectToConfigPage/*
+																				 * securedDashboardConfigurationHandler
+																				 */)//
 				.get("/{dashboard}/create", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create", securedDashboardCreationHandler)//
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
@@ -313,7 +321,14 @@ public class OversigtServer extends AbstractIdleService {
 		server = builder.setHandler(accessHandler).build();
 
 		LOGGER.info("Starting web server");
-		server.start();
+		try {
+			server.start();
+		} catch (Exception e) {
+			if (e.getCause() instanceof BindException) {
+				LOGGER.error("Cannot start server", e.getCause());
+				stopAsync();
+			}
+		}
 
 		nightlyReloader.startAsync();
 		if (startEventSources) {
@@ -524,9 +539,9 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	/**
-	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts
-	 * compilation and saas processing Wro4j uses Servlet API so we make fake
-	 * Servlet Deployment here to emulate servlet-based environment
+	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts compilation and saas
+	 * processing Wro4j uses Servlet API so we make fake Servlet Deployment here to emulate
+	 * servlet-based environment
 	 *
 	 * @return Static resources handler
 	 */
