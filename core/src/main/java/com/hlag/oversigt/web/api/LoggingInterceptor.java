@@ -62,10 +62,11 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 						}
 					}
 					Utils.logChange(principal,
-							"Called method %s.%s(" + values.stream().collect(Collectors.joining(", ")) + ")",
+							"Called method %s.%s(%s)",
 							method.getDeclaringClass().getSimpleName(),
-							method.getName());
-				} else if (responseContext.getStatus() == 401/*UNAUTHORIZED*/) {
+							method.getName(),
+							values.stream().collect(Collectors.joining(", ")));
+				} else if (responseContext.getStatus() == 401/* UNAUTHORIZED */) {
 					Utils.logChange("somebody",
 							"Failed calling %s.%s()",
 							method.getDeclaringClass().getSimpleName(),
