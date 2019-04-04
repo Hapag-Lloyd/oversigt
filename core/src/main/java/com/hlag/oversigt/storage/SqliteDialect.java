@@ -15,52 +15,74 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String getJdbcConnectionUrl(String location, String schemaName, String username, String password) {
+	public String getJdbcConnectionUrl(final String location,
+			final String schemaName,
+			final String username,
+			final String password) {
 		return "jdbc:sqlite:" + location;
 	}
 
 	@Override
-	public String select(String tableName,
-			Collection<String> select,
-			Collection<String> where,
-			String columnIn,
-			boolean notIn,
-			long inValues) {
+	public String select(final String tableName,
+			final Collection<String> select,
+			final Collection<String> where,
+			final String columnIn,
+			final boolean notIn,
+			final long inValues) {
 		String sql = "SELECT ";
 		if (select != null && !select.isEmpty()) {
 			sql += select.stream().collect(Collectors.joining(","));
 		} else {
 			sql += "*";
 		}
-		sql += " FROM " + tableName;
+		return sql + getFromAndWhere(tableName, where, columnIn, notIn, inValues);
+	}
+
+	private String getFromAndWhere(final String tableName,
+			final Collection<String> where,
+			final String columnIn,
+			final boolean notIn,
+			final long inValues) {
+		// from
+		final StringBuilder sql = new StringBuilder(" FROM " + tableName);
+
+		// where
 		if (where != null && !where.isEmpty() || columnIn != null && inValues > 0) {
-			sql += " WHERE ";
-			boolean needAnd = false;
+			sql.append(" WHERE ");
+
+			// equals
+			boolean needAnd;
 			if (where != null && !where.isEmpty()) {
-				sql += where.stream().map(s -> s + "=?").collect(Collectors.joining(" AND "));
+				sql.append(where.stream().map(s -> s + " = ?").collect(Collectors.joining(" AND ")));
 				needAnd = true;
+			} else {
+				needAnd = false;
 			}
+
+			// in
 			if (columnIn != null && inValues > 0) {
 				if (needAnd) {
-					sql += " AND ";
+					sql.append(" AND ");
 				}
 				if (notIn) {
-					sql += " NOT ";
+					sql.append(" NOT ");
 				}
-				sql += columnIn + " IN (" + Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(","))
-						+ ")";
+				sql.append(columnIn
+						+ " IN ("
+						+ Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(", "))
+						+ ")");
 			}
 		} else if (inValues == -1) {
-			sql += " WHERE 1!=1 -- IN values are not set\n";
+			sql.append(" WHERE 1 <> 1 -- IN values are not set");
 		}
-		return sql.trim();
+		return sql.toString();
 	}
 
 	@Override
-	public String selectithOneLike(String tableName,
-			Collection<String> select,
-			Collection<String> columnsToCheck,
-			String columnWithLike) {
+	public String selectWithOneLike(final String tableName,
+			final Collection<String> select,
+			final Collection<String> columnsToCheck,
+			final String columnWithLike) {
 		String sql = "SELECT ";
 		if (select != null && !select.isEmpty()) {
 			sql += select.stream().collect(Collectors.joining(","));
@@ -77,7 +99,7 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String insert(String tableName, Collection<String> columns) {
+	public String insert(final String tableName, final Collection<String> columns) {
 		String sql = "INSERT INTO " + tableName + " (";
 		sql += columns.stream().collect(joining(","));
 		sql += ") VALUES (";
@@ -87,7 +109,9 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String update(String tableName, Collection<String> valueNames, Collection<String> whereNames) {
+	public String update(final String tableName,
+			final Collection<String> valueNames,
+			final Collection<String> whereNames) {
 		String sql = "UPDATE " + tableName + " SET ";
 		sql += valueNames.stream().map(k -> k + "=?").collect(joining(","));
 		sql += " WHERE ";
@@ -96,7 +120,7 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String delete(String tableName, Collection<String> whereNames) {
+	public String delete(final String tableName, final Collection<String> whereNames) {
 		String sql = "DELETE FROM " + tableName + " WHERE ";
 		sql += whereNames//
 				.stream()//
@@ -106,52 +130,39 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String delete(String tableName, Collection<String> where, String columnIn, boolean notIn, long inValues) {
-		String sql = "DELETE FROM " + tableName;
-		if (where != null && !where.isEmpty() || columnIn != null && inValues > 0) {
-			sql += " WHERE ";
-			boolean needAnd = false;
-			if (where != null && !where.isEmpty()) {
-				sql += where.stream().map(s -> s + "=?").collect(Collectors.joining(" AND "));
-				needAnd = true;
-			}
-			if (columnIn != null && inValues > 0) {
-				if (needAnd) {
-					sql += " AND ";
-				}
-				if (notIn) {
-					sql += " NOT ";
-				}
-				sql += columnIn + " IN (" + Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(","))
-						+ ")";
-			}
-		}
-		return sql;
+	public String delete(final String tableName,
+			final Collection<String> where,
+			final String columnIn,
+			final boolean notIn,
+			final long inValues) {
+		return "DELETE" + getFromAndWhere(tableName, where, columnIn, notIn, inValues);
 	}
 
 	@Override
-	public String createTable(String name, ColumnOptions... columns) {
+	public String createTable(final String name, final ColumnOptions... columns) {
 		String sql = "CREATE TABLE " + name + " (";
-		long pkColumnCount = Stream.of(columns).filter(c -> c.primaryKey).count();
-		boolean hasUnique = Stream.of(columns).filter(c -> c.unique).findAny().isPresent();
+		final long pkColumnCount = Stream.of(columns).filter(c -> c.primaryKey).count();
+		final boolean hasUnique = Stream.of(columns).filter(c -> c.unique).findAny().isPresent();
 		sql += Stream//
 				.of(columns)//
 				.map(c -> getColumnDefinition(c, pkColumnCount == 1))//
 				.collect(Collectors.joining(","));
 		if (pkColumnCount > 1) {
-			sql += ", PRIMARY KEY (" + Stream//
-					.of(columns)//
-					.filter(c -> c.primaryKey)//
-					.map(c -> c.name)//
-					.collect(Collectors.joining(",")) //
+			sql += ", PRIMARY KEY ("
+					+ Stream//
+							.of(columns)//
+							.filter(c -> c.primaryKey)//
+							.map(c -> c.name)//
+							.collect(Collectors.joining(",")) //
 					+ ")";
 		}
 		if (hasUnique) {
-			sql += ", UNIQUE (" + Stream//
-					.of(columns)//
-					.filter(c -> c.unique)//
-					.map(c -> c.name)//
-					.collect(Collectors.joining(",")) //
+			sql += ", UNIQUE ("
+					+ Stream//
+							.of(columns)//
+							.filter(c -> c.unique)//
+							.map(c -> c.name)//
+							.collect(Collectors.joining(",")) //
 					+ ")";
 		}
 		sql += ")";
@@ -159,7 +170,7 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String alterTableAddColumn(String tableName, ColumnOptions option) {
+	public String alterTableAddColumn(final String tableName, final ColumnOptions option) {
 		String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + option.name + " " + getTypeName(option.type);
 		if (!option.nullable) {
 			sql += " NOT NULL";
@@ -176,13 +187,13 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	@Override
-	public String alterTableDropColumn(String tableName, String columnName) {
+	public String alterTableDropColumn(final String tableName, final String columnName) {
 		throw new RuntimeException("DROP COLUMN is not supported by SQLite");
-		//return "ALTER TABLE " + tableName + " DROP COLUMN " + columnName;
+		// return "ALTER TABLE " + tableName + " DROP COLUMN " + columnName;
 	}
 
 	@Override
-	public Object convertValue(Object object) {
+	public Object convertValue(final Object object) {
 		if (object instanceof Boolean) {
 			return (Boolean) object ? 1 : 0;
 		} else if (object instanceof Duration) {
@@ -192,7 +203,7 @@ public class SqliteDialect implements SqlDialect {
 		}
 	}
 
-	private String getColumnDefinition(ColumnOptions column, boolean withPrimaryKey) {
+	private String getColumnDefinition(final ColumnOptions column, final boolean withPrimaryKey) {
 		String sql = column.name + " " + getTypeName(column.type);
 		if (withPrimaryKey && column.primaryKey) {
 			sql += " PRIMARY KEY";
@@ -208,22 +219,22 @@ public class SqliteDialect implements SqlDialect {
 		return sql;
 	}
 
-	private String getTypeName(ColumnType type) {
+	private String getTypeName(final ColumnType type) {
 		switch (type) {
-			case Text:
-				return "TEXT";
-			case Float:
-				return "REAL";
-			case Integer:
-				return "INTEGER";
-			case BigInteger:
-				return "BIGINT";
-			case Timestamp:
-				return "TIMESTAMP";
-			case Boolean:
-				return "INTEGER(1)";
-			default:
-				throw new RuntimeException("Unknown column type: " + type.name());
+		case Text:
+			return "TEXT";
+		case Float:
+			return "REAL";
+		case Integer:
+			return "INTEGER";
+		case BigInteger:
+			return "BIGINT";
+		case Timestamp:
+			return "TIMESTAMP";
+		case Boolean:
+			return "INTEGER(1)";
+		default:
+			throw new RuntimeException("Unknown column type: " + type.name());
 		}
 	}
 }

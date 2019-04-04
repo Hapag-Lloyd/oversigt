@@ -208,7 +208,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			Object[] valuesToCheck,
 			String columnToCheckWithLike,
 			String likeValue) {
-		return load(getDialect().selectithOneLike(table,
+		return load(getDialect().selectWithOneLike(table,
 				Arrays.asList(columnToRead),
 				Arrays.asList(columnsToCheck),
 				columnToCheckWithLike), rs -> (T) rs.getObject(1), simplify(valuesToCheck, likeValue));

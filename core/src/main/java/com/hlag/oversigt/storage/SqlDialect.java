@@ -34,7 +34,7 @@ public interface SqlDialect {
 			boolean notIn,
 			long inValues);
 
-	String selectithOneLike(String tableName,
+	String selectWithOneLike(String tableName,
 			Collection<String> select,
 			Collection<String> columnsToCheck,
 			String columnWithLike);
