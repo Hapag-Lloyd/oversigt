@@ -61,18 +61,6 @@ public abstract class DatabaseCache<T> {
 		return items;
 	}
 
-	private synchronized boolean shouldReadItems() {
-		final LocalDateTime now = LocalDateTime.now();
-		final boolean yes = lastAccess.get() == null || lastAccess.get().plus(getDurationBetweenReads()).isBefore(now);
-		if (yes) {
-			lastAccess.set(now);
-		}
-		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Should read items: " + yes);
-		}
-		return yes;
-	}
-
 	public List<T> getItems(final Connection connection) throws SQLException {
 		if (shouldReadItems()) {
 			if (LOGGER.isDebugEnabled()) {
@@ -85,6 +73,18 @@ public abstract class DatabaseCache<T> {
 			this.items.set(items);
 		}
 		return items.get();
+	}
+
+	private synchronized boolean shouldReadItems() {
+		final LocalDateTime now = LocalDateTime.now();
+		final boolean yes = lastAccess.get() == null || lastAccess.get().plus(getDurationBetweenReads()).isBefore(now);
+		if (yes) {
+			lastAccess.set(now);
+		}
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Should read items: " + yes);
+		}
+		return yes;
 	}
 
 	protected abstract Collection<T> readItems(Connection connection) throws SQLException;

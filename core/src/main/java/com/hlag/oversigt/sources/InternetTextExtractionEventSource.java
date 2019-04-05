@@ -162,7 +162,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 
 		private final Collector<CharSequence, ?, ?> collector;
 
-		private Summarization(final Collector<CharSequence, ?, ?> collector) {
+		Summarization(final Collector<CharSequence, ?, ?> collector) {
 			this.collector = collector;
 		}
 

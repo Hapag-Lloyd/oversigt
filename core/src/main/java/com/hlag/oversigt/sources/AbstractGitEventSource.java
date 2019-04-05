@@ -119,7 +119,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 			@Nonnull final Instant from,
 			@Nullable final Instant to) {
 		return r -> {
-			final Instant time = getTimeFunction.apply(r);// Instant.ofEpochSecond(r.getCommitTime());
+			final Instant time = getTimeFunction.apply(r);
 			return (null == to || time.isBefore(to)) && time.isAfter(from);
 		};
 	}

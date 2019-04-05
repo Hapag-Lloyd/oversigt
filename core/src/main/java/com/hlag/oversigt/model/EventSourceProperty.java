@@ -24,7 +24,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	private final String description;
 
 	@NotBlank
-	private final String inputType;// = "text";
+	private final String inputType;
 
 	private final Map<@NotNull String, @NotNull String> allowedValues = new LinkedHashMap<>();
 

@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
  * @author Olaf Neumann
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.TYPE })
+@Target(ElementType.TYPE)
 public @interface NoCache {}

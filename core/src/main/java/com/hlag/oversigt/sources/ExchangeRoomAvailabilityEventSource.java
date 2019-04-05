@@ -541,7 +541,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 		private ZonedDateTime end;
 
-		public TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
+		TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
 			this.start = Objects.requireNonNull(start);
 			this.end = Objects.requireNonNull(end);
 		}

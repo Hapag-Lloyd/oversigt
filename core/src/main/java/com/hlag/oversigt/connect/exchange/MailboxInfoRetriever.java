@@ -352,7 +352,7 @@ public class MailboxInfoRetriever {
 
 		private final String folderName;
 
-		public Key(final String mailboxName, final String folderName) {
+		Key(final String mailboxName, final String folderName) {
 			this.mailboxName = mailboxName;
 			this.folderName = folderName;
 		}

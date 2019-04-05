@@ -200,7 +200,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 
 		private final Function<Collection<?>, ?> extractor;
 
-		private MultiResultBehaviour(final Function<Collection<?>, ?> extractor) {
+		MultiResultBehaviour(final Function<Collection<?>, ?> extractor) {
 			this.extractor = extractor;
 		}
 

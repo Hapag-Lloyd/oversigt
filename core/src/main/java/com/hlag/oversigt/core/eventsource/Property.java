@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @author Olaf Neumann
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value = { ElementType.METHOD })
+@Target(ElementType.METHOD)
 @Documented
 public @interface Property {
 

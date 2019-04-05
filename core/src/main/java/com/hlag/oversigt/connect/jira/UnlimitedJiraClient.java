@@ -17,7 +17,7 @@ class UnlimitedJiraClient implements JiraClient {
 
 	private static final Table<String, String, UnlimitedJiraClient> CLIENT_CACHE = HashBasedTable.create();
 
-	synchronized static JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
+	static synchronized JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
 			throws JiraClientException {
 		if (!CLIENT_CACHE.contains(connection.getUrl(), credentials.getUsername())) {
 			CLIENT_CACHE.put(connection.getUrl(),

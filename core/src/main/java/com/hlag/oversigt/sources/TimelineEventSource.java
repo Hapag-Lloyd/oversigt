@@ -52,17 +52,17 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private int minimumEventCount = 0;
 
-	private Color colorToday = Color.Green;// "#008000"; // green
+	private Color colorToday = Color.Green;
 
-	private Color colorAppointment = Color.Blue;// "#0000FF"; // blue
+	private Color colorAppointment = Color.Blue;
 
-	private Color colorBirthday = Color.Yellow;// "#FFFF00"; // yellow
+	private Color colorBirthday = Color.Yellow;
 
-	private Color colorHoliday = Color.Grey;// "#808080"; // grey
+	private Color colorHoliday = Color.Grey;
 
-	private Color colorOutOfOffice = Color.Blue;// "#808080"; // blue
+	private Color colorOutOfOffice = Color.Blue;
 
-	private Color colorMailbox = Color.Blue;// "#808080"; // blue
+	private Color colorMailbox = Color.Blue;
 
 	private HolidayCalendar holidayCalendar = HolidayCalendar.GERMANY;
 

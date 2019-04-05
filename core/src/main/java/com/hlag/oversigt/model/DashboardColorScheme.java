@@ -14,7 +14,7 @@ public enum DashboardColorScheme {
 
 	private final Set<String> names;
 
-	private DashboardColorScheme(final String... names) {
+	DashboardColorScheme(final String... names) {
 		this.names = new HashSet<>(Arrays.asList(names));
 	}
 

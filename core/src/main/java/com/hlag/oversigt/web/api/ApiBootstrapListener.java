@@ -232,7 +232,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 	private static class ApiBootstrapException extends RuntimeException {
 		private static final long serialVersionUID = 7618319300693716653L;
 
-		public ApiBootstrapException(final String message) {
+		ApiBootstrapException(final String message) {
 			super(message);
 		}
 	}

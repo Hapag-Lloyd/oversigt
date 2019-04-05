@@ -151,7 +151,8 @@ public abstract class SshConnection {
 	}
 
 	public List<ProcessInfo> getTopProcesses(final String... greps) {
-		String command = "ps -e -o pcpu,args | /bin/sort -u -r";// | grep DataFlowEngine | grep -v ksh | head"
+		// | grep DataFlowEngine | grep -v ksh | head"
+		String command = "ps -e -o pcpu,args | /bin/sort -u -r";
 		for (final String grep : greps) {
 			command += " | grep " + grep;
 		}

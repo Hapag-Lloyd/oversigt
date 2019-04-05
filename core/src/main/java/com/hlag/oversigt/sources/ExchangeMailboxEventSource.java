@@ -154,7 +154,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 		private int unread = 0;
 
-		public CategoryInfo(final DisplayOption option) {
+		CategoryInfo(final DisplayOption option) {
 			this.option = Objects.requireNonNull(option);
 		}
 

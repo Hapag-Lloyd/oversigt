@@ -52,7 +52,7 @@ public interface SqlDialect {
 
 	Object convertValue(Object object);
 
-	public enum ColumnType {
+	enum ColumnType {
 		Text,
 		Integer,
 		BigInteger,
@@ -63,7 +63,7 @@ public interface SqlDialect {
 		Time
 	}
 
-	public static class ColumnOptions {
+	class ColumnOptions {
 
 		final String name;
 

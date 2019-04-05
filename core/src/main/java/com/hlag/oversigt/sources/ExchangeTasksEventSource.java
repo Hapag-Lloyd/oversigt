@@ -33,7 +33,7 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 
 		private final String valueStyle;
 
-		private Style(final String labelStyle, final String valueStyle) {
+		Style(final String labelStyle, final String valueStyle) {
 			this.labelStyle = labelStyle;
 			this.valueStyle = valueStyle;
 		}

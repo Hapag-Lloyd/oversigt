@@ -369,14 +369,14 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 		private final BiFunction<Issue, String, String> displayValueProducer;
 
-		private AggregationType(final String displayValue, final Function<Issue, String> attributeValueProducer) {
+		AggregationType(final String displayValue, final Function<Issue, String> attributeValueProducer) {
 			this(displayValue, i -> {
 				final String value = attributeValueProducer.apply(i);
 				return value == null ? Collections.emptyList() : Arrays.asList(value);
 			}, (i, v) -> v);
 		}
 
-		private AggregationType(final String displayValue,
+		AggregationType(final String displayValue,
 				final Function<Issue, String> attributeValueProducer,
 				final Function<Issue, String> displayValueProducer) {
 			this(displayValue, i -> {
@@ -385,7 +385,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			}, (i, v) -> displayValueProducer.apply(i));
 		}
 
-		private AggregationType(final String displayValue,
+		AggregationType(final String displayValue,
 				final Function<Issue, Collection<String>> attributeValuesProducer,
 				final BiFunction<Issue, String, String> displayValueProducer) {
 			this.attributeValuesProducer = attributeValuesProducer;
