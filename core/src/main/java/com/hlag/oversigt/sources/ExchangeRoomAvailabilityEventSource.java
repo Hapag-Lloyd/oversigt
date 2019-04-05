@@ -54,15 +54,18 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 /**
  * @author Olaf Neumann
  */
-@EventSource(view = "MeetingRooms", displayName = "Microsoft Exchange Meeting Room Availability", description = "Shows the room availability from Microsoft Exchange for a configurable collection of rooms.", hiddenDataItems = {
-		"moreinfo" })
+@EventSource(view = "MeetingRooms",
+		displayName = "Microsoft Exchange Meeting Room Availability",
+		description = "Shows the room availability from Microsoft Exchange for a configurable collection of rooms.",
+		hiddenDataItems = { "moreinfo" })
 public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource<RoomAvailabilityListEvent> {
 	private static final boolean FAIL_SAFE = true;
 
 	@Override
 	protected RoomAvailabilityListEvent produceExchangeEvent() throws Exception {
-		ZonedDateTime now = ZonedDateTime.now(getZoneId());
-		Map<Room, List<Meeting>> meetings = getMeetings(getRooms(), createExchangeService().get(), now.toLocalDate());
+		final ZonedDateTime now = ZonedDateTime.now(getZoneId());
+		final Map<Room, List<Meeting>> meetings
+				= getMeetings(getRooms(), createExchangeService().get(), now.toLocalDate());
 		if (meetings == null) {
 			return null;
 		}
@@ -75,11 +78,11 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 		final List<RoomAvailabilityItem> sortedItems;
 		if (isAvailableRoomsToTop()) {
-			Comparator<RoomAvailabilityItem> compareByFree = (a, b) -> Boolean.compare(b.free, a.free);
-			Comparator<RoomAvailabilityItem> compareByUntil = (a, b) -> (a.free ? -1 : 1)
+			final Comparator<RoomAvailabilityItem> compareByFree = (a, b) -> Boolean.compare(b.free, a.free);
+			final Comparator<RoomAvailabilityItem> compareByUntil = (a, b) -> (a.free ? -1 : 1)
 					* a.until.orElse(LocalTime.MAX).compareTo(b.until.orElse(LocalTime.MAX));
-			Comparator<RoomAvailabilityItem> compareByIndex = (a, b) -> unsortedItems.indexOf(a)
-					- unsortedItems.indexOf(b);
+			final Comparator<RoomAvailabilityItem> compareByIndex
+					= (a, b) -> unsortedItems.indexOf(a) - unsortedItems.indexOf(b);
 
 			sortedItems = unsortedItems.stream()
 					.sorted(compareByFree.thenComparing(compareByUntil).thenComparing(compareByIndex))
@@ -91,10 +94,12 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return new RoomAvailabilityListEvent(sortedItems);
 	}
 
-	private RoomAvailabilityItem checkRoomAvailability(ZonedDateTime when, Room room, Collection<Meeting> meetings) {
-		BusyState bs = new BusyState();
+	private RoomAvailabilityItem checkRoomAvailability(final ZonedDateTime when,
+			final Room room,
+			final Collection<Meeting> meetings) {
+		final BusyState bs = new BusyState();
 		meetings.forEach(meeting -> bs.add(meeting.getStart(), meeting.getEnd()));
-		DateTimeFormatter formatter = getDateFormatter();
+		final DateTimeFormatter formatter = getDateFormatter();
 		return new RoomAvailabilityItem(room,
 				!bs.isBusy(when),
 				bs.currentStateUntil(when)
@@ -104,61 +109,65 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 				formatter);
 	}
 
-	private Map<Room, List<Meeting>> getMeetings(Room[] rooms, ExchangeService service, LocalDate day)
+	private Map<Room, List<Meeting>> getMeetings(final Room[] rooms, final ExchangeService service, final LocalDate day)
 			throws Exception {
 		if (FAIL_SAFE) {
-			return getMeetings_viaAttendeeInfo(rooms,
+			return getMeetingsViaAttendeeInfo(rooms,
 					service,
 					day.atStartOfDay(getZoneId()),
 					day.plusDays(1).atStartOfDay(getZoneId()));
 		} else {
-			return Stream.of(rooms).collect(
-					Collectors.toMap(Function.identity(), room -> getMeetings_viaAppointment(room, service, day)));
+			return Stream.of(rooms)
+					.collect(Collectors.toMap(Function.identity(),
+							room -> getMeetingsViaAppointment(room, service, day)));
 		}
 	}
 
-	private List<Meeting> getMeetings_viaAppointment(Room room, ExchangeService service, LocalDate day) {
+	private List<Meeting> getMeetingsViaAppointment(final Room room,
+			final ExchangeService service,
+			final LocalDate day) {
 		try {
-			CalendarFolder cf = CalendarFolder.bind(service,
+			final CalendarFolder cf = CalendarFolder.bind(service,
 					new FolderId(WellKnownFolderName.Calendar, new Mailbox(room.smtpAddress)));
-			CalendarView cv = getCalendarView(day.atStartOfDay(getZoneId()), day.atStartOfDay(getZoneId()).plusDays(1));
+			final CalendarView cv
+					= getCalendarView(day.atStartOfDay(getZoneId()), day.atStartOfDay(getZoneId()).plusDays(1));
 
-			FindItemsResults<Appointment> apps = cf.findAppointments(cv);
-			List<Meeting> meetings = new ArrayList<>();
-			for (Appointment app : apps) {
+			final FindItemsResults<Appointment> apps = cf.findAppointments(cv);
+			final List<Meeting> meetings = new ArrayList<>();
+			for (final Appointment app : apps) {
 				meetings.add(new Meeting(room, app, app.getStart(), app.getEnd(), app.getSubject(), getZoneId()));
 			}
 			return meetings;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			if (e instanceof ServiceRequestException && "The request failed. 40".equals(e.getMessage())) {
-				//Happens sometimes. Ignore it
+				// Happens sometimes. Ignore it
 				return null;
 			} else if (e instanceof ServiceResponseException
 					&& "The specified folder could not be found in the store.".equals(e.getMessage())) {
-				getLogger().warn("Unable to get Meetings for " + room.name + ". " + e.getMessage(), e);
-				return null;
-			}
+						getLogger().warn("Unable to get Meetings for " + room.name + ". " + e.getMessage(), e);
+						return null;
+					}
 			throw new RuntimeException("Unable to get appointments", e);
 		}
 	}
 
-	private Map<Room, List<Meeting>> getMeetings_viaAttendeeInfo(Room[] rooms,
-			ExchangeService service,
-			ZonedDateTime from,
-			ZonedDateTime to) throws Exception {
-		Instant fromInstant = from.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
-		Instant toInstant = to.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
+	private Map<Room, List<Meeting>> getMeetingsViaAttendeeInfo(final Room[] rooms,
+			final ExchangeService service,
+			final ZonedDateTime from,
+			final ZonedDateTime to) throws Exception {
+		final Instant fromInstant = from.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
+		final Instant toInstant = to.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
 
-		List<AttendeeInfo> attendees = Arrays.asList(rooms).stream().map(r -> new AttendeeInfo(r.smtpAddress)).collect(
-				Collectors.toList());
+		final List<AttendeeInfo> attendees
+				= Arrays.asList(rooms).stream().map(r -> new AttendeeInfo(r.smtpAddress)).collect(Collectors.toList());
 
-		GetUserAvailabilityResults result = service
-				.getUserAvailability(attendees, getTimeWindow(from, to), AvailabilityData.FreeBusy);
+		final GetUserAvailabilityResults result
+				= service.getUserAvailability(attendees, getTimeWindow(from, to), AvailabilityData.FreeBusy);
 
 		int index = 0;
-		Map<Room, List<Meeting>> meetings = new LinkedHashMap<>();
-		for (AttendeeAvailability availability : result.getAttendeesAvailability()) {
-			Room room = rooms[index];
+		final Map<Room, List<Meeting>> meetings = new LinkedHashMap<>();
+		for (final AttendeeAvailability availability : result.getAttendeesAvailability()) {
+			final Room room = rooms[index];
 			meetings.put(room,
 					availability.getCalendarEvents()
 							.stream()
@@ -172,24 +181,27 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return meetings;
 	}
 
-	private TimeWindow getTimeWindow(ZonedDateTime fromTime, ZonedDateTime toTime) {
+	private TimeWindow getTimeWindow(final ZonedDateTime fromTime, final ZonedDateTime toTime) {
 		assert fromTime.isBefore(toTime);
 
-		LocalDate fromDate = fromTime.toLocalDate();
+		final LocalDate fromDate = fromTime.toLocalDate();
 		LocalDate toDate = toTime.toLocalDate();
 		if (toTime.isAfter(toDate.atStartOfDay(getZoneId())) || fromDate.isEqual(toDate)) {
 			toDate = toDate.plusDays(1);
 		}
 
-		// Following the UTC conversion at TimeWindow.writeToXmlUnscopedDatesOnly(EwsServiceXmlWriter, String)
-		Date start = Date.from(fromDate.atStartOfDay(ZoneOffset.UTC).toInstant());
-		Date end = Date.from(toDate.atStartOfDay(ZoneOffset.UTC).toInstant());
+		// Following the UTC conversion at
+		// TimeWindow.writeToXmlUnscopedDatesOnly(EwsServiceXmlWriter, String)
+		final Date start = Date.from(fromDate.atStartOfDay(ZoneOffset.UTC).toInstant());
+		final Date end = Date.from(toDate.atStartOfDay(ZoneOffset.UTC).toInstant());
 
 		return new TimeWindow(start, end);
 	}
 
 	private Room[] rooms = new Room[] { new Room() };
+
 	private boolean availableRoomsToTop = false;
+
 	private String dateFormat = "HH:mm";
 
 	@Property(name = "Rooms", description = "The rooms to be checked and to be displayed in the widget.")
@@ -197,7 +209,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return rooms;
 	}
 
-	public void setRooms(Room[] rooms) {
+	public void setRooms(final Room[] rooms) {
 		this.rooms = rooms;
 	}
 
@@ -205,8 +217,9 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return availableRoomsToTop;
 	}
 
-	@Property(name = "Available Rooms To Top", description = "If selected the available rooms will be moved to the top of the room list.")
-	public void setAvailableRoomsToTop(boolean availableRoomsToTop) {
+	@Property(name = "Available Rooms To Top",
+			description = "If selected the available rooms will be moved to the top of the room list.")
+	public void setAvailableRoomsToTop(final boolean availableRoomsToTop) {
 		this.availableRoomsToTop = availableRoomsToTop;
 	}
 
@@ -219,19 +232,21 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		return DateTimeFormatter.ofPattern(getDateFormatString());
 	}
 
-	public void setDateFormatString(String dateFormat) {
+	public void setDateFormatString(final String dateFormat) {
 		this.dateFormat = dateFormat;
 	}
 
 	@JsonHint(headerTemplate = "{{self.name}}", arrayStyle = ArrayStyle.TABLE)
 	public static class Room implements JsonBasedData, Comparable<Room> {
 		public String name = "RoomName";
+
 		public String smtpAddress = "roomname@exchange.com";
+
 		public String roomNumber = "123";
 
 		@Override
-		public int compareTo(Room that) {
-			return String.CASE_INSENSITIVE_ORDER.compare(this.name, that.name);
+		public int compareTo(final Room that) {
+			return String.CASE_INSENSITIVE_ORDER.compare(name, that.name);
 		}
 
 		@Override
@@ -243,26 +258,38 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	public static class Meeting {
 
 		private final Room room;
+
 		private final ZonedDateTime start;
+
 		private final ZonedDateTime end;
+
 		private final String organizer;
+
 		private final Appointment appointment;
 
-		private Meeting(Room room, CalendarEvent event, ZoneId zone) {
-			this(
-				room,
-				null,
-				event.getStartTime(),
-				event.getEndTime(),
-				event.getDetails() != null ? event.getDetails().getSubject() : "Unknown",
-				zone);
+		private Meeting(final Room room, final CalendarEvent event, final ZoneId zone) {
+			this(room,
+					null,
+					event.getStartTime(),
+					event.getEndTime(),
+					event.getDetails() != null ? event.getDetails().getSubject() : "Unknown",
+					zone);
 		}
 
-		private Meeting(Room room, Appointment appointment, Date start, Date end, String organizer, ZoneId zone) {
+		private Meeting(final Room room,
+				final Appointment appointment,
+				final Date start,
+				final Date end,
+				final String organizer,
+				final ZoneId zone) {
 			this(room, appointment, start.toInstant().atZone(zone), end.toInstant().atZone(zone), organizer);
 		}
 
-		private Meeting(Room room, Appointment appointment, ZonedDateTime start, ZonedDateTime end, String organizer) {
+		private Meeting(final Room room,
+				final Appointment appointment,
+				final ZonedDateTime start,
+				final ZonedDateTime end,
+				final String organizer) {
 			this.room = room;
 			this.start = start;
 			this.end = end;
@@ -300,7 +327,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 		private final List<RoomAvailabilityItem> items;
 
-		public RoomAvailabilityListEvent(List<RoomAvailabilityItem> items) {
+		public RoomAvailabilityListEvent(final List<RoomAvailabilityItem> items) {
 			this.items = items;
 		}
 
@@ -313,7 +340,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -323,7 +350,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			RoomAvailabilityListEvent other = (RoomAvailabilityListEvent) obj;
+			final RoomAvailabilityListEvent other = (RoomAvailabilityListEvent) obj;
 			if (items == null) {
 				if (other.items != null) {
 					return false;
@@ -338,24 +365,27 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	public static final class RoomAvailabilityItem {
 
 		private final String clazz;
+
 		private final String name;
+
 		private final String number;
+
 		private final String status;
+
 		private final boolean free;
+
 		private final Optional<LocalTime> until;
 
-		public RoomAvailabilityItem(Room room, Boolean free, LocalTime until, DateTimeFormatter formatter) {
-			clazz = free != null && free ? "free" : "occupied";
+		public RoomAvailabilityItem(final Room room,
+				final boolean free,
+				final LocalTime until,
+				final DateTimeFormatter formatter) {
+			clazz = free ? "free" : "occupied";
 			name = room.name;
 			number = room.roomNumber;
 			this.free = free;
 			this.until = Optional.ofNullable(until);
-
-			if (free == null) {
-				status = "";
-			} else {
-				status = (free ? "Free" : "Busy") + (until == null ? " Today" : " until " + formatter.format(until)); // TODO internationalization
-			}
+			status = (free ? "Free" : "Busy") + (until == null ? " Today" : " until " + formatter.format(until)); // TODO
 		}
 
 		@Override
@@ -370,7 +400,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -380,7 +410,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			RoomAvailabilityItem other = (RoomAvailabilityItem) obj;
+			final RoomAvailabilityItem other = (RoomAvailabilityItem) obj;
 			if (clazz == null) {
 				if (other.clazz != null) {
 					return false;
@@ -421,29 +451,31 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	private static class BusyState {
 		private SortedSet<TimeSlice> slices = new TreeSet<>();
 
-		synchronized boolean isBusy(ZonedDateTime dt) {
-			return slices.stream().filter(s -> s.contains(dt)).findAny().isPresent();
+		synchronized boolean isBusy(final ZonedDateTime dt) {
+			return slices.stream().anyMatch(s -> s.contains(dt));
 		}
 
-		synchronized Optional<ZonedDateTime> currentStateUntil(ZonedDateTime dt) {
-			return slices.stream().filter(s -> s.isBefore(dt)).findFirst().map(
-					s -> s.start.isBefore(dt) ? s.end : s.start);
+		synchronized Optional<ZonedDateTime> currentStateUntil(final ZonedDateTime dt) {
+			return slices.stream()
+					.filter(s -> s.isBefore(dt))
+					.findFirst()
+					.map(s -> s.start.isBefore(dt) ? s.end : s.start);
 		}
 
-		void add(ZonedDateTime start, ZonedDateTime end) {
+		void add(final ZonedDateTime start, final ZonedDateTime end) {
 			add(new TimeSlice(start, end));
 		}
 
-		synchronized void add(TimeSlice nts) {
+		synchronized void add(final TimeSlice nts) {
 			// is the new slice completely within an existing?
-			for (TimeSlice slice : slices) {
+			for (final TimeSlice slice : slices) {
 				if (slice.containsCompletely(nts)) {
 					return;
 				}
 			}
 
 			// does the new slice contain another completely?
-			Iterator<TimeSlice> it = slices.iterator();
+			final Iterator<TimeSlice> it = slices.iterator();
 			while (it.hasNext()) {
 				if (nts.containsCompletely(it.next())) {
 					it.remove();
@@ -454,7 +486,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			boolean expandedSomething = false;
 
 			// does the new slice interfere with the previous slice?
-			List<TimeSlice> befores = getTimeSlicesCompletlyBefore(nts.end);
+			final List<TimeSlice> befores = getTimeSlicesCompletlyBefore(nts.end);
 			TimeSlice prev = null;
 			if (!befores.isEmpty()) {
 				prev = befores.get(befores.size() - 1);
@@ -465,7 +497,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			}
 
 			// does the new slice interfere with the next slice?
-			List<TimeSlice> afters = getTimeSlicesCompletlyAfter(nts.start);
+			final List<TimeSlice> afters = getTimeSlicesCompletlyAfter(nts.start);
 			TimeSlice next = null;
 			if (!afters.isEmpty()) {
 				next = afters.get(0);
@@ -478,25 +510,23 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			// maybe add new slice
 			if (!expandedSomething) {
 				slices.add(nts);
-			} else if (prev != null && next != null) {
-				if (prev.end.isEqual(next.start) || prev.end.isAfter(next.start)) {
-					// combine both slices
-					slices.remove(prev);
-					slices.remove(next);
-					slices.add(new TimeSlice(prev.start, next.end));
-				}
+			} else if (prev != null && next != null && (prev.end.isEqual(next.start) || prev.end.isAfter(next.start))) {
+				// combine both slices
+				slices.remove(prev);
+				slices.remove(next);
+				slices.add(new TimeSlice(prev.start, next.end));
 			}
 		}
 
-		List<TimeSlice> getTimeSlicesCompletlyBefore(ZonedDateTime point) {
+		List<TimeSlice> getTimeSlicesCompletlyBefore(final ZonedDateTime point) {
 			return getFilteredTimeSlices(s -> s.end.isBefore(point));
 		}
 
-		List<TimeSlice> getTimeSlicesCompletlyAfter(ZonedDateTime point) {
+		List<TimeSlice> getTimeSlicesCompletlyAfter(final ZonedDateTime point) {
 			return getFilteredTimeSlices(s -> s.start.isAfter(point));
 		}
 
-		private List<TimeSlice> getFilteredTimeSlices(Predicate<? super TimeSlice> predicate) {
+		private List<TimeSlice> getFilteredTimeSlices(final Predicate<? super TimeSlice> predicate) {
 			return slices.stream().filter(predicate).collect(Collectors.toList());
 		}
 
@@ -508,28 +538,29 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 	private static class TimeSlice implements Comparable<TimeSlice> {
 		private ZonedDateTime start;
+
 		private ZonedDateTime end;
 
-		public TimeSlice(ZonedDateTime start, ZonedDateTime end) {
+		public TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
 			this.start = Objects.requireNonNull(start);
 			this.end = Objects.requireNonNull(end);
 		}
 
-		boolean containsCompletely(TimeSlice that) {
+		boolean containsCompletely(final TimeSlice that) {
 			return contains(that.start) && contains(that.end);
 		}
 
-		boolean contains(ZonedDateTime that) {
+		boolean contains(final ZonedDateTime that) {
 			return start.isBefore(that) && end.isAfter(that);
 		}
 
-		boolean isBefore(ZonedDateTime dt) {
+		boolean isBefore(final ZonedDateTime dt) {
 			return end.isAfter(dt);
 		}
 
 		@Override
 		public String toString() {
-			StringBuilder builder = new StringBuilder();
+			final StringBuilder builder = new StringBuilder();
 			builder.append("<<");
 			builder.append(start);
 			builder.append(" - ");
@@ -539,8 +570,8 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public int compareTo(TimeSlice that) {
-			return this.start.compareTo(that.start);
+		public int compareTo(final TimeSlice that) {
+			return start.compareTo(that.start);
 		}
 
 		@Override
@@ -553,7 +584,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -563,7 +594,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			TimeSlice other = (TimeSlice) obj;
+			final TimeSlice other = (TimeSlice) obj;
 			if (end == null) {
 				if (other.end != null) {
 					return false;
