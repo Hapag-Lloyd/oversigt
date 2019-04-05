@@ -8,10 +8,12 @@ public enum Roles {
 	DASHBOARD_EDITOR("Editor", "server.dashboard.editor", Role.DASHBOARD_EDITOR);
 
 	private final String displayName;
+
 	private final String name;
+
 	private final Role role;
 
-	private Roles(String displayName, String name, Role role) {
+	private Roles(final String displayName, final String name, final Role role) {
 		this.displayName = displayName;
 		this.name = name;
 		this.role = role;
@@ -29,12 +31,12 @@ public enum Roles {
 		return role;
 	}
 
-	public static Optional<Roles> maybeFromString(String string) {
+	public static Optional<Roles> maybeFromString(final String string) {
 		return Optional.ofNullable(fromString(string));
 	}
 
-	public static Roles fromString(String string) {
-		for (Roles roles : values()) {
+	public static Roles fromString(final String string) {
+		for (final Roles roles : values()) {
 			if (roles.name().equalsIgnoreCase(string) || roles.name.equalsIgnoreCase(string)) {
 				return roles;
 			}

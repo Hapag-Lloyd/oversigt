@@ -15,15 +15,18 @@ public interface SqlDialect {
 
 	String alterTableDropColumn(String tableName, String columnName);
 
-	default String select(String tableName, Collection<String> select) {
+	default String select(final String tableName, final Collection<String> select) {
 		return select(tableName, null, select);
 	}
 
-	default String select(String tableName, Collection<String> select, Collection<String> where) {
+	default String select(final String tableName, final Collection<String> select, final Collection<String> where) {
 		return select(tableName, select, where, null, false, 0L);
 	}
 
-	default String select(String tableName, Collection<String> select, String columnIn, long inValues) {
+	default String select(final String tableName,
+			final Collection<String> select,
+			final String columnIn,
+			final long inValues) {
 		return select(tableName, select, null, columnIn, false, inValues);
 	}
 
@@ -49,7 +52,7 @@ public interface SqlDialect {
 
 	Object convertValue(Object object);
 
-	public static enum ColumnType {
+	public enum ColumnType {
 		Text,
 		Integer,
 		BigInteger,
@@ -63,34 +66,46 @@ public interface SqlDialect {
 	public static class ColumnOptions {
 
 		final String name;
+
 		final ColumnType type;
+
 		final boolean nullable;
+
 		final Object defaultValue;
+
 		final boolean primaryKey;
+
 		final boolean autoincrement;
+
 		final boolean unique;
+
 		final Integer length;
+
 		final Integer precision;
 
-		public ColumnOptions(String name, ColumnType type, Object defaultValue, boolean nullable, boolean primaryKey) {
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey) {
 			this(name, type, defaultValue, nullable, primaryKey, false, false);
 		}
 
-		public ColumnOptions(String name,
-				ColumnType type,
-				Object defaultValue,
-				boolean nullable,
-				boolean primaryKey,
-				boolean autoincrement,
-				boolean unique) {
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey,
+				final boolean autoincrement,
+				final boolean unique) {
 			this.name = Objects.requireNonNull(name);
 			this.type = Objects.requireNonNull(type);
 			this.defaultValue = defaultValue;
 			this.nullable = nullable;
 			this.primaryKey = primaryKey;
 			this.autoincrement = autoincrement;
-			this.length = null;
-			this.precision = null;
+			length = null;
+			precision = null;
 			this.unique = unique;
 		}
 

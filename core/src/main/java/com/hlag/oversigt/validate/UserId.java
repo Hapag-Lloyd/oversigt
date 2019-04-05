@@ -14,7 +14,8 @@ import javax.validation.Constraint;
 import javax.validation.Payload;
 
 /**
- * Defines a constraint to an annotated String that the content of the String must be a valid username in the current applications context.
+ * Defines a constraint to an annotated String that the content of the String
+ * must be a valid username in the current applications context.
  *
  * @author neumaol
  */

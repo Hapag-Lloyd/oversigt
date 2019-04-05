@@ -24,39 +24,47 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@NotBlank
 	@NotNull
 	private final String displayName;
+
 	private final String description;
+
 	@NotNull
 	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
+
 	@NotNull
 	private final Set<@NotNull EventSourceProperty> dataItems = new TreeSet<>();
+
 	@JsonIgnore
 	private final Set<@NotBlank String> dataItemsToHide = new TreeSet<>();
 
 	@NotBlank
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
+
 	private final Class<? extends Service> serviceClass;
+
 	private final Class<? extends OversigtEvent> eventClass;
+
 	@JsonIgnore
 	private final Class<? extends Module> moduleClass;
+
 	private boolean standAlone = false;
 
-	EventSourceDescriptor(@NotNull EventSourceKey key,
-			@NotBlank String displayName,
-			String description,
-			@NotBlank String view,
-			boolean standAlone) {
+	EventSourceDescriptor(@NotNull final EventSourceKey key,
+			@NotBlank final String displayName,
+			final String description,
+			@NotBlank final String view,
+			final boolean standAlone) {
 		this(key, displayName, description, view, null, null, null);
 		this.standAlone = standAlone;
 	}
 
-	EventSourceDescriptor(@NotNull EventSourceKey key,
-			@NotBlank String displayName,
-			String description,
-			@NotBlank String view,
-			Class<? extends Service> serviceClass,
-			Class<? extends OversigtEvent> eventClass,
-			Class<? extends Module> moduleClass) {
+	EventSourceDescriptor(@NotNull final EventSourceKey key,
+			@NotBlank final String displayName,
+			final String description,
+			@NotBlank final String view,
+			final Class<? extends Service> serviceClass,
+			final Class<? extends OversigtEvent> eventClass,
+			final Class<? extends Module> moduleClass) {
 		this.key = key;
 		this.displayName = displayName;
 		this.description = description != null && description.trim().length() > 1 ? description : null;
@@ -121,24 +129,24 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return Collections.unmodifiableSet(dataItemsToHide);
 	}
 
-	void addProperty(@NotNull EventSourceProperty property) {
-		this.properties.add(Objects.requireNonNull(property, "Property must not be null"));
+	void addProperty(@NotNull final EventSourceProperty property) {
+		properties.add(Objects.requireNonNull(property, "Property must not be null"));
 	}
 
-	void addDataItem(@NotNull EventSourceProperty dataItem) {
-		this.dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
+	void addDataItem(@NotNull final EventSourceProperty dataItem) {
+		dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
 	}
 
-	void addDataItemToHide(@NotBlank String itemName) {
-		this.dataItemsToHide
+	void addDataItemToHide(@NotBlank final String itemName) {
+		dataItemsToHide
 				.add(Objects.requireNonNull(Strings.emptyToNull(itemName), "Item name must not be null or empty"));
 	}
 
-	EventSourceProperty getProperty(@NotBlank String name) {
+	EventSourceProperty getProperty(@NotBlank final String name) {
 		return properties.stream().filter(p -> name.equals(p.getName())).findAny().get();
 	}
 
-	EventSourceProperty getDataItem(@NotBlank String name) {
+	EventSourceProperty getDataItem(@NotBlank final String name) {
 		return dataItems.stream().filter(p -> name.equals(p.getName())).findAny().get();
 	}
 
@@ -147,8 +155,8 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	}
 
 	@Override
-	public int compareTo(EventSourceDescriptor that) {
-		return this.getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(final EventSourceDescriptor that) {
+		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
 	}
 
 	@Override

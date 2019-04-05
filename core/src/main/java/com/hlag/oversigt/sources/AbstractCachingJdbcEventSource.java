@@ -14,10 +14,10 @@ import com.hlag.oversigt.core.eventsource.Property;
  */
 public abstract class AbstractCachingJdbcEventSource<X, T extends OversigtEvent> extends AbstractJdbcEventSource<T> {
 	private DatabaseCache<X> cache = null;
+
 	private long limit = 5;
 
-	protected AbstractCachingJdbcEventSource() {
-	}
+	protected AbstractCachingJdbcEventSource() {}
 
 	protected synchronized DatabaseCache<X> getCache() {
 		if (cache == null) {
@@ -28,12 +28,13 @@ public abstract class AbstractCachingJdbcEventSource<X, T extends OversigtEvent>
 
 	protected abstract DatabaseCache<X> createCache();
 
-	@Property(name = "Max item count", description = "The maximum number of items to be listed. Set to 0 for unlimited number of items.")
+	@Property(name = "Max item count",
+			description = "The maximum number of items to be listed. Set to 0 for unlimited number of items.")
 	public long getLimit() {
 		return limit;
 	}
 
-	public void setLimit(long limit) {
+	public void setLimit(final long limit) {
 		this.limit = limit;
 	}
 
@@ -46,7 +47,7 @@ public abstract class AbstractCachingJdbcEventSource<X, T extends OversigtEvent>
 	}
 
 	@Override
-	protected void gatherDatabaseInfo(Connection connection) throws SQLException {
+	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
 		getCache().getItems(connection);
 	}
 }

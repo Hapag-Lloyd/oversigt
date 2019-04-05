@@ -33,16 +33,16 @@ import io.swagger.util.Json;
 public class ApiApplication extends Application {
 
 	@Inject
-	public ApiApplication(@Named("hostname") String hostname) {
+	public ApiApplication(@Named("hostname") final String hostname) {
 		// Initialize Swagger settings
 		URL url;
 		try {
 			url = new URL(hostname);
-		} catch (MalformedURLException e) {
+		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 		// Configure Swagger
-		BeanConfig beanConfig = new BeanConfig();
+		final BeanConfig beanConfig = new BeanConfig();
 		beanConfig.setSchemes(new String[] { url.getProtocol() });
 		beanConfig.setHost(url.getHost()
 				+ (url.getPort() != -1 && url.getPort() != url.getDefaultPort() ? ":" + url.getPort() : ""));
@@ -58,7 +58,7 @@ public class ApiApplication extends Application {
 
 	@Override
 	public Set<Class<?>> getClasses() {
-		Set<Class<?>> classes = new HashSet<>();
+		final Set<Class<?>> classes = new HashSet<>();
 
 		// Add Swagger Resources
 		classes.add(io.swagger.jaxrs.listing.ApiListingResource.class);
@@ -71,16 +71,16 @@ public class ApiApplication extends Application {
 
 	private static class ColorConverter implements ModelConverter {
 		@Override
-		public Property resolveProperty(Type type,
-				ModelConverterContext context,
-				Annotation[] annotations,
-				Iterator<ModelConverter> chain) {
+		public Property resolveProperty(final Type type,
+				final ModelConverterContext context,
+				final Annotation[] annotations,
+				final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
 			if (jType != null) {
 				final Class<?> cls = jType.getRawClass();
 				if (cls.equals(Color.class)) {
-					HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
-					//map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
+					final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+					// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
 					map.put(PropertyBuilder.PropertyId.TYPE, "string");
 					map.put(PropertyBuilder.PropertyId.EXAMPLE, "#11223344");
 					return PropertyBuilder.build("string", "#rrggbbaa", map);
@@ -93,23 +93,25 @@ public class ApiApplication extends Application {
 		}
 
 		@Override
-		public Model resolve(Type type, ModelConverterContext context, Iterator<ModelConverter> chain) {
+		public Model resolve(final Type type,
+				final ModelConverterContext context,
+				final Iterator<ModelConverter> chain) {
 			return chain.next().resolve(type, context, chain);
 		}
 	}
 
 	private static class DurationConverter implements ModelConverter {
 		@Override
-		public Property resolveProperty(Type type,
-				ModelConverterContext context,
-				Annotation[] annotations,
-				Iterator<ModelConverter> chain) {
+		public Property resolveProperty(final Type type,
+				final ModelConverterContext context,
+				final Annotation[] annotations,
+				final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
 			if (jType != null) {
 				final Class<?> cls = jType.getRawClass();
 				if (cls.equals(Duration.class)) {
-					HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
-					//map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
+					final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+					// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
 					map.put(PropertyBuilder.PropertyId.TYPE, "string");
 					map.put(PropertyBuilder.PropertyId.EXAMPLE, "PT1H");
 					map.put(PropertyBuilder.PropertyId.PATTERN,
@@ -124,7 +126,9 @@ public class ApiApplication extends Application {
 		}
 
 		@Override
-		public Model resolve(Type type, ModelConverterContext context, Iterator<ModelConverter> chain) {
+		public Model resolve(final Type type,
+				final ModelConverterContext context,
+				final Iterator<ModelConverter> chain) {
 			return chain.next().resolve(type, context, chain);
 		}
 	}

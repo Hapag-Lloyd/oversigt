@@ -16,24 +16,25 @@ import io.undertow.server.HttpServerExchange;
 @Singleton
 public class WelcomeHandler extends AbstractConfigurationHandler {
 	@Inject
-	public WelcomeHandler(DashboardController dashboardController, HttpServerExchangeHandler exchangeHelper) {
+	public WelcomeHandler(final DashboardController dashboardController,
+			final HttpServerExchangeHandler exchangeHelper) {
 		super(dashboardController, exchangeHelper, "views/layout/root/", new String[] { "page_welcome.ftl.html" });
 	}
 
 	@Override
-	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
+	protected Map<String, Object> getModel(final HttpServerExchange exchange, final String page) {
 		switch (page) {
-			case "welcome":
-				return map("title",
-						"Welcome",
-						"dashboards",
-						getDashboardController().getDashboardIds()//
-								.stream()
-								.map(getDashboardController()::getDashboard)
-								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
-								.collect(Collectors.toList()));
-			default:
-				return null;
+		case "welcome":
+			return map("title",
+					"Welcome",
+					"dashboards",
+					getDashboardController().getDashboardIds()//
+							.stream()
+							.map(getDashboardController()::getDashboard)
+							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
+							.collect(Collectors.toList()));
+		default:
+			return null;
 		}
 	}
 

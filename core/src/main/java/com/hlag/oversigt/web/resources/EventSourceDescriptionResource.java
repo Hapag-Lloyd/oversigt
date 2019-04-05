@@ -30,8 +30,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 
-@Api(tags = { "EventSource" }, authorizations = {
-		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Api(tags = { "EventSource" },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/descriptions")
 @Singleton
 public class EventSourceDescriptionResource {
@@ -41,7 +41,10 @@ public class EventSourceDescriptionResource {
 	@GET
 	@Path("/")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of available event sources", response = EventSourceInfo.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returns a list of available event sources",
+					response = EventSourceInfo.class,
+					responseContainer = "List") })
 	@JwtSecured
 	@ApiOperation(value = "List available event sources")
 	@NoChangeLog
@@ -58,14 +61,19 @@ public class EventSourceDescriptionResource {
 	@GET
 	@Path("/{key}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "The details of the requested event source descriptor", response = EventSourceDescriptor.class),
-			@ApiResponse(code = 404, message = "The requested event source descriptor does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "The details of the requested event source descriptor",
+					response = EventSourceDescriptor.class),
+			@ApiResponse(code = 404,
+					message = "The requested event source descriptor does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read event source description")
 	@NoChangeLog
-	public Response getEventSourceDetails(@PathParam("key") String key) {
+	public Response getEventSourceDetails(@PathParam("key") final String key) {
 		try {
-			EventSourceDescriptor descriptor = dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
+			final EventSourceDescriptor descriptor
+					= dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
 			return ok(descriptor).build();
 		} catch (NoSuchElementException | InvalidKeyException e) {
 			return notFound("The event source descriptor does not exist.");
@@ -75,7 +83,7 @@ public class EventSourceDescriptionResource {
 	public static class EventSourceInfo {
 		private final EventSourceDescriptor descriptor;
 
-		EventSourceInfo(EventSourceDescriptor descriptor) {
+		EventSourceInfo(final EventSourceDescriptor descriptor) {
 			this.descriptor = descriptor;
 		}
 

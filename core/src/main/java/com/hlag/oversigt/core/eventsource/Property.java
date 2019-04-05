@@ -17,39 +17,41 @@ import java.lang.annotation.Target;
 public @interface Property {
 
 	/**
-	 * The name of the property. If this annotation is not used the camel case name of the getter
-	 * method is used.
+	 * The name of the property. If this annotation is not used the camel case name
+	 * of the getter method is used.
 	 *
 	 * @return the name of the property
 	 */
 	String name();
 
 	/**
-	 * A short description of the property. This is a text presented to the end user.
+	 * A short description of the property. This is a text presented to the end
+	 * user.
 	 *
 	 * @return a description of the property.
 	 */
 	String description() default "";
 
 	/**
-	 * The input type of the property. This is used for the type attribute of input fields. Leave
-	 * empty for auto detection based on the properties type.
+	 * The input type of the property. This is used for the type attribute of input
+	 * fields. Leave empty for auto detection based on the properties type.
 	 *
 	 * @return input type of the property.
 	 */
 	String type() default "";
 
 	/**
-	 * Determines whether you need to restart the event source if you changed this property
+	 * Determines whether you need to restart the event source if you changed this
+	 * property
 	 *
-	 * @return <code>true</code> if you need to restart the event source if you changed this
-	 *         property
+	 * @return <code>true</code> if you need to restart the event source if you
+	 *         changed this property
 	 */
 	boolean needsRestart() default true;
 
 	/**
-	 * Determines the allowed values for the current property. If the list is empty any value is
-	 * valid
+	 * Determines the allowed values for the current property. If the list is empty
+	 * any value is valid
 	 *
 	 * @return a list of allowed values
 	 */

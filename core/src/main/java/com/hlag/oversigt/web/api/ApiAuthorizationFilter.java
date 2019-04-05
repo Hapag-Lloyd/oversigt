@@ -34,8 +34,8 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	private ResourceInfo resourceInfo;
 
 	@Override
-	public void filter(ContainerRequestContext requestContext) throws IOException {
-		Method method = resourceInfo.getResourceMethod();
+	public void filter(final ContainerRequestContext requestContext) throws IOException {
+		final Method method = resourceInfo.getResourceMethod();
 
 		// @DenyAll on the method takes precedence over @RolesAllowed and @PermitAll
 		if (method.isAnnotationPresent(DenyAll.class)) {
@@ -81,7 +81,7 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	 * @param rolesAllowed
 	 * @param requestContext
 	 */
-	private void performAuthorization(ContainerRequestContext requestContext, String[] rolesAllowed) {
+	private void performAuthorization(final ContainerRequestContext requestContext, final String[] rolesAllowed) {
 		if (rolesAllowed.length > 0 && !isAuthenticated(requestContext)) {
 			refuseRequest(requestContext);
 		}
@@ -108,24 +108,24 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	/**
 	 * Refuse the request.
 	 */
-	private void refuseRequest(ContainerRequestContext requestContext) {
+	private void refuseRequest(final ContainerRequestContext requestContext) {
 		requestContext.abortWith(ErrorResponse.forbidden("You don't have permissions to perform this action."));
 	}
 
-	private String enhanceRole(ContainerRequestContext requestContext, String requiredRole) {
-		for (String placeholder : getPlaceholders(requiredRole)) {
-			String newValue = getParameter(requestContext, placeholder);
+	private String enhanceRole(final ContainerRequestContext requestContext, String requiredRole) {
+		for (final String placeholder : getPlaceholders(requiredRole)) {
+			final String newValue = getParameter(requestContext, placeholder);
 			requiredRole = requiredRole.replace("{" + placeholder + "}", newValue);
 		}
 		return requiredRole;
 	}
 
-	private String getParameter(ContainerRequestContext requestContext, String parameterName) {
+	private String getParameter(final ContainerRequestContext requestContext, final String parameterName) {
 		Optional<String> param = Optional.empty();
 
 		// path params
 		param = Optional.ofNullable(uriInfo.getPathParameters().get(parameterName)).map(l -> l.get(0));
-		//param=Optional.of(context.get)
+		// param=Optional.of(context.get)
 
 		// query params
 		if (!param.isPresent()) {
@@ -146,13 +146,13 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 		// matrix params
 
-		return param.orElseThrow(() -> new /*TODO better exception*/RuntimeException(
+		return param.orElseThrow(() -> new /* TODO better exception */RuntimeException(
 				"The parameter " + parameterName + " is not present."));
 	}
 
-	private static Set<String> getPlaceholders(String roleString) {
-		Set<String> placeholders = new HashSet<>();
-		Matcher matcher = PLACEHOLDER_PATTERN.matcher(roleString);
+	private static Set<String> getPlaceholders(final String roleString) {
+		final Set<String> placeholders = new HashSet<>();
+		final Matcher matcher = PLACEHOLDER_PATTERN.matcher(roleString);
 		while (matcher.find()) {
 			placeholders.add(matcher.group(1));
 		}

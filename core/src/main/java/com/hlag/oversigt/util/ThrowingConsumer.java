@@ -6,10 +6,10 @@ import java.util.function.Consumer;
 public interface ThrowingConsumer<T> extends Consumer<T> {
 
 	@Override
-	default void accept(T t) {
+	default void accept(final T t) {
 		try {
 			acceptThrowing(t);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw e instanceof RuntimeException ? (RuntimeException) e : new SneakyException(e);
 		}
 	}

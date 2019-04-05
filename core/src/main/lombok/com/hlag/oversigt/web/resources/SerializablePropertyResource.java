@@ -57,13 +57,17 @@ import lombok.Getter;
 public class SerializablePropertyResource {
 	@Inject
 	private DashboardController dController;
+
 	@Inject
 	private SerializablePropertyController spController;
 
 	@GET
 	@Path("/type")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of available types", response = SerializablePropertyDescription.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returns a list of available types",
+					response = SerializablePropertyDescription.class,
+					responseContainer = "List") })
 	@ApiOperation(value = "List available property types")
 	@NoChangeLog
 	public List<SerializablePropertyDescription> listPropertyTypes() {
@@ -79,16 +83,21 @@ public class SerializablePropertyResource {
 	@GET
 	@Path("/type/{name}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns details of the requested serializable property", response = SerializablePropertyMember.class, responseContainer = "List"),
-			@ApiResponse(code = 404, message = "The requested serializable property type does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "Returns details of the requested serializable property",
+					response = SerializablePropertyMember.class,
+					responseContainer = "List"),
+			@ApiResponse(code = 404,
+					message = "The requested serializable property type does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read serializable property details", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
-	public Response readMembers(@PathParam("name") @NotBlank String className) {
+	public Response readMembers(@PathParam("name") @NotBlank final String className) {
 		try {
 			return ok(spController.getMembers(spController.getClass(className))).build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property '" + className + "' does not exist.");
 		}
 	}
@@ -96,17 +105,20 @@ public class SerializablePropertyResource {
 	@GET
 	@Path("/value/{type}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returns a list of all values of the requested serializable property",
+					response = Map.class,
+					responseContainer = "List") })
 	@JwtSecured
 	@ApiOperation(value = "Read serializable property values", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
-	public Response listProperties(@PathParam("type") @NotBlank String className) {
+	public Response listProperties(@PathParam("type") @NotBlank final String className) {
 		try {
 			return ok(spController.streamProperties(spController.getClass(className))//
 					.map(SerializablePropertyResource::toMapWithoutPassword)
 					.collect(Collectors.toList())).build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 	}
@@ -115,34 +127,36 @@ public class SerializablePropertyResource {
 	@Path("/value/{type}")
 	@ApiResponses({ //
 			@ApiResponse(code = 201, message = "Serializable property has been created", response = Map.class),
-			@ApiResponse(code = 404, message = "Serializable property type does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 404,
+					message = "Serializable property type does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Create serializable property values", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response createProperty(@Context UriInfo uri,
-			@PathParam("type") @NotBlank String className,
-			@NotEmpty Map<@NotBlank String, @NotNull Object> map) throws MemberMissingException {
+	public Response createProperty(@Context final UriInfo uri,
+			@PathParam("type") @NotBlank final String className,
+			@NotEmpty final Map<@NotBlank String, @NotNull Object> map) throws MemberMissingException {
 		Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 
-		List<String> errors = checkMembers(clazz, map);
+		final List<String> errors = checkMembers(clazz, map);
 		if (!errors.isEmpty()) {
 			return ErrorResponse.badRequest("Cannot create serializable property", errors);
 		}
 
 		try {
-			SerializableProperty prop = spController.createProperty(clazz, (String) map.get("name"), map);
+			final SerializableProperty prop = spController.createProperty(clazz, (String) map.get("name"), map);
 			return status(Status.CREATED)// TODO change to proper Location-header returning response
 					.entity(toMapWithoutPassword(prop))
 					.type(MediaType.APPLICATION_JSON_TYPE)
 					.link(uri.getAbsolutePath() + "/" + prop.getId(), "self")
 					.build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property '" + className + "' does not exist.");
 		}
 	}
@@ -150,20 +164,23 @@ public class SerializablePropertyResource {
 	@GET
 	@Path("/value/{type}/{id}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class),
+			@ApiResponse(code = 200,
+					message = "Returns a list of all values of the requested serializable property",
+					response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read serializable property values", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
-	public Response readProperty(@PathParam("type") @NotBlank String className, @PathParam("id") @Positive int id) {
+	public Response readProperty(@PathParam("type") @NotBlank final String className,
+			@PathParam("id") @Positive final int id) {
 		Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
-		SerializableProperty prop = spController.getProperty(clazz, id);
+		final SerializableProperty prop = spController.getProperty(clazz, id);
 		if (prop.getId() == id) {
 			return ok(toMapWithoutPassword(prop)).build();
 		} else {
@@ -175,29 +192,31 @@ public class SerializablePropertyResource {
 	@PUT
 	@Path("/value/{type}/{id}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of all values of the requested serializable property", response = Map.class),
+			@ApiResponse(code = 200,
+					message = "Returns a list of all values of the requested serializable property",
+					response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Update serializable property values", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response updateProperty(@Context UriInfo uri,
-			@PathParam("type") @NotBlank String className,
-			@PathParam("id") @Positive int id,
-			@NotNull Map<@NotBlank String, @NotNull Object> map) {
+	public Response updateProperty(@Context final UriInfo uri,
+			@PathParam("type") @NotBlank final String className,
+			@PathParam("id") @Positive final int id,
+			@NotNull final Map<@NotBlank String, @NotNull Object> map) {
 		Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
-		SerializableProperty prop = spController.getProperty(clazz, id);
+		final SerializableProperty prop = spController.getProperty(clazz, id);
 		if (prop.getId() != id) {
 			return ErrorResponse
 					.notFound("Serializable property of type '" + className + "' with id " + id + " does not exist.");
 		}
 
-		List<String> errors = checkMembers(clazz, map);
+		final List<String> errors = checkMembers(clazz, map);
 		if (!errors.isEmpty()) {
 			return ErrorResponse.badRequest("Cannot update serializable property", errors);
 		}
@@ -214,33 +233,37 @@ public class SerializablePropertyResource {
 	@Path("/value/{type}/{id}")
 	@ApiResponses({ //
 			@ApiResponse(code = 200, message = "Serializable property has been deleted"),
-			@ApiResponse(code = 404, message = "Serializable property does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 404,
+					message = "Serializable property does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Delete serializable property values", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response deleteProperty(@PathParam("type") @NotBlank String className, @PathParam("id") @Positive int id) {
+	public Response deleteProperty(@PathParam("type") @NotBlank final String className,
+			@PathParam("id") @Positive final int id) {
 		Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 		try {
 			spController.getProperty(clazz, id);
 			spController.deleteProperty(clazz, id);
 			return Response.ok().build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse
 					.notFound("Serializable property of type '" + className + "' with id " + id + " does not exist.");
 		}
 	}
 
-	private List<String> checkMembers(Class<? extends SerializableProperty> clazz, Map<String, Object> map) {
-		List<String> errors = new ArrayList<>();
+	private List<String> checkMembers(final Class<? extends SerializableProperty> clazz,
+			final Map<String, Object> map) {
+		final List<String> errors = new ArrayList<>();
 		// Are all members in the map?
-		Collection<SerializablePropertyMember> members = spController.getMembers(clazz);
-		for (SerializablePropertyMember m : members) {
+		final Collection<SerializablePropertyMember> members = spController.getMembers(clazz);
+		for (final SerializablePropertyMember m : members) {
 			if (!map.containsKey(m.getName())) {
 				errors.add("Member '" + m.getName() + "' is missing");
 			}
@@ -248,29 +271,31 @@ public class SerializablePropertyResource {
 		// Are only members in the map?
 		if (map.size() != members.size()) {
 			members.stream().map(SerializablePropertyMember::getName).forEach(map::remove);
-			for (String n : map.keySet()) {
+			for (final String n : map.keySet()) {
 				errors.add("'" + n + "' is not a member of " + clazz.getSimpleName());
 			}
 		}
-		//		// are all values strings?
-		//		map.entrySet().stream().filter(e -> !(e.getValue() instanceof String)).forEach(
-		//				e -> errors.add("Value of '" + e.getKey() + "' is not a String"));
+		// // are all values strings?
+		// map.entrySet().stream().filter(e -> !(e.getValue() instanceof
+		// String)).forEach(
+		// e -> errors.add("Value of '" + e.getKey() + "' is not a String"));
 		return errors;
 	}
 
-	static Map<String, Object> toMapWithoutPassword(SerializableProperty property) {
+	static Map<String, Object> toMapWithoutPassword(final SerializableProperty property) {
 		return removePasswords(toMemberMap(property), "");
 	}
 
 	/**
 	 * Class describing a {@link SerializableProperty} class.
-	 * 
+	 *
 	 * @author Olaf Neumann
 	 */
 	@Builder
 	@Getter
 	public static class SerializablePropertyDescription {
 		private final String name;
+
 		private final String description;
 	}
 }

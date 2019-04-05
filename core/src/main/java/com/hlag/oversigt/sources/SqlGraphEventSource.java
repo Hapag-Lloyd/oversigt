@@ -29,30 +29,34 @@ import com.hlag.oversigt.util.Utils;
 @EventSource(displayName = "SQL Graph", view = "Rickshawgraph")
 public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEvent> {
 	private int historyLength = 10;
+
 	private String labelFormat = "";
+
 	private String sqlStatement = "";
+
 	private String[] titles = new String[0];
 
 	private int columnCount = 0;
+
 	private final SortedMap<ZonedDateTime, List<Long>> values = new TreeMap<>();
 
 	@Override
 	protected ComplexGraphEvent produceEventFromData() {
-		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
 		// Remove too old history
 		values.keySet().removeIf(now.minusMinutes(getHistoryLength())::isAfter);
 
 		// Calculate graph values
-		long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
-		List<Series> series = new ArrayList<>();
+		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
+		final List<Series> series = new ArrayList<>();
 		IntStream.range(0, columnCount).forEach(column -> {
 			List<Point> points = new ArrayList<>();
 
 			if (!values.isEmpty()) {
 				// Get maximum value of each series to normalize
-				OptionalLong optionalMaxValue = values.values().stream().mapToLong(v -> v.get(column)).max();
-				long maxValue = optionalMaxValue.getAsLong() == 0 ? 1 : optionalMaxValue.getAsLong();
+				final OptionalLong optionalMaxValue = values.values().stream().mapToLong(v -> v.get(column)).max();
+				final long maxValue = optionalMaxValue.getAsLong() == 0 ? 1 : optionalMaxValue.getAsLong();
 
 				points = values.entrySet()
 						.stream()
@@ -69,8 +73,8 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	}
 
 	@Override
-	protected void gatherDatabaseInfo(Connection connection) throws SQLException {
-		List<List<Long>> data = readFromDatabase(connection,
+	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
+		final List<List<Long>> data = readFromDatabase(connection,
 				rs -> IntStream.range(1, rs.getMetaData().getColumnCount() + 1)
 						.mapToObj(SneakyException.sneakyInt(rs::getLong))
 						.collect(toList()),
@@ -82,7 +86,8 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 			Utils.logInfo(getSpecialLogger(),
 					"%s", //
 					(Supplier<String>) () -> IntStream.range(0, columnCount) //
-							.mapToObj((int column) -> String.format("%s: %d", titles[column], data.get(0).get(column))) //
+							.mapToObj((final int column) -> String
+									.format("%s: %d", titles[column], data.get(0).get(column))) //
 							.collect(Collectors.joining(", ")));
 		} else {
 			getLogger().error("Failed with empty result set.");
@@ -94,16 +99,17 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		return historyLength;
 	}
 
-	public void setHistoryLength(int historyLength) {
+	public void setHistoryLength(final int historyLength) {
 		this.historyLength = historyLength;
 	}
 
-	@Property(name = "Label format", description = "Values of the latest SQL execution can be used as String.format parameters (type: long)")
+	@Property(name = "Label format",
+			description = "Values of the latest SQL execution can be used as String.format parameters (type: long)")
 	public String getLabelFormat() {
 		return labelFormat;
 	}
 
-	public void setLabelFormat(String labelFormat) {
+	public void setLabelFormat(final String labelFormat) {
 		this.labelFormat = labelFormat;
 	}
 
@@ -112,7 +118,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		return sqlStatement;
 	}
 
-	public void setSqlStatement(String sqlStatement) {
+	public void setSqlStatement(final String sqlStatement) {
 		this.sqlStatement = sqlStatement;
 	}
 
@@ -122,7 +128,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
-	public void setTitles(String[] titles) {
+	public void setTitles(final String[] titles) {
 		this.titles = titles;
 	}
 }

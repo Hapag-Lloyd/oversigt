@@ -4,13 +4,14 @@ import com.google.common.base.Throwables;
 
 public class ErrorEvent extends OversigtEvent {
 	private final String errorMessage;
+
 	private final boolean error = true;
 
-	public ErrorEvent(Throwable t) {
+	public ErrorEvent(final Throwable t) {
 		this(Throwables.getStackTraceAsString(t));
 	}
 
-	public ErrorEvent(String errorMessage) {
+	public ErrorEvent(final String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 

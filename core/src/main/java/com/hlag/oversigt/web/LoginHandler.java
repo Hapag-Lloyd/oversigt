@@ -39,40 +39,41 @@ public class LoginHandler implements HttpHandler {
 	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
 
 	private final Configuration templateConfiguration;
+
 	private final Authenticator authenticator;
+
 	private final HttpServerExchangeHandler exchangeHelper;
 
 	private List<String> availableImages = new ArrayList<>();
 
 	@Inject
-	public LoginHandler(Configuration templateConfiguration,
-			Authenticator authenticator,
-			HttpServerExchangeHandler exchangeHelper) {
+	public LoginHandler(final Configuration templateConfiguration,
+			final Authenticator authenticator,
+			final HttpServerExchangeHandler exchangeHelper) {
 		this.templateConfiguration = templateConfiguration;
 		this.authenticator = authenticator;
 		this.exchangeHelper = exchangeHelper;
 
 		for (int i = 1;; ++i) {
 			try {
-				String name = StringUtils.leftPad(Integer.toString(i), 3, '0');
-				URL url = Resources.getResource("statics/login/" + name + ".jpg");
-				ByteSource source = Resources.asByteSource(url);
+				final String name = StringUtils.leftPad(Integer.toString(i), 3, '0');
+				final URL url = Resources.getResource("statics/login/" + name + ".jpg");
+				final ByteSource source = Resources.asByteSource(url);
 				try (InputStream in = source.openStream()) {
 					if (in != null) {
 						availableImages.add(name);
 					} else {
 						break;
 					}
-				} catch (Exception ignore) {
-				}
-			} catch (IllegalArgumentException e) {
+				} catch (final Exception ignore) {}
+			} catch (final IllegalArgumentException e) {
 				break;
 			}
 		}
 	}
 
 	@Override
-	public void handleRequest(HttpServerExchange exchange) throws Exception {
+	public void handleRequest(final HttpServerExchange exchange) throws Exception {
 		if (GET.equals(exchange.getRequestMethod())) {
 			exchangeHelper.doNonBlocking(this::doGet, exchange);
 		} else if (POST.equals(exchange.getRequestMethod())) {
@@ -82,36 +83,36 @@ public class LoginHandler implements HttpHandler {
 		}
 	}
 
-	private void doGet(HttpServerExchange exchange) throws Exception {
-		Optional<String> message = exchangeHelper.query(exchange, "message");
+	private void doGet(final HttpServerExchange exchange) throws Exception {
+		final Optional<String> message = exchangeHelper.query(exchange, "message");
 
-		StringWriter writer = new StringWriter();
-		String backgroundImage = availableImages.get((int) (Math.random() * availableImages.size()));
-		Map<String, Object> model = map("backgroundNumber", backgroundImage);
+		final StringWriter writer = new StringWriter();
+		final String backgroundImage = availableImages.get((int) (Math.random() * availableImages.size()));
+		final Map<String, Object> model = map("backgroundNumber", backgroundImage);
 		if (message.isPresent() && message.get().equals("failed")) {
 			model.putAll(map("message", "Login failed. Please try again!"));
 		}
 
-		Template template = templateConfiguration.getTemplate("views/layout/login/layout.ftl.html");
+		final Template template = templateConfiguration.getTemplate("views/layout/login/layout.ftl.html");
 		template.process(model, writer);
-		String content = writer.toString();
+		final String content = writer.toString();
 		exchange.setStatusCode(StatusCodes.OK);
 		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
 		exchange.getResponseSender().send(ByteBuffer.wrap(content.getBytes("UTF-8")));
 		exchange.endExchange();
 	}
 
-	private void doPost(HttpServerExchange exchange) throws Exception {
-		FormData formData = exchangeHelper.getFormData(exchange);
-		String action = exchangeHelper.param(formData, "action");
+	private void doPost(final HttpServerExchange exchange) throws Exception {
+		final FormData formData = exchangeHelper.getFormData(exchange);
+		final String action = exchangeHelper.param(formData, "action");
 
 		if ("login".equals(action)) {
-			String username = exchangeHelper.param(formData, "username");
-			String password = exchangeHelper.param(formData, "password");
+			final String username = exchangeHelper.param(formData, "username");
+			final String password = exchangeHelper.param(formData, "password");
 
-			Principal user = authenticator.login(username, password);
+			final Principal user = authenticator.login(username, password);
 			if (user != null) {
-				Session session = exchangeHelper.getOrCreateSession(exchange);
+				final Session session = exchangeHelper.getOrCreateSession(exchange);
 				session.setAttribute("PRINCIPAL", user);
 				CHANGE_LOGGER.info("User logged in: " + user.getUsername());
 				HttpUtils.redirect(exchange, exchange.getRequestURI(), true, true);

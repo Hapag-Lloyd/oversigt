@@ -20,12 +20,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
 public class Dashboard implements Cloneable {
-	private static Set<String> newSet(String... items) {
+	private static Set<String> newSet(final String... items) {
 		return newSet(Arrays.asList(items));
 	}
 
-	private static Set<String> newSet(Collection<String> items) {
-		TreeSet<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+	private static Set<String> newSet(final Collection<String> items) {
+		final TreeSet<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		set.addAll(items);
 		return Collections.synchronizedSet(set);
 	}
@@ -36,23 +36,28 @@ public class Dashboard implements Cloneable {
 	@NotBlank
 	@JsonPropertyDescription("The unique ID of the dashboard. It will be used to reference the dashboard.")
 	private String id = null;
+
 	@NotNull
 	@NotBlank
 	@JsonPropertyDescription("The title of the dashboard for display in the browser")
 	private String title = "Dashboard";
+
 	@NotNull
 	@JsonPropertyDescription("Whether the dashboard is available to the public")
 	private boolean enabled = false;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "1920")
 	@JsonPropertyDescription("The screen width the dashboard will be optimized for")
 	private int screenWidth = 1920;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "1080")
 	@JsonPropertyDescription("The screen height the dashboard will be optimized for")
 	private int screenHeight = 1080;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "15")
@@ -63,12 +68,15 @@ public class Dashboard implements Cloneable {
 	@JsonProperty(defaultValue = "#222222")
 	@JsonPropertyDescription("The background color of the dashboard")
 	private Color backgroundColor = Color.parse("#222222");
+
 	@NotNull
 	@JsonPropertyDescription("The type of coloring the dashboard will use")
 	private DashboardColorScheme colorScheme = DashboardColorScheme.COLORED;
+
 	@NotNull
 	@JsonPropertyDescription("The first color for the selected color scheme")
 	private Color foregroundColorStart = Color.parse("#888888");
+
 	@NotNull
 	@JsonPropertyDescription("The second color for the selected color scheme")
 	private Color foregroundColorEnd = Color.parse("#AAAAAA");
@@ -76,6 +84,7 @@ public class Dashboard implements Cloneable {
 	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
 	private Set<@NotBlank /* TODO @UserId */ String> owners = newSet();
+
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
 	private Set<@NotBlank /* TODO @UserId */ String> editors = newSet();
@@ -83,28 +92,27 @@ public class Dashboard implements Cloneable {
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
 
-	Dashboard() {
-	}
+	Dashboard() {}
 
-	public Dashboard(String id, String owner, boolean enabled) {
+	public Dashboard(final String id, final String owner, final boolean enabled) {
 		this.id = id;
-		this.title = id;
-		this.owners.add(owner);
+		title = id;
+		owners.add(owner);
 		this.enabled = enabled;
 	}
 
-	public Dashboard(String id,
-			String title,
-			boolean enabled,
-			int screenWidth,
-			int screenHeight,
-			int columns,
-			Color backgroundColor,
-			DashboardColorScheme colorScheme,
-			Color foregroundColorStart,
-			Color foregroundColorEnd,
-			Collection<String> owners,
-			Collection<String> editors) {
+	public Dashboard(final String id,
+			final String title,
+			final boolean enabled,
+			final int screenWidth,
+			final int screenHeight,
+			final int columns,
+			final Color backgroundColor,
+			final DashboardColorScheme colorScheme,
+			final Color foregroundColorStart,
+			final Color foregroundColorEnd,
+			final Collection<String> owners,
+			final Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;
@@ -123,7 +131,7 @@ public class Dashboard implements Cloneable {
 		return Objects.requireNonNull(id);
 	}
 
-	public void setId(String id) {
+	public void setId(final String id) {
 		this.id = id;
 	}
 
@@ -131,7 +139,7 @@ public class Dashboard implements Cloneable {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
@@ -139,7 +147,7 @@ public class Dashboard implements Cloneable {
 		return enabled;
 	}
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(final boolean enabled) {
 		this.enabled = enabled;
 	}
 
@@ -147,7 +155,7 @@ public class Dashboard implements Cloneable {
 		return screenWidth;
 	}
 
-	public void setScreenWidth(int screenWidth) {
+	public void setScreenWidth(final int screenWidth) {
 		this.screenWidth = screenWidth;
 	}
 
@@ -155,7 +163,7 @@ public class Dashboard implements Cloneable {
 		return screenHeight;
 	}
 
-	public void setScreenHeight(int screenHeight) {
+	public void setScreenHeight(final int screenHeight) {
 		this.screenHeight = screenHeight;
 	}
 
@@ -163,7 +171,7 @@ public class Dashboard implements Cloneable {
 		return columns;
 	}
 
-	public void setColumns(int columns) {
+	public void setColumns(final int columns) {
 		this.columns = columns;
 	}
 
@@ -171,11 +179,11 @@ public class Dashboard implements Cloneable {
 		return backgroundColor;
 	}
 
-	public void setBackgroundColor(Color backgroundColor) {
+	public void setBackgroundColor(final Color backgroundColor) {
 		this.backgroundColor = backgroundColor;
 	}
 
-	public void setBackgroundColor(String backgroundColor) {
+	public void setBackgroundColor(final String backgroundColor) {
 		setBackgroundColor(Color.parse(backgroundColor));
 	}
 
@@ -183,11 +191,11 @@ public class Dashboard implements Cloneable {
 		return colorScheme;
 	}
 
-	public void setColorScheme(DashboardColorScheme colorScheme) {
+	public void setColorScheme(final DashboardColorScheme colorScheme) {
 		this.colorScheme = colorScheme;
 	}
 
-	public void setColorScheme(String string) {
+	public void setColorScheme(final String string) {
 		setColorScheme(DashboardColorScheme.fromString(string));
 	}
 
@@ -195,11 +203,11 @@ public class Dashboard implements Cloneable {
 		return foregroundColorStart;
 	}
 
-	public void setForegroundColorStart(Color foregroundColorStart) {
+	public void setForegroundColorStart(final Color foregroundColorStart) {
 		this.foregroundColorStart = foregroundColorStart;
 	}
 
-	public void setForegroundColorStart(String foregroundColorStart) {
+	public void setForegroundColorStart(final String foregroundColorStart) {
 		setForegroundColorStart(Color.parse(foregroundColorStart));
 	}
 
@@ -207,11 +215,11 @@ public class Dashboard implements Cloneable {
 		return foregroundColorEnd;
 	}
 
-	public void setForegroundColorEnd(Color foregroundColorEnd) {
+	public void setForegroundColorEnd(final Color foregroundColorEnd) {
 		this.foregroundColorEnd = foregroundColorEnd;
 	}
 
-	public void setForegroundColorEnd(String foregroundColorEnd) {
+	public void setForegroundColorEnd(final String foregroundColorEnd) {
 		setForegroundColorEnd(Color.parse(foregroundColorEnd));
 	}
 
@@ -219,7 +227,7 @@ public class Dashboard implements Cloneable {
 		return owners;
 	}
 
-	public void setOwners(Collection<String> owners) {
+	public void setOwners(final Collection<String> owners) {
 		this.owners = newSet(owners);
 	}
 
@@ -227,11 +235,11 @@ public class Dashboard implements Cloneable {
 		return editors;
 	}
 
-	public void setEditors(Collection<String> editors) {
+	public void setEditors(final Collection<String> editors) {
 		this.editors = newSet(editors);
 	}
 
-	public boolean isEditor(String username) {
+	public boolean isEditor(final String username) {
 		return getEditors().contains(username);
 	}
 
@@ -240,7 +248,7 @@ public class Dashboard implements Cloneable {
 		return Collections.unmodifiableCollection(widgets);
 	}
 
-	public Widget getWidget(int id) {
+	public Widget getWidget(final int id) {
 		return getWidgets().stream().filter(w -> w.getId() == id).findFirst().get();
 	}
 
@@ -268,7 +276,7 @@ public class Dashboard implements Cloneable {
 
 	@Override
 	public Dashboard clone() {
-		Dashboard dashboard = new Dashboard(getId(),
+		final Dashboard dashboard = new Dashboard(getId(),
 				getTitle(),
 				isEnabled(),
 				getScreenWidth(),

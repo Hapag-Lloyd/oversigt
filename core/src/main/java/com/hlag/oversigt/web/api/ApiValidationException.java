@@ -10,7 +10,7 @@ public class ApiValidationException extends Exception {
 
 	private final Set<? extends ConstraintViolation<?>> violations;
 
-	public ApiValidationException(Method method, Set<? extends ConstraintViolation<?>> violations) {
+	public ApiValidationException(final Method method, final Set<? extends ConstraintViolation<?>> violations) {
 		super("Constraint violation while calling method: " + method.toString());
 		this.violations = violations;
 	}

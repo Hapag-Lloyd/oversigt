@@ -99,7 +99,8 @@ import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
 
 /**
- * HTTP Server Controller. Bootstraps server and specifies all needed mappings and request handlers
+ * HTTP Server Controller. Bootstraps server and specifies all needed mappings
+ * and request handlers
  *
  * @author avarabyeu
  * @author Olaf Neumann
@@ -107,6 +108,7 @@ import ro.isdc.wro.http.ConfigurableWroFilter;
 @Singleton
 public class OversigtServer extends AbstractIdleService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtServer.class);
+
 	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
 
 	public static final String MAPPING_API = "/api/v1";
@@ -116,27 +118,38 @@ public class OversigtServer extends AbstractIdleService {
 	private final EventBus eventBus;
 
 	private ServerSentEventHandler sseHandler;
+
 	private Undertow server;
+
 	private EventSender sender;
 
 	private final Configuration templateConfiguration;
 
 	private final WelcomeHandler welcomeHandler;
+
 	private final LoginHandler loginHandler;
-	//private final DashboardConfigurationHandler dashboardConfigurationHandler;
+
+	// private final DashboardConfigurationHandler dashboardConfigurationHandler;
 	private final DashboardCreationHandler dashboardCreationHandler;
-	//private final EventSourceConfigurationHandler eventSourceConfigurationHandler;
+
+	// private final EventSourceConfigurationHandler
+	// eventSourceConfigurationHandler;
 	private final DashboardController dashboardController;
+
 	private final Application restApiApplication;
+
 	private final HttpServerExchangeHandler exchangeHandler;
 
 	private final Path[] addonFolders;
+
 	private final String[] widgetsPaths;
 
 	@Inject
 	private SessionManager sessionManager;
+
 	@Inject
 	private SessionConfig sessionConfig;
+
 	@Inject
 	@Named("startEventSources")
 	private boolean startEventSources;
@@ -148,37 +161,39 @@ public class OversigtServer extends AbstractIdleService {
 	@Inject
 	@Named("debug")
 	private boolean debug;
+
 	@Inject
 	private Injector injector;
+
 	@Inject
 	private JsonUtils json;
 
 	@Inject
-	public OversigtServer(@Named("listeners") List<HttpListenerConfiguration> listeners,
-			EventBus eventBus,
-			EventSender sender,
+	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners,
+			final EventBus eventBus,
+			final EventSender sender,
 
-			Configuration templateConfiguration,
-			WelcomeHandler welcomeHandler,
-			LoginHandler loginHandler,
-			//DashboardConfigurationHandler dashboardConfigurationHandler,
-			DashboardCreationHandler dashboardCreationHandler,
-			//EventSourceConfigurationHandler eventSourceConfigurationHandler,
-			DashboardController dashboardController,
-			HttpServerExchangeHandler exchangeHandler,
-			Application restApiApplication,
-			@Named("additionalPackages") String[] additionalPackages,
-			@Named("addonFolders") Path[] addonFolders,
-			@Named("widgetsPaths") String[] widgetsPaths) {
+			final Configuration templateConfiguration,
+			final WelcomeHandler welcomeHandler,
+			final LoginHandler loginHandler,
+			// DashboardConfigurationHandler dashboardConfigurationHandler,
+			final DashboardCreationHandler dashboardCreationHandler,
+			// EventSourceConfigurationHandler eventSourceConfigurationHandler,
+			final DashboardController dashboardController,
+			final HttpServerExchangeHandler exchangeHandler,
+			final Application restApiApplication,
+			@Named("additionalPackages") final String[] additionalPackages,
+			@Named("addonFolders") final Path[] addonFolders,
+			@Named("widgetsPaths") final String[] widgetsPaths) {
 		this.listeners = listeners;
 		this.eventBus = eventBus;
 		this.sender = sender;
 		this.templateConfiguration = templateConfiguration;
 		this.welcomeHandler = welcomeHandler;
 		this.loginHandler = loginHandler;
-		//this.dashboardConfigurationHandler = dashboardConfigurationHandler;
+		// this.dashboardConfigurationHandler = dashboardConfigurationHandler;
 		this.dashboardCreationHandler = dashboardCreationHandler;
-		//this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
+		// this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
 		this.dashboardController = dashboardController;
 		this.exchangeHandler = exchangeHandler;
 		this.restApiApplication = restApiApplication;
@@ -202,12 +217,12 @@ public class OversigtServer extends AbstractIdleService {
 			}
 
 			@Override
-			public void failed(State from, Throwable failure) {
+			public void failed(final State from, final Throwable failure) {
 				LOGGER.error("Embedded Oversigt server failed from: " + from, failure);
 			}
 
 			@Override
-			public void stopping(State from) {
+			public void stopping(final State from) {
 				LOGGER.info("Stopping embedded Oversigt server");
 			}
 		}, MoreExecutors.directExecutor());
@@ -237,16 +252,18 @@ public class OversigtServer extends AbstractIdleService {
 		eventBus.register(new Consumer<OversigtEvent>() {
 			@Subscribe
 			@Override
-			public void accept(OversigtEvent event) {
+			public void accept(final OversigtEvent event) {
 				sseHandler.getConnections()
 						.stream()
 						.forEach(connection -> sender.sendEventToConnection(event, connection));
 			}
 		});
 
-		//final HttpHandler securedEventSourceConfigurationHandler = withLogin(eventSourceConfigurationHandler);
+		// final HttpHandler securedEventSourceConfigurationHandler =
+		// withLogin(eventSourceConfigurationHandler);
 		final HttpHandler securedDashboardCreationHandler = withLogin(dashboardCreationHandler);
-		//final HttpHandler securedDashboardConfigurationHandler = withLogin(dashboardConfigurationHandler);
+		// final HttpHandler securedDashboardConfigurationHandler =
+		// withLogin(dashboardConfigurationHandler);
 
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers//
@@ -275,10 +292,10 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
 				// server configuration
-				//				.get("/config", securedEventSourceConfigurationHandler)//
-				//				.post("/config", securedEventSourceConfigurationHandler)//
-				//				.get("/config/{page}", securedEventSourceConfigurationHandler)//
-				//				.post("/config/{page}", securedEventSourceConfigurationHandler)//
+				// .get("/config", securedEventSourceConfigurationHandler)//
+				// .post("/config", securedEventSourceConfigurationHandler)//
+				// .get("/config/{page}", securedEventSourceConfigurationHandler)//
+				// .post("/config/{page}", securedEventSourceConfigurationHandler)//
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
@@ -304,13 +321,13 @@ public class OversigtServer extends AbstractIdleService {
 				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(10)))//
 						.setNext(rootHandler);
 
-		Logger accessLogger = LoggerFactory.getLogger("access");
+		final Logger accessLogger = LoggerFactory.getLogger("access");
 		final AccessLogHandler accessHandler = new AccessLogHandler(encodingHandler,
 				message -> accessLogger.info(message),
 				"combined",
 				OversigtServer.class.getClassLoader());
 
-		Builder builder = Undertow.builder();
+		final Builder builder = Undertow.builder();
 		listeners.stream()//
 				.filter(not(HttpListenerConfiguration::isSsl))
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
@@ -323,7 +340,7 @@ public class OversigtServer extends AbstractIdleService {
 		LOGGER.info("Starting web server");
 		try {
 			server.start();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			if (e.getCause() instanceof BindException) {
 				LOGGER.error("Cannot start server", e.getCause());
 				stopAsync();
@@ -339,16 +356,16 @@ public class OversigtServer extends AbstractIdleService {
 		LOGGER.info("StartUp finished");
 	}
 
-	private HttpHandler withLogin(HttpHandler handler) {
+	private HttpHandler withLogin(final HttpHandler handler) {
 		return withSession(Handlers.predicate(exchangeHandler::hasSession, handler, loginHandler));
 	}
 
-	private HttpHandler withSession(HttpHandler handler) {
+	private HttpHandler withSession(final HttpHandler handler) {
 		return new SessionAttachmentHandler(handler, sessionManager, sessionConfig);
 	}
 
-	private void redirectToConfigPage(HttpServerExchange exchange) {
-		List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
+	private void redirectToConfigPage(final HttpServerExchange exchange) {
+		final List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
 		if ("config".equals(parts.get(1))) {
 			HttpUtils.redirect(exchange, "/config/dashboards/" + parts.get(0), false, true);
 		} else {
@@ -356,8 +373,8 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
-	private void doLogout(HttpServerExchange exchange) {
-		Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
+	private void doLogout(final HttpServerExchange exchange) {
+		final Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
 		if (principal.isPresent()) {
 			exchangeHandler.getSession(exchange).ifPresent(s -> s.invalidate(exchange));
 			CHANGE_LOGGER.info("User logged out: "
@@ -368,10 +385,10 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
-	private void serveJsonSchema(HttpServerExchange exchange) {
-		String className = exchange.getQueryParameters().get("class").poll();
+	private void serveJsonSchema(final HttpServerExchange exchange) {
+		final String className = exchange.getQueryParameters().get("class").poll();
 		try {
-			Class<?> clazz = Class.forName(className);
+			final Class<?> clazz = Class.forName(className);
 			if (SerializableProperty.class.isAssignableFrom(clazz)) {
 				exchange.setStatusCode(StatusCodes.OK);
 				exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
@@ -381,44 +398,44 @@ public class OversigtServer extends AbstractIdleService {
 			} else {
 				HttpUtils.notFound(exchange);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			HttpUtils.notFound(exchange);
 		}
 	}
 
-	private void redirectToWelcomePage(HttpServerExchange exchange) {
+	private void redirectToWelcomePage(final HttpServerExchange exchange) {
 		HttpUtils.redirect(exchange, "/welcome", false, true);
 	}
 
-	private void serveWidget(HttpServerExchange exchange) {
+	private void serveWidget(final HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.SEE_OTHER);
-		String widgetName = exchange.getQueryParameters().get("widget").getFirst();
+		final String widgetName = exchange.getQueryParameters().get("widget").getFirst();
 		exchange.getResponseHeaders()
 				.put(Headers.LOCATION, "/assets/widgets/" + substringBefore(widgetName, ".html") + "/" + widgetName);
 		exchange.endExchange();
 	}
 
-	private void serveDashboard(HttpServerExchange exchange) throws Exception {
-		Object acceptHeader = exchange.getRequestHeaders().get(Headers.ACCEPT);
-		String acceptHeaderString = acceptHeader != null ? acceptHeader.toString() : "html";
-		boolean searchHtml = acceptHeaderString.toLowerCase().contains("html");
+	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
+		final Object acceptHeader = exchange.getRequestHeaders().get(Headers.ACCEPT);
+		final String acceptHeaderString = acceptHeader != null ? acceptHeader.toString() : "html";
+		final boolean searchHtml = acceptHeaderString.toLowerCase().contains("html");
 
 		if (searchHtml) {
-			String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
+			final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
 			if ("favicon.ico".equals(dashboardId)) {
 				// XXX add a proper favicon handler
 				HttpUtils.notFound(exchange);
 				return;
 			}
 			// check if the URI is correct... otherwise redirect to proper dashboard URI
-			String correctUri = "/" + dashboardId;
+			final String correctUri = "/" + dashboardId;
 			if (correctUri.equals(exchange.getRequestURI())) {
-				Dashboard dashboard = dashboardController.getDashboard(dashboardId);
+				final Dashboard dashboard = dashboardController.getDashboard(dashboardId);
 				if (dashboard == null || !dashboard.isEnabled()) {
 					// redirect to config page in order to create new dashboard
 					redirect(exchange, "/" + dashboardId + "/create", false, true);
 				} else {
-					String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
+					final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
 							map("title",
 									dashboard.getTitle(),
 									"columns",
@@ -441,31 +458,32 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
-	private String processTemplate(String templateName, Object model) throws IOException, TemplateException {
-		StringWriter out = new StringWriter();
+	private String processTemplate(final String templateName, final Object model)
+			throws IOException, TemplateException {
+		final StringWriter out = new StringWriter();
 		templateConfiguration.getTemplate(templateName).process(model, out);
 		return out.toString();
 	}
 
-	private void handleForeignEvents(HttpServerExchange exchange) throws IOException {
-		String encoding = exchange.getRequestCharset();
-		Charset charset = Charset.forName(encoding);
+	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+		final String encoding = exchange.getRequestCharset();
+		final Charset charset = Charset.forName(encoding);
 
-		String widgetId = exchange.getQueryParameters().get("widget").poll();
-		String json = IOUtils.toString(exchange.getInputStream(), charset);
+		final String widgetId = exchange.getQueryParameters().get("widget").poll();
+		final String json = IOUtils.toString(exchange.getInputStream(), charset);
 
 		// XXX check if event is OK
 		// - does this widget exist?
 		// - is JSON well formed for this widget?
 
-		JsonEvent event = new JsonEvent(widgetId, json);
+		final JsonEvent event = new JsonEvent(widgetId, json);
 		eventBus.post(event);
 	}
 
 	private HttpHandler createAssetsHandler() {
 		return Handlers.resource(new ClassPathResourceManager("statics") {
 			@Override
-			protected URL getResourceUrl(String realPath) {
+			protected URL getResourceUrl(final String realPath) {
 				if (realPath.startsWith("statics/widgets/")) {
 					final String end = realPath.substring("statics/widgets/".length());
 					return Arrays.stream(widgetsPaths)
@@ -481,10 +499,10 @@ public class OversigtServer extends AbstractIdleService {
 		});
 	}
 
-	private static URL getResourceUrl(String path) {
+	private static URL getResourceUrl(final String path) {
 		try {
 			return Resources.getResource(path);
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			return null;
 		}
 	}
@@ -497,7 +515,7 @@ public class OversigtServer extends AbstractIdleService {
 		final Path basePath;
 		try {
 			basePath = Paths.get(Resources.getResource(prefix).toURI());
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new RuntimeException(String.format("Unable to find prefix '%s' in resources", prefix), e);
 		}
 		final Path indexHtml = basePath.resolve("index.html");
@@ -507,8 +525,8 @@ public class OversigtServer extends AbstractIdleService {
 		}
 		return exchange -> {
 			// Find the file to serve
-			final String relativePath = exchange.getRelativePath()
-					.substring(exchange.getRelativePath().startsWith("/") ? 1 : 0);
+			final String relativePath
+					= exchange.getRelativePath().substring(exchange.getRelativePath().startsWith("/") ? 1 : 0);
 			final Path requestedFile = basePath.resolve(relativePath);
 			final Path fileToServe;
 			if (Files.isRegularFile(requestedFile)) {
@@ -520,14 +538,14 @@ public class OversigtServer extends AbstractIdleService {
 			// actually serve the file
 			final String contentType = FileUtils.getExtension(fileToServe).map(extension -> {
 				switch (extension.toLowerCase()) {
-					case "css":
-						return "text/css";
-					case "html":
-						return "text/html";
-					case "js":
-						return "application/javascript";
-					default:
-						return "application/octet-stream";
+				case "css":
+					return "text/css";
+				case "html":
+					return "text/html";
+				case "js":
+					return "application/javascript";
+				default:
+					return "application/octet-stream";
 				}
 			}).get();
 			exchange.setStatusCode(StatusCodes.OK);
@@ -539,34 +557,34 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	/**
-	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts compilation and saas
-	 * processing Wro4j uses Servlet API so we make fake Servlet Deployment here to emulate
-	 * servlet-based environment
+	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts
+	 * compilation and saas processing Wro4j uses Servlet API so we make fake
+	 * Servlet Deployment here to emulate servlet-based environment
 	 *
 	 * @return Static resources handler
 	 */
 	private HttpHandler createAggregationHandler() throws ServletException {
-		DeploymentInfo deploymentInfo = Servlets.deployment()
+		final DeploymentInfo deploymentInfo = Servlets.deployment()
 				.setClassLoader(OversigtServer.class.getClassLoader())
 				.setContextPath("/")
 				.setDeploymentName("oversigt")
 				.addFilterUrlMapping("wro4j", "/*", DispatcherType.REQUEST)
 				.addFilter(Servlets.filter("wro4j", ConfigurableWroFilter.class, () -> {
-					ConfigurableWroFilter filter = new ConfigurableWroFilter();
+					final ConfigurableWroFilter filter = new ConfigurableWroFilter();
 					filter.setWroManagerFactory(new WroManagerFactory());
 					return new ImmediateInstanceHandle<>(filter);
 				}));
-		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
+		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 		return manager.start();
 	}
 
 	private HttpHandler createApiHandler() throws ServletException {
 		// https://github.com/ukarim/undertow-resteasy-example
-		ResteasyDeployment deployment = new ResteasyDeployment();
+		final ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(restApiApplication);
 		deployment.setInjectorFactoryClass(CdiInjectorFactory.class.getName());
-		DeploymentInfo deploymentInfo = createUndertowDeployment(deployment, "/");
+		final DeploymentInfo deploymentInfo = createUndertowDeployment(deployment, "/");
 		deploymentInfo.setClassLoader(OversigtServer.class.getClassLoader());
 		deploymentInfo.setDeploymentName("oversigt-api");
 		deploymentInfo.setContextPath(MAPPING_API);
@@ -574,12 +592,12 @@ public class OversigtServer extends AbstractIdleService {
 		deploymentInfo
 				.addListener(listener(ApiBootstrapListener.class, createInstanceFactory(ApiBootstrapListener.class)));
 
-		DeploymentManager manager = defaultContainer().addDeployment(deploymentInfo);
+		final DeploymentManager manager = defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
 		return manager.start();
 	}
 
-	private DeploymentInfo createUndertowDeployment(ResteasyDeployment deployment, String mapping) {
+	private DeploymentInfo createUndertowDeployment(final ResteasyDeployment deployment, String mapping) {
 		if (mapping == null) {
 			mapping = "/";
 		}
@@ -594,7 +612,7 @@ public class OversigtServer extends AbstractIdleService {
 		if (!mapping.equals("/*")) {
 			prefix = mapping.substring(0, mapping.length() - 2);
 		}
-		ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServlet30Dispatcher.class)//
+		final ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServlet30Dispatcher.class)//
 				.setAsyncSupported(true)
 				.setLoadOnStartup(1)
 				.addMapping(mapping);
@@ -627,8 +645,8 @@ public class OversigtServer extends AbstractIdleService {
 		server.stop();
 	}
 
-	private <T> InstanceFactory<T> createInstanceFactory(Class<T> clazz) {
-		Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
+	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
+		final Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
 	}
 }

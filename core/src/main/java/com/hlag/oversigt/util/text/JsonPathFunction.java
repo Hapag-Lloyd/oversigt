@@ -8,17 +8,18 @@ import com.jayway.jsonpath.JsonPath;
 
 class JsonPathFunction implements Function<String, String> {
 	private final Configuration configuration;
+
 	private final String json;
 
-	JsonPathFunction(Configuration configuration, String json) {
+	JsonPathFunction(final Configuration configuration, final String json) {
 		this.configuration = configuration;
 		this.json = json;
 	}
 
 	@Override
-	public String apply(String jsonPathString) {
-		JsonPath jsonPath = JsonPath.compile(jsonPathString);
-		Object result = jsonPath.read(json, configuration);
+	public String apply(final String jsonPathString) {
+		final JsonPath jsonPath = JsonPath.compile(jsonPathString);
+		final Object result = jsonPath.read(json, configuration);
 
 		if (result == null) {
 			return "";

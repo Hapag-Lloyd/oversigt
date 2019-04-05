@@ -10,11 +10,11 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 public class ReloadEvent extends OversigtEvent {
 	private Collection<String> dashboards;
 
-	public ReloadEvent(String... dashboards) {
+	public ReloadEvent(final String... dashboards) {
 		this(Arrays.asList(dashboards));
 	}
 
-	public ReloadEvent(Collection<String> dashboards) {
+	public ReloadEvent(final Collection<String> dashboards) {
 		setId("reload");
 		this.dashboards = dashboards.isEmpty() ? null : dashboards;
 	}
@@ -23,7 +23,7 @@ public class ReloadEvent extends OversigtEvent {
 		return dashboards;
 	}
 
-	public void setDashboards(Collection<String> dashboards) {
+	public void setDashboards(final Collection<String> dashboards) {
 		this.dashboards = dashboards;
 	}
 }

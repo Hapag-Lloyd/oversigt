@@ -8,7 +8,7 @@ public interface ThrowingSupplier<T> extends Supplier<T> {
 	default T get() {
 		try {
 			return getThrowing();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw e instanceof RuntimeException ? (RuntimeException) e : new SneakyException(e);
 		}
 	}

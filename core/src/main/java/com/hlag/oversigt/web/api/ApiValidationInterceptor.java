@@ -16,19 +16,21 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 	private Validator validator;
 
 	@Override
-	public Object invoke(MethodInvocation invocation) throws Throwable {
+	public Object invoke(final MethodInvocation invocation) throws Throwable {
 		// save parameters for logging
 		LoggingInterceptor.parameters.set(invocation.getArguments());
 
 		// Validate call
-		Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+		final Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
 
 		violations.addAll(validator.forExecutables()
 				.validateParameters(invocation.getThis(), invocation.getMethod(), invocation.getArguments()));
 
-		Class<?>[] types = invocation.getMethod().getParameterTypes();
+		final Class<?>[] types = invocation.getMethod().getParameterTypes();
 		for (int i = 0; i < types.length; ++i) {
-			if (!(types[i].isPrimitive() || Number.class.isAssignableFrom(types[i]) || types[i] == String.class
+			if (!(types[i].isPrimitive()
+					|| Number.class.isAssignableFrom(types[i])
+					|| types[i] == String.class
 					|| types[i] == Boolean.class)) {
 				violations.addAll(validator.validate(invocation.getArguments()[i]));
 			}

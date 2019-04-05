@@ -9,28 +9,31 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
 public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
-	public TwoColumnListEvent(List<? extends ListEventItem<T>> items) {
+	public TwoColumnListEvent(final List<? extends ListEventItem<T>> items) {
 		super(items);
 	}
 
 	public static class ListEventItem<T> {
 		private String label;
+
 		private T value;
+
 		private String labelStyle;
+
 		private String valueStyle;
 
-		public ListEventItem(String label, T value, String labelStyle, String valueStyle) {
+		public ListEventItem(final String label, final T value, final String labelStyle, final String valueStyle) {
 			this.label = label;
 			this.value = value;
 			this.labelStyle = labelStyle;
 			this.valueStyle = valueStyle;
 		}
 
-		public ListEventItem(String label, T value) {
+		public ListEventItem(final String label, final T value) {
 			this(label, value, "", "");
 		}
 
-		public ListEventItem(Entry<? extends CharSequence, T> entry) {
+		public ListEventItem(final Entry<? extends CharSequence, T> entry) {
 			this(entry.getKey().toString(), entry.getValue());
 		}
 

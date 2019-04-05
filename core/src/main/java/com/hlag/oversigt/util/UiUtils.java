@@ -12,7 +12,8 @@ import com.hlag.oversigt.properties.SerializableProperty;
 
 public class UiUtils {
 	/**
-	 * Determines whether the provided class has a dedicated editor in the UI or not.<br>
+	 * Determines whether the provided class has a dedicated editor in the UI or
+	 * not.<br>
 	 * Classes that have a dedicated editor:
 	 * <ul>
 	 * <li>all primitive types</li>
@@ -28,12 +29,11 @@ public class UiUtils {
 	 * <li>{@link ZoneId}</li>
 	 * </ul>
 	 *
-	 * @param clazz
-	 *            the class to test
+	 * @param clazz the class to test
 	 * @return <code>true</code> if the class has a dedicated UI editor, otherwise
 	 *         <code>false</code>
 	 */
-	public static boolean hasDedicatedEditor(Class<?> clazz) {
+	public static boolean hasDedicatedEditor(final Class<?> clazz) {
 		return clazz.isPrimitive()//
 				|| clazz == String.class//
 				|| SerializableProperty.class.isAssignableFrom(clazz)//

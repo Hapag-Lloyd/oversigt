@@ -71,6 +71,7 @@ import lombok.ToString;
 public class DashboardResource {
 	@Inject
 	private DashboardController dashboardController;
+
 	@Inject
 	private Authenticator authenticator;
 
@@ -79,7 +80,10 @@ public class DashboardResource {
 
 	@GET
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returning a list of all dashboards", response = DashboardInfo.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returning a list of all dashboards",
+					response = DashboardInfo.class,
+					responseContainer = "List") })
 	@ApiOperation(value = "List existing dashboards ids")
 	@NoChangeLog
 	public Response listDashboardIds() {
@@ -92,15 +96,18 @@ public class DashboardResource {
 
 	@PUT
 	@ApiResponses({
-			@ApiResponse(code = 201, message = "A new dashboard has been created. The body contains a detailed representation of the newly created dashboard", response = Dashboard.class), //
-			@ApiResponse(code = 303, message = "The dashboard already exists. Sending redirect to dashboard information.") //
+			@ApiResponse(code = 201,
+					message = "A new dashboard has been created. The body contains a detailed representation of the newly created dashboard",
+					response = Dashboard.class), //
+			@ApiResponse(code = 303,
+					message = "The dashboard already exists. Sending redirect to dashboard information.") //
 	})
 	@JwtSecured
 	@ApiOperation(value = "Create new dashboard", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
-	public Response createDashboard(@Context SecurityContext securityContext,
-			@QueryParam("dashboardId") @NotNull String id,
-			@QueryParam("owner") @NotNull @UserId String ownerUserId,
+	public Response createDashboard(@Context final SecurityContext securityContext,
+			@QueryParam("dashboardId") @NotNull final String id,
+			@QueryParam("owner") @NotNull @UserId final String ownerUserId,
 			@QueryParam("enabled") @ApiParam(defaultValue = "false") boolean enabled) {
 		Dashboard dashboard = dashboardController.getDashboard(id);
 		if (dashboard != null) {
@@ -108,8 +115,8 @@ public class DashboardResource {
 		}
 
 		enabled = enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN);
-		dashboard = dashboardController
-				.createDashboard(id, Principal.loadPrincipal(authenticator, ownerUserId), enabled);
+		dashboard
+				= dashboardController.createDashboard(id, Principal.loadPrincipal(authenticator, ownerUserId), enabled);
 		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId()))//
 				.entity(dashboard)
 				.type(MediaType.APPLICATION_JSON_TYPE)
@@ -119,7 +126,9 @@ public class DashboardResource {
 	@GET
 	@Path("/{dashboardId}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "A detailed representation of the requested dashboard", response = Dashboard.class), //
+			@ApiResponse(code = 200,
+					message = "A detailed representation of the requested dashboard",
+					response = Dashboard.class), //
 			@ApiResponse(code = 404, message = "The requested dashboard does not exist", response = ErrorResponse.class) //
 	})
 	@JwtSecured(mustBeAuthenticated = false)
@@ -127,15 +136,15 @@ public class DashboardResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@PermitAll
-	public Response readDashboard(@Context SecurityContext secu, @PathParam("dashboardId") String id) {
-		final Optional<Map<String, Object>> dashboard = Optional.ofNullable(dashboardController.getDashboard(id))
-				.map(TypeUtils::toMemberMap);
+	public Response readDashboard(@Context final SecurityContext secu, @PathParam("dashboardId") final String id) {
+		final Optional<Map<String, Object>> dashboard
+				= Optional.ofNullable(dashboardController.getDashboard(id)).map(TypeUtils::toMemberMap);
 		if (!dashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
 
-		final Map<String, Object> dashboardMap = dashboard
-				.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
+		final Map<String, Object> dashboardMap
+				= dashboard.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
 		if (secu.getUserPrincipal() == null) {
 			dashboardMap.remove("owner");
 			dashboardMap.remove("editors");
@@ -148,16 +157,18 @@ public class DashboardResource {
 	@ApiResponses({ //
 			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class), //
 			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
-			@ApiResponse(code = 403, message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to", response = ErrorResponse.class), //
+			@ApiResponse(code = 403,
+					message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to",
+					response = ErrorResponse.class), //
 			@ApiResponse(code = 404, message = "The dashboard does not exist") //
 	})
 	@ApiOperation(value = "Partially update dashboard details", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
-	public Response updateDashboardPartially(@Context SecurityContext securityContext,
-			@PathParam("dashboardId") @NotNull String id,
-			Map<String, Object> newDashboardData) throws ApiValidationException {
+	public Response updateDashboardPartially(@Context final SecurityContext securityContext,
+			@PathParam("dashboardId") @NotNull final String id,
+			final Map<String, Object> newDashboardData) throws ApiValidationException {
 		// load current dashboard from storage
 		final Dashboard dashboard = dashboardController.getDashboard(id);
 		if (dashboard == null) {
@@ -179,7 +190,8 @@ public class DashboardResource {
 			return badRequest("Currently the only allowed attribute for change is: 'enabled'");
 		}
 
-		// Check if the user changed the enabled state of the dashboard. Only server admins may perform that action
+		// Check if the user changed the enabled state of the dashboard. Only server
+		// admins may perform that action
 		if (newDashboardData.containsKey("enabled")
 				&& Boolean.parseBoolean(newDashboardData.get("enabled").toString()) != newDashboard.isEnabled()
 				&& !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {
@@ -187,11 +199,14 @@ public class DashboardResource {
 					"Only server admins are allowed to change a dashboard's enabled state. Please contact a server admin.");
 		}
 
-		//		// if the owner has changed the user needs to be at least dashboard owner
-		//		if (!newDashboardData.getOwners().equals(dashboard.getOwners())
-		//				&& !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName())) {
-		//			return forbidden("To change the owner of a dashboard you need to be at least the owner of the dashboard.");
-		//		}
+		// // if the owner has changed the user needs to be at least dashboard owner
+		// if (!newDashboardData.getOwners().equals(dashboard.getOwners())
+		// &&
+		// !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName()))
+		// {
+		// return forbidden("To change the owner of a dashboard you need to be at least
+		// the owner of the dashboard.");
+		// }
 
 		// update dashboard data
 		if (newDashboardData.containsKey("enabled")) {
@@ -209,16 +224,18 @@ public class DashboardResource {
 	@ApiResponses({ //
 			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class), //
 			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
-			@ApiResponse(code = 403, message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to", response = ErrorResponse.class), //
+			@ApiResponse(code = 403,
+					message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to",
+					response = ErrorResponse.class), //
 			@ApiResponse(code = 404, message = "The dashboard does not exist") //
 	})
 	@ApiOperation(value = "Update dashboard details", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
-	public Response updateDashboard(@Context SecurityContext securityContext,
-			@PathParam("dashboardId") @NotNull String id,
-			Dashboard newDashboardData) throws ApiValidationException {
+	public Response updateDashboard(@Context final SecurityContext securityContext,
+			@PathParam("dashboardId") @NotNull final String id,
+			final Dashboard newDashboardData) throws ApiValidationException {
 		// load current dashboard from storage
 		final Dashboard originalDashboard = dashboardController.getDashboard(id);
 
@@ -235,7 +252,8 @@ public class DashboardResource {
 			return badRequest("The dashboard ID does not match");
 		}
 
-		// Check if the user changed the enabled state of the dashboard. Only server admins may perform that action
+		// Check if the user changed the enabled state of the dashboard. Only server
+		// admins may perform that action
 		if (newDashboardData.isEnabled() != originalDashboard.isEnabled()
 				&& !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {
 			return forbidden(
@@ -257,9 +275,9 @@ public class DashboardResource {
 
 		// Prepare changes
 		// ===============
-		final Set<String> users = Stream
-				.concat(originalDashboard.getOwners().stream(), originalDashboard.getEditors().stream())
-				.collect(toSet());
+		final Set<String> users
+				= Stream.concat(originalDashboard.getOwners().stream(), originalDashboard.getEditors().stream())
+						.collect(toSet());
 
 		// update dashboard data
 		// =====================
@@ -290,10 +308,10 @@ public class DashboardResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
-	public Response updateWidgetPositions(@PathParam("dashboardId") @NotNull String id,
-			List<WidgetPosition> widgetPositions) throws ApiValidationException {
+	public Response updateWidgetPositions(@PathParam("dashboardId") @NotNull final String id,
+			final List<WidgetPosition> widgetPositions) throws ApiValidationException {
 		// load current dashboard from storage
-		Dashboard dashboard = dashboardController.getDashboard(id);
+		final Dashboard dashboard = dashboardController.getDashboard(id);
 
 		// does it exist?
 		if (dashboard == null) {
@@ -301,7 +319,7 @@ public class DashboardResource {
 		}
 
 		// Do all given widget positions match a dashboard widget?
-		Set<String> unmatchedWidgetIds = widgetPositions.stream()//
+		final Set<String> unmatchedWidgetIds = widgetPositions.stream()//
 				.mapToInt(WidgetPosition::getWidgetId)
 				.filter(i -> !dashboard.getWidgets()//
 						.stream()
@@ -315,7 +333,7 @@ public class DashboardResource {
 
 		// Update widget positions
 		widgetPositions.forEach(t -> {
-			Widget widget = dashboard.getWidget(t.getWidgetId());
+			final Widget widget = dashboard.getWidget(t.getWidgetId());
 			widget.setSizeX(t.getSizeX());
 			widget.setSizeY(t.getSizeY());
 			widget.setPosX(t.getPosX());
@@ -336,7 +354,7 @@ public class DashboardResource {
 	@ApiOperation(value = "Delete dashboard", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
-	public Response deleteDashboard(@PathParam("dashboardId") String id) {
+	public Response deleteDashboard(@PathParam("dashboardId") final String id) {
 		if (dashboardController.deleteDashboard(id)) {
 			return ok().build();
 		} else {
@@ -348,7 +366,7 @@ public class DashboardResource {
 	@ToString
 	@Builder
 	public static class DashboardInfo {
-		public static DashboardInfo fromDashboard(Dashboard dashboard) {
+		public static DashboardInfo fromDashboard(final Dashboard dashboard) {
 			return builder().id(dashboard.getId()).title(dashboard.getTitle()).build();
 		}
 
@@ -356,6 +374,7 @@ public class DashboardResource {
 		@NotEmpty
 		@NotBlank
 		private String id;
+
 		@NotNull
 		@NotEmpty
 		@NotBlank
@@ -368,21 +387,25 @@ public class DashboardResource {
 		@Positive
 		@JsonPropertyDescription("The ID of the widget this position applys to")
 		private int widgetId;
+
 		@NotNull
 		@Min(1)
 		@Positive
 		@JsonPropertyDescription("The widget's position on the X axis")
 		private int posX;
+
 		@NotNull
 		@Min(1)
 		@Positive
 		@JsonPropertyDescription("The widget's position on the Y axis")
 		private int posY;
+
 		@NotNull
 		@Min(1)
 		@Positive
 		@JsonPropertyDescription("The widget's width")
 		private int sizeX;
+
 		@NotNull
 		@Min(1)
 		@Positive
@@ -409,23 +432,23 @@ public class DashboardResource {
 			return sizeY;
 		}
 
-		public void setWidgetId(int widgetId) {
+		public void setWidgetId(final int widgetId) {
 			this.widgetId = widgetId;
 		}
 
-		public void setPosX(int posX) {
+		public void setPosX(final int posX) {
 			this.posX = posX;
 		}
 
-		public void setPosY(int posY) {
+		public void setPosY(final int posY) {
 			this.posY = posY;
 		}
 
-		public void setSizeX(int sizeX) {
+		public void setSizeX(final int sizeX) {
 			this.sizeX = sizeX;
 		}
 
-		public void setSizeY(int sizeY) {
+		public void setSizeY(final int sizeY) {
 			this.sizeY = sizeY;
 		}
 	}

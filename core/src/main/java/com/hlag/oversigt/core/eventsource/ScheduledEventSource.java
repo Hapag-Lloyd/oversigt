@@ -25,7 +25,8 @@ import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
 
 /**
- * Scheduled EventSource - produces events with specified time period. Basically, based on Guava's
+ * Scheduled EventSource - produces events with specified time period.
+ * Basically, based on Guava's
  * {@link com.google.common.util.concurrent.AbstractScheduledService}
  *
  * @author avarabyeu
@@ -52,11 +53,15 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	private EventBus eventBus;
 
 	private AtomicBoolean immediateExecution = new AtomicBoolean(false);
+
 	private ZonedDateTime lastRun = null;
+
 	private ZonedDateTime lastSuccessfulRun = null;
 
 	private ZonedDateTime lastFailureDateTime = null;
+
 	private String lastFailureDescription = null;
+
 	private Throwable lastFailureException = null;
 
 	protected String getEventId() {
@@ -64,13 +69,15 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	}
 
 	/**
-	 * Executes one iteration of {@link com.google.common.util.concurrent.AbstractScheduledService}
-	 * Sends event to event bus
+	 * Executes one iteration of
+	 * {@link com.google.common.util.concurrent.AbstractScheduledService} Sends
+	 * event to event bus
 	 */
 	@Override
 	protected final void runOneIteration() {
 		logTrace(getLogger(), "Run one iteration");
-		// if the last iteration (if any) is too short in the past, return immediately so no action will be done.
+		// if the last iteration (if any) is too short in the past, return immediately
+		// so no action will be done.
 		if (!isTimeToRunNextIteration()) {
 			logTrace(getLogger(), "Not the time to run one iteration");
 			return;
@@ -85,7 +92,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			}
 			logTrace(getLogger(), "Done producing event");
 			setLastRunNow(true);
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			sendEvent(new ErrorEvent(e));
 			logError(getLogger(), "Cannot produce event with id %s. Deleting last event.", eventId);
 			failure("Event source threw an exception", e);
@@ -98,12 +105,12 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		}
 	}
 
-	protected final boolean sendEvent(OversigtEvent event) {
+	protected final boolean sendEvent(final OversigtEvent event) {
 		if (event != null) {
 			event.setId(eventId);
 			try {
 				event.setLifetime(getEventLifetime());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logWarn(getLogger(), "Unable to compute event life time", e);
 			}
 			this.eventBus.post(event);
@@ -144,23 +151,24 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return frequency;
 	}
 
-	public final void setFrequency(Duration frequency) {
+	public final void setFrequency(final Duration frequency) {
 		this.frequency = frequency;
 		scheduleImmediateExecution();
 	}
 
 	/**
-	 * Clears the timestamp of the last iteration of this service resulting in an immediate execution of this event source within the next second.
+	 * Clears the timestamp of the last iteration of this service resulting in an
+	 * immediate execution of this event source within the next second.
 	 */
 	public final void scheduleImmediateExecution() {
 		immediateExecution.set(true);
 	}
 
-	private void setLastRunNow(boolean success) {
+	private void setLastRunNow(final boolean success) {
 		setLastRun(success, ZonedDateTime.now());
 	}
 
-	private synchronized void setLastRun(boolean success, ZonedDateTime lastRun) {
+	private synchronized void setLastRun(final boolean success, final ZonedDateTime lastRun) {
 		logDebug(getLogger(), "Setting last run timestamp to %s", lastRun);
 		this.lastRun = lastRun;
 		if (success) {
@@ -181,7 +189,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return immediateExecution.getAndSet(false) //
 				|| lastRun == null //
 				|| frequency.minus(Duration.between(lastRun, ZonedDateTime.now())).isNegative();
-		//|| Duration.between(lastRun, LocalDateTime.now()).compareTo(frequency) > 1;
+		// || Duration.between(lastRun, LocalDateTime.now()).compareTo(frequency) > 1;
 	}
 
 	public synchronized ZonedDateTime getLastRun() {
@@ -198,11 +206,11 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		this.lastFailureException = null;
 	}
 
-	protected synchronized <X> X failure(String message) {
+	protected synchronized <X> X failure(final String message) {
 		return failure(message, null);
 	}
 
-	protected synchronized <X> X failure(String message, Throwable exception) {
+	protected synchronized <X> X failure(final String message, final Throwable exception) {
 		getLogger().error(message, exception);
 		this.lastFailureDateTime = ZonedDateTime.now();
 		this.lastFailureDescription = message;

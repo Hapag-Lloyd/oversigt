@@ -22,37 +22,40 @@ import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
 /**
- * @author Olaf Neumann
- * see https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+ * @author Olaf Neumann see
+ *         https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
  *
  */
 @Singleton
 public class ApiAuthenticationUtils {
 	private final String issuer;
+
 	private final byte[] apiSecret;
+
 	private final SignatureAlgorithm signatureAlgorithm;
+
 	private final long apiTtl;
 
 	private final Authenticator authenticator;
 
 	@Inject
-	public ApiAuthenticationUtils(@Named("hostname") String hostname,
-			@Named("api.secret.base64") String apiSecretBase64,
-			Authenticator authenticator,
-			SignatureAlgorithm signatureAlgorithm,
-			@Named("api.ttl") long ttl) {
-		this.issuer = hostname + OversigtServer.MAPPING_API;
-		this.apiSecret = Base64.getDecoder().decode(apiSecretBase64);
+	public ApiAuthenticationUtils(@Named("hostname") final String hostname,
+			@Named("api.secret.base64") final String apiSecretBase64,
+			final Authenticator authenticator,
+			final SignatureAlgorithm signatureAlgorithm,
+			@Named("api.ttl") final long ttl) {
+		issuer = hostname + OversigtServer.MAPPING_API;
+		apiSecret = Base64.getDecoder().decode(apiSecretBase64);
 		this.signatureAlgorithm = signatureAlgorithm;
-		this.apiTtl = ttl;
+		apiTtl = ttl;
 		this.authenticator = authenticator;
 	}
 
-	public Principal authenticate(String username, String password) throws Exception {
+	public Principal authenticate(final String username, final String password) throws Exception {
 		// Authenticate against a database, LDAP, file or whatever
 		// Throw an Exception if the credentials are invalid
 
-		Principal principal = authenticator.login(username, password);
+		final Principal principal = authenticator.login(username, password);
 		if (principal != null) {
 			return principal;
 		} else {
@@ -60,12 +63,12 @@ public class ApiAuthenticationUtils {
 		}
 	}
 
-	public String issueToken(Principal principal) throws IllegalArgumentException, UnsupportedEncodingException {
+	public String issueToken(final Principal principal) throws IllegalArgumentException, UnsupportedEncodingException {
 		final long nowMillis = System.currentTimeMillis();
 		final Date now = new Date(nowMillis);
 		final String id = nowMillis + "-" + UUID.randomUUID().toString();
 
-		JwtBuilder builder = Jwts//
+		final JwtBuilder builder = Jwts//
 				.builder()
 				.setId(id)
 				.setIssuedAt(now)
@@ -83,13 +86,13 @@ public class ApiAuthenticationUtils {
 		return builder.compact();
 	}
 
-	public Principal validateToken(String token) throws ExpiredJwtException, UnsupportedJwtException,
+	public Principal validateToken(final String token) throws ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, SignatureException, IllegalArgumentException {
 		// Check if the token was issued by the server and if it's not expired
 		// Throw an Exception if the token is invalid
 
-		//This line will throw an exception if it is not a signed JWS (as expected)
-		Claims claims = Jwts//
+		// This line will throw an exception if it is not a signed JWS (as expected)
+		final Claims claims = Jwts//
 				.parser()
 				.setSigningKey(apiSecret)
 				.requireSubject("oversigt-api")

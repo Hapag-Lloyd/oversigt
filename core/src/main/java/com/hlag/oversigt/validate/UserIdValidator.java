@@ -13,11 +13,11 @@ public class UserIdValidator implements ConstraintValidator<UserId, String> {
 	private Authenticator authenticator;
 
 	@Override
-	public boolean isValid(String value, ConstraintValidatorContext context) {
+	public boolean isValid(final String value, final ConstraintValidatorContext context) {
 		try {
-			Principal principal = Principal.loadPrincipal(authenticator, value);
+			final Principal principal = Principal.loadPrincipal(authenticator, value);
 			return principal != null;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 	}

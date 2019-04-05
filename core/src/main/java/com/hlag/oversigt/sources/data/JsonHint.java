@@ -19,7 +19,7 @@ public @interface JsonHint {
 		TABS("tabs");
 		private final String value;
 
-		private ArrayStyle(String value) {
+		private ArrayStyle(final String value) {
 			this.value = value;
 		}
 

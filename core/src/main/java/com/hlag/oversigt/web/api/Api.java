@@ -10,7 +10,8 @@ import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.annotations.Tag;
 
 /**
- * This class is used to define basic functionality of the Oversigt API. It does not contain logic.
+ * This class is used to define basic functionality of the Oversigt API. It does
+ * not contain logic.
  *
  * @author Olaf Neumann
  *
@@ -31,7 +32,10 @@ import io.swagger.annotations.Tag;
 		}, //
 		securityDefinition = @SecurityDefinition(//
 				apiKeyAuthDefinitions = {
-						@ApiKeyAuthDefinition(key = "JsonWebToken", in = ApiKeyLocation.HEADER, name = "Authorization", description = "This authorization definition uses JSON Web Tokens. To correctly use it please prepend a 'Bearer ' to the token.") //
+						@ApiKeyAuthDefinition(key = "JsonWebToken",
+								in = ApiKeyLocation.HEADER,
+								name = "Authorization",
+								description = "This authorization definition uses JSON Web Tokens. To correctly use it please prepend a 'Bearer ' to the token.") //
 				} //
 		), //
 		consumes = { MediaType.APPLICATION_JSON }, //

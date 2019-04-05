@@ -33,10 +33,10 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	@Override
 	protected ProcessorsFactory newProcessorsFactory() {
-		SimpleProcessorsFactory factory = new SimpleProcessorsFactory();
+		final SimpleProcessorsFactory factory = new SimpleProcessorsFactory();
 		factory.addPreProcessor(new ProcessorDecorator(new CoffeeScriptProcessor()) {
 			@Override
-			public void process(Resource resource, Reader reader, Writer writer) throws IOException {
+			public void process(final Resource resource, final Reader reader, final Writer writer) throws IOException {
 				if (resource.getUri().endsWith(COFFEE_FILENAME)) {
 					super.process(resource, reader, writer);
 				} else {
@@ -62,10 +62,10 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	@Override
 	protected Properties newConfigProperties() {
-		Properties properties = new Properties();
+		final Properties properties = new Properties();
 		try (InputStream is = Resources.asByteSource(Resources.getResource("wro.properties")).openStream()) {
 			properties.load(is);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Unable to load wro configuration", e);
 		}
 

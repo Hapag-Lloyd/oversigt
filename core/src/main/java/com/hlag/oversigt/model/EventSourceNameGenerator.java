@@ -13,7 +13,7 @@ public class EventSourceNameGenerator {
 	@Inject
 	private Storage storage;
 
-	public String createEventSourceInstanceName(EventSourceDescriptor descriptor) {
+	public String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
 		// create base name
 		String basename = descriptor.getView();
 		if (descriptor.getServiceClass() != null) {
@@ -28,7 +28,7 @@ public class EventSourceNameGenerator {
 				.trim();
 
 		// look if there is another source with the same name
-		Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		final Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		names.addAll(storage.getEventSourceNames());
 		String name = basename;
 		int i = 1;

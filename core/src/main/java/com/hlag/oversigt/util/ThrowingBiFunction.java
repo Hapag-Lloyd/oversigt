@@ -6,10 +6,10 @@ import java.util.function.BiFunction;
 @FunctionalInterface
 public interface ThrowingBiFunction<T, U, R> extends BiFunction<T, U, R> {
 	@Override
-	default R apply(T t, U u) {
+	default R apply(final T t, final U u) {
 		try {
 			return applyThrowing(t, u);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw e instanceof RuntimeException ? (RuntimeException) e : new SneakyException(e);
 		}
 	}

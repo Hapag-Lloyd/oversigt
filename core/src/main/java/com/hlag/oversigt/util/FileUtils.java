@@ -36,7 +36,7 @@ import com.google.common.base.Splitter;
 public class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
 
-	public static Stream<Path> closedPathStream(Stream<Path> stream) {
+	public static Stream<Path> closedPathStream(final Stream<Path> stream) {
 		try (Stream<Path> paths = stream) {
 			return paths//
 					.collect(Collectors.toList())
@@ -44,33 +44,33 @@ public class FileUtils {
 		}
 	}
 
-	public static void deleteFolderOnExit(Path root) {
+	public static void deleteFolderOnExit(final Path root) {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteFolder(root), "DeleteOnExit:" + root.toString()));
 	}
 
-	public static void deleteFolder(Path root) {
+	public static void deleteFolder(final Path root) {
 		try {
 			LOGGER.info("Deleting folder [{}]", root.toAbsolutePath().toString());
 			Files.walk(root)//
 					.sorted(Comparator.reverseOrder())
 					.forEach(sneakc(Files::deleteIfExists));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new SneakyException(e);
 		}
 	}
 
-	public static URI getURI(URL url) {
+	public static URI getURI(final URL url) {
 		try {
 			return url.toURI();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new SneakyException(e);
 		}
 	}
 
-	public static Path getPath(URI uri) {
+	public static Path getPath(final URI uri) {
 		if ("jar".equalsIgnoreCase(uri.getScheme())) {
-			String uriString = uri.toString();
-			List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
+			final String uriString = uri.toString();
+			final List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
 			if (jarPathParts.size() == 2) {
 				return getFileSystem(URI.create(jarPathParts.get(0))).getPath(jarPathParts.get(1));
 			} else {
@@ -81,13 +81,13 @@ public class FileUtils {
 		}
 	}
 
-	public static FileSystem getFileSystem(URI uri) {
+	public static FileSystem getFileSystem(final URI uri) {
 		try {
 			return FileSystems.getFileSystem(uri);
-		} catch (FileSystemNotFoundException e) {
+		} catch (final FileSystemNotFoundException e) {
 			try {
 				return FileSystems.newFileSystem(uri, Collections.emptyMap());
-			} catch (IOException e1) {
+			} catch (final IOException e1) {
 				throw new UncheckedIOException(e1);
 			}
 		}
@@ -100,16 +100,16 @@ public class FileUtils {
 				.flatMap(FileUtils::streamResources);
 	}
 
-	private static Stream<Path> streamResources(Path classpathEntry) {
+	private static Stream<Path> streamResources(final Path classpathEntry) {
 		if (Files.isRegularFile(classpathEntry)) {
-			Optional<String> extension = getExtension(classpathEntry);
+			final Optional<String> extension = getExtension(classpathEntry);
 			if (extension.isPresent()) {
 				switch (extension.get().toLowerCase()) {
-					case "jar":
-					case "zip":
-						return listResourcesFromJar(classpathEntry).stream();
-					default:
-						// nothing
+				case "jar":
+				case "zip":
+					return listResourcesFromJar(classpathEntry).stream();
+				default:
+					// nothing
 				}
 			}
 			throw new RuntimeException("Unable to handle file for resource scanning: " + classpathEntry);
@@ -118,11 +118,11 @@ public class FileUtils {
 		}
 	}
 
-	private static List<Path> listResourcesFromJar(Path zip) {
+	private static List<Path> listResourcesFromJar(final Path zip) {
 		final String uriString = "jar:" + zip.toUri().toString();
 
-		FileSystem fileSystem = getFileSystem(URI.create(uriString));
-		LinkedList<Path> paths = new LinkedList<>();
+		final FileSystem fileSystem = getFileSystem(URI.create(uriString));
+		final LinkedList<Path> paths = new LinkedList<>();
 		try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
 			JarEntry entry = null;
 			while ((entry = jarInputStream.getNextJarEntry()) != null) {
@@ -137,7 +137,8 @@ public class FileUtils {
 					.map(Manifest::getMainAttributes)
 					// ... take the ClassPath entry ...
 					.map(attributes -> attributes.getValue("Class-Path"))
-					// ... split it on whitespaces. Then you have a list of new relative class path entries.
+					// ... split it on whitespaces. Then you have a list of new relative class path
+					// entries.
 					.map(classpath -> Splitter//
 							.on(CharMatcher.whitespace())
 							.omitEmptyStrings()
@@ -150,17 +151,17 @@ public class FileUtils {
 							.flatMap(Collection::stream)
 							.collect(toList()))
 					.ifPresent(paths::addAll);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 
 		return paths;
 	}
 
-	private static Stream<Path> streamResourcesFromDirectory(Path directory) {
+	private static Stream<Path> streamResourcesFromDirectory(final Path directory) {
 		try {
 			return closedPathStream(Files.walk(directory));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
@@ -172,15 +173,15 @@ public class FileUtils {
 				.splitToList(System.getProperty("java.class.path"));
 	}
 
-	public static Optional<String> getExtension(Path path) {
+	public static Optional<String> getExtension(final Path path) {
 		if (Files.isRegularFile(path)) {
 			return getExtension(path.getFileName().toString());
 		}
 		return Optional.empty();
 	}
 
-	public static Optional<String> getExtension(String filename) {
-		int lastIndex = filename.lastIndexOf('.');
+	public static Optional<String> getExtension(final String filename) {
+		final int lastIndex = filename.lastIndexOf('.');
 		if (lastIndex >= 0) {
 			return Optional.of(filename.substring(lastIndex + 1));
 		} else {

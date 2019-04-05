@@ -58,12 +58,16 @@ public class DashboardConfigurationHandlerTest {
 
 	@Mock
 	private Authenticator authenticator;
+
 	@Mock
 	private DashboardController dashboardController;
+
 	@Mock
 	private HttpServerExchangeHandler httpServerExchangeHelper;
+
 	@Mock
 	private JsonUtils json;
+
 	@Mock
 	private MailSender mailSender;
 
@@ -78,12 +82,13 @@ public class DashboardConfigurationHandlerTest {
 		when(authenticator.isUsernameValid(ArgumentMatchers.anyString())).thenReturn(false);
 		VALID_USERNAMES.forEach(s -> when(authenticator.isUsernameValid(s)).thenReturn(true));
 
-		Principal principal = Mockito.mock(Principal.class);
+		final Principal principal = Mockito.mock(Principal.class);
 		when(httpServerExchangeHelper.getPrincipal(ArgumentMatchers.any())).thenReturn(Optional.of(principal));
 		// when(httpServerExchangeHelper.getFormData(Mockito.any())).thenCallRealMethod();
 		// when(httpServerExchangeHelper.param(Mockito.any(),
 		// Mockito.anyString())).thenCallRealMethod();
-		when(httpServerExchangeHelper.maybeParam(ArgumentMatchers.any(), ArgumentMatchers.anyString())).thenCallRealMethod();
+		when(httpServerExchangeHelper.maybeParam(ArgumentMatchers.any(), ArgumentMatchers.anyString()))
+				.thenCallRealMethod();
 		when(httpServerExchangeHelper.query(ArgumentMatchers.any(), ArgumentMatchers.anyString())).thenCallRealMethod();
 		// when(httpServerExchangeHelper.query(Mockito.any(), Mockito.anyString(),
 		// Mockito.any(), Mockito.any())) .thenCallRealMethod();
@@ -130,9 +135,12 @@ public class DashboardConfigurationHandlerTest {
 		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
 
 		// then
-		ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
+		final ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
 		Mockito.verify(mailSender)
-				.sendPermissionsReceived(ArgumentMatchers.any(), addressCaptor.capture(), ArgumentMatchers.any(), ArgumentMatchers.any());
+				.sendPermissionsReceived(ArgumentMatchers.any(),
+						addressCaptor.capture(),
+						ArgumentMatchers.any(),
+						ArgumentMatchers.any());
 
 		// that
 		assertThat(result).isEqualToComparingFieldByField(expected);
@@ -155,9 +163,12 @@ public class DashboardConfigurationHandlerTest {
 		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
 
 		// then
-		ActionResponse result = dashboardConfigurationHandler.doAction_setEditors(exchange, formData);
+		final ActionResponse result = dashboardConfigurationHandler.doAction_setEditors(exchange, formData);
 		Mockito.verify(mailSender)
-				.sendPermissionsReceived(ArgumentMatchers.any(), addressCaptor.capture(), ArgumentMatchers.any(), ArgumentMatchers.any());
+				.sendPermissionsReceived(ArgumentMatchers.any(),
+						addressCaptor.capture(),
+						ArgumentMatchers.any(),
+						ArgumentMatchers.any());
 
 		// that
 		assertThat(result).isEqualToComparingFieldByField(expected);
@@ -166,74 +177,74 @@ public class DashboardConfigurationHandlerTest {
 		assertThat(addressCaptor.getValue()).isEqualTo(expectedMailSet);
 	}
 
-	//	@Test
-	//	public void testHandleRequest() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testHandleRequest() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDashboardConfigurationHandler() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDashboardConfigurationHandler() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_addWidget() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_addWidget() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_updateWidget() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_updateWidget() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_updateWidgetPositions() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_updateWidgetPositions() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_deleteWidget() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_deleteWidget() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_updateDashboard() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_updateDashboard() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_deleteDashboard() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_deleteDashboard() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_reloadDashboard() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_reloadDashboard() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_enableWidget() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_enableWidget() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_disableWidget() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_disableWidget() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_checkUsername() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_checkUsername() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_setOwners() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_setOwners() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 	//
-	//	@Test
-	//	public void testDoAction_setEditors() throws Exception {
-	//		throw new RuntimeException("not yet implemented");
-	//	}
+	// @Test
+	// public void testDoAction_setEditors() throws Exception {
+	// throw new RuntimeException("not yet implemented");
+	// }
 
 }

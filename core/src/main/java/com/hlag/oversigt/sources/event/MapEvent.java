@@ -10,55 +10,69 @@ import com.hlag.oversigt.properties.Color;
 public class MapEvent extends OversigtEvent {
 	private final List<Point> points = new ArrayList<>();
 
-	public MapEvent(Collection<Point> points) {
+	public MapEvent(final Collection<Point> points) {
 		this.points.addAll(points);
 	}
 
 	public static class Point {
 		private final String id;
+
 		private final double lon;
+
 		private final double lat;
+
 		private final String fill;
+
 		private final String stroke;
+
 		private final Double size;
 
-		public Point(String id, double longitude, double latitue) {
+		public Point(final String id, final double longitude, final double latitue) {
 			this.id = id;
-			this.fill = null;
-			this.stroke = null;
-			this.lon = longitude;
-			this.lat = latitue;
-			this.size = null;
+			fill = null;
+			stroke = null;
+			lon = longitude;
+			lat = latitue;
+			size = null;
 		}
 
-		public Point(String id, double longitude, double latitue, double size) {
+		public Point(final String id, final double longitude, final double latitue, final double size) {
 			this.id = id;
-			this.fill = null;
-			this.stroke = null;
-			this.lon = longitude;
-			this.lat = latitue;
+			fill = null;
+			stroke = null;
+			lon = longitude;
+			lat = latitue;
 			this.size = size;
 		}
 
-		public Point(String id, double longitude, double latitue, Color fill, Color stroke) {
+		public Point(final String id,
+				final double longitude,
+				final double latitue,
+				final Color fill,
+				final Color stroke) {
 			this.id = id;
 			this.fill = getColorString(fill);
 			this.stroke = getColorString(stroke);
-			this.lon = longitude;
-			this.lat = latitue;
-			this.size = null;
+			lon = longitude;
+			lat = latitue;
+			size = null;
 		}
 
-		public Point(String id, double longitude, double latitue, Color fill, Color stroke, double size) {
+		public Point(final String id,
+				final double longitude,
+				final double latitue,
+				final Color fill,
+				final Color stroke,
+				final double size) {
 			this.id = id;
 			this.fill = getColorString(fill);
 			this.stroke = getColorString(stroke);
-			this.lon = longitude;
-			this.lat = latitue;
+			lon = longitude;
+			lat = latitue;
 			this.size = size;
 		}
 
-		private static String getColorString(Color color) {
+		private static String getColorString(final Color color) {
 			return color != null ? color.getHexColor() : null;
 		}
 

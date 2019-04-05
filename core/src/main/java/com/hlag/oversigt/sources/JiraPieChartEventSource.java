@@ -13,15 +13,15 @@ import com.hlag.oversigt.sources.event.PieChartEvent;
 public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEvent> {
 	@Override
 	protected PieChartEvent produceEvent() {
-		Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
+		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
 
 		if (issues != null) {
-			long sumMails = issues.values().stream().flatMap(Set::stream).count();
+			final long sumMails = issues.values().stream().flatMap(Set::stream).count();
 
-			PieChartEvent event = new PieChartEvent();
-			for (Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
-				DisplayOption displayOption = entry.getKey();
-				int count = entry.getValue().size();
+			final PieChartEvent event = new PieChartEvent();
+			for (final Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
+				final DisplayOption displayOption = entry.getKey();
+				final int count = entry.getValue().size();
 
 				event.addData(displayOption.formatDisplayValue(count),
 						(double) count / sumMails,

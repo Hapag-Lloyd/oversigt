@@ -17,13 +17,13 @@ public class GitCommittersEventSource extends AbstractGitCommitEventSource<Overs
 	@Override
 	protected OversigtEvent produceEvent() throws Exception {
 		// Count commits per user
-		Map<String, Integer> committers = streamLogWithoutFilteredUsers(s -> s//
+		final Map<String, Integer> committers = streamLogWithoutFilteredUsers(s -> s//
 				.map(r -> r.getCommitterIdent().getName())
 				.map(createNameMapper())
 				.collect(toMap(Function.identity(), x -> 1, (x, y) -> x + y)));
 
 		// Order by commit count
-		List<ListEventItem<Integer>> list = committers.entrySet()
+		final List<ListEventItem<Integer>> list = committers.entrySet()
 				.stream()
 				.sorted((a, b) -> -Integer.compare(a.getValue(), b.getValue()))
 				.limit(getLimit() > 0 ? getLimit() : committers.size())

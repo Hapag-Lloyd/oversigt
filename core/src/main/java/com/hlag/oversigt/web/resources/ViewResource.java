@@ -37,15 +37,17 @@ import ro.isdc.wro.model.resource.ResourceType;
 public class ViewResource {
 	@GET
 	@Path("/html")
-	@ApiResponses({ @ApiResponse(code = 200, message = "Returning the raw HTML content of the view"),
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Returning the raw HTML content of the view"),
 			@ApiResponse(code = 404, message = "The view does not exist") })
 	@ApiOperation(value = "Read the HTML data of the given widget", produces = "text/html")
 	@PermitAll
 	@NoChangeLog
-	public Response readHtml(@PathParam("viewId") @NotNull @NotBlank String viewId) {
-		//return readValue(viewId, "html", MediaType.TEXT_HTML_TYPE, Function.identity());
+	public Response readHtml(@PathParam("viewId") @NotNull @NotBlank final String viewId) {
+		// return readValue(viewId, "html", MediaType.TEXT_HTML_TYPE,
+		// Function.identity());
 		if (doesViewExist(viewId)) {
-			Optional<String> content = readContent(getResourceUrl(viewId, "html"));
+			final Optional<String> content = readContent(getResourceUrl(viewId, "html"));
 			if (content.isPresent()) {
 				return Response.ok(content.get(), MediaType.TEXT_HTML_TYPE).build();
 			} else {
@@ -58,14 +60,15 @@ public class ViewResource {
 
 	@GET
 	@Path("/css")
-	@ApiResponses({ @ApiResponse(code = 200, message = "Returning the raw CSS content of the view"),
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Returning the raw CSS content of the view"),
 			@ApiResponse(code = 404, message = "The view does not exist") })
 	@ApiOperation(value = "Read the CSS data of the given widget", produces = "text/css")
 	@PermitAll
 	@NoChangeLog
-	public Response readCss(@PathParam("viewId") @NotNull @NotBlank String viewId) {
+	public Response readCss(@PathParam("viewId") @NotNull @NotBlank final String viewId) {
 		if (doesViewExist(viewId)) {
-			Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.CSS);
+			final Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.CSS);
 			if (out.isPresent()) {
 				return Response.ok(out.get(), "text/css").build();
 			} else {
@@ -78,14 +81,15 @@ public class ViewResource {
 
 	@GET
 	@Path("/js")
-	@ApiResponses({ @ApiResponse(code = 200, message = "Returning the raw Javascript content of the view"),
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Returning the raw Javascript content of the view"),
 			@ApiResponse(code = 404, message = "The view does not exist") })
 	@ApiOperation(value = "Read the Javascript data of the given widget", produces = "application/javascript")
 	@PermitAll
 	@NoChangeLog
-	public Response readJavascript(@PathParam("viewId") @NotNull @NotBlank String viewId) {
+	public Response readJavascript(@PathParam("viewId") @NotNull @NotBlank final String viewId) {
 		if (doesViewExist(viewId)) {
-			Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.JS);
+			final Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.JS);
 			if (out.isPresent()) {
 				return Response.ok(out.get(), "application/javascript").build();
 			} else {
@@ -96,28 +100,28 @@ public class ViewResource {
 		}
 	}
 
-	private static String getName(String viewId) {
+	private static String getName(final String viewId) {
 		return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, viewId);
 	}
 
-	private static boolean doesViewExist(String viewId) {
+	private static boolean doesViewExist(final String viewId) {
 		try {
 			return new File(getResourceUrl(viewId, "html").toURI()).exists();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			throw new SneakyException(e);
 		}
 	}
 
-	private static URL getResourceUrl(String viewId, String extension) {
+	private static URL getResourceUrl(final String viewId, final String extension) {
 		return Resources.getResource("statics/widgets/" + getName(viewId) + "/" + getName(viewId) + "." + extension);
 	}
 
-	private static Optional<String> readContent(URL url) {
+	private static Optional<String> readContent(final URL url) {
 		try {
 			return Optional.of(new String(Resources.toByteArray(url), StandardCharsets.UTF_8));
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			return Optional.empty();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new SneakyException(e);
 		}
 	}

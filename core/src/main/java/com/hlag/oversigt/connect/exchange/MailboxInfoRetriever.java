@@ -41,23 +41,31 @@ public class MailboxInfoRetriever {
 	private static final MailboxInfoRetriever SINGLETON = new MailboxInfoRetriever();
 
 	private final Map<Key, ExchangeService> services = new HashMap<>();
+
 	private final Map<Key, MailboxInfoLoadingProvider> providers = new HashMap<>();
+
 	private final Map<Key, MailboxFolder> mailboxes = new HashMap<>();
+
 	private final Map<Key, List<Task>> tasks = new HashMap<>();
+
 	private final Map<Key, LocalDateTime> lastMailboxLoadingTimes = new HashMap<>();
+
 	private final Map<Key, LocalDateTime> lastTasksLoadingTimes = new HashMap<>();
 
 	public static MailboxInfoRetriever getInstance() {
 		return SINGLETON;
 	}
 
-	/**Loads the mailbox folder from the exchange server
+	/**
+	 * Loads the mailbox folder from the exchange server
+	 * 
 	 * @param mailboxName the name of the mailbox to read
-	 * @param folderName the name of the folder within the mailbox to read
-	 * @return the mailbox from the server or <code>null</code> if something fails but does not throw an exception
+	 * @param folderName  the name of the folder within the mailbox to read
+	 * @return the mailbox from the server or <code>null</code> if something fails
+	 *         but does not throw an exception
 	 * @throws Exception if the underlying exchange service throws an exception
 	 */
-	public MailboxFolder getMailbox(String mailboxName, String folderName) throws Exception {
+	public MailboxFolder getMailbox(final String mailboxName, final String folderName) throws Exception {
 		final Key key = new Key(mailboxName, folderName);
 		if (!mailboxes.containsKey(key) || shouldReload(key)) {
 			// XXX Sync?
@@ -67,7 +75,7 @@ public class MailboxInfoRetriever {
 		return mailboxes.get(key);
 	}
 
-	public List<Task> getTasks(String mailboxName) throws Exception {
+	public List<Task> getTasks(final String mailboxName) throws Exception {
 		final Key key = new Key(mailboxName, null);
 		if (!tasks.containsKey(key) || shouldReloadTasks(key)) {
 			// XXX Sync?
@@ -77,22 +85,22 @@ public class MailboxInfoRetriever {
 		return tasks.get(key);
 	}
 
-	private List<Task> loadTasks(Key key) throws Exception {
-		ExchangeService service = getService(key);
+	private List<Task> loadTasks(final Key key) throws Exception {
+		final ExchangeService service = getService(key);
 
-		List<Task> tasks = new ArrayList<>();
+		final List<Task> tasks = new ArrayList<>();
 
-		ItemView view = new ItemView(50);
+		final ItemView view = new ItemView(50);
 		view.getOrderBy().add(ItemSchema.DateTimeCreated, SortDirection.Descending);
-		SearchFilter filter = new SearchFilter.IsLessThanOrEqualTo(TaskSchema.StartDate, new Date());
+		final SearchFilter filter = new SearchFilter.IsLessThanOrEqualTo(TaskSchema.StartDate, new Date());
 		FindItemsResults<Item> findResults;
 		do {
-			FolderId folderId = getUniqueIdForFolderName(service, "Dashboard");
+			final FolderId folderId = getUniqueIdForFolderName(service, "Dashboard");
 			findResults = service.findItems(folderId, filter, view);
 			tasks.addAll(findResults.getItems().stream().filter(i -> i instanceof Task).map(i -> (Task) i).filter(t -> {
 				try {
 					return !t.getIsComplete();
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					throw new RuntimeException("Unable to read complete status of task", e);
 				}
 			}).collect(Collectors.toList()));
@@ -102,33 +110,33 @@ public class MailboxInfoRetriever {
 		return tasks;
 	}
 
-	private FolderId getUniqueIdForFolderName(ExchangeService service, String folderName) throws Exception {
-		FolderView view = new FolderView(1);
+	private FolderId getUniqueIdForFolderName(final ExchangeService service, final String folderName) throws Exception {
+		final FolderView view = new FolderView(1);
 		view.setTraversal(FolderTraversal.Deep);
-		SearchFilter searchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, folderName);
-		FindFoldersResults folders = service.findFolders(WellKnownFolderName.Root, searchFilter, view);
+		final SearchFilter searchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, folderName);
+		final FindFoldersResults folders = service.findFolders(WellKnownFolderName.Root, searchFilter, view);
 		switch (folders.getTotalCount()) {
-			case 0:
-				throw new RuntimeException("No folder found with name '" + folderName + "'");
-			case 1:
-				return folders.getFolders().get(0).getId();
-			default:
-				throw new RuntimeException("More than one folder with name '" + folderName + "' found");
+		case 0:
+			throw new RuntimeException("No folder found with name '" + folderName + "'");
+		case 1:
+			return folders.getFolders().get(0).getId();
+		default:
+			throw new RuntimeException("More than one folder with name '" + folderName + "' found");
 		}
 	}
 
-	private MailboxFolder loadMailbox(Key key) throws Exception {
-		MailboxFolder mailboxFolder = new MailboxFolder(key.getMailboxName(), key.getFolderName());
+	private MailboxFolder loadMailbox(final Key key) throws Exception {
+		final MailboxFolder mailboxFolder = new MailboxFolder(key.getMailboxName(), key.getFolderName());
 
-		ExchangeService service = getService(key);
-		FolderId folderId = getFolder(service, key.getFolderName());
+		final ExchangeService service = getService(key);
+		final FolderId folderId = getFolder(service, key.getFolderName());
 
-		ItemView view = new ItemView(50);
+		final ItemView view = new ItemView(50);
 		view.getOrderBy().add(ItemSchema.DateTimeReceived, SortDirection.Ascending);
 		FindItemsResults<Item> findResults;
 		do {
 			findResults = service.findItems(folderId, view);
-			for (Item item : findResults.getItems()) {
+			for (final Item item : findResults.getItems()) {
 				if (item instanceof EmailMessage) {
 					mailboxFolder.addMail(new Mail((EmailMessage) item));
 				}
@@ -140,38 +148,38 @@ public class MailboxInfoRetriever {
 		return mailboxFolder;
 	}
 
-	private ExchangeService getService(Key key) {
+	private ExchangeService getService(final Key key) {
 		if (!services.containsKey(key)) {
 			services.put(key, createService(key));
 		}
 		return services.get(key);
 	}
 
-	private ExchangeService createService(Key key) {
-		MailboxInfoLoadingProvider provider = getProvider(key);
+	private ExchangeService createService(final Key key) {
+		final MailboxInfoLoadingProvider provider = getProvider(key);
 		return createService(provider.getServerConnection().getUrl(),
 				provider.getCredentials().getUsername(),
 				provider.getCredentials().getPassword());
 	}
 
-	public static ExchangeService createService(String uri, String username, String password) {
+	public static ExchangeService createService(final String uri, final String username, final String password) {
 		try {
-			ExchangeService svc = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
-			ExchangeCredentials credentials = new WebCredentials(username, password);
+			final ExchangeService svc = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
+			final ExchangeCredentials credentials = new WebCredentials(username, password);
 			svc.setCredentials(credentials);
 			svc.setUrl(new URI(uri));
 			return svc;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Unable to create Exchange service", e);
 		}
 	}
 
-	private FolderId getFolder(ExchangeService service, String folderName) throws Exception {
-		SearchFilter folderSearchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, folderName);
-		FolderView folderView = new FolderView(2);
-		FindFoldersResults searchResult = service
-				.findFolders(WellKnownFolderName.MsgFolderRoot, folderSearchFilter, folderView);
-		ArrayList<Folder> folders = searchResult.getFolders();
+	private FolderId getFolder(final ExchangeService service, final String folderName) throws Exception {
+		final SearchFilter folderSearchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, folderName);
+		final FolderView folderView = new FolderView(2);
+		final FindFoldersResults searchResult
+				= service.findFolders(WellKnownFolderName.MsgFolderRoot, folderSearchFilter, folderView);
+		final ArrayList<Folder> folders = searchResult.getFolders();
 		if (folders.size() == 0) {
 			return null;
 		} else if (folders.size() > 1) {
@@ -181,43 +189,47 @@ public class MailboxInfoRetriever {
 		}
 	}
 
-	private boolean shouldReload(Key key) {
-		MailboxInfoLoadingProvider provider = getProvider(key);
-		LocalDateTime lastLoadingTime = lastMailboxLoadingTimes.get(key);
+	private boolean shouldReload(final Key key) {
+		final MailboxInfoLoadingProvider provider = getProvider(key);
+		final LocalDateTime lastLoadingTime = lastMailboxLoadingTimes.get(key);
 		if (lastLoadingTime == null) {
 			return true;
 		}
 		return LocalDateTime.now().minus(provider.getReloadInterval()).isAfter(lastLoadingTime);
 	}
 
-	private boolean shouldReloadTasks(Key key) {
-		MailboxInfoLoadingProvider provider = getProvider(key);
-		LocalDateTime lastLoadingTime = lastTasksLoadingTimes.get(key);
+	private boolean shouldReloadTasks(final Key key) {
+		final MailboxInfoLoadingProvider provider = getProvider(key);
+		final LocalDateTime lastLoadingTime = lastTasksLoadingTimes.get(key);
 		if (lastLoadingTime == null) {
 			return true;
 		}
 		return LocalDateTime.now().minus(provider.getReloadInterval()).isAfter(lastLoadingTime);
 	}
 
-	public void registerProvider(String mailboxName, String folderName, MailboxInfoLoadingProvider provider) {
+	public void registerProvider(final String mailboxName,
+			final String folderName,
+			final MailboxInfoLoadingProvider provider) {
 		providers.put(new Key(mailboxName, folderName), provider);
 	}
 
-	public void removeProvider(String mailboxName, String folderName) {
+	public void removeProvider(final String mailboxName, final String folderName) {
 		providers.remove(new Key(mailboxName, folderName));
 	}
 
-	private MailboxInfoLoadingProvider getProvider(Key key) {
+	private MailboxInfoLoadingProvider getProvider(final Key key) {
 		return providers.get(key);
 	}
 
 	public static final class MailboxFolder {
 
 		private final String mailboxName;
+
 		private final String folderName;
+
 		private final List<Mail> mails = new ArrayList<>();
 
-		public MailboxFolder(String mailboxName, String folderName) {
+		public MailboxFolder(final String mailboxName, final String folderName) {
 			this.mailboxName = mailboxName;
 			this.folderName = folderName;
 		}
@@ -234,7 +246,7 @@ public class MailboxInfoRetriever {
 			return mails;
 		}
 
-		public void addMail(Mail mail) {
+		public void addMail(final Mail mail) {
 			mails.add(mail);
 		}
 	}
@@ -242,39 +254,47 @@ public class MailboxInfoRetriever {
 	public static final class Mail {
 
 		private final String id;
+
 		private final String subject;
+
 		private final String fromAddress;
+
 		private final String fromName;
+
 		private final Map<String, String> tos = new HashMap<>();
+
 		private final Map<String, String> ccs = new HashMap<>();
+
 		private final boolean isRead;
+
 		private final boolean hasAttachment;
+
 		private final List<String> categories = new ArrayList<>();
 
-		public Mail(EmailMessage mail) throws ServiceLocalException {
-			this.id = mail.getId().getUniqueId();
-			this.subject = mail.getSubject();
+		public Mail(final EmailMessage mail) throws ServiceLocalException {
+			id = mail.getId().getUniqueId();
+			subject = mail.getSubject();
 
-			EmailAddress from = mail.getFrom();
-			this.fromAddress = from.getAddress();
-			this.fromName = from.getName();
+			final EmailAddress from = mail.getFrom();
+			fromAddress = from.getAddress();
+			fromName = from.getName();
 
-			Iterator<EmailAddress> toIter = mail.getToRecipients().iterator();
+			final Iterator<EmailAddress> toIter = mail.getToRecipients().iterator();
 			while (toIter.hasNext()) {
-				EmailAddress to = toIter.next();
+				final EmailAddress to = toIter.next();
 				tos.put(to.getName(), to.getAddress());
 			}
 
-			Iterator<EmailAddress> ccIter = mail.getCcRecipients().iterator();
+			final Iterator<EmailAddress> ccIter = mail.getCcRecipients().iterator();
 			while (ccIter.hasNext()) {
-				EmailAddress cc = ccIter.next();
+				final EmailAddress cc = ccIter.next();
 				ccs.put(cc.getName(), cc.getAddress());
 			}
 
-			this.isRead = mail.getIsRead();
-			this.hasAttachment = mail.getHasAttachments();
+			isRead = mail.getIsRead();
+			hasAttachment = mail.getHasAttachments();
 
-			Iterator<String> catIter = mail.getCategories().iterator();
+			final Iterator<String> catIter = mail.getCategories().iterator();
 			while (catIter.hasNext()) {
 				categories.add(catIter.next());
 			}
@@ -317,21 +337,22 @@ public class MailboxInfoRetriever {
 		}
 	}
 
-	public static interface MailboxInfoLoadingProvider {
+	public interface MailboxInfoLoadingProvider {
 
-		public ServerConnection getServerConnection();
+		ServerConnection getServerConnection();
 
-		public Credentials getCredentials();
+		Credentials getCredentials();
 
-		public TemporalAmount getReloadInterval();
+		TemporalAmount getReloadInterval();
 	}
 
 	private static final class Key {
 
 		private final String mailboxName;
+
 		private final String folderName;
 
-		public Key(String mailboxName, String folderName) {
+		public Key(final String mailboxName, final String folderName) {
 			this.mailboxName = mailboxName;
 			this.folderName = folderName;
 		}
@@ -354,7 +375,7 @@ public class MailboxInfoRetriever {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -364,7 +385,7 @@ public class MailboxInfoRetriever {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			Key other = (Key) obj;
+			final Key other = (Key) obj;
 			if (folderName == null) {
 				if (other.folderName != null) {
 					return false;

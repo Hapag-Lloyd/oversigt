@@ -10,15 +10,15 @@ import com.jcraft.jsch.UserInfo;
 class SshConnectionWithPassword extends SshConnection {
 	private final char[] password;
 
-	SshConnectionWithPassword(String hostname, int port, String username, String password) {
+	SshConnectionWithPassword(final String hostname, final int port, final String username, final String password) {
 		super(hostname, port, username);
 		this.password = password.toCharArray();
 	}
 
 	@Override
-	protected synchronized Session createSession(JSch jsch) throws JSchException {
-		Session session = jsch.getSession(getUsername(), getHostname(), getPort());
-		Properties properties = new java.util.Properties();
+	protected synchronized Session createSession(final JSch jsch) throws JSchException {
+		final Session session = jsch.getSession(getUsername(), getHostname(), getPort());
+		final Properties properties = new java.util.Properties();
 		properties.put("StrictHostKeyChecking", "no");
 		session.setDaemonThread(true);
 		session.setConfig(properties);
@@ -32,7 +32,7 @@ class SshConnectionWithPassword extends SshConnection {
 
 		private final String password;
 
-		private FixedUserInfo(char[] password) {
+		private FixedUserInfo(final char[] password) {
 			this.password = new String(password);
 		}
 
@@ -47,22 +47,21 @@ class SshConnectionWithPassword extends SshConnection {
 		}
 
 		@Override
-		public boolean promptPassphrase(String arg0) {
+		public boolean promptPassphrase(final String arg0) {
 			return false;
 		}
 
 		@Override
-		public boolean promptPassword(String arg0) {
+		public boolean promptPassword(final String arg0) {
 			return true;
 		}
 
 		@Override
-		public boolean promptYesNo(String arg0) {
+		public boolean promptYesNo(final String arg0) {
 			return false;
 		}
 
 		@Override
-		public void showMessage(String arg0) {
-		}
+		public void showMessage(final String arg0) {}
 	}
 }

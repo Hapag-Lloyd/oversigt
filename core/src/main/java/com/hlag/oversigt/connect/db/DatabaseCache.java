@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 import com.hlag.oversigt.util.ThrowingFunction;
 
 public abstract class DatabaseCache<T> {
-	public static <X> DatabaseCache<X> createCache(ThrowingFunction<Connection, Collection<X>> readFunction) {
+	public static <X> DatabaseCache<X> createCache(final ThrowingFunction<Connection, Collection<X>> readFunction) {
 		return new DatabaseCache<X>() {
 			@Override
-			protected Collection<X> readItems(Connection connection) throws SQLException {
+			protected Collection<X> readItems(final Connection connection) throws SQLException {
 				return readFunction.apply(connection);
 			}
 		};
@@ -27,18 +27,19 @@ public abstract class DatabaseCache<T> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCache.class);
 
-	protected DatabaseCache() {
-	}
+	protected DatabaseCache() {}
 
 	private final AtomicReference<List<T>> items = new AtomicReference<>(new ArrayList<>());
+
 	private final AtomicReference<LocalDateTime> lastAccess = new AtomicReference<>();
+
 	private Duration durationBetweenReads = Duration.ofHours(1);
 
 	public Duration getDurationBetweenReads() {
 		return durationBetweenReads;
 	}
 
-	public void setDurationBetweenReads(Duration durationBetweenReads) {
+	public void setDurationBetweenReads(final Duration durationBetweenReads) {
 		if (LOGGER.isTraceEnabled()) {
 			LOGGER.trace("Set durationBetweenReads=" + durationBetweenReads);
 		}
@@ -53,7 +54,7 @@ public abstract class DatabaseCache<T> {
 	}
 
 	public List<T> getItems() {
-		List<T> items = this.items.get();
+		final List<T> items = this.items.get();
 		if (items.isEmpty()) {
 			LOGGER.warn("Items have not been loaded yet.");
 		}
@@ -61,8 +62,8 @@ public abstract class DatabaseCache<T> {
 	}
 
 	private synchronized boolean shouldReadItems() {
-		LocalDateTime now = LocalDateTime.now();
-		boolean yes = lastAccess.get() == null || lastAccess.get().plus(getDurationBetweenReads()).isBefore(now);
+		final LocalDateTime now = LocalDateTime.now();
+		final boolean yes = lastAccess.get() == null || lastAccess.get().plus(getDurationBetweenReads()).isBefore(now);
 		if (yes) {
 			lastAccess.set(now);
 		}
@@ -72,12 +73,12 @@ public abstract class DatabaseCache<T> {
 		return yes;
 	}
 
-	public List<T> getItems(Connection connection) throws SQLException {
+	public List<T> getItems(final Connection connection) throws SQLException {
 		if (shouldReadItems()) {
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("Reading items");
 			}
-			List<T> items = new ArrayList<>(readItems(connection));
+			final List<T> items = new ArrayList<>(readItems(connection));
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("Found " + items.size() + " items");
 			}

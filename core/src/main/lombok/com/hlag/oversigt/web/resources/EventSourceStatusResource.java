@@ -44,17 +44,21 @@ public class EventSourceStatusResource {
 	@GET
 	@Path("/{id}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a current event source instance state", response = EventSourceInstanceState.class),
-			@ApiResponse(code = 404, message = "The event source instance does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "Returns a current event source instance state",
+					response = EventSourceInstanceState.class),
+			@ApiResponse(code = 404,
+					message = "The event source instance does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read an event source instance's current state")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
-	public Response isInstanceRunning(@PathParam("id") @NotBlank String instanceId) {
+	public Response isInstanceRunning(@PathParam("id") @NotBlank final String instanceId) {
 		try {
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 	}
@@ -62,14 +66,21 @@ public class EventSourceStatusResource {
 	@POST
 	@Path("/{id}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "Returns a current event source instance state after changing the state", response = EventSourceInstanceState.class),
-			@ApiResponse(code = 404, message = "The event source instance does not exist", response = ErrorResponse.class),
-			@ApiResponse(code = 412, message = "The event source was not in a suitable state", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "Returns a current event source instance state after changing the state",
+					response = EventSourceInstanceState.class),
+			@ApiResponse(code = 404,
+					message = "The event source instance does not exist",
+					response = ErrorResponse.class),
+			@ApiResponse(code = 412,
+					message = "The event source was not in a suitable state",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Start or stop an event source instance")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response setInstanceRunning(@PathParam("id") @NotBlank String instanceId,
-			@QueryParam("running") @ApiParam(required = true, value = "Whether the event source instance shall be running or not") boolean running) {
+	public Response setInstanceRunning(@PathParam("id") @NotBlank final String instanceId,
+			@QueryParam("running") @ApiParam(required = true,
+					value = "Whether the event source instance shall be running or not") final boolean running) {
 		try {
 			if (running) {
 				controller.startInstance(instanceId);
@@ -78,9 +89,9 @@ public class EventSourceStatusResource {
 			}
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return ErrorResponse.preconditionFailed("Unable to start/ stop event source", e);
 		}
 	}
@@ -88,8 +99,8 @@ public class EventSourceStatusResource {
 	@Builder
 	@Getter
 	public static class EventSourceInstanceState {
-		public static EventSourceInstanceState fromInstance(DashboardController controller,
-				EventSourceInstance instance) {
+		public static EventSourceInstanceState fromInstance(final DashboardController controller,
+				final EventSourceInstance instance) {
 			return EventSourceInstanceState.builder()
 					.id(instance.getId())
 					.serviceClass(instance.getDescriptor().getServiceClassName())
@@ -106,14 +117,23 @@ public class EventSourceStatusResource {
 
 		@NotBlank
 		private final String id;
+
 		private final String serviceClass;
+
 		private final String createdBy;
+
 		private final String lastChangedBy;
+
 		private final boolean running;
+
 		private final ZonedDateTime lastRun;
+
 		private final ZonedDateTime lastSuccess;
+
 		private final ZonedDateTime lastFailure;
+
 		private final String lastException;
+
 		private final String lastReason;
 	}
 }

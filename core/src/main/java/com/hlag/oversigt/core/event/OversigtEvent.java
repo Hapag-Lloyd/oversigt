@@ -20,29 +20,33 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	private static final Duration DEFAULT_LIFETIME = Duration.ofHours(1);
 
 	private String applicationId;
+
 	private String id;
+
 	private long updatedAt;
+
 	private String moreinfo = null;
 
 	private final transient LocalDateTime internal_createdOn = now();
+
 	private transient Duration lifetime = null;
 
 	/* Do not populate if you don't need dynamic title */
 	private String title;
 
 	public OversigtEvent() {
-		this.updatedAt = Instant.now().getEpochSecond();
+		updatedAt = Instant.now().getEpochSecond();
 	}
 
 	public String getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(final String id) {
 		this.id = id;
 	}
 
-	public void setLifetime(Duration lifetime) {
+	public void setLifetime(final Duration lifetime) {
 		this.lifetime = lifetime;
 	}
 
@@ -54,7 +58,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return internal_createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());
 	}
 
-	void setApplicationId(String applicationId) {
+	void setApplicationId(final String applicationId) {
 		this.applicationId = applicationId;
 	}
 
@@ -70,7 +74,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
@@ -78,7 +82,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return moreinfo;
 	}
 
-	public void setMoreinfo(String moreinfo) {
+	public void setMoreinfo(final String moreinfo) {
 		this.moreinfo = moreinfo;
 	}
 
@@ -93,15 +97,15 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	@Override
-	public int compareTo(OversigtEvent that) {
-		if (this.id == null && that.id == null) {
+	public int compareTo(final OversigtEvent that) {
+		if (id == null && that.id == null) {
 			return 0;
-		} else if (this.id == null) {
+		} else if (id == null) {
 			return -1;
 		} else if (that.id == null) {
 			return 1;
 		} else {
-			return this.getId().compareTo(that.getId());
+			return getId().compareTo(that.getId());
 		}
 	}
 }

@@ -25,13 +25,13 @@ import io.undertow.util.Protocols;
 
 public class UndertowHelper {
 
-	public static FormData createFormData(String... strings) {
-		FormData formData = new FormData(2000);
+	public static FormData createFormData(final String... strings) {
+		final FormData formData = new FormData(2000);
 		addPairs(formData::add, strings);
 		return formData;
 	}
 
-	public static HttpServerExchange createHttpExchangeWithQueryParameters(String... queryParameters) {
+	public static HttpServerExchange createHttpExchangeWithQueryParameters(final String... queryParameters) {
 		final HeaderMap headerMap = new HeaderMap();
 		final StreamConnection streamConnection = createStreamConnection();
 		final OptionMap options = OptionMap.EMPTY;
@@ -53,11 +53,11 @@ public class UndertowHelper {
 		ConduitStreamSinkChannel sinkChannel;
 		try {
 			sinkChannel = createSinkChannel();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new SneakyException(e);
 		}
 		when(streamConnection.getSinkChannel()).thenReturn(sinkChannel);
-		ConduitStreamSourceChannel sourceChannel = createSourceChannel();
+		final ConduitStreamSourceChannel sourceChannel = createSourceChannel();
 		when(streamConnection.getSourceChannel()).thenReturn(sourceChannel);
 		// XnioIoThread ioThread = mock(XnioIoThread.class);
 		// when(streamConnection.getIoThread()).thenReturn(ioThread);
@@ -65,29 +65,29 @@ public class UndertowHelper {
 	}
 
 	private static ConduitStreamSinkChannel createSinkChannel() throws IOException {
-		StreamSinkConduit sinkConduit = mock(StreamSinkConduit.class);
+		final StreamSinkConduit sinkConduit = mock(StreamSinkConduit.class);
 		// when(sinkConduit.write(any(ByteBuffer.class))).thenReturn(1);
-		ConduitStreamSinkChannel sinkChannel = new ConduitStreamSinkChannel(null, sinkConduit);
+		final ConduitStreamSinkChannel sinkChannel = new ConduitStreamSinkChannel(null, sinkConduit);
 		return sinkChannel;
 	}
 
 	private static ConduitStreamSourceChannel createSourceChannel() {
-		StreamSourceConduit sourceConduit = mock(StreamSourceConduit.class);
-		ConduitStreamSourceChannel sourceChannel = new ConduitStreamSourceChannel(null, sourceConduit);
+		final StreamSourceConduit sourceConduit = mock(StreamSourceConduit.class);
+		final ConduitStreamSourceChannel sourceChannel = new ConduitStreamSourceChannel(null, sourceConduit);
 		return sourceChannel;
 	}
 
-	private static HttpServerExchange createHttpExchange(ServerConnection connection,
-			HeaderMap headerMap,
-			String[] queryParameters) {
-		HttpServerExchange httpServerExchange = new HttpServerExchange(connection, null, headerMap, 200);
+	private static HttpServerExchange createHttpExchange(final ServerConnection connection,
+			final HeaderMap headerMap,
+			final String[] queryParameters) {
+		final HttpServerExchange httpServerExchange = new HttpServerExchange(connection, null, headerMap, 200);
 		httpServerExchange.setRequestMethod(new HttpString("GET"));
 		httpServerExchange.setProtocol(Protocols.HTTP_1_1);
 		addPairs(httpServerExchange::addQueryParam, queryParameters);
 		return httpServerExchange;
 	}
 
-	private static void addPairs(BiConsumer<String, String> consumer, String[] strings) {
+	private static void addPairs(final BiConsumer<String, String> consumer, final String[] strings) {
 		if (strings != null) {
 			for (int i = 0; i < strings.length; i += 2) {
 				consumer.accept(strings[i], strings[i + 1]);

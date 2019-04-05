@@ -5,11 +5,11 @@ import static com.hlag.oversigt.util.HttpUtils.encodeByteArrayToUrlString;
 import com.hlag.oversigt.core.event.OversigtEvent;
 
 public class StyleEvent extends OversigtEvent {
-	public static StyleEvent backgroundImage(String url) {
+	public static StyleEvent backgroundImage(final String url) {
 		return new StyleEvent("background-image: url(" + url + ")");
 	}
 
-	public static StyleEvent backgroundImage(String mimeType, byte[] imageData) {
+	public static StyleEvent backgroundImage(String mimeType, final byte[] imageData) {
 		mimeType = mimeType != null ? mimeType : "image";
 		return new StyleEvent(
 				"background-image: url(\"data:" + mimeType + "," + encodeByteArrayToUrlString(imageData) + "\")");
@@ -17,7 +17,7 @@ public class StyleEvent extends OversigtEvent {
 
 	private final String style;
 
-	public StyleEvent(String style) {
+	public StyleEvent(final String style) {
 		this.style = style;
 	}
 

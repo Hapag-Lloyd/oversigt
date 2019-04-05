@@ -14,7 +14,7 @@ class RegularExpressionFunction implements Function<String, String> {
 	}
 
 	@Override
-	public String apply(String regex) {
+	public String apply(final String regex) {
 		final Matcher matcher = Pattern.compile(regex).matcher(value); // TODO: Cache pattern statically
 
 		// Return empty string if not found
@@ -26,7 +26,7 @@ class RegularExpressionFunction implements Function<String, String> {
 		String result;
 		try {
 			result = matcher.group("return");
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			result = matcher.group();
 		}
 

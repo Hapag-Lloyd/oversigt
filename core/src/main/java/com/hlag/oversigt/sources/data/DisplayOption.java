@@ -12,30 +12,31 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	@NotNull
 	private Color color = Color.Grey;
+
 	@NotNull
 	private String displayValue = null;
+
 	@NotNull
 	private String value = null;
 
-	public DisplayOption() {
-	}
+	public DisplayOption() {}
 
-	public DisplayOption(String displayValue) {
+	public DisplayOption(final String displayValue) {
 		this.displayValue = Objects.requireNonNull(displayValue);
 	}
 
-	public DisplayOption(String displayValue, Color color) {
+	public DisplayOption(final String displayValue, final Color color) {
 		this(displayValue);
 		this.color = color;
 	}
 
 	@Override
-	public int compareTo(DisplayOption o) {
+	public int compareTo(final DisplayOption o) {
 		return getDisplayValue().compareTo(o.getDisplayValue());
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return o != null && o instanceof DisplayOption && compareTo((DisplayOption) o) == 0;
 	}
 
@@ -48,7 +49,7 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 		return color;
 	}
 
-	public void setColor(Color color) {
+	public void setColor(final Color color) {
 		this.color = color;
 	}
 
@@ -56,11 +57,11 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 		return displayValue;
 	}
 
-	public String formatDisplayValue(int count) {
+	public String formatDisplayValue(final int count) {
 		return String.format(getDisplayValue(), count);
 	}
 
-	public void setDisplayValue(String displayValue) {
+	public void setDisplayValue(final String displayValue) {
 		this.displayValue = displayValue;
 	}
 
@@ -68,7 +69,7 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(final String value) {
 		this.value = value;
 	}
 }

@@ -19,7 +19,7 @@ import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionManager;
 
 public class HttpServerExchangeHandler {
-	void doNonBlocking(HttpHandler handler, HttpServerExchange exchange) throws Exception {
+	void doNonBlocking(final HttpHandler handler, final HttpServerExchange exchange) throws Exception {
 		if (exchange.isInIoThread()) {
 			exchange.dispatch(handler);
 		} else {
@@ -27,11 +27,14 @@ public class HttpServerExchangeHandler {
 		}
 	}
 
-	<T> T query(HttpServerExchange exchange, String name, Function<String, T> converter, T defaultIfNotPresent) {
+	<T> T query(final HttpServerExchange exchange,
+			final String name,
+			final Function<String, T> converter,
+			final T defaultIfNotPresent) {
 		return query(exchange, name).map(converter).orElse(defaultIfNotPresent);
 	}
 
-	Optional<String> query(HttpServerExchange exchange, String name) {
+	Optional<String> query(final HttpServerExchange exchange, final String name) {
 		return Optional//
 				.ofNullable(exchange.getQueryParameters())//
 				.map(qp -> qp.get(name))//
@@ -48,7 +51,7 @@ public class HttpServerExchangeHandler {
 	 * @return the string value of the extracted parameter
 	 * @throws RuntimeException if the named parameter cannot be found
 	 */
-	String param(FormData formData, String name) {
+	String param(final FormData formData, final String name) {
 		return maybeParam(formData, name).orElseThrow(
 				() -> new RuntimeException(String.format("Unable to extract parameter '%s' from form data.", name)));
 	}
@@ -61,22 +64,22 @@ public class HttpServerExchangeHandler {
 	 * @param name     the name of the parameter to extract
 	 * @return an {@link Optional} that may hold the extracted value
 	 */
-	Optional<String> maybeParam(FormData formData, String name) {
+	Optional<String> maybeParam(final FormData formData, final String name) {
 		return Optional.of(formData).map(fd -> fd.get(name)).map(Deque::getFirst).map(FormValue::getValue);
 	}
 
-	FormData getFormData(HttpServerExchange exchange) throws IOException {
-		Builder builder = FormParserFactory.builder();
+	FormData getFormData(final HttpServerExchange exchange) throws IOException {
+		final Builder builder = FormParserFactory.builder();
 		builder.setDefaultCharset("UTF-8");
-		FormDataParser parser = builder.build().createParser(exchange);
+		final FormDataParser parser = builder.build().createParser(exchange);
 		return parser.parseBlocking();
 	}
 
-	public Optional<Session> getSession(HttpServerExchange exchange) {
+	public Optional<Session> getSession(final HttpServerExchange exchange) {
 		// To retrive the SessionManager use the attachmentKey
-		SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
+		final SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
 		// same goes to SessionConfig
-		SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
+		final SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
 
 		if (sm != null) {
 			return Optional.ofNullable(sm.getSession(exchange, sessionConfig));
@@ -85,19 +88,19 @@ public class HttpServerExchangeHandler {
 		}
 	}
 
-	public Optional<Principal> getPrincipal(HttpServerExchange exchange) {
+	public Optional<Principal> getPrincipal(final HttpServerExchange exchange) {
 		return getSession(exchange).map(session -> (Principal) session.getAttribute("PRINCIPAL"));
 	}
 
-	public boolean hasSession(HttpServerExchange exchange) {
+	public boolean hasSession(final HttpServerExchange exchange) {
 		return getSession(exchange).isPresent();
 	}
 
-	Session getOrCreateSession(HttpServerExchange exchange) {
+	Session getOrCreateSession(final HttpServerExchange exchange) {
 		// To retrieve the SessionManager use the attachmentKey
-		SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
+		final SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
 		// same goes to SessionConfig
-		SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
+		final SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
 
 		Session session = sm.getSession(exchange, sessionConfig);
 		if (session == null) {

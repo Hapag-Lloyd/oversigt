@@ -18,16 +18,16 @@ import microsoft.exchange.webservices.data.core.exception.service.remote.Service
 import microsoft.exchange.webservices.data.search.CalendarView;
 
 public abstract class AbstractExchangeEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
-	public static CalendarView getCalendarView(ZonedDateTime start, ZonedDateTime end) {
+	public static CalendarView getCalendarView(final ZonedDateTime start, final ZonedDateTime end) {
 		return new CalendarView(Date.from(start.toInstant()), Date.from(end.toInstant()));
 	}
 
-	private static boolean isExceptionToIgnore(Exception e) {
+	private static boolean isExceptionToIgnore(final Exception e) {
 		return e instanceof ServiceRequestException //
 				&& e.getMessage().equals("The request failed. 40");
 	}
 
-	private static boolean isLoginException(Exception e) {
+	private static boolean isLoginException(final Exception e) {
 		return e instanceof ServiceRequestException //
 				&& e.getCause() != null //
 				&& e.getCause() instanceof ServiceRequestException//
@@ -38,7 +38,9 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	}
 
 	private ServerConnection serverConnection = ServerConnection.EMPTY;
+
 	private Credentials credentials = Credentials.EMPTY;
+
 	private ZoneId zoneId = ZoneId.systemDefault();
 
 	@Property(name = "Exchange Server", description = "The exchange server to connect to.")
@@ -46,16 +48,18 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		return serverConnection;
 	}
 
-	public final void setServerConnection(ServerConnection serverConnection) {
+	public final void setServerConnection(final ServerConnection serverConnection) {
 		this.serverConnection = serverConnection;
 	}
 
-	@Property(name = "Credentials", description = "The credentials to be used when connecting to Exchange.", needsRestart = true)
+	@Property(name = "Credentials",
+			description = "The credentials to be used when connecting to Exchange.",
+			needsRestart = true)
 	public final Credentials getCredentials() {
 		return credentials;
 	}
 
-	public final void setCredentials(Credentials credentials) {
+	public final void setCredentials(final Credentials credentials) {
 		this.credentials = credentials;
 	}
 
@@ -64,7 +68,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		return zoneId;
 	}
 
-	public void setZoneId(ZoneId zoneId) {
+	public void setZoneId(final ZoneId zoneId) {
 		this.zoneId = zoneId;
 	}
 
@@ -85,7 +89,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	protected final T produceEvent() throws Exception {
 		try {
 			return produceExchangeEvent();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			if (isExceptionToIgnore(e)) {
 				return null;
 			} else if (isLoginException(e)) {
@@ -93,7 +97,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 						getCredentials() != null ? getCredentials().getUsername() : "",
 						getServerConnection() != null ? getServerConnection().getUrl() : ""));
 			} else {
-				String message = getFailureMessage(e);
+				final String message = getFailureMessage(e);
 				if (message != null) {
 					return failure(message, e);
 				} else {
@@ -103,7 +107,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		}
 	}
 
-	protected String getFailureMessage(Exception e) {
+	protected String getFailureMessage(final Exception e) {
 		return null;
 	}
 

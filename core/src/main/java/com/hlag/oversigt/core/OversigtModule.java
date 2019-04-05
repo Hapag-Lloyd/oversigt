@@ -92,9 +92,10 @@ class OversigtModule extends AbstractModule {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtModule.class);
 
 	private final Runnable shutdownRunnable;
+
 	private final CommandLineOptions options;
 
-	OversigtModule(CommandLineOptions options, Runnable shutdownRunnable, List<Module> extensions) {
+	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable, final List<Module> extensions) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
@@ -143,7 +144,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Service.class).annotatedWith(Names.named("NightlyReloader")).to(NightlyReloaderService.class);
 
 		// GSON
-		Gson gson = new GsonBuilder()//
+		final Gson gson = new GsonBuilder()//
 				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
@@ -157,14 +158,14 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Gson.class).toInstance(gson);
 
 		// Jackson for our API
-		SimpleModule module = new SimpleModule("Oversigt-API");
+		final SimpleModule module = new SimpleModule("Oversigt-API");
 		module.addSerializer(Color.class, serializer(Color.class, Color::getHexColor));
 		module.addDeserializer(Color.class, deserializer(Color.class, Color::parse));
 		module.addSerializer(Duration.class, serializer(Duration.class, Duration::toString));
 		module.addDeserializer(Duration.class, deserializer(Duration.class, Duration::parse));
 		module.addDeserializer(ZonedDateTime.class, InstantDeserializer.ZONED_DATE_TIME);
 		module.addSerializer(ZonedDateTime.class, ZonedDateTimeSerializer.INSTANCE);
-		ObjectMapper objectMapper = new ObjectMapper();
+		final ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.registerModule(module);
 		// objectMapper.registerModule(new JavaTimeModule()); // instead the
 		// InstantDeserializer and ZonedDateTimeSerializer are used directly
@@ -175,7 +176,7 @@ class OversigtModule extends AbstractModule {
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
 		final GuiceConstraintValidatorFactory constraintValidatorFactory = new GuiceConstraintValidatorFactory();
 		requestInjection(constraintValidatorFactory);
-		Validator validator = Validation.buildDefaultValidatorFactory()
+		final Validator validator = Validation.buildDefaultValidatorFactory()
 				.usingContext()
 				.constraintValidatorFactory(constraintValidatorFactory)
 				.getValidator();
@@ -184,12 +185,12 @@ class OversigtModule extends AbstractModule {
 		// XML
 		try {
 			binder().bind(DatatypeFactory.class).toInstance(DatatypeFactory.newInstance());
-		} catch (DatatypeConfigurationException e) {
+		} catch (final DatatypeConfigurationException e) {
 			throw new RuntimeException("Unable to create DatatypeFactory");
 		}
 
 		// binds properties
-		OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
+		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
 		configuration.bindProperties(binder(), options.isDebugFallback(), options.getLdapBindPasswordFallback());
 		if (options != null) {
@@ -200,8 +201,8 @@ class OversigtModule extends AbstractModule {
 	@Singleton
 	@Provides
 	@Inject
-	EventBus provideEventBus(EventSender sender) {
-		EventBus eventBus = new EventBus(Oversigt::handleEventBusException);
+	EventBus provideEventBus(final EventSender sender) {
+		final EventBus eventBus = new EventBus(Oversigt::handleEventBusException);
 		eventBus.register(sender);
 		return eventBus;
 	}
@@ -210,9 +211,9 @@ class OversigtModule extends AbstractModule {
 	@Provides
 	@Inject
 	freemarker.template.Configuration provideTemplateConfiguration(
-			@Named("templateNumberFormat") String templateNumberFormat) {
-		freemarker.template.Configuration configuration = new freemarker.template.Configuration(
-				freemarker.template.Configuration.VERSION_2_3_23);
+			@Named("templateNumberFormat") final String templateNumberFormat) {
+		final freemarker.template.Configuration configuration
+				= new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_23);
 		configuration.setTemplateLoader(new ClassTemplateLoader(Oversigt.class, "/"));
 		configuration.setNumberFormat(templateNumberFormat);
 		configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
@@ -225,9 +226,8 @@ class OversigtModule extends AbstractModule {
 		final JsonProvider jsonProvider = new JacksonJsonProvider();
 		final MappingProvider mappingProvider = new JacksonMappingProvider();
 
-		final com.jayway.jsonpath.Configuration jsonpathConfiguration = com.jayway.jsonpath.Configuration.builder()
-				.options(Option.DEFAULT_PATH_LEAF_TO_NULL)
-				.build();
+		final com.jayway.jsonpath.Configuration jsonpathConfiguration
+				= com.jayway.jsonpath.Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build();
 		com.jayway.jsonpath.Configuration.setDefaults(new com.jayway.jsonpath.Configuration.Defaults() {
 			@Override
 			public Set<Option> options() {
@@ -247,14 +247,14 @@ class OversigtModule extends AbstractModule {
 		return jsonpathConfiguration;
 	}
 
-	OversigtConfiguration readConfiguration(String resourceUrlString, Gson gson) {
+	OversigtConfiguration readConfiguration(final String resourceUrlString, final Gson gson) {
 		try {
-			URL configUrl = Resources.getResource(resourceUrlString);
+			final URL configUrl = Resources.getResource(resourceUrlString);
 			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);
 			LOGGER.info("Reading Oversigt configuration: " + configUrl);
-			String configString = Resources.toString(configUrl, Charsets.UTF_8);
+			final String configString = Resources.toString(configUrl, Charsets.UTF_8);
 			return gson.fromJson(configString, OversigtConfiguration.class);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new IllegalStateException("Unable to read configuration", e);
 		}
 	}
@@ -272,7 +272,7 @@ class OversigtModule extends AbstractModule {
 			 * manually maintain internal state (to re-use validators and simplify life for
 			 * GC)
 			 */
-			boolean bound = injector.getBindings()//
+			final boolean bound = injector.getBindings()//
 					.keySet()
 					.stream()
 					.map(k -> k.getTypeLiteral().getRawType())
@@ -289,7 +289,7 @@ class OversigtModule extends AbstractModule {
 			/* Garbage collector will do it */
 		}
 
-		private <T> T run(PrivilegedAction<T> action) {
+		private <T> T run(final PrivilegedAction<T> action) {
 			return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
 		}
 

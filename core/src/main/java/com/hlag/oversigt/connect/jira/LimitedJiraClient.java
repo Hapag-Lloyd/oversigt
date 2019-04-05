@@ -20,15 +20,16 @@ public class LimitedJiraClient extends JiraClientFilter {
 	}
 
 	/**
-	 * Perform the Jira search but limit the number of calls per second to the JIRA server. The
-	 * limit is dynamically adjusted with every incoming request
+	 * Perform the Jira search but limit the number of calls per second to the JIRA
+	 * server. The limit is dynamically adjusted with every incoming request
 	 *
-	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int, int)
+	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int,
+	 *      int)
 	 */
 	@Override
-	public List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException {
+	public List<Issue> search(final String jql, final int maxResults, final int startAt) throws JiraClientException {
 		// change the number of allowed searches
-		int limit = runningSearches.incrementAndGet();
+		final int limit = runningSearches.incrementAndGet();
 		RATE_LIMITER.setRate(limit);
 
 		// wait until we may proceed

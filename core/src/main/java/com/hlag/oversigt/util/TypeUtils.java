@@ -46,23 +46,23 @@ public class TypeUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
 
-	public static boolean isOfType(Class<?> typeToCheck, Class<?> typeToCheckAgainst) {
+	public static boolean isOfType(final Class<?> typeToCheck, final Class<?> typeToCheckAgainst) {
 		return typeToCheckAgainst.isAssignableFrom(typeToCheck)
 				|| typeToCheck.isArray() && isOfType(typeToCheck.getComponentType(), typeToCheckAgainst);
 	}
 
-	public static <T> Stream<Class<T>> findClasses(Package packageToSearch, Class<T> assignableTo) {
+	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Class<T> assignableTo) {
 		return findClasses(packageToSearch, assignableTo, null);
 	}
 
-	public static <T> Stream<Class<T>> findClasses(Package packageToSearch,
-			Class<T> assignableTo,
-			Class<? extends Annotation> annotationToBePresent) {
+	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch,
+			final Class<T> assignableTo,
+			final Class<? extends Annotation> annotationToBePresent) {
 		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c) && //
 				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent)));
 	}
 
-	public static <T> Stream<Class<T>> findClasses(Package packageToSearch, Predicate<Class<?>> filter) {
+	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Predicate<Class<?>> filter) {
 		LOGGER.info("Inspecting classes using ClassLoader[{}] and package[{}]",
 				Thread.currentThread().getContextClassLoader(),
 				packageToSearch);
@@ -71,13 +71,14 @@ public class TypeUtils {
 			classes = ClassPath//
 					.from(Thread.currentThread().getContextClassLoader())
 					.getTopLevelClassesRecursive(packageToSearch.getName());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("Unable to search classes in class path", e);
 		}
 
-		// iterates over all classes, filter by HandlesEvent annotation and transforms stream to needed form
+		// iterates over all classes, filter by HandlesEvent annotation and transforms
+		// stream to needed form
 		@SuppressWarnings("unchecked")
-		Stream<Class<T>> stream = classes//
+		final Stream<Class<T>> stream = classes//
 				.stream()//
 				.map(TypeUtils::loadClassInfo)//
 				.filter(Optional::isPresent)//
@@ -89,18 +90,20 @@ public class TypeUtils {
 		return stream;
 	}
 
-	public static void bindClasses(Package packageToSearch, Predicate<Class<?>> filter, Binder binder) {
+	public static void bindClasses(final Package packageToSearch,
+			final Predicate<Class<?>> filter,
+			final Binder binder) {
 		findClasses(packageToSearch, filter).forEach(binder::bind);
 	}
 
-	public static <T> Stream<Class<T>> findClasses(ClassLoader classLoader,
-			Collection<String> classNames,
-			Class<T> assignableTo,
-			Class<? extends Annotation> annotationToBePresent) {
-		Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c) && //
+	public static <T> Stream<Class<T>> findClasses(final ClassLoader classLoader,
+			final Collection<String> classNames,
+			final Class<T> assignableTo,
+			final Class<? extends Annotation> annotationToBePresent) {
+		final Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c) && //
 				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent));
 		@SuppressWarnings("unchecked")
-		Stream<Class<T>> stream = classNames.stream()
+		final Stream<Class<T>> stream = classNames.stream()
 				.map(s -> loadClassInfo(classLoader, s))
 				.filter(Optional::isPresent)
 				.map(Optional::get)
@@ -115,9 +118,10 @@ public class TypeUtils {
 	 * Tries to load a {@link Class} and return <code>true</code> if successful.
 	 *
 	 * @param classInfo the {@link Class} to load
-	 * @return <code>true</code> if the {@link Class} could be loaded, otherwise <code>false</code>
+	 * @return <code>true</code> if the {@link Class} could be loaded, otherwise
+	 *         <code>false</code>
 	 */
-	private static Optional<Class<?>> loadClassInfo(ClassInfo classInfo) {
+	private static Optional<Class<?>> loadClassInfo(final ClassInfo classInfo) {
 		try {
 			return Optional.of(classInfo.load());
 		} catch (Exception | NoClassDefFoundError e) {
@@ -126,7 +130,7 @@ public class TypeUtils {
 		}
 	}
 
-	private static Optional<Class<?>> loadClassInfo(ClassLoader classLoader, String className) {
+	private static Optional<Class<?>> loadClassInfo(final ClassLoader classLoader, final String className) {
 		try {
 			return Optional.of(classLoader.loadClass(className));
 		} catch (Exception | NoClassDefFoundError e) {
@@ -135,9 +139,9 @@ public class TypeUtils {
 		}
 	}
 
-	public static List<String> listClassesInJarFiles(URL[] jarFileUrls) throws IOException {
-		List<String> classNames = new ArrayList<>();
-		for (URL jarFileUrl : jarFileUrls) {
+	public static List<String> listClassesInJarFiles(final URL[] jarFileUrls) throws IOException {
+		final List<String> classNames = new ArrayList<>();
+		for (final URL jarFileUrl : jarFileUrls) {
 			try (JarInputStream in = new JarInputStream(jarFileUrl.openStream())) {
 				JarEntry jarEntry;
 				while ((jarEntry = in.getNextJarEntry()) != null) {
@@ -155,7 +159,7 @@ public class TypeUtils {
 		return classNames;
 	}
 
-	public static Stream<String> getMembers(Class<?> clazz) {
+	public static Stream<String> getMembers(final Class<?> clazz) {
 		return streamFields(clazz)//
 				.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)//
 				.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)//
@@ -163,7 +167,7 @@ public class TypeUtils {
 		;
 	}
 
-	public static Map<String, Object> toMemberMap(Object object) {
+	public static Map<String, Object> toMemberMap(final Object object) {
 		try {
 			return Stream//
 					.of(Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors())//
@@ -172,26 +176,26 @@ public class TypeUtils {
 					.filter(i -> i.getWriteMethod() == null
 							|| !i.getWriteMethod().isAnnotationPresent(JsonIgnore.class))
 					.collect(Collectors.toMap(PropertyDescriptor::getName, pd -> get(pd.getReadMethod(), object)));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private static Object get(Method method, Object target) {
+	private static Object get(final Method method, final Object target) {
 		try {
-			Object object = method.invoke(target);
+			final Object object = method.invoke(target);
 			if (object != null) {
-				return object/* TODO why did we convert to string here? .toString()*/;
+				return object/* TODO why did we convert to string here? .toString() */;
 			} else {
 				return null;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public static <T extends SerializableProperty> Collection<SerializablePropertyMember> getSerializablePropertyMembers(
-			Class<T> clazz) {
+			final Class<T> clazz) {
 		Collection<SerializablePropertyMember> members = new LinkedHashSet<>();
 		try {
 			members.add(new SerializablePropertyMember(SerializableProperty.class.getDeclaredField("id")));
@@ -209,7 +213,7 @@ public class TypeUtils {
 		return members;
 	}
 
-	static Stream<Field> streamFields(Class<?> clazz) {
+	static Stream<Field> streamFields(final Class<?> clazz) {
 		if (clazz != Object.class) {
 			return Stream.concat(Stream.of(clazz.getDeclaredFields()), streamFields(clazz.getSuperclass()));
 		} else {
@@ -218,20 +222,20 @@ public class TypeUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <C> Constructor<C> getAppropriateConstructor(Class<C> c, Object[] initArgs) {
+	public static <C> Constructor<C> getAppropriateConstructor(final Class<C> c, Object[] initArgs) {
 		if (initArgs == null) {
 			initArgs = new Object[0];
 		}
 		for (@SuppressWarnings("rawtypes")
-		Constructor con : c.getDeclaredConstructors()) {
+		final Constructor con : c.getDeclaredConstructors()) {
 			@SuppressWarnings("rawtypes")
-			Class[] types = con.getParameterTypes();
+			final Class[] types = con.getParameterTypes();
 			if (types.length != initArgs.length) {
 				continue;
 			}
 			boolean match = true;
 			for (int i = 0; i < types.length; i++) {
-				Class<?> need = types[i], got = initArgs[i].getClass();
+				final Class<?> need = types[i], got = initArgs[i].getClass();
 				if (!need.isAssignableFrom(got)) {
 					if (need.isPrimitive()) {
 						match = int.class.equals(need) && Integer.class.equals(got)
@@ -252,60 +256,61 @@ public class TypeUtils {
 				return con;
 			}
 		}
-		throw new IllegalArgumentException("Cannot find an appropriate constructor for class " + c + " and arguments "
+		throw new IllegalArgumentException("Cannot find an appropriate constructor for class "
+				+ c
+				+ " and arguments "
 				+ Arrays.toString(initArgs));
 	}
 
 	@SafeVarargs
-	public static <T> T tryToCreateInstance(Class<T> target,
-			String input,
-			Supplier<T> defaultValueSupplier,
-			Class<? extends T>... classes) {
-		for (Class<? extends T> clazz : classes) {
+	public static <T> T tryToCreateInstance(final Class<T> target,
+			final String input,
+			final Supplier<T> defaultValueSupplier,
+			final Class<? extends T>... classes) {
+		for (final Class<? extends T> clazz : classes) {
 			try {
 				return createInstance(clazz, input);
-			} catch (Exception ignore) {
-			}
+			} catch (final Exception ignore) {}
 		}
 		return defaultValueSupplier.get();
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T createInstance(Class<? extends T> clazz, Object... parameters) {
+	public static <T> T createInstance(final Class<? extends T> clazz, final Object... parameters) {
 		Objects.requireNonNull(parameters);
-		for (Object param : parameters) {
+		for (final Object param : parameters) {
 			Objects.requireNonNull(param);
 		}
 		if (parameters.length == 1 && parameters[0].getClass() == clazz) {
 			return (T) parameters[0];
 		} else if (clazz.isPrimitive()) {
 			if (int.class == clazz) {
-				int value = Integer.parseInt((String) parameters[0]);
-				Object[] values = { value };
+				final int value = Integer.parseInt((String) parameters[0]);
+				final Object[] values = { value };
 				return (T) values[0];
 			} else if (long.class == clazz) {
-				Object[] values = { Long.parseLong((String) parameters[0]) };
+				final Object[] values = { Long.parseLong((String) parameters[0]) };
 				return (T) values[0];
 			} else if (double.class == clazz) {
-				Object[] values = { Double.parseDouble((String) parameters[0]) };
+				final Object[] values = { Double.parseDouble((String) parameters[0]) };
 				return (T) values[0];
 			} else if (float.class == clazz) {
-				Object[] values = { Float.parseFloat((String) parameters[0]) };
+				final Object[] values = { Float.parseFloat((String) parameters[0]) };
 				return (T) values[0];
 			} else if (byte.class == clazz) {
-				Object[] values = { Byte.parseByte((String) parameters[0]) };
+				final Object[] values = { Byte.parseByte((String) parameters[0]) };
 				return (T) values[0];
 			} else if (short.class == clazz) {
-				Object[] values = { Short.parseShort((String) parameters[0]) };
+				final Object[] values = { Short.parseShort((String) parameters[0]) };
 				return (T) values[0];
 			} else if (char.class == clazz) {
-				Object[] values = { ((String) parameters[0]).charAt(0) };
+				final Object[] values = { ((String) parameters[0]).charAt(0) };
 				return (T) values[0];
 			} else {
 				throw new RuntimeException("Unknown primitive type: " + clazz.getName());
 			}
 		} else {
-			List<Constructor<?>> constructors = Arrays//
+			final List<Constructor<?>> constructors = Arrays//
 					.stream(clazz.getDeclaredConstructors())//
 					.filter(c -> c.getParameterCount() == parameters.length)
 					.filter(c -> {
@@ -322,12 +327,14 @@ public class TypeUtils {
 				constructors.get(0).setAccessible(true);
 				try {
 					return (T) constructors.get(0).newInstance(parameters);
-				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+				} catch (InstantiationException
+						| IllegalAccessException
+						| IllegalArgumentException
 						| InvocationTargetException e) {
 					throw new RuntimeException("Unable to create instance of class: " + clazz.getName(), e);
 				}
 			} else {
-				List<Method> fabricMethods = Arrays//
+				final List<Method> fabricMethods = Arrays//
 						.stream(clazz.getDeclaredMethods())//
 						.filter(m -> (m.getModifiers() & Modifier.STATIC) != 0)//
 						.filter(m -> m.getParameterTypes().length == parameters.length)//
@@ -344,8 +351,14 @@ public class TypeUtils {
 				if (fabricMethods.size() == 1) {
 					return invokeStaticMethod(fabricMethods.get(0), parameters);
 				} else if (fabricMethods.size() > 1) {
-					Optional<T> maybe = tryStaticMethods(fabricMethods,
-							new String[] { "parse", "create", "compile", "get", "createInstance", "getInstance",
+					final Optional<T> maybe = tryStaticMethods(fabricMethods,
+							new String[] {
+									"parse",
+									"create",
+									"compile",
+									"get",
+									"createInstance",
+									"getInstance",
 									"construct" },
 							parameters);
 					return maybe.get();
@@ -357,7 +370,9 @@ public class TypeUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> Optional<T> tryStaticMethods(Collection<Method> methods, String[] names, Object... values) {
+	private static <T> Optional<T> tryStaticMethods(final Collection<Method> methods,
+			final String[] names,
+			final Object... values) {
 		return (Optional<T>) Arrays//
 				.stream(names)//
 				.map(name -> tryStaticMethod(methods, name, values))//
@@ -365,7 +380,9 @@ public class TypeUtils {
 				.orElse(Optional.empty());
 	}
 
-	private static <T> Optional<T> tryStaticMethod(Collection<Method> methods, String name, Object... values) {
+	private static <T> Optional<T> tryStaticMethod(final Collection<Method> methods,
+			final String name,
+			final Object... values) {
 		return methods//
 				.stream()//
 				.filter(m -> m.getName().equals(name))//
@@ -374,22 +391,22 @@ public class TypeUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T invokeStaticMethod(Method method, Object... arguments) {
+	private static <T> T invokeStaticMethod(final Method method, final Object... arguments) {
 		method.setAccessible(true);
 		try {
 			return (T) method.invoke(null, arguments);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public static Method getMethod(Class<?> clazz, List<String> methodNames, Class<?>[] parameterTypes) {
+	public static Method getMethod(Class<?> clazz, final List<String> methodNames, final Class<?>[] parameterTypes) {
 		if (methodNames == null || methodNames.size() == 0) {
 			return null;
 		}
 
 		while (clazz != Object.class) {
-			Optional<Method> method = Stream//
+			final Optional<Method> method = Stream//
 					.of(clazz.getDeclaredMethods())//
 					.filter(m -> methodNames.contains(m.getName()))//
 					.filter(m -> Arrays.deepEquals(m.getParameterTypes(), parameterTypes))
@@ -414,7 +431,7 @@ public class TypeUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> T[] createArray(Class<T> clazz, int length) {
+	public static <T> T[] createArray(final Class<T> clazz, final int length) {
 		return (T[]) Array.newInstance(clazz, length);
 	}
 
@@ -425,76 +442,87 @@ public class TypeUtils {
 				.indexOf("jdwp") >= 0;
 	}
 
-	private static final Comparator<Method> CLASS_DEPTH_COMPARATOR = (a,
-			b) -> -Integer.compare(getClassDepth(a.getReturnType()), getClassDepth(b.getReturnType()));
+	private static final Comparator<Method> CLASS_DEPTH_COMPARATOR
+			= (a, b) -> -Integer.compare(getClassDepth(a.getReturnType()), getClassDepth(b.getReturnType()));
 
 	private static class IndexOfComparator implements Comparator<Method> {
 		private final List<String> methodNames;
 
-		private IndexOfComparator(List<String> methodNames) {
+		private IndexOfComparator(final List<String> methodNames) {
 			this.methodNames = methodNames;
 		}
 
 		@Override
-		public int compare(Method a, Method b) {
+		public int compare(final Method a, final Method b) {
 			return Integer.compare(methodNames.indexOf(a.getName()), methodNames.indexOf(b.getName()));
 		}
 	}
 
 	public static class SerializablePropertyMember {
 		private final Field field;
+
 		private final String name;
+
 		private final String displayName;
+
 		private final Type type;
+
 		private final String icon;
+
 		private final int size;
+
 		private final boolean required;
 
-		private SerializablePropertyMember(Field field) {
+		private SerializablePropertyMember(final Field field) {
 			this(//
-				field,
-				field.getName(),
-				Type.fromField(field),
-				field.isAnnotationPresent(Member.class) ? field.getAnnotation(Member.class) : null);
+					field,
+					field.getName(),
+					Type.fromField(field),
+					field.isAnnotationPresent(Member.class) ? field.getAnnotation(Member.class) : null);
 		}
 
-		private SerializablePropertyMember(Field field, String name, Type type, Member member) {
+		private SerializablePropertyMember(final Field field, final String name, final Type type, final Member member) {
 			this(//
-				field,
-				name,
-				type,
-				member != null ? member.icon() : "tag",
-				member != null ? member.size() : 2,
-				member != null ? member.mayBeEmpty() : false);
+					field,
+					name,
+					type,
+					member != null ? member.icon() : "tag",
+					member != null ? member.size() : 2,
+					member != null ? member.mayBeEmpty() : false);
 		}
 
-		private SerializablePropertyMember(Field field, String name, Type type, String icon, int size, boolean empty) {
+		private SerializablePropertyMember(final Field field,
+				final String name,
+				final Type type,
+				final String icon,
+				final int size,
+				final boolean empty) {
 			this.field = field;
 			field.setAccessible(true);
 			this.name = name;
-			this.displayName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+			displayName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
 			this.type = type;
 			this.icon = icon;
 			this.size = size;
-			this.required = !empty;
+			required = !empty;
 		}
 
 		private Class<?> getClazz() {
 			return field.getType();
 		}
 
-		public Object createInstance(String stringValue) throws MemberMissingException {
+		public Object createInstance(final String stringValue) throws MemberMissingException {
 			if (isRequired() && Strings.isNullOrEmpty(stringValue)) {
 				throw new MemberMissingException("Value for member " + name + " must not be null or empty");
 			}
 			return TypeUtils.createInstance(getClazz(), stringValue);
 		}
 
-		public void set(SerializableProperty property, String value) throws MemberMissingException {
+		public void set(final SerializableProperty property, final String value) throws MemberMissingException {
 			set(property, createInstance(value));
 		}
 
-		public void set(SerializableProperty property, Object object) throws MemberMissingException {
+		public void set(final SerializableProperty property, final Object object) throws MemberMissingException {
 			try {
 				field.set(property, object);
 			} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -503,7 +531,7 @@ public class TypeUtils {
 			}
 		}
 
-		public Object get(SerializableProperty property) {
+		public Object get(final SerializableProperty property) {
 			try {
 				return field.get(property);
 			} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -541,7 +569,7 @@ public class TypeUtils {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -551,7 +579,7 @@ public class TypeUtils {
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			SerializablePropertyMember other = (SerializablePropertyMember) obj;
+			final SerializablePropertyMember other = (SerializablePropertyMember) obj;
 			if (name == null) {
 				if (other.name != null) {
 					return false;
@@ -564,18 +592,25 @@ public class TypeUtils {
 
 		@Override
 		public String toString() {
-			return "SerializablePropertyMember [name=" + name + ", type=" + type + ", icon=" + icon + ", size=" + size
+			return "SerializablePropertyMember [name="
+					+ name
+					+ ", type="
+					+ type
+					+ ", icon="
+					+ icon
+					+ ", size="
+					+ size
 					+ "]";
 		}
 
-		public static enum Type {
+		public enum Type {
 			text,
 			number,
 			password,
 			color;
 
-			static Type fromField(Field field) {
-				Class<?> type = field.getType();
+			static Type fromField(final Field field) {
+				final Class<?> type = field.getType();
 				if (type == String.class && field.getName().toLowerCase().contains("password")) {
 					return password;
 				} else if (type == Color.class) {
@@ -593,7 +628,7 @@ public class TypeUtils {
 		public static class MemberMissingException extends Exception {
 			private static final long serialVersionUID = 9022818290418219308L;
 
-			private MemberMissingException(String message) {
+			private MemberMissingException(final String message) {
 				super(message);
 				// TODO Auto-generated constructor stub
 			}
@@ -602,7 +637,7 @@ public class TypeUtils {
 
 	public static class ClassProxy implements InvocationHandler {
 		@SuppressWarnings("unchecked")
-		public static <T> T create(Class<T> clazz, ReturnValue... returns) {
+		public static <T> T create(final Class<T> clazz, final ReturnValue... returns) {
 			return (T) Proxy.newProxyInstance(ClassProxy.class.getClassLoader(),
 					new Class[] { clazz },
 					new ClassProxy(returns));
@@ -610,12 +645,12 @@ public class TypeUtils {
 
 		private final List<ReturnValue> returns;
 
-		private ClassProxy(ReturnValue[] returns) {
+		private ClassProxy(final ReturnValue[] returns) {
 			this.returns = Arrays.asList(returns);
 		}
 
 		@Override
-		public Object invoke(Object object, Method method, Object[] args) throws Throwable {
+		public Object invoke(final Object object, final Method method, final Object[] args) throws Throwable {
 			return returns.stream()
 					.filter(r -> r.getMethod().equals(method))
 					.map(ReturnValue::getReturnValue)
@@ -625,7 +660,7 @@ public class TypeUtils {
 	}
 
 	public static class ReturnValue {
-		public static ReturnValue find(Class<?> clazz, String methodName, Object returnValue) {
+		public static ReturnValue find(final Class<?> clazz, final String methodName, final Object returnValue) {
 			return new ReturnValue(Arrays.stream(clazz.getMethods())//
 					.filter(m -> m.getName().equals(methodName))
 					.findFirst()
@@ -633,9 +668,10 @@ public class TypeUtils {
 		}
 
 		private final Method method;
+
 		private final Object returnValue;
 
-		private ReturnValue(Method method, Object returnValue) {
+		private ReturnValue(final Method method, final Object returnValue) {
 			this.method = method;
 			this.returnValue = returnValue;
 		}

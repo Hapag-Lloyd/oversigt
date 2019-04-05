@@ -14,12 +14,12 @@ public enum DashboardColorScheme {
 
 	private final Set<String> names;
 
-	private DashboardColorScheme(String... names) {
+	private DashboardColorScheme(final String... names) {
 		this.names = new HashSet<>(Arrays.asList(names));
 	}
 
-	public static DashboardColorScheme fromString(String string) {
-		for (DashboardColorScheme scheme : values()) {
+	public static DashboardColorScheme fromString(final String string) {
+		for (final DashboardColorScheme scheme : values()) {
 			if (scheme.name().equals(string) || scheme.names.stream().anyMatch(string::equals)) {
 				return scheme;
 			}

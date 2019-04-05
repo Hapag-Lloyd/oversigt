@@ -11,26 +11,24 @@ public interface Authenticator extends AutoCloseable {
 
 	public static class NoAuthenticator implements Authenticator {
 		@Override
-		public Principal login(String username, String password) {
+		public Principal login(final String username, final String password) {
 			return null;
 		}
 
 		@Override
-		public Principal readPrincipal(String username) {
+		public Principal readPrincipal(final String username) {
 			return null;
 		}
 
 		@Override
-		public boolean isUsernameValid(String username) {
+		public boolean isUsernameValid(final String username) {
 			return false;
 		}
 
 		@Override
-		public void reloadRoles(String username) {
-		}
+		public void reloadRoles(final String username) {}
 
 		@Override
-		public void close() {
-		}
+		public void close() {}
 	}
 }

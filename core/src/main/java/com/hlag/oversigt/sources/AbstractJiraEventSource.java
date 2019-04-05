@@ -43,13 +43,20 @@ import com.hlag.oversigt.util.Utils;
 
 public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 	private ServerConnection jiraConnection = ServerConnection.EMPTY;
+
 	private Credentials jiraCredentials = Credentials.EMPTY;
+
 	private String query = "";
-	private final Set<AggregationType> aggregationTypes = Collections
-			.synchronizedSet(new TreeSet<>(Arrays.asList(AggregationType.STATUS)));
+
+	private final Set<AggregationType> aggregationTypes
+			= Collections.synchronizedSet(new TreeSet<>(Arrays.asList(AggregationType.STATUS)));
+
 	private DisplayOption[] displayOptions = null;
+
 	private DisplayOption defaultDisplayOption = null;
+
 	private boolean showEmptyCategories = false;
+
 	private ShowUnknownCategories showUnknownCategories = ShowUnknownCategories.ALL;
 
 	@Override
@@ -62,35 +69,36 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		final List<Issue> issues;
 		try {
 			issues = new LimitedJiraClient(getJiraConnection(), getJiraCredentials()).search(getQuery());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return handleException(e);
 		}
 
 		// Initialize entries per user-defined category to keep the user-defined order
 		Map<DisplayOption, Set<Issue>> issuesPerCategory = new LinkedHashMap<>();
-		for (DisplayOption displayOption : getDisplayOptions()) {
+		for (final DisplayOption displayOption : getDisplayOptions()) {
 			issuesPerCategory.put(displayOption, new HashSet<>());
 		}
 
 		// Find known (categories) and unknown DisplayOptions per issue
-		Map<DisplayOption, Set<Issue>> issuesUnknown = new TreeMap<>();
-		for (Issue issue : issues) {
+		final Map<DisplayOption, Set<Issue>> issuesUnknown = new TreeMap<>();
+		for (final Issue issue : issues) {
 			boolean containedKnownDislayOption = false;
 
 			// Add issues to all known (categories) DisplayOptions,
-			// following the user-defined option "showUnknownDisplayOptions" for unknown DisplayOptions
-			for (DisplayOption displayOption : getDisplayOptions(issue)) {
+			// following the user-defined option "showUnknownDisplayOptions" for unknown
+			// DisplayOptions
+			for (final DisplayOption displayOption : getDisplayOptions(issue)) {
 				if (issuesPerCategory.containsKey(displayOption) && !Strings.isNullOrEmpty(displayOption.getValue())) {
 					issuesPerCategory.get(displayOption).add(issue);
 					containedKnownDislayOption = true;
 				} else if (getShowUnknownCategories() == ShowUnknownCategories.ALL
 						|| getShowUnknownCategories() == ShowUnknownCategories.UNKNOWN_ONLY
 								&& !containedKnownDislayOption) {
-					if (!issuesUnknown.containsKey(displayOption)) {
-						issuesUnknown.put(displayOption, new HashSet<>());
-					}
-					issuesUnknown.get(displayOption).add(issue);
-				}
+									if (!issuesUnknown.containsKey(displayOption)) {
+										issuesUnknown.put(displayOption, new HashSet<>());
+									}
+									issuesUnknown.get(displayOption).add(issue);
+								}
 			}
 		}
 
@@ -99,33 +107,34 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 		// If not getShowEmptyCategories then remove empty DisplayOption entries
 		if (!getShowEmptyCategories()) {
-			issuesPerCategory = Utils
-					.toLinkedMap(issuesPerCategory.entrySet().stream().filter(e -> !e.getValue().isEmpty()));
+			issuesPerCategory
+					= Utils.toLinkedMap(issuesPerCategory.entrySet().stream().filter(e -> !e.getValue().isEmpty()));
 		}
 
 		return issuesPerCategory;
 	}
 
 	/**
-	 * Returns all matching DisplayOptions of an issue The returned set is ordered by known
-	 * categories first and unknown DisplayOptions last. For no further ordering is guaranteed.
+	 * Returns all matching DisplayOptions of an issue The returned set is ordered
+	 * by known categories first and unknown DisplayOptions last. For no further
+	 * ordering is guaranteed.
 	 */
-	private Set<DisplayOption> getDisplayOptions(Issue issue) {
+	private Set<DisplayOption> getDisplayOptions(final Issue issue) {
 		// Collect attribute values to match
-		Map<String, AggregationType> values = new TreeMap<>();
-		for (AggregationType aggregationType : getAggregationTypes()) {
-			for (String value : aggregationType.getAttributeValues(issue)) {
+		final Map<String, AggregationType> values = new TreeMap<>();
+		for (final AggregationType aggregationType : getAggregationTypes()) {
+			for (final String value : aggregationType.getAttributeValues(issue)) {
 				values.put(value, aggregationType);
 			}
 		}
 
 		// Collect DisplayOptions per value
-		Set<DisplayOption> displayOptions = new LinkedHashSet<>();
-		Set<DisplayOption> displayOptionsUnknown = new TreeSet<>();
-		for (String value : values.keySet()) {
+		final Set<DisplayOption> displayOptions = new LinkedHashSet<>();
+		final Set<DisplayOption> displayOptionsUnknown = new TreeSet<>();
+		for (final String value : values.keySet()) {
 			boolean foundDisplayOption = false;
 
-			for (DisplayOption displayOption : getDisplayOptions()) {
+			for (final DisplayOption displayOption : getDisplayOptions()) {
 				if (AggregationType.matches(displayOption, value)) {
 					displayOptions.add(displayOption);
 					foundDisplayOption = true;
@@ -141,8 +150,10 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return displayOptions;
 	}
 
-	private DisplayOption getUnknownDisplayOptions(AggregationType aggregationType, Issue issue, String value) {
-		DisplayOption defaultDisplayOption = getDefaultDisplayOption();
+	private DisplayOption getUnknownDisplayOptions(final AggregationType aggregationType,
+			final Issue issue,
+			final String value) {
+		final DisplayOption defaultDisplayOption = getDefaultDisplayOption();
 		if (defaultDisplayOption != null && !Strings.isNullOrEmpty(defaultDisplayOption.getDisplayValue())) {
 			return defaultDisplayOption;
 		}
@@ -154,7 +165,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return jiraConnection;
 	}
 
-	public void setJiraConnection(ServerConnection jiraConnection) {
+	public void setJiraConnection(final ServerConnection jiraConnection) {
 		this.jiraConnection = jiraConnection;
 	}
 
@@ -163,7 +174,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return jiraCredentials;
 	}
 
-	public void setJiraCredentials(Credentials jiraCredentials) {
+	public void setJiraCredentials(final Credentials jiraCredentials) {
 		this.jiraCredentials = jiraCredentials;
 	}
 
@@ -172,7 +183,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return query;
 	}
 
-	public void setQuery(String query) {
+	public void setQuery(final String query) {
 		this.query = query;
 	}
 
@@ -181,14 +192,15 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return aggregationTypes.toArray(new AggregationType[0]);
 	}
 
-	public void setAggregationTypes(AggregationType[] aggregationTypes) {
+	public void setAggregationTypes(final AggregationType[] aggregationTypes) {
 		synchronized (this.aggregationTypes) {
 			this.aggregationTypes.clear();
 			this.aggregationTypes.addAll(Arrays.asList(aggregationTypes));
 		}
 	}
 
-	@Property(name = "Display Options", description = "Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.")
+	@Property(name = "Display Options",
+			description = "Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.")
 	public DisplayOption[] getDisplayOptions() {
 		if (displayOptions == null) {
 			return new DisplayOption[0];
@@ -196,35 +208,38 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return displayOptions;
 	}
 
-	public void setDisplayOptions(DisplayOption[] displayOptions) {
+	public void setDisplayOptions(final DisplayOption[] displayOptions) {
 		this.displayOptions = displayOptions;
 	}
 
-	@Property(name = "Default Display Option", description = "Optionally all unmapped display values can be displayed by this color. By defining a Default Display Option display value, all unmapped display values are mapped to just one entry with that specified display value.")
+	@Property(name = "Default Display Option",
+			description = "Optionally all unmapped display values can be displayed by this color. By defining a Default Display Option display value, all unmapped display values are mapped to just one entry with that specified display value.")
 	public DisplayOption getDefaultDisplayOption() {
 		return defaultDisplayOption;
 	}
 
-	public void setDefaultDisplayOption(DisplayOption defaultDisplayOption) {
+	public void setDefaultDisplayOption(final DisplayOption defaultDisplayOption) {
 		this.defaultDisplayOption = defaultDisplayOption;
 	}
 
 	// TODO this property should be a property of the Widget, not of the EventSource
-	@Property(name = "Show Empty Categories", description = "If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.")
+	@Property(name = "Show Empty Categories",
+			description = "If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.")
 	public boolean getShowEmptyCategories() {
 		return showEmptyCategories;
 	}
 
-	public void setShowEmptyCategories(boolean showEmptyCategories) {
+	public void setShowEmptyCategories(final boolean showEmptyCategories) {
 		this.showEmptyCategories = showEmptyCategories;
 	}
 
-	@Property(name = "Show Unknown Categories", description = "Handles how values without a matching Display Option are handled.\n'ALL' shows them anyway, 'UNKNOWN_ONLY' shows them only if no Display Option matched the issue at all and 'NONE' ignores unknown values at all.")
+	@Property(name = "Show Unknown Categories",
+			description = "Handles how values without a matching Display Option are handled.\n'ALL' shows them anyway, 'UNKNOWN_ONLY' shows them only if no Display Option matched the issue at all and 'NONE' ignores unknown values at all.")
 	public ShowUnknownCategories getShowUnknownCategories() {
 		return showUnknownCategories;
 	}
 
-	public void setShowUnknownCategories(ShowUnknownCategories showUnknownCategories) {
+	public void setShowUnknownCategories(final ShowUnknownCategories showUnknownCategories) {
 		this.showUnknownCategories = showUnknownCategories;
 	}
 
@@ -236,12 +251,13 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			if (throwable instanceof JiraClientException) {
 				return failure(throwable.getMessage(), throwable.getCause());
 			} else if (throwable instanceof RestClientException) {
-				RestClientException rce = (RestClientException) throwable;
-				if (rce.getStatusCode().isPresent() && rce.getStatusCode().get() == 500
+				final RestClientException rce = (RestClientException) throwable;
+				if (rce.getStatusCode().isPresent()
+						&& rce.getStatusCode().get() == 500
 						&& rce.getCause() instanceof JSONException) {
-					JSONException je = (JSONException) rce.getCause();
-					String[] messageParts = je.getMessage().split("[\r\n]+");
-					List<String> auths = Arrays.stream(messageParts)
+					final JSONException je = (JSONException) rce.getCause();
+					final String[] messageParts = je.getMessage().split("[\r\n]+");
+					final List<String> auths = Arrays.stream(messageParts)
 							.filter(ste -> ste.toLowerCase().contains("authenticator"))
 							.collect(Collectors.toList());
 
@@ -265,82 +281,82 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		throw new RuntimeException(original);
 	}
 
-	private static boolean contains(Collection<String> haystack, String needle) {
+	private static boolean contains(final Collection<String> haystack, final String needle) {
 		return haystack.stream().filter(s -> s.contains(needle)).findAny().isPresent();
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
-	public static enum AggregationType {
+	public enum AggregationType {
 		ASSIGNEE( //
-			"Assignee",
-			i -> i.getAssignee() == null ? null : i.getAssignee().getName(), //
-			i -> i.getAssignee() == null ? null : i.getAssignee().getDisplayName()),
+				"Assignee",
+				i -> i.getAssignee() == null ? null : i.getAssignee().getName(), //
+				i -> i.getAssignee() == null ? null : i.getAssignee().getDisplayName()),
 		COMPONENTS( //
-			"Components",
-			i -> StreamSupport.stream(i.getComponents().spliterator(), false)
-					.map(BasicComponent::getName)
-					.collect(Collectors.toSet()),
-			(i, v) -> v),
+				"Components",
+				i -> StreamSupport.stream(i.getComponents().spliterator(), false)
+						.map(BasicComponent::getName)
+						.collect(Collectors.toSet()),
+				(i, v) -> v),
 		ISSUE_TYPE( //
-			"Issue Type",
-			i -> i.getIssueType().getName()),
+				"Issue Type",
+				i -> i.getIssueType().getName()),
 		PRIORITY( //
-			"Priority",
-			i -> i.getPriority().getName()),
+				"Priority",
+				i -> i.getPriority().getName()),
 		PROJECT( //
-			"Project",
-			i -> i.getProject().getName()),
+				"Project",
+				i -> i.getProject().getName()),
 		REPORTER( //
-			"Reporter",
-			i -> i.getReporter().getName(), //
-			i -> i.getReporter().getDisplayName()),
+				"Reporter",
+				i -> i.getReporter().getName(), //
+				i -> i.getReporter().getDisplayName()),
 		RESPONSIBLE_PERSONS( //
-			"Responsible Persons",
-			i -> getUserNamesOfResponsiblePersons(i.getFieldByName("Responsible Persons")), //
-			(i, v) -> getDisplayNameOfResponsiblePerson(i.getFieldByName("Responsible Persons"), v)),
+				"Responsible Persons",
+				i -> getUserNamesOfResponsiblePersons(i.getFieldByName("Responsible Persons")), //
+				(i, v) -> getDisplayNameOfResponsiblePerson(i.getFieldByName("Responsible Persons"), v)),
 		STATUS( //
-			"Status",
-			i -> i.getStatus().getName()),
+				"Status",
+				i -> i.getStatus().getName()),
 		WORKER( //
-			"Worker",
-			i -> i.getFieldByName("Worker").getValue() == null
-					? null
-					: ((User) i.getFieldByName("Worker").getValue()).getName(), //
-			i -> i.getFieldByName("Worker").getValue() == null
-					? null
-					: ((User) i.getFieldByName("Worker").getValue()).getDisplayName());
+				"Worker",
+				i -> i.getFieldByName("Worker").getValue() == null
+						? null
+						: ((User) i.getFieldByName("Worker").getValue()).getName(), //
+				i -> i.getFieldByName("Worker").getValue() == null
+						? null
+						: ((User) i.getFieldByName("Worker").getValue()).getDisplayName());
 
-		private static String getDisplayNameOfResponsiblePerson(IssueField field, String name) {
+		private static String getDisplayNameOfResponsiblePerson(final IssueField field, final String name) {
 			try {
-				JSONArray responsiblePersons = (JSONArray) field.getValue();
+				final JSONArray responsiblePersons = (JSONArray) field.getValue();
 				for (int i = 0; i < responsiblePersons.length(); i += 1) {
-					JSONObject person = responsiblePersons.getJSONObject(i);
+					final JSONObject person = responsiblePersons.getJSONObject(i);
 					if (person.getString("name").equals(name)) {
 						return person.getString("displayName");
 					}
 				}
 				return name;
-			} catch (JSONException e) {
+			} catch (final JSONException e) {
 				throw new RuntimeException("Unable to extract responsible person.", e);
 			}
 		}
 
-		private static List<String> getUserNamesOfResponsiblePersons(IssueField field) {
+		private static List<String> getUserNamesOfResponsiblePersons(final IssueField field) {
 			try {
-				List<String> names = new ArrayList<>();
-				JSONArray responsiblePersons = (JSONArray) field.getValue();
+				final List<String> names = new ArrayList<>();
+				final JSONArray responsiblePersons = (JSONArray) field.getValue();
 				if (responsiblePersons != null) {
 					for (int i = 0; i < responsiblePersons.length(); i += 1) {
 						names.add(responsiblePersons.getJSONObject(i).getString("name"));
 					}
 				}
 				return names;
-			} catch (JSONException e) {
+			} catch (final JSONException e) {
 				throw new RuntimeException("Unable to extract responsible persons.", e);
 			}
 		}
 
-		public static boolean matches(DisplayOption displayOption, String attributeValue) {
+		public static boolean matches(final DisplayOption displayOption, String attributeValue) {
 			if (attributeValue == null) {
 				attributeValue = "";
 			}
@@ -348,34 +364,36 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		}
 
 		private final Function<Issue, Collection<String>> attributeValuesProducer;
+
 		private final String displayValue;
+
 		private final BiFunction<Issue, String, String> displayValueProducer;
 
-		private AggregationType(String displayValue, Function<Issue, String> attributeValueProducer) {
+		private AggregationType(final String displayValue, final Function<Issue, String> attributeValueProducer) {
 			this(displayValue, i -> {
-				String value = attributeValueProducer.apply(i);
+				final String value = attributeValueProducer.apply(i);
 				return value == null ? Collections.emptyList() : Arrays.asList(value);
 			}, (i, v) -> v);
 		}
 
-		private AggregationType(String displayValue,
-				Function<Issue, String> attributeValueProducer,
-				Function<Issue, String> displayValueProducer) {
+		private AggregationType(final String displayValue,
+				final Function<Issue, String> attributeValueProducer,
+				final Function<Issue, String> displayValueProducer) {
 			this(displayValue, i -> {
-				String value = attributeValueProducer.apply(i);
+				final String value = attributeValueProducer.apply(i);
 				return value == null ? Collections.emptyList() : Arrays.asList(value);
 			}, (i, v) -> displayValueProducer.apply(i));
 		}
 
-		private AggregationType(String displayValue,
-				Function<Issue, Collection<String>> attributeValuesProducer,
-				BiFunction<Issue, String, String> displayValueProducer) {
+		private AggregationType(final String displayValue,
+				final Function<Issue, Collection<String>> attributeValuesProducer,
+				final BiFunction<Issue, String, String> displayValueProducer) {
 			this.attributeValuesProducer = attributeValuesProducer;
 			this.displayValue = displayValue;
 			this.displayValueProducer = displayValueProducer;
 		}
 
-		public Collection<String> getAttributeValues(Issue issue) {
+		public Collection<String> getAttributeValues(final Issue issue) {
 			return attributeValuesProducer.apply(issue);
 		}
 
@@ -383,7 +401,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			return displayValue;
 		}
 
-		public String getDisplayValue(Issue issue, String value) {
+		public String getDisplayValue(final Issue issue, final String value) {
 			return displayValueProducer.apply(issue, value);
 		}
 
@@ -393,7 +411,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
-	private static enum ShowUnknownCategories {
+	private enum ShowUnknownCategories {
 		ALL,
 		UNKNOWN_ONLY,
 		NONE;

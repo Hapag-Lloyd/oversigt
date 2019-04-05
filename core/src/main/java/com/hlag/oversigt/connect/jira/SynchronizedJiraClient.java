@@ -15,22 +15,26 @@ import com.hlag.oversigt.properties.ServerConnection;
 @Deprecated
 public class SynchronizedJiraClient extends JiraClientFilter {
 
-	private SynchronizedJiraClient(JiraClient jiraClient) {
+	private SynchronizedJiraClient(final JiraClient jiraClient) {
 		super(jiraClient);
 	}
 
-	public SynchronizedJiraClient(ServerConnection connection, Credentials credentials) throws JiraClientException {
+	public SynchronizedJiraClient(final ServerConnection connection, final Credentials credentials)
+			throws JiraClientException {
 		super(connection, credentials);
 	}
 
 	/**
-	 * Perform the jira search but only allow one search per time. Calls to this method while
-	 * another search is performed will be blocked until the first search has finished.
+	 * Perform the jira search but only allow one search per time. Calls to this
+	 * method while another search is performed will be blocked until the first
+	 * search has finished.
 	 *
-	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int, int)
+	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int,
+	 *      int)
 	 */
 	@Override
-	public synchronized List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException {
+	public synchronized List<Issue> search(final String jql, final int maxResults, final int startAt)
+			throws JiraClientException {
 		return getJiraClient().search(jql, maxResults, startAt);
 	}
 }

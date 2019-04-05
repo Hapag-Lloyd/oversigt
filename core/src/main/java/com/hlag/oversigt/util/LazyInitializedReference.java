@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LazyInitializedReference<V> {
 	private final AtomicReference<V> cachedValue = new AtomicReference<>();
+
 	private final Callable<V> callable;
 
 	public LazyInitializedReference(final Callable<V> callable) {
@@ -24,7 +25,7 @@ public class LazyInitializedReference<V> {
 				cachedValue.set(callable.call());
 			}
 			return cachedValue.get();
-		} catch (ExecutionException e) {
+		} catch (final ExecutionException e) {
 			/* Re-set the reference. */
 			cachedValue.set(null);
 
@@ -39,7 +40,7 @@ public class LazyInitializedReference<V> {
 
 			/* It's the client's responsibility to check the cause. */
 			throw new RuntimeException("Interrupted", ie);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw toUnchecked(e);
 		}
 	}
