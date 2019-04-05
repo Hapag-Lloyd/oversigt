@@ -13,7 +13,6 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  * separate tables.
  *
  * @author neumaol
- *
  */
 public abstract class SerializableProperty implements Comparable<SerializableProperty> {
 
@@ -74,7 +73,7 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	public static @interface Description {
 		/**
 		 * The description of the annotated object
-		 * 
+		 *
 		 * @return the description
 		 */
 		String value();

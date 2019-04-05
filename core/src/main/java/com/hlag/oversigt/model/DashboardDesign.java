@@ -4,8 +4,10 @@ import static com.hlag.oversigt.properties.Color.smooth;
 
 import com.hlag.oversigt.properties.Color;
 
+import de.larssh.utils.Finals;
+
 public class DashboardDesign {
-	static final int TILE_DISTANCE = 6;
+	static final int TILE_DISTANCE = Finals.constant(6);
 
 	static int getRows(final Dashboard dashboard) {
 		return dashboard.getScreenHeight() / dashboard.getComputedTileHeight();

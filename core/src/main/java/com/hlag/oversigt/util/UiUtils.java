@@ -34,17 +34,16 @@ public class UiUtils {
 	 *         <code>false</code>
 	 */
 	public static boolean hasDedicatedEditor(final Class<?> clazz) {
-		return clazz.isPrimitive()//
-				|| clazz == String.class//
-				|| SerializableProperty.class.isAssignableFrom(clazz)//
-				|| clazz.isEnum() //
-				|| clazz == Color.class//
-				|| clazz == Locale.class//
-				|| clazz == Date.class//
-				|| clazz == LocalDate.class//
-				|| clazz == LocalTime.class//
-				|| TemporalAmount.class.isAssignableFrom(clazz)//
-				|| clazz == ZoneId.class// TODO really?
-		;
+		return clazz.isPrimitive()
+				|| clazz == String.class
+				|| SerializableProperty.class.isAssignableFrom(clazz)
+				|| clazz.isEnum()
+				|| clazz == Color.class
+				|| clazz == Locale.class
+				|| clazz == Date.class
+				|| clazz == LocalDate.class
+				|| clazz == LocalTime.class
+				|| TemporalAmount.class.isAssignableFrom(clazz)
+				|| clazz == ZoneId.class; // TODO really?
 	}
 }

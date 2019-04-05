@@ -24,6 +24,7 @@ import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.Storage;
 
 import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Finals;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -32,13 +33,13 @@ import ch.qos.logback.classic.LoggerContext;
  * @author noxfireone
  */
 public final class Oversigt {
-	public static final String APPLICATION_NAME = "Oversigt";
+	public static final String APPLICATION_NAME = Finals.constant("Oversigt");
 
-	public static final String APPLICATION_VERSION = "0.6";
+	public static final String APPLICATION_VERSION = Finals.constant("0.6");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);
 
-	static final String APPLICATION_CONFIG = "config.json";
+	static final String APPLICATION_CONFIG = Finals.constant("config.json");
 
 	private AtomicBoolean bootstrapped;
 

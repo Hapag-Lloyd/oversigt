@@ -312,8 +312,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-				.addPrefixPath("/config", createAngularHandler("oversigt-ui"))//
-		;
+				.addPrefixPath("/config", createAngularHandler("oversigt-ui"));
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//

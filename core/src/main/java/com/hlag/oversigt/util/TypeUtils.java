@@ -160,11 +160,10 @@ public class TypeUtils {
 	}
 
 	public static Stream<String> getMembers(final Class<?> clazz) {
-		return streamFields(clazz)//
-				.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)//
-				.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)//
-				.map(Field::getName)//
-		;
+		return streamFields(clazz) //
+				.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)
+				.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)
+				.map(Field::getName);
 	}
 
 	public static Map<String, Object> toMemberMap(final Object object) {

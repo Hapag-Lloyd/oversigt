@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -40,6 +41,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 
 public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextListener {
+	private static final Pattern CHECK_METHOD_WITH_PATH_PATTERN = Pattern.compile("\\{[^\\}]*?\\}");
+
 	@Override
 	protected List<? extends Module> getModules(final ServletContext context) {
 		return Arrays.asList(new ApiModule());
@@ -96,7 +99,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 	}
 
 	private void checkMethodWithPath(final String originalPath, final String message) {
-		final String path = originalPath.replaceAll("\\{[^\\}]*?\\}", "");
+		final String path = CHECK_METHOD_WITH_PATH_PATTERN.matcher(originalPath).replaceAll("");
 		Arrays.asList(CaseFormat.values()).forEach(cf -> checkCaseFormatOnMethodWithPath(path, cf, message));
 	}
 

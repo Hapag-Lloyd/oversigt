@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
+import de.larssh.utils.Finals;
+
 public class Dashboard implements Cloneable {
 	private static Set<String> newSet(final String... items) {
 		return newSet(Arrays.asList(items));
@@ -30,7 +32,7 @@ public class Dashboard implements Cloneable {
 		return Collections.synchronizedSet(set);
 	}
 
-	static final int TILE_DISTANCE = 6;
+	static final int TILE_DISTANCE = Finals.constant(6);
 
 	@NotNull
 	@NotBlank

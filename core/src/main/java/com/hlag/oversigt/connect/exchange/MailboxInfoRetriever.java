@@ -58,7 +58,7 @@ public class MailboxInfoRetriever {
 
 	/**
 	 * Loads the mailbox folder from the exchange server
-	 * 
+	 *
 	 * @param mailboxName the name of the mailbox to read
 	 * @param folderName  the name of the folder within the mailbox to read
 	 * @return the mailbox from the server or <code>null</code> if something fails

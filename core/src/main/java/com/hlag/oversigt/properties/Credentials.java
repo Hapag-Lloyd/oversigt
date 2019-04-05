@@ -14,7 +14,6 @@ import com.hlag.oversigt.properties.SerializableProperty.Description;
  * need to know passwords because they can be entered somewhere else.
  *
  * @author neumaol
- *
  */
 @Description("Store credentials to access a resource using them. The password will be stored in a way that others can use it without being able to read it.")
 public class Credentials extends SerializableProperty {
@@ -42,7 +41,7 @@ public class Credentials extends SerializableProperty {
 
 	/**
 	 * The domain of these credentials
-	 * 
+	 *
 	 * @return The domain of these credentials
 	 */
 	public String getDomain() {
@@ -51,7 +50,7 @@ public class Credentials extends SerializableProperty {
 
 	/**
 	 * The password belonging to these credentials
-	 * 
+	 *
 	 * @return The password belonging to these credentials
 	 */
 	public String getPassword() {
@@ -60,7 +59,7 @@ public class Credentials extends SerializableProperty {
 
 	/**
 	 * The username belonging to these credentials
-	 * 
+	 *
 	 * @return The username belonging to these credentials
 	 */
 	public String getUsername() {

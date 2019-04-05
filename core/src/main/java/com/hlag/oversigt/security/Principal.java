@@ -22,7 +22,7 @@ public class Principal implements java.security.Principal {
 	/**
 	 * Gets the principal with the given username from the given
 	 * {@link Authenticator}.
-	 * 
+	 *
 	 * @param authenticator the {@link Authenticator} to use for reading the
 	 *                      principal information
 	 * @param username      the name of the {@link Principal} to read

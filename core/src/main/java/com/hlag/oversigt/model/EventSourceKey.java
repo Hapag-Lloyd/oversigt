@@ -17,6 +17,8 @@ import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Finals;
+
 public class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
 			= Utils.caseInsensitiveComparator(EventSourceKey::getDisplayName);
@@ -29,9 +31,9 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 
 	static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
 
-	static final String PREFIX_CLASS = "class:";
+	static final String PREFIX_CLASS = Finals.constant("class:");
 
-	static final String PREFIX_WIDGET = "widget:";
+	static final String PREFIX_WIDGET = Finals.constant("widget:");
 
 	private static final Map<String, EventSourceKey> KEYS = Collections.synchronizedMap(new HashMap<>());
 

@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,6 +34,7 @@ import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.util.JsonUtils;
 
+import de.larssh.utils.OptionalLongs;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.AttachmentKey;
 
@@ -48,7 +50,7 @@ public class EventSender {
 	@Inject
 	private String applicationId;
 
-	private final Optional<Long> rateLimit;
+	private final OptionalLong rateLimit;
 
 	// Send events in another thread
 	private final BlockingQueue<EventSendTask> eventsToSend = new LinkedBlockingQueue<>();
@@ -70,7 +72,7 @@ public class EventSender {
 			@Named("rateLimit") @Nullable final Long rateLimit) {
 		this.json = json;
 		defaultEventLifetime = discardEventsAfter;
-		this.rateLimit = Optional.ofNullable(rateLimit);
+		this.rateLimit = rateLimit == null ? OptionalLong.empty() : OptionalLong.of(rateLimit);
 
 		thread = new Thread(this::sendQueuedTasks, "EventSender");
 		thread.setDaemon(true);
@@ -100,7 +102,7 @@ public class EventSender {
 
 	@Subscribe
 	void newConnectionAdded(final ServerSentEventConnection connection) {
-		rateLimit.map(RateLimiter::create)
+		OptionalLongs.mapToObj(rateLimit, RateLimiter::create)
 				.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
 		logInfo(LOGGER,
 				"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",

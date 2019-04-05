@@ -102,7 +102,7 @@ public class TimelineEvent extends OversigtEvent {
 	/**
 	 * Removes events older than maxAge if more than minCount of events are inside
 	 * this event.
-	 * 
+	 *
 	 * @param maxAge   the maximum age of an event to be allowed
 	 * @param minCount the minimum number of events to keep
 	 */
