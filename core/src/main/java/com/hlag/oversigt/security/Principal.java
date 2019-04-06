@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -28,7 +27,8 @@ public class Principal implements java.security.Principal {
 	 * @param username      the name of the {@link Principal} to read
 	 * @return the read {@link Principal} object. This method does not return
 	 *         <code>null</code>.
-	 * @throws NoSuchElementException if the principal could not be loaded.
+	 * @throws java.util.NoSuchElementException if the principal could not be
+	 *                                          loaded.
 	 */
 	public static Principal loadPrincipal(final Authenticator authenticator, final String username) {
 		principals.computeIfAbsent(username, name -> {
@@ -94,12 +94,10 @@ public class Principal implements java.security.Principal {
 		return Collections.unmodifiableSet(roles);
 	}
 
-	public synchronized boolean hasRole(Role role) {
-		while (role != null) {
-			if (roles.contains(role)) {
+	public synchronized boolean hasRole(final Role role) {
+		for (Role currentRole = role; currentRole != null; currentRole = currentRole.getParent()) {
+			if (roles.contains(currentRole)) {
 				return true;
-			} else {
-				role = role.getParent();
 			}
 		}
 		return false;

@@ -27,7 +27,7 @@ public class BarChartEvent extends OversigtEvent {
 			throw new RuntimeException("Number of values doesn't match the number of datasets");
 		}
 		labels.add(label);
-		for (int i = 0; i < values.length; ++i) {
+		for (int i = 0; i < values.length; i += 1) {
 			datasets.get(i).add(values[i]);
 		}
 	}
@@ -40,7 +40,7 @@ public class BarChartEvent extends OversigtEvent {
 		return labels;
 	}
 
-	public static class Dataset {
+	public static final class Dataset {
 		private final String label;
 
 		private final Collection<Double> data = new ArrayList<>();

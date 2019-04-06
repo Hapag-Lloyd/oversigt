@@ -86,8 +86,8 @@ public class ApiAuthenticationUtils {
 		return builder.compact();
 	}
 
-	public Principal validateToken(final String token) throws ExpiredJwtException, UnsupportedJwtException,
-			MalformedJwtException, SignatureException, IllegalArgumentException {
+	public Principal validateToken(final String token)
+			throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException {
 		// Check if the token was issued by the server and if it's not expired
 		// Throw an Exception if the token is invalid
 

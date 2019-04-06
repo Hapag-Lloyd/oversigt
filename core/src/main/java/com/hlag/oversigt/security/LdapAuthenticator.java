@@ -107,8 +107,8 @@ public class LdapAuthenticator implements Authenticator {
 					return distinguishedName.get();
 				}
 			}
-		} catch (final NamingException ne) {
-			LOGGER.error("Unable to log in user", ne);
+		} catch (final NamingException e) {
+			LOGGER.error("Unable to log in user", e);
 		}
 		return null;
 	}
@@ -147,18 +147,19 @@ public class LdapAuthenticator implements Authenticator {
 		NamingEnumeration<SearchResult> results;
 		try {
 			results = serviceCtx.search(baseDn, searchFilter, sc);
-		} catch (final NamingException ne) {
-			if (ne.getCause() instanceof IOException && "connection closed".equals(ne.getCause().getMessage())) {
+		} catch (final NamingException e) {
+			if (e.getCause() instanceof IOException && "connection closed".equals(e.getCause().getMessage())) {
 				LOGGER.info("Connection broken. Trying to create a new connection.");
 				try {
 					setDirContext();
 					results = serviceCtx.search(baseDn, searchFilter, sc);
-				} catch (final NamingException e) {
-					throw new RuntimeException("Connection was closed and now unable to create a new context", e);
+				} catch (final NamingException namingException) {
+					throw new RuntimeException("Connection was closed and now unable to create a new context",
+							namingException);
 				}
 			} else {
 				LOGGER.warn("Unknown exception type. Unable to handle it.");
-				throw ne;
+				throw e;
 			}
 		}
 

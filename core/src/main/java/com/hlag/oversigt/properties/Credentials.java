@@ -9,6 +9,7 @@ import com.hlag.oversigt.properties.SerializableProperty.Description;
  * This class stores the credentials for a given use case. Credentials will be
  * stored separately within the dashboard and can be changed without the need to
  * change all event source configurations.
+ *
  * <p>
  * This class is also useful because when configuring an event source you don't
  * need to know passwords because they can be entered somewhere else.

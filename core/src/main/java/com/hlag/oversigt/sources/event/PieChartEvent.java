@@ -28,7 +28,7 @@ public class PieChartEvent extends OversigtEvent {
 		return datasets.get(0);
 	}
 
-	public static class Dataset {
+	public static final class Dataset {
 		private final Collection<Double> data = new ArrayList<>();
 
 		private final Collection<String> backgroundColor = new ArrayList<>();

@@ -257,7 +257,9 @@ public class Color {
 	 * @return int array, the RGB representation
 	 */
 	public static int[] hslToRgb(final float h, final float s, final float l) {
-		float r, g, b;
+		final float r;
+		final float g;
+		final float b;
 
 		if (s == 0f) {
 			r = g = b = l; // achromatic
@@ -268,8 +270,7 @@ public class Color {
 			g = hueToRgb(p, q, h);
 			b = hueToRgb(p, q, h - 1f / 3f);
 		}
-		final int[] rgb = { (int) (r * 255), (int) (g * 255), (int) (b * 255) };
-		return rgb;
+		return new int[] { (int) (r * 255), (int) (g * 255), (int) (b * 255) };
 	}
 
 	private static float hueToRgb(final float p, final float q, float t) {

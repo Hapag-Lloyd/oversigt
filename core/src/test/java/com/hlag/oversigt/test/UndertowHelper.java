@@ -23,7 +23,7 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
 import io.undertow.util.Protocols;
 
-public class UndertowHelper {
+public final class UndertowHelper {
 
 	public static FormData createFormData(final String... strings) {
 		final FormData formData = new FormData(2000);
@@ -48,9 +48,19 @@ public class UndertowHelper {
 		return createHttpExchange(connection, headerMap, null);
 	}
 
+	private static HttpServerExchange createHttpExchange(final ServerConnection connection,
+			final HeaderMap headerMap,
+			final String[] queryParameters) {
+		final HttpServerExchange httpServerExchange = new HttpServerExchange(connection, null, headerMap, 200);
+		httpServerExchange.setRequestMethod(new HttpString("GET"));
+		httpServerExchange.setProtocol(Protocols.HTTP_1_1);
+		addPairs(httpServerExchange::addQueryParam, queryParameters);
+		return httpServerExchange;
+	}
+
 	private static StreamConnection createStreamConnection() {
 		final StreamConnection streamConnection = mock(StreamConnection.class);
-		ConduitStreamSinkChannel sinkChannel;
+		final ConduitStreamSinkChannel sinkChannel;
 		try {
 			sinkChannel = createSinkChannel();
 		} catch (final IOException e) {
@@ -77,21 +87,15 @@ public class UndertowHelper {
 		return sourceChannel;
 	}
 
-	private static HttpServerExchange createHttpExchange(final ServerConnection connection,
-			final HeaderMap headerMap,
-			final String[] queryParameters) {
-		final HttpServerExchange httpServerExchange = new HttpServerExchange(connection, null, headerMap, 200);
-		httpServerExchange.setRequestMethod(new HttpString("GET"));
-		httpServerExchange.setProtocol(Protocols.HTTP_1_1);
-		addPairs(httpServerExchange::addQueryParam, queryParameters);
-		return httpServerExchange;
-	}
-
 	private static void addPairs(final BiConsumer<String, String> consumer, final String[] strings) {
 		if (strings != null) {
 			for (int i = 0; i < strings.length; i += 2) {
 				consumer.accept(strings[i], strings[i + 1]);
 			}
 		}
+	}
+
+	private UndertowHelper() {
+		throw new UnsupportedOperationException();
 	}
 }

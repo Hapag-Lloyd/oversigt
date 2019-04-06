@@ -75,7 +75,7 @@ public class EventSourceDescriptionResource {
 			final EventSourceDescriptor descriptor
 					= dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
 			return ok(descriptor).build();
-		} catch (NoSuchElementException | InvalidKeyException e) {
+		} catch (final NoSuchElementException | InvalidKeyException e) {
 			return notFound("The event source descriptor does not exist.");
 		}
 	}

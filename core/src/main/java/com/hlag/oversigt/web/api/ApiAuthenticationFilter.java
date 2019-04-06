@@ -81,27 +81,7 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 
 	private void overrideSecurityContext(final ContainerRequestContext requestContext, final Principal principal) {
 		final SecurityContext currentSecurityContext = requestContext.getSecurityContext();
-		requestContext.setSecurityContext(new SecurityContext() {
-			@Override
-			public Principal getUserPrincipal() {
-				return principal;
-			}
-
-			@Override
-			public boolean isUserInRole(final String role) {
-				return principal.hasRole(role);
-			}
-
-			@Override
-			public boolean isSecure() {
-				return currentSecurityContext.isSecure();
-			}
-
-			@Override
-			public String getAuthenticationScheme() {
-				return AUTHENTICATION_SCHEME;
-			}
-		});
+		requestContext.setSecurityContext(new ApiSecurityContext(currentSecurityContext, principal));
 	}
 
 	private boolean isTokenBasedAuthentication(final String authorizationHeader) {
@@ -118,5 +98,36 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 		requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
 				.header(HttpHeaders.WWW_AUTHENTICATE, AUTHENTICATION_SCHEME + " realm=\"" + REALM + "\"")
 				.build());
+	}
+
+	private static final class ApiSecurityContext implements SecurityContext {
+		private final Principal principal;
+
+		private final SecurityContext securityContext;
+
+		private ApiSecurityContext(final SecurityContext securityContext, final Principal principal) {
+			this.principal = principal;
+			this.securityContext = securityContext;
+		}
+
+		@Override
+		public Principal getUserPrincipal() {
+			return principal;
+		}
+
+		@Override
+		public boolean isUserInRole(final String role) {
+			return principal.hasRole(role);
+		}
+
+		@Override
+		public boolean isSecure() {
+			return securityContext.isSecure();
+		}
+
+		@Override
+		public String getAuthenticationScheme() {
+			return AUTHENTICATION_SCHEME;
+		}
 	}
 }

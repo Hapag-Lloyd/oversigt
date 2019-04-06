@@ -174,7 +174,10 @@ public class SerializablePropertyController {
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
 			try {
 				return (SerializableProperty) clazz.getField("EMPTY").get(null);
-			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+			} catch (final IllegalArgumentException
+					| IllegalAccessException
+					| NoSuchFieldException
+					| SecurityException e) {
 				throw new RuntimeException("Unable to get field 'EMPTY' from type " + clazz.getSimpleName(), e);
 			}
 		} else {

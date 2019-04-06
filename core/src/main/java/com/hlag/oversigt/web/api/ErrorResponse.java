@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 @JsonInclude(Include.NON_NULL)
-public class ErrorResponse {
+public final class ErrorResponse {
 	public static Collection<String> getErrorMessages(final Exception e) {
 		return Arrays.asList(e instanceof InvocationTargetException
 				? ((InvocationTargetException) e).getTargetException().getMessage()

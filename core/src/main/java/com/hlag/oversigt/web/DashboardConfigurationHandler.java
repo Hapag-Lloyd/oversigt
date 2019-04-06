@@ -148,7 +148,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 		// Read Data
 		final List<String> parameters = new ArrayList<>();
 		formData.forEach(parameters::add);
-		final String WIDGET_DATA = widgetId + ".data.";
+		final String widgetData = widgetId + ".data.";
 		final BiFunction<Widget, String, EventSourceProperty> getProperty = (w, s) -> w.getEventSourceInstance()
 				.getDescriptor()
 				.getDataItems()
@@ -158,8 +158,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 				.get();
 		parameters//
 				.stream()//
-				.filter(s -> s.startsWith(WIDGET_DATA))//
-				.forEach(s -> widget.setWidgetData(getProperty.apply(widget, s.substring(WIDGET_DATA.length())),
+				.filter(s -> s.startsWith(widgetData))//
+				.forEach(s -> widget.setWidgetData(getProperty.apply(widget, s.substring(widgetData.length())),
 						getHelper().param(formData, s)));
 		// save
 		getDashboardController().updateWidget(widget);

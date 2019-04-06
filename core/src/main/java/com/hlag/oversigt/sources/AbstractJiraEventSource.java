@@ -41,6 +41,8 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Nullables;
+
 public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 	private ServerConnection jiraConnection = ServerConnection.EMPTY;
 
@@ -114,42 +116,6 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		return issuesPerCategory;
 	}
 
-	/**
-	 * Returns all matching DisplayOptions of an issue The returned set is ordered
-	 * by known categories first and unknown DisplayOptions last. For no further
-	 * ordering is guaranteed.
-	 */
-	private Set<DisplayOption> getDisplayOptions(final Issue issue) {
-		// Collect attribute values to match
-		final Map<String, AggregationType> values = new TreeMap<>();
-		for (final AggregationType aggregationType : getAggregationTypes()) {
-			for (final String value : aggregationType.getAttributeValues(issue)) {
-				values.put(value, aggregationType);
-			}
-		}
-
-		// Collect DisplayOptions per value
-		final Set<DisplayOption> displayOptions = new LinkedHashSet<>();
-		final Set<DisplayOption> displayOptionsUnknown = new TreeSet<>();
-		for (final String value : values.keySet()) {
-			boolean foundDisplayOption = false;
-
-			for (final DisplayOption displayOption : getDisplayOptions()) {
-				if (AggregationType.matches(displayOption, value)) {
-					displayOptions.add(displayOption);
-					foundDisplayOption = true;
-				}
-			}
-
-			if (!foundDisplayOption) {
-				displayOptionsUnknown.add(getUnknownDisplayOptions(values.get(value), issue, value));
-			}
-		}
-
-		displayOptions.addAll(displayOptionsUnknown);
-		return displayOptions;
-	}
-
 	private DisplayOption getUnknownDisplayOptions(final AggregationType aggregationType,
 			final Issue issue,
 			final String value) {
@@ -205,6 +171,42 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		if (displayOptions == null) {
 			return new DisplayOption[0];
 		}
+		return displayOptions;
+	}
+
+	/**
+	 * Returns all matching DisplayOptions of an issue The returned set is ordered
+	 * by known categories first and unknown DisplayOptions last. For no further
+	 * ordering is guaranteed.
+	 */
+	private Set<DisplayOption> getDisplayOptions(final Issue issue) {
+		// Collect attribute values to match
+		final Map<String, AggregationType> values = new TreeMap<>();
+		for (final AggregationType aggregationType : getAggregationTypes()) {
+			for (final String value : aggregationType.getAttributeValues(issue)) {
+				values.put(value, aggregationType);
+			}
+		}
+
+		// Collect DisplayOptions per value
+		final Set<DisplayOption> displayOptions = new LinkedHashSet<>();
+		final Set<DisplayOption> displayOptionsUnknown = new TreeSet<>();
+		for (final String value : values.keySet()) {
+			boolean foundDisplayOption = false;
+
+			for (final DisplayOption displayOption : getDisplayOptions()) {
+				if (AggregationType.matches(displayOption, value)) {
+					displayOptions.add(displayOption);
+					foundDisplayOption = true;
+				}
+			}
+
+			if (!foundDisplayOption) {
+				displayOptionsUnknown.add(getUnknownDisplayOptions(values.get(value), issue, value));
+			}
+		}
+
+		displayOptions.addAll(displayOptionsUnknown);
 		return displayOptions;
 	}
 
@@ -287,41 +289,26 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public enum AggregationType {
-		ASSIGNEE( //
-				"Assignee",
-				i -> i.getAssignee() == null ? null : i.getAssignee().getName(), //
+		ASSIGNEE("Assignee",
+				i -> i.getAssignee() == null ? null : i.getAssignee().getName(),
 				i -> i.getAssignee() == null ? null : i.getAssignee().getDisplayName()),
-		COMPONENTS( //
-				"Components",
+		COMPONENTS("Components",
 				i -> StreamSupport.stream(i.getComponents().spliterator(), false)
 						.map(BasicComponent::getName)
 						.collect(Collectors.toSet()),
 				(i, v) -> v),
-		ISSUE_TYPE( //
-				"Issue Type",
-				i -> i.getIssueType().getName()),
-		PRIORITY( //
-				"Priority",
-				i -> i.getPriority().getName()),
-		PROJECT( //
-				"Project",
-				i -> i.getProject().getName()),
-		REPORTER( //
-				"Reporter",
-				i -> i.getReporter().getName(), //
-				i -> i.getReporter().getDisplayName()),
-		RESPONSIBLE_PERSONS( //
-				"Responsible Persons",
-				i -> getUserNamesOfResponsiblePersons(i.getFieldByName("Responsible Persons")), //
+		ISSUE_TYPE("Issue Type", i -> i.getIssueType().getName()),
+		PRIORITY("Priority", i -> i.getPriority().getName()),
+		PROJECT("Project", i -> i.getProject().getName()),
+		REPORTER("Reporter", i -> i.getReporter().getName(), i -> i.getReporter().getDisplayName()),
+		RESPONSIBLE_PERSONS("Responsible Persons",
+				i -> getUserNamesOfResponsiblePersons(i.getFieldByName("Responsible Persons")),
 				(i, v) -> getDisplayNameOfResponsiblePerson(i.getFieldByName("Responsible Persons"), v)),
-		STATUS( //
-				"Status",
-				i -> i.getStatus().getName()),
-		WORKER( //
-				"Worker",
+		STATUS("Status", i -> i.getStatus().getName()),
+		WORKER("Worker",
 				i -> i.getFieldByName("Worker").getValue() == null
 						? null
-						: ((User) i.getFieldByName("Worker").getValue()).getName(), //
+						: ((User) i.getFieldByName("Worker").getValue()).getName(),
 				i -> i.getFieldByName("Worker").getValue() == null
 						? null
 						: ((User) i.getFieldByName("Worker").getValue()).getDisplayName());
@@ -356,11 +343,8 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			}
 		}
 
-		public static boolean matches(final DisplayOption displayOption, String attributeValue) {
-			if (attributeValue == null) {
-				attributeValue = "";
-			}
-			return attributeValue.matches(displayOption.getValue());
+		public static boolean matches(final DisplayOption displayOption, final String attributeValue) {
+			return Nullables.orElse(attributeValue, "").matches(displayOption.getValue());
 		}
 
 		private final Function<Issue, Collection<String>> attributeValuesProducer;

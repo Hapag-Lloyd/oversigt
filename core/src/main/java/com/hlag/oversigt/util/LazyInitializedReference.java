@@ -34,12 +34,12 @@ public class LazyInitializedReference<V> {
 				throw (Error) cause;
 			}
 			throw toUnchecked(cause);
-		} catch (final InterruptedException ie) {
+		} catch (final InterruptedException e) {
 			/* Re-set the reference. */
 			cachedValue.set(null);
 
 			/* It's the client's responsibility to check the cause. */
-			throw new RuntimeException("Interrupted", ie);
+			throw new RuntimeException("Interrupted", e);
 		} catch (final Exception e) {
 			throw toUnchecked(e);
 		}

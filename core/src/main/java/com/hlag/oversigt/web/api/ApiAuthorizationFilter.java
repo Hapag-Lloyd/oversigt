@@ -77,9 +77,6 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 	/**
 	 * Perform authorization based on roles.
-	 *
-	 * @param rolesAllowed
-	 * @param requestContext
 	 */
 	private void performAuthorization(final ContainerRequestContext requestContext, final String[] rolesAllowed) {
 		if (rolesAllowed.length > 0 && !isAuthenticated(requestContext)) {
@@ -97,9 +94,6 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 	/**
 	 * Check if the user is authenticated.
-	 *
-	 * @param requestContext
-	 * @return
 	 */
 	private boolean isAuthenticated(final ContainerRequestContext requestContext) {
 		return requestContext.getSecurityContext().getUserPrincipal() != null;
@@ -112,12 +106,13 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 		requestContext.abortWith(ErrorResponse.forbidden("You don't have permissions to perform this action."));
 	}
 
-	private String enhanceRole(final ContainerRequestContext requestContext, String requiredRole) {
-		for (final String placeholder : getPlaceholders(requiredRole)) {
+	private String enhanceRole(final ContainerRequestContext requestContext, final String requiredRole) {
+		String role = requiredRole;
+		for (final String placeholder : getPlaceholders(role)) {
 			final String newValue = getParameter(requestContext, placeholder);
-			requiredRole = requiredRole.replace("{" + placeholder + "}", newValue);
+			role = role.replace("{" + placeholder + "}", newValue);
 		}
-		return requiredRole;
+		return role;
 	}
 
 	private String getParameter(final ContainerRequestContext requestContext, final String parameterName) {
@@ -146,8 +141,7 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 		// matrix params
 
-		return param.orElseThrow(() -> new /* TODO better exception */RuntimeException(
-				"The parameter " + parameterName + " is not present."));
+		return param.orElseThrow(() -> new RuntimeException("The parameter " + parameterName + " is not present."));
 	}
 
 	private static Set<String> getPlaceholders(final String roleString) {

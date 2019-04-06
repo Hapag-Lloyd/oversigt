@@ -54,7 +54,7 @@ public class LoginHandler implements HttpHandler {
 		this.authenticator = authenticator;
 		this.exchangeHelper = exchangeHelper;
 
-		for (int i = 1;; ++i) {
+		for (int i = 1;; i += 1) {
 			try {
 				final String name = StringUtils.leftPad(Integer.toString(i), 3, '0');
 				final URL url = Resources.getResource("statics/login/" + name + ".jpg");

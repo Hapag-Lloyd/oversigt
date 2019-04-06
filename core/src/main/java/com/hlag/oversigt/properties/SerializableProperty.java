@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -50,6 +51,11 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	@Override
 	public final boolean equals(final Object that) {
 		return this == that;
+	}
+
+	@Override
+	public final int hashCode() {
+		return Objects.hashCode(this);
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)

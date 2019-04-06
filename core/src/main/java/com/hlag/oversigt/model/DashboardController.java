@@ -308,7 +308,7 @@ public class DashboardController {
 				.map(SneakyException.sneaky(URI::toURL))
 				.collect(toSet())
 				.toArray(new URL[0]);
-		List<String> classNamesToLoad;
+		final List<String> classNamesToLoad;
 		try {
 			classNamesToLoad = TypeUtils.listClassesInJarFiles(jarFileUrls);
 		} catch (final IOException e1) {

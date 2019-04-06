@@ -71,7 +71,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 	}
 
 	private int getCpuUsage(final Server server) {
-		int usage;
+		final int usage;
 		switch (server.operatingSystem) {
 		case Linux:
 		case Aix:
@@ -160,7 +160,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 				}
 				return percentage / (lines.size() - 1);
 			}
-		} catch (InterruptedException | IOException e) {
+		} catch (final InterruptedException | IOException e) {
 			getLogger().error("Exception while getting CPU usage.", e);
 			return 0;
 		} finally {

@@ -10,7 +10,7 @@ import java.util.Locale;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 
-public class UiUtils {
+public final class UiUtils {
 	/**
 	 * Determines whether the provided class has a dedicated editor in the UI or
 	 * not.<br>
@@ -45,5 +45,9 @@ public class UiUtils {
 				|| clazz == LocalTime.class
 				|| TemporalAmount.class.isAssignableFrom(clazz)
 				|| clazz == ZoneId.class; // TODO really?
+	}
+
+	private UiUtils() {
+		throw new UnsupportedOperationException();
 	}
 }

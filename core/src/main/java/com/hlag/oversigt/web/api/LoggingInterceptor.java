@@ -55,7 +55,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 				if (principal != null) {
 					final List<String> values = new ArrayList<>();
 					final Parameter[] parameters = method.getParameters();
-					for (int i = 0; i < parameters.length; ++i) {
+					for (int i = 0; i < parameters.length; i += 1) {
 						if (!values.isEmpty() || isApiParameter(parameters[i])) {
 							values.add(
 									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.parameters.get()[i]);

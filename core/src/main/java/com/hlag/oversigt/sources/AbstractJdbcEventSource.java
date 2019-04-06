@@ -144,7 +144,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 		final long time = System.currentTimeMillis();
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-			for (int i = 0; i < parameters.length; ++i) {
+			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
 			return readFromDatabase(stmt, readOneLine);
@@ -184,7 +184,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		T readLine(ResultSet resultSet) throws SQLException;
 	}
 
-	private static class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
+	private static final class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
 		private final Connection connection;
 
 		private UnpreparedStatementPreventingInvocationHandler(final Connection connection) {

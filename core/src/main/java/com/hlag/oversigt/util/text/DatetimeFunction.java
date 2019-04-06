@@ -44,7 +44,7 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 				op = dateMatcher.group(1).charAt(0);
 			}
 
-			TemporalAmount change;
+			final TemporalAmount change;
 			final String temporalString = dateMatcher.group(2).toUpperCase();
 			if (temporalString.equals("NOW")) {
 				change = Duration.between(nullDateTime, LocalDateTime.now());

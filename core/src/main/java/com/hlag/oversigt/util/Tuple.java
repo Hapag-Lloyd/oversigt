@@ -53,16 +53,16 @@ public class Tuple<A, B> {
 		return filter.test(this) ? Optional.of(this) : Optional.empty();
 	}
 
+	public Tuple<Optional<A>, Optional<B>> filter(final Predicate<A> filterFirst, final Predicate<B> filterSecond) {
+		return new Tuple<>(filterFirst.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(),
+				filterSecond.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
+	}
+
 	public Tuple<Optional<A>, B> filterFirst(final Predicate<A> filter) {
 		return new Tuple<>(filter.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(), getSecond());
 	}
 
 	public Tuple<A, Optional<B>> filterSecond(final Predicate<B> filter) {
 		return new Tuple<>(getFirst(), filter.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
-	}
-
-	public Tuple<Optional<A>, Optional<B>> filter(final Predicate<A> filterFirst, final Predicate<B> filterSecond) {
-		return new Tuple<>(filterFirst.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(),
-				filterSecond.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
 	}
 }

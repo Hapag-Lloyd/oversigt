@@ -5,11 +5,11 @@ import java.util.Collection;
 import com.hlag.oversigt.core.event.OversigtEvent;
 
 public class ProgressBarEvent extends OversigtEvent {
-	private Collection<Item> progress_items;
+	private Collection<Item> progressItems;
 
 	public ProgressBarEvent(final String title, final Collection<Item> items) {
 		setTitle(title);
-		progress_items = items;
+		progressItems = items;
 	}
 
 	public ProgressBarEvent(final Collection<Item> items) {
@@ -17,11 +17,11 @@ public class ProgressBarEvent extends OversigtEvent {
 	}
 
 	public Collection<Item> getItems() {
-		return progress_items;
+		return progressItems;
 	}
 
 	public void setItems(final Collection<Item> items) {
-		progress_items = items;
+		progressItems = items;
 	}
 
 	public static class Item {

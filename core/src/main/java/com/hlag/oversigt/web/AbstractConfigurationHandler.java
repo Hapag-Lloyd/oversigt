@@ -47,6 +47,7 @@ import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Nullables;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.undertow.server.HttpHandler;
@@ -293,20 +294,16 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				.orElse(false);
 	}
 
-	private Method getMethod(final String name, Object... objects) {
+	private Method getMethod(final String name, final Object... objects) {
 		try {
-			if (objects == null) {
-				objects = new Object[0];
+			final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
+			final Class<?>[] classes = new Class<?>[objs.length];
+			for (int i = 0; i < objs.length; i += 1) {
+				classes[i] = objs[i].getClass();
 			}
-			final Class<?>[] classes = new Class<?>[objects.length];
-			for (int i = 0; i < objects.length; ++i) {
-				classes[i] = objects[i].getClass();
-			}
-			// classes[classes.length - 1] = FormData.class;
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {
-			return null;
-		}
+		} catch (final Exception ignore) {}
+		return null;
 	}
 
 	protected void handleRequestPost(final HttpServerExchange exchange) throws IOException {

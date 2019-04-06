@@ -27,7 +27,7 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 				.validateParameters(invocation.getThis(), invocation.getMethod(), invocation.getArguments()));
 
 		final Class<?>[] types = invocation.getMethod().getParameterTypes();
-		for (int i = 0; i < types.length; ++i) {
+		for (int i = 0; i < types.length; i += 1) {
 			if (!(types[i].isPrimitive()
 					|| Number.class.isAssignableFrom(types[i])
 					|| types[i] == String.class

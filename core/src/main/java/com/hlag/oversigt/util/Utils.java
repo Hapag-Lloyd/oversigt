@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
 
-public class Utils {
+import de.larssh.utils.Nullables;
+
+public final class Utils {
 	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
 
 	public static void logDebug(final Logger logger, final String format, final Object... objects) {
@@ -67,14 +69,13 @@ public class Utils {
 		CHANGE_LOGGER.info(who + " - " + String.format(didWhat, withWhat));
 	}
 
-	private static String format(final String string, Object... objects) {
-		objects = objects != null
-				? Arrays.stream(objects)
-						.map(o -> o instanceof Supplier ? ((Supplier<?>) o).get() : o)
-						.collect(Collectors.toList())
-						.toArray()
-				: null;
-		return String.format(string, objects);
+	private static String format(final String string, final Object... objects) {
+		return String.format(string,
+				Nullables.map(objects,
+						objs -> Arrays.stream(objs)
+								.map(o -> o instanceof Supplier ? ((Supplier<?>) o).get() : o)
+								.collect(Collectors.toList())
+								.toArray()));
 	}
 
 	public static Set<String> findGets(final Collection<String> lines) {
@@ -192,5 +193,9 @@ public class Utils {
 			}
 		}
 		return map;
+	}
+
+	private Utils() {
+		throw new UnsupportedOperationException();
 	}
 }

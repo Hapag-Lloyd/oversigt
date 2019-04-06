@@ -121,7 +121,7 @@ public class TimelineEvent extends OversigtEvent {
 		}
 	}
 
-	public static class Event implements Comparable<Event> {
+	public static final class Event implements Comparable<Event> {
 
 		private final String name;
 

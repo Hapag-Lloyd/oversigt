@@ -35,7 +35,7 @@ public class ApiApplication extends Application {
 	@Inject
 	public ApiApplication(@Named("hostname") final String hostname) {
 		// Initialize Swagger settings
-		URL url;
+		final URL url;
 		try {
 			url = new URL(hostname);
 		} catch (final MalformedURLException e) {
