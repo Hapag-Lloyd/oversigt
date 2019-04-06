@@ -59,10 +59,6 @@ public class Role {
 
 	@Override
 	public String toString() {
-		if (parent != null) {
-			return name + " (" + parent.toString() + ")";
-		} else {
-			return name;
-		}
+		return parent == null ? name : name + " (" + parent.toString() + ")";
 	}
 }

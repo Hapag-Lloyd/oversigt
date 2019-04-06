@@ -2,6 +2,8 @@ package com.hlag.oversigt.model;
 
 import static com.hlag.oversigt.properties.Color.smooth;
 
+import java.util.Optional;
+
 import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;
@@ -61,28 +63,18 @@ public class DashboardDesign {
 
 	static String getDisplayClass(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
-		if (isAddColorCssToWidgets(dashboard)) {
-			final StyleAddon addon = getStyleAddon(dashboard,
-					widget.getPosX(),
-					widget.getPosY(),
-					widget.getSizeX(),
-					widget.getSizeY());
-			if (addon.getBackgroundColor() != null) {
-				if (addon.getBackgroundColor().shouldUseWhiteFontColor()) {
-					return "light-foreground";
-				} else {
-					return "dark-foreground";
-				}
-			} else {
-				if (widget.getBackgroundColor().shouldUseWhiteFontColor()) {
-					return "light-foreground";
-				} else {
-					return "dark-foreground";
-				}
-			}
-		} else {
+		if (!isAddColorCssToWidgets(dashboard)) {
 			return "";
 		}
+
+		final StyleAddon addon
+				= getStyleAddon(dashboard, widget.getPosX(), widget.getPosY(), widget.getSizeX(), widget.getSizeY());
+		if (Optional.ofNullable(addon.getBackgroundColor())
+				.map(Color::shouldUseWhiteFontColor)
+				.orElseGet(() -> widget.getBackgroundColor().shouldUseWhiteFontColor())) {
+			return "light-foreground";
+		}
+		return "dark-foreground";
 	}
 
 	static String getDisplayStyle(final Widget widget) {

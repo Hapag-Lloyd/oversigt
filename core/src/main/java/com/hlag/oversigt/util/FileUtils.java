@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
-public class FileUtils {
+public final class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
 
 	public static Stream<Path> closedPathStream(final Stream<Path> stream) {
@@ -87,8 +87,8 @@ public class FileUtils {
 		} catch (final FileSystemNotFoundException e) {
 			try {
 				return FileSystems.newFileSystem(uri, Collections.emptyMap());
-			} catch (final IOException e1) {
-				throw new UncheckedIOException(e1);
+			} catch (final IOException ioException) {
+				throw new UncheckedIOException(ioException);
 			}
 		}
 	}
@@ -187,5 +187,9 @@ public class FileUtils {
 		} else {
 			return Optional.empty();
 		}
+	}
+
+	private FileUtils() {
+		throw new UnsupportedOperationException();
 	}
 }

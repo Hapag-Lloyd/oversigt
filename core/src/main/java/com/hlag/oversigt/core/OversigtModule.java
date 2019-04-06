@@ -279,9 +279,8 @@ class OversigtModule extends AbstractModule {
 					.anyMatch(k -> key.equals(k));
 			if (bound) {
 				return injector.getInstance(key);
-			} else {
-				return run(NewInstance.action(key, "ConstraintValidator"));
 			}
+			return run(NewInstance.action(key, "ConstraintValidator"));
 		}
 
 		@Override

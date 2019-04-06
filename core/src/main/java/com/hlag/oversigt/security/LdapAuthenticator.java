@@ -126,13 +126,12 @@ public class LdapAuthenticator implements Authenticator {
 	public boolean isUsernameValid(final String username) {
 		if (Strings.isNullOrEmpty(username)) {
 			return false;
-		} else {
-			try {
-				return readDistinguishedName(username).isPresent();
-			} catch (final NamingException e) {
-				LOGGER.error("Unable to check username validity", e);
-				return false;
-			}
+		}
+		try {
+			return readDistinguishedName(username).isPresent();
+		} catch (final NamingException e) {
+			LOGGER.error("Unable to check username validity", e);
+			return false;
 		}
 	}
 
@@ -163,19 +162,19 @@ public class LdapAuthenticator implements Authenticator {
 			}
 		}
 
-		if (results.hasMore()) {
-			// get the users DN (distinguishedName) from the result
-			final SearchResult result = results.next();
-			final Attributes attributes = result.getAttributes();
-
-			return Optional.of(new Principal(result.getNameInNamespace(),
-					username,
-					attributes.get("givenname").get().toString() + " " + attributes.get("sn").get().toString(),
-					attributes.get("mail").get().toString(),
-					roleProvider.getRoles(username)));
-		} else {
+		if (!results.hasMore()) {
 			return Optional.empty();
 		}
+
+		// get the users DN (distinguishedName) from the result
+		final SearchResult result = results.next();
+		final Attributes attributes = result.getAttributes();
+
+		return Optional.of(new Principal(result.getNameInNamespace(),
+				username,
+				attributes.get("givenname").get().toString() + " " + attributes.get("sn").get().toString(),
+				attributes.get("mail").get().toString(),
+				roleProvider.getRoles(username)));
 	}
 
 	private boolean authorize(final String distinguishedName, final String password) {

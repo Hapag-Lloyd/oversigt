@@ -227,9 +227,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	private URLConnection handleRedirects(final URLConnection connection) throws IOException {
 		if (connection instanceof HttpURLConnection) {
 			return handleRedirects((HttpURLConnection) connection);
-		} else {
-			return connection;
 		}
+		return connection;
 	}
 
 	private URLConnection handleRedirects(final HttpURLConnection connection) throws IOException {
@@ -345,19 +344,17 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 
 		public String getUrlString() {
-			if (!Strings.isNullOrEmpty(address)) {
-				return address;
-			} else {
+			if (Strings.isNullOrEmpty(address)) {
 				return null;
 			}
+			return address;
 		}
 
 		public Pattern getPattern() {
-			if (!Strings.isNullOrEmpty(pattern)) {
-				return Pattern.compile(pattern, Pattern.DOTALL);
-			} else {
+			if (Strings.isNullOrEmpty(pattern)) {
 				return null;
 			}
+			return Pattern.compile(pattern, Pattern.DOTALL);
 		}
 	}
 

@@ -228,9 +228,8 @@ public class EventSender {
 	private String toJson(final OversigtEvent event) {
 		if (event instanceof JsonEvent) {
 			return ((JsonEvent) event).getJson();
-		} else {
-			return json.toJson(event);
 		}
+		return json.toJson(event);
 	}
 
 	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {

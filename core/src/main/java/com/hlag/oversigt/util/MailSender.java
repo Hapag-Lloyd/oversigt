@@ -187,7 +187,7 @@ public class MailSender {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				sendMail_unsafe(sender, new String[] { recipientEmail }, subject, templatePath, model);
-			} catch (IOException | TemplateException e) {
+			} catch (final IOException | TemplateException e) {
 				LOGGER.error("Unable to send mail.", e);
 			}
 		});
@@ -200,7 +200,7 @@ public class MailSender {
 	 *
 	 * @param recipients   all mail addresses that shall receive this current mail
 	 * @param subject      the subject of the mail to send
-	 * @param templatePath the path to the template file to be used
+	 * @param templateName the name to the template file to be used
 	 * @param model        the model to be used to fill the template
 	 * @return <code>true</code> if mail sending was successful, otherwise
 	 *         <code>false</code>
@@ -211,9 +211,9 @@ public class MailSender {
 	private void sendMail_unsafe(final Principal sender,
 			final String[] recipients,
 			final String subject,
-			String templatePath,
+			final String templateName,
 			final Map<String, Object> model) throws IOException, TemplateException {
-		templatePath = "mails/" + templatePath + ".ftl";
+		final String templatePath = "mails/" + templateName + ".ftl";
 		final Template htmlTemplate = templateConfiguration.getTemplate(templatePath + ".html");
 		final StringWriter html = new StringWriter();
 		htmlTemplate.process(model, html);

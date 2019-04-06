@@ -53,12 +53,10 @@ public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
 		}
 
 		// consider day of week
-		{
-			final DayOfWeek dow = now.getDayOfWeek();
-			final double offset = dow.ordinal() * 0.05;
-			final double factor = 1.0 - DayOfWeek.values().length * 0.05;
-			motivation = offset + motivation * factor;
-		}
+		final DayOfWeek dow = now.getDayOfWeek();
+		final double offset = dow.ordinal() * 0.05;
+		final double factor = 1.0 - DayOfWeek.values().length * 0.05;
+		motivation = offset + motivation * factor;
 
 		return new MeterEvent((byte) (motivation * 100 + 0.5));
 	}

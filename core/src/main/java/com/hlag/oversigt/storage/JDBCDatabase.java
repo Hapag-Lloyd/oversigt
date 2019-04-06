@@ -1,5 +1,23 @@
 package com.hlag.oversigt.storage;
 
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_WIDGET_DATA;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_WIDGET_DATA;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET_DATA;
 import static com.hlag.oversigt.util.StringUtils.list;
 import static com.hlag.oversigt.util.Utils.is;
 import static com.hlag.oversigt.util.Utils.map;
@@ -47,7 +65,7 @@ import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
 
 @Singleton
-public class JDBCDatabase extends AbstractJdbcConnector implements Storage, DBConstants {
+public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JDBCDatabase.class);
 
 	private static final String TYPE_PROPERTY = "PROPERTY";

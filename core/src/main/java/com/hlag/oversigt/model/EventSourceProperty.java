@@ -11,8 +11,9 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.text.WordUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Strings;
 import com.hlag.oversigt.sources.data.JsonHint;
+
+import de.larssh.utils.Optionals;
 
 public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	@NotBlank
@@ -70,11 +71,9 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		this.jsonSchema = jsonSchema;
 	}
 
-	void addAllowedValue(@NotNull final String value, String title) {
-		if (Strings.isNullOrEmpty(title)) {
-			title = WordUtils.capitalizeFully(value.replace('_', ' '));
-		}
-		allowedValues.put(value, title);
+	void addAllowedValue(@NotNull final String value, final String title) {
+		allowedValues.put(value,
+				Optionals.ofNonEmpty(title).orElseGet(() -> WordUtils.capitalizeFully(value.replace('_', ' '))));
 	}
 
 	public String getName() {
@@ -131,11 +130,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	@JsonIgnore
 	public String getType() {
-		if (getter != null) {
-			return "PROPERTY";
-		} else {
-			return "DATA";
-		}
+		return getter == null ? "DATA" : "PROPERTY";
 	}
 
 	@Override

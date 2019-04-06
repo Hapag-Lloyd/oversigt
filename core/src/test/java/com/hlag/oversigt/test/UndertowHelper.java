@@ -31,6 +31,7 @@ public final class UndertowHelper {
 		return formData;
 	}
 
+	@SuppressWarnings("resource")
 	public static HttpServerExchange createHttpExchangeWithQueryParameters(final String... queryParameters) {
 		final HeaderMap headerMap = new HeaderMap();
 		final StreamConnection streamConnection = createStreamConnection();
@@ -40,6 +41,7 @@ public final class UndertowHelper {
 		return createHttpExchange(connection, headerMap, queryParameters);
 	}
 
+	@SuppressWarnings("resource")
 	public static HttpServerExchange createHttpExchange() {
 		final HeaderMap headerMap = new HeaderMap();
 		final StreamConnection streamConnection = createStreamConnection();
@@ -58,6 +60,7 @@ public final class UndertowHelper {
 		return httpServerExchange;
 	}
 
+	@SuppressWarnings("resource")
 	private static StreamConnection createStreamConnection() {
 		final StreamConnection streamConnection = mock(StreamConnection.class);
 		final ConduitStreamSinkChannel sinkChannel;

@@ -237,6 +237,8 @@ public class Color {
 			case "hsla":
 				final int[] rgb = hslToRgb(Integer.parseInt(r), Integer.parseInt(r), Integer.parseInt(b));
 				return new Color(rgb[0], rgb[1], rgb[2], a != null ? Double.parseDouble(a) : 1.0);
+			default:
+				// throw below exception
 			}
 		}
 		throw new RuntimeException("Unable to parse color: " + string);
@@ -273,21 +275,21 @@ public class Color {
 		return new int[] { (int) (r * 255), (int) (g * 255), (int) (b * 255) };
 	}
 
-	private static float hueToRgb(final float p, final float q, float t) {
-		if (t < 0f) {
-			t += 1f;
+	private static float hueToRgb(final float p, final float q, final float t) {
+		float tt = t;
+		if (tt < 0f) {
+			tt += 1f;
+		} else if (tt > 1f) {
+			tt -= 1f;
 		}
-		if (t > 1f) {
-			t -= 1f;
+		if (tt < 1f / 6f) {
+			return p + (q - p) * 6f * tt;
 		}
-		if (t < 1f / 6f) {
-			return p + (q - p) * 6f * t;
-		}
-		if (t < 1f / 2f) {
+		if (tt < 1f / 2f) {
 			return q;
 		}
-		if (t < 2f / 3f) {
-			return p + (q - p) * (2f / 3f - t) * 6f;
+		if (tt < 2f / 3f) {
+			return p + (q - p) * (2f / 3f - tt) * 6f;
 		}
 		return p;
 	}
@@ -653,11 +655,7 @@ public class Color {
 
 	private static String hex(final int i) {
 		final String h = Integer.toHexString(i);
-		if (h.length() > 1) {
-			return h;
-		} else {
-			return "0" + h;
-		}
+		return h.length() > 1 ? h : "0" + h;
 	}
 
 	@JsonIgnore

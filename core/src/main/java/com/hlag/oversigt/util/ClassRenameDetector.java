@@ -24,7 +24,7 @@ import com.hlag.oversigt.model.EventSourceKey;
 import info.debatty.java.stringsimilarity.Levenshtein;
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance;
 
-public class ClassRenameDetector {
+public final class ClassRenameDetector {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClassRenameDetector.class);
 
 	private static final String RENAME_FILENAME = "data/classRenames.properties";
@@ -49,9 +49,9 @@ public class ClassRenameDetector {
 		return className.contains(".") ? className.substring(className.lastIndexOf(".") + 1) : className;
 	}
 
-	public static EventSourceKey detectPackageMove(final Map<String, EventSourceKey> KEYS, final String className) {
+	public static EventSourceKey detectPackageMove(final Map<String, EventSourceKey> keys, final String className) {
 		final String simpleClassNameWithDot = "." + getSimpleName(className);
-		final Set<Entry<String, EventSourceKey>> candidates = KEYS.entrySet()//
+		final Set<Entry<String, EventSourceKey>> candidates = keys.entrySet()//
 				.stream()
 				.filter(s -> s.getKey().startsWith("class:"))
 				.filter(s -> s.getKey().endsWith(simpleClassNameWithDot))
@@ -72,9 +72,9 @@ public class ClassRenameDetector {
 
 	private static final MetricStringDistance DISTANCE = new Levenshtein();
 
-	public static EventSourceKey detectSimpleRename(final Map<String, EventSourceKey> KEYS, final String className) {
+	public static EventSourceKey detectSimpleRename(final Map<String, EventSourceKey> keys, final String className) {
 		final String simpleClassName = getSimpleName(className);
-		final List<Tuple<EventSourceKey, Double>> candidates = KEYS.entrySet()//
+		final List<Tuple<EventSourceKey, Double>> candidates = keys.entrySet()//
 				.stream()
 				.filter(s -> s.getKey().startsWith("class:"))
 				.map(s -> new Tuple<>(s.getValue(), DISTANCE.distance(simpleClassName, getSimpleName(s.getKey()))))
@@ -95,17 +95,21 @@ public class ClassRenameDetector {
 		}
 	}
 
-	public static EventSourceKey detectComplexRename(final Map<String, EventSourceKey> KEYS, final String className) {
+	public static EventSourceKey detectComplexRename(final Map<String, EventSourceKey> keys, final String className) {
 		final String newClassName = RENAME_PROPERTIES.getProperty(className);
 		if (newClassName != null) {
 			try {
 				Class.forName(newClassName);
 				LOGGER.info("Class {} replaced by {}", className, newClassName);
-				return KEYS.get("class:" + newClassName);
+				return keys.get("class:" + newClassName);
 			} catch (final Exception e) {
 				LOGGER.error("Unable to load class {} in order to replace class {}", newClassName, className, e);
 			}
 		}
 		return null;
+	}
+
+	private ClassRenameDetector() {
+		throw new UnsupportedOperationException();
 	}
 }

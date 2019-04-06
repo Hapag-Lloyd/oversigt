@@ -107,29 +107,22 @@ public class Principal implements java.security.Principal {
 		final Optional<Roles> roles = Roles.maybeFromString(roleName);
 		if (roles.isPresent()) {
 			return hasRole(roles.get().getRole());
-		} else {
-			final String[] parts = roleName.toLowerCase().split("\\.", 3);
-			if (parts.length == 3) {
-				switch (parts[0]) {
-				case "dashboard":
-					switch (parts[2]) {
-					case "owner":
-						return hasRole(Role.DASHBOARD_OWNER.getDashboardSpecificRole(parts[1]));
-					case "editor":
-						return hasRole(Role.DASHBOARD_EDITOR.getDashboardSpecificRole(parts[1]));
-					default:
-						// unknown part
-						return false;
-					}
-				default:
-					// unknown part
-					return false;
-				}
-			} else {
-				// does not fit current role names
+		}
+
+		final String[] parts = roleName.toLowerCase().split("\\.", 3);
+		if (parts.length == 3 && parts[0].equals("dashboard")) {
+			switch (parts[2]) {
+			case "owner":
+				return hasRole(Role.DASHBOARD_OWNER.getDashboardSpecificRole(parts[1]));
+			case "editor":
+				return hasRole(Role.DASHBOARD_EDITOR.getDashboardSpecificRole(parts[1]));
+			default:
+				// unknown part
 				return false;
 			}
 		}
+		// does not fit current role names
+		return false;
 	}
 
 	@Override

@@ -13,6 +13,8 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import de.larssh.utils.Nullables;
+
 public class CommandLineOptions {
 
 	public static CommandLineOptions parse(final String[] args) {
@@ -84,12 +86,7 @@ public class CommandLineOptions {
 
 	private String get(final Method method) {
 		try {
-			final Object object = method.invoke(this);
-			if (object != null) {
-				return object.toString();
-			} else {
-				return null;
-			}
+			return Nullables.map(method.invoke(this), Object::toString);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

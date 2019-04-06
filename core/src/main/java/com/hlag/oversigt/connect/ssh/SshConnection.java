@@ -110,9 +110,8 @@ public abstract class SshConnection {
 			if (sessionReference.get() != null) {
 				if (isSessionAlive(sessionReference.get())) {
 					return sessionReference.get();
-				} else {
-					sessionReference.set(null);
 				}
+				sessionReference.set(null);
 			}
 
 			try {
@@ -136,18 +135,18 @@ public abstract class SshConnection {
 
 	public double getCpuUsage() {
 		final String result = runSshCommand("lparstat 1 1");
-		if (result != null) {
-			double percent = parseCpuUsage(result);
-			if (percent < 0.0) {
-				percent = 0.0;
-			}
-			if (percent > 1.0) {
-				percent = 1.0;
-			}
-			return percent;
-		} else {
+		if (result == null) {
 			return Double.NaN;
 		}
+
+		double percent = parseCpuUsage(result);
+		if (percent < 0.0) {
+			percent = 0.0;
+		}
+		if (percent > 1.0) {
+			percent = 1.0;
+		}
+		return percent;
 	}
 
 	public List<ProcessInfo> getTopProcesses(final String... greps) {
@@ -195,14 +194,12 @@ public abstract class SshConnection {
 	private static double parseCpuUsage(final String string) {
 		if (string.contains("Linux")) {
 			return Double.NaN;
-			// String[] parts = string.split("[\\s]+");
-			// return 1.0 - Double.parseDouble(parts[parts.length - 1]) / 100.0;
-		} else {
-			final String[] lines = string.split("[\\r\\n]+");
-			final int pos = lines[lines.length - 3].indexOf("%idle");
-			final int len = lines[lines.length - 2].indexOf(" ", pos);
-			return 1.0 - Double.parseDouble(lines[lines.length - 1].substring(pos, len)) / 100.0;
 		}
+
+		final String[] lines = string.split("[\\r\\n]+");
+		final int pos = lines[lines.length - 3].indexOf("%idle");
+		final int len = lines[lines.length - 2].indexOf(" ", pos);
+		return 1.0 - Double.parseDouble(lines[lines.length - 1].substring(pos, len)) / 100.0;
 	}
 
 	private String runSshCommand(final String command) {
@@ -216,30 +213,30 @@ public abstract class SshConnection {
 			final InputStream in = channel.getInputStream();
 			channel.connect();
 
-			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-			final byte[] buffer = new byte[1024];
-			while (true) {
-				while (in.available() > 0) {
-					final int len = in.read(buffer, 0, 1024);
-					if (len < 0) {
+			try (final ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+				final byte[] buffer = new byte[1024];
+				while (true) {
+					while (in.available() > 0) {
+						final int len = in.read(buffer, 0, 1024);
+						if (len < 0) {
+							break;
+						}
+						bos.write(buffer, 0, len);
+					}
+					if (channel.isClosed()) {
+						if (in.available() > 0) {
+							continue;
+						}
 						break;
 					}
-					bos.write(buffer, 0, len);
+					try {
+						Thread.sleep(100);
+					} catch (final Exception ignore) {}
 				}
-				if (channel.isClosed()) {
-					if (in.available() > 0) {
-						continue;
-					}
-					break;
-				}
-				try {
-					Thread.sleep(100);
-				} catch (final Exception ignore) {}
-			}
-			channel.disconnect();
+				channel.disconnect();
 
-			return bos.toString();
+				return bos.toString();
+			}
 		} catch (final Exception e) {
 			LOGGER.error("Unknown exception while running SSH command.", e);
 			return null;
@@ -265,33 +262,35 @@ public abstract class SshConnection {
 			out.print("exit");
 			out.flush();
 
-			final InputStream in = channel.getInputStream();
-			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			final byte[] buffer = new byte[1024];
-			while (true) {
-				while (in.available() > 0) {
-					final int len = in.read(buffer, 0, 1024);
-					if (len < 0) {
+			try (final InputStream in = channel.getInputStream();
+					final ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+				final byte[] buffer = new byte[1024];
+				while (true) {
+					while (in.available() > 0) {
+						final int len = in.read(buffer, 0, 1024);
+						if (len < 0) {
+							break;
+						}
+						bos.write(buffer, 0, len);
+					}
+					if (channel.isClosed()) {
+						if (in.available() > 0) {
+							continue;
+						}
 						break;
 					}
-					bos.write(buffer, 0, len);
-				}
-				if (channel.isClosed()) {
-					if (in.available() > 0) {
-						continue;
+					if ((bos.size() > 10 ? bos.toString().substring(bos.size() - 10) : bos.toString())
+							.contains("exit")) {
+						break;
 					}
-					break;
+					try {
+						Thread.sleep(100);
+					} catch (final Exception ignore) {}
 				}
-				if ((bos.size() > 10 ? bos.toString().substring(bos.size() - 10) : bos.toString()).contains("exit")) {
-					break;
-				}
-				try {
-					Thread.sleep(100);
-				} catch (final Exception ignore) {}
-			}
-			channel.disconnect();
+				channel.disconnect();
 
-			return bos.toString();
+				return bos.toString();
+			}
 		} catch (final Exception e) {
 			LOGGER.error("Unknown exception while running SSH command.", e);
 			return null;

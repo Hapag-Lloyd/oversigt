@@ -179,14 +179,13 @@ public class DashboardController {
 	 *         dashboard with the given ID already exists.
 	 */
 	public Dashboard createDashboard(final String id, final Principal owner, final boolean enabled) {
-		if (!dashboards.containsKey(id)) {
-			final Dashboard dashboard = new Dashboard(id, owner.getUsername(), enabled);
-			storage.persistDashboard(dashboard);
-			dashboards.put(id, dashboard);
-			return dashboard;
-		} else {
+		if (dashboards.containsKey(id)) {
 			return null;
 		}
+		final Dashboard dashboard = new Dashboard(id, owner.getUsername(), enabled);
+		storage.persistDashboard(dashboard);
+		dashboards.put(id, dashboard);
+		return dashboard;
 	}
 
 	public boolean updateDashboard(final Dashboard dashboard) {
@@ -201,11 +200,10 @@ public class DashboardController {
 
 	public boolean deleteDashboard(final String id) {
 		final Dashboard dashboard = getDashboard(id);
-		if (dashboard != null) {
-			return deleteDashboard(dashboard);
-		} else {
+		if (dashboard == null) {
 			return false;
 		}
+		return deleteDashboard(dashboard);
 	}
 
 	public boolean deleteDashboard(final Dashboard dashboard) {
@@ -268,11 +266,11 @@ public class DashboardController {
 		reloadDashboards(dashboard);
 	}
 
-	public void deleteWidget(Widget widget) {
+	public void deleteWidget(final Widget widget) {
 		final Dashboard dashboard = getDashboard(widget);
-		widget = dashboard.getWidget(widget.getId());
-		dashboard.getModifiableWidgets().remove(widget);
-		storage.deleteWidget(widget);
+		final Widget widgetReference = dashboard.getWidget(widget.getId());
+		dashboard.getModifiableWidgets().remove(widgetReference);
+		storage.deleteWidget(widgetReference);
 		reloadDashboards(dashboard);
 	}
 
@@ -292,12 +290,12 @@ public class DashboardController {
 		// load event sources from classes
 		LOGGER.info("Scanning packages for EventSources: {} ",
 				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
-		final List<EventSourceDescriptor> descriptorsFromClasses_ = //
+		final List<EventSourceDescriptor> descriptorsFromClasses = //
 				packagesToScan.stream()//
 						.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
 						.map(this::loadEventSourceFromClass)
 						.collect(toList());
-		LOGGER.info("Loaded {} EventSources", descriptorsFromClasses_.size());
+		LOGGER.info("Loaded {} EventSources", descriptorsFromClasses.size());
 
 		LOGGER.info("Scanning addon folders for EventSources: {}",
 				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(", ")));
@@ -314,17 +312,18 @@ public class DashboardController {
 		} catch (final IOException e1) {
 			throw new RuntimeException("Unable to scan JAR files", e1);
 		}
+		@SuppressWarnings("resource")
 		final ClassLoader addonClassLoader
 				= URLClassLoader.newInstance(jarFileUrls, ClassLoader.getSystemClassLoader());
-		final List<EventSourceDescriptor> descriptorsFromAddons_
+		final List<EventSourceDescriptor> descriptorsFromAddons
 				= TypeUtils.findClasses(addonClassLoader, classNamesToLoad, Service.class, EventSource.class)
 						.map(this::loadEventSourceFromClass)
 						.collect(toList());
-		LOGGER.info("Loaded {} EventSources", descriptorsFromAddons_.size());
+		LOGGER.info("Loaded {} EventSources", descriptorsFromAddons.size());
 
 		final List<EventSourceDescriptor> descriptorsJavaBased = new ArrayList<>();
-		descriptorsJavaBased.addAll(descriptorsFromClasses_);
-		descriptorsJavaBased.addAll(descriptorsFromAddons_);
+		descriptorsJavaBased.addAll(descriptorsFromClasses);
+		descriptorsJavaBased.addAll(descriptorsFromAddons);
 
 		// load event sources without class
 		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
@@ -399,12 +398,10 @@ public class DashboardController {
 				.get()); // TODO replace by orElseThrow()
 	}
 
-	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewname) {
-		if (className != null) {
-			return getEventSourceDescriptor(EventSourceKey.getKey(EventSourceKey.PREFIX_CLASS + className));
-		} else {
-			return getEventSourceDescriptor(EventSourceKey.getKey(EventSourceKey.PREFIX_WIDGET + viewname));
-		}
+	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewName) {
+		final String key
+				= className == null ? EventSourceKey.PREFIX_WIDGET + viewName : EventSourceKey.PREFIX_CLASS + className;
+		return getEventSourceDescriptor(EventSourceKey.getKey(key));
 	}
 
 	public EventSourceDescriptor getEventSourceDescriptor(final EventSourceKey key) {
@@ -518,11 +515,7 @@ public class DashboardController {
 	}
 
 	private static String getView(final String id) {
-		if (id.contains(":")) {
-			return id.substring(0, id.indexOf(":"));
-		} else {
-			return id.substring(0, id.indexOf("__"));
-		}
+		return id.substring(0, id.indexOf(id.contains(":") ? ":" : "__"));
 	}
 
 	private void updateEventSourceClasses(final String oldClassName, final String newClassName) {
@@ -788,9 +781,8 @@ public class DashboardController {
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
 			return binder -> {};
-		} else {
-			return TypeUtils.createInstance(moduleClass);
 		}
+		return TypeUtils.createInstance(moduleClass);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -799,28 +791,35 @@ public class DashboardController {
 		try {
 			if (type == null || String.class == type) {
 				return string;
-				// method.invoke(eventSource, string);
-			} else if (type.isPrimitive()) {
+			}
+			if (type.isPrimitive()) {
 				if (type == boolean.class) {
-					return string == null ? false : Boolean.parseBoolean(string);
-				} else if (type == byte.class) {
-					return Byte.parseByte(string);
-				} else if (type == short.class) {
-					return Short.parseShort(string);
-				} else if (type == int.class) {
-					return Integer.parseInt(string);
-				} else if (type == long.class) {
-					return Long.parseLong(string);
-				} else if (type == float.class) {
-					return Float.parseFloat(string);
-				} else if (type == double.class) {
-					return Double.parseDouble(string);
-				} else if (type == char.class) {
-					return string.charAt(0);
-				} else {
-					throw new RuntimeException("Unknown primitive type: " + type);
+					return string == null ? Boolean.FALSE : Boolean.parseBoolean(string);
 				}
-			} else if (Enum.class.isAssignableFrom(type)) {
+				if (type == byte.class) {
+					return Byte.parseByte(string);
+				}
+				if (type == short.class) {
+					return Short.parseShort(string);
+				}
+				if (type == int.class) {
+					return Integer.parseInt(string);
+				}
+				if (type == long.class) {
+					return Long.parseLong(string);
+				}
+				if (type == float.class) {
+					return Float.parseFloat(string);
+				}
+				if (type == double.class) {
+					return Double.parseDouble(string);
+				}
+				if (type == char.class) {
+					return string.charAt(0);
+				}
+				throw new RuntimeException("Unknown primitive type: " + type);
+			}
+			if (Enum.class.isAssignableFrom(type)) {
 				Enum enumValue = null;
 				if (string != null) {
 					enumValue = Enum.valueOf((Class<Enum>) type, string);
@@ -829,38 +828,43 @@ public class DashboardController {
 				}
 				// method.invoke(eventSource, enumValue);
 				return enumValue;
-			} else if (string == null) {
+			}
+			if (string == null) {
 				// method.invoke(eventSource, string);
 				return string;
-			} else if (SerializableProperty.class.isAssignableFrom(type)) {
+			}
+			if (SerializableProperty.class.isAssignableFrom(type)) {
 				try {
 					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
 				} catch (final NumberFormatException ignore) {
 					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}
-			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
+			}
+			if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				final Object value = json.fromJson(string, type);
 				return value;
-			} else if (type.isArray()) {
+			}
+			if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);
-			} else if (Path.class == type) {
+			}
+			if (Path.class == type) {
 				return Paths.get(string);
-			} else if (TemporalAmount.class == type) {
+			}
+			if (TemporalAmount.class == type) {
 				// This is quite difficult. Java has many classes that are temporal amount.
 				// We need to test a bit, which one can interpret the String.
 				return TypeUtils
 						.tryToCreateInstance(TemporalAmount.class, string, () -> null, Duration.class, Period.class);
-			} else if (type.isInterface()) {
+			}
+			if (type.isInterface()) {
 				final String message = "Type "
 						+ type.getName()
 						+ " is an interface. Please use concrete classes for getters and setters.";
 				LOGGER.error(message);
 				throw new RuntimeException(message);
-			} else {
-				final Object value = TypeUtils.createInstance(type, string);
-				return value;
 			}
+			return TypeUtils.createInstance(type, string);
 		} catch (final Throwable e) {
 			LOGGER.error("Unable to set property value of type " + type + " from string '" + string + "'", e);
 			return null;
@@ -1179,8 +1183,7 @@ public class DashboardController {
 	private static void addDataItemsFromHtml(final Collection<String> dataItems, final Path folder) throws IOException {
 		final Path html = folder.resolve(folder.getFileName().toString() + ".html");
 		if (Files.exists(html)) {
-			final Stream<String> lines = Files.lines(html);
-			dataItems.addAll(Utils.findDataBindings(lines));
+			dataItems.addAll(Utils.findDataBindings(Files.lines(html)));
 		}
 	}
 
@@ -1200,11 +1203,10 @@ public class DashboardController {
 	}
 
 	private static <T, I> T getOrDefault(final I input, final Function<I, T> extractor, final T defaultValue) {
-		if (input != null) {
-			return extractor.apply(input);
-		} else {
+		if (input == null) {
 			return defaultValue;
 		}
+		return extractor.apply(input);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1212,15 +1214,13 @@ public class DashboardController {
 		final Method method = TypeUtils.getMethod(clazz,
 				Arrays.asList("produceEventFromData", "produceCachedEvent", "produceEvent"),
 				new Class<?>[0]);
-		if (method != null) {
-			if (TypeUtils.isOfType(method.getReturnType(), OversigtEvent.class)) {
-				return (Class<? extends OversigtEvent>) method.getReturnType();
-			} else {
-				throw new RuntimeException("Event producing method does not return " + OversigtEvent.class.getName());
-			}
-		} else {
+		if (method == null) {
 			return OversigtEvent.class;
 		}
+		if (TypeUtils.isOfType(method.getReturnType(), OversigtEvent.class)) {
+			return (Class<? extends OversigtEvent>) method.getReturnType();
+		}
+		throw new RuntimeException("Event producing method does not return " + OversigtEvent.class.getName());
 	}
 
 	private static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {

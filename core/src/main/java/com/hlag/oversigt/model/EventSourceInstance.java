@@ -57,13 +57,11 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	}
 
 	public String getPropertyValueString(final EventSourceProperty property) {
-		if (property.getClazz() != null) {
-			return Optional.ofNullable(propertyValues.get(property))
-					.map(v -> DashboardController.getInstance().getValueString(property, v))
-					.orElse("");
-		} else {
-			return Optional.ofNullable((String) propertyValues.get(property)).orElse("");
+		final Optional<Object> value = Optional.ofNullable(propertyValues.get(property));
+		if (property.getClazz() == null) {
+			return value.map(v -> (String) v).orElse("");
 		}
+		return value.map(v -> DashboardController.getInstance().getValueString(property, v)).orElse("");
 	}
 
 	public String getId() {

@@ -45,11 +45,10 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		if (key == null) {
 			key = detectComplexRename(KEYS, className);
 		}
-		if (key != null) {
-			return key;
-		} else {
+		if (key == null) {
 			throw new RuntimeException("Unable to find matching class for: " + className);
 		}
+		return key;
 	}
 
 	private static EventSourceKey findKeyFromWidget(final String widget) {

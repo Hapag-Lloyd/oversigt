@@ -35,11 +35,10 @@ public class MapAuthenticator implements Authenticator {
 		Objects.requireNonNull(password, "Password must not be null");
 
 		final String savedPassword = usernamesToPasswords.get(username);
-		if (password.equals(savedPassword)) {
-			return new Principal(username, roleProvider.getRoles(username));
-		} else {
+		if (!password.equals(savedPassword)) {
 			return null;
 		}
+		return new Principal(username, roleProvider.getRoles(username));
 	}
 
 	@Override

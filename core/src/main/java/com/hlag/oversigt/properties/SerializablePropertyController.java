@@ -63,18 +63,12 @@ public class SerializablePropertyController {
 
 	@SuppressWarnings("unchecked")
 	public <T extends SerializableProperty> Stream<T> streamProperties(final Class<T> clazz) {
-		// return storage.listProperties(clazz);
 		return properties.values().stream().filter(p -> p.getClass() == clazz).map(p -> (T) p);
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T extends SerializableProperty> T getProperty(final Class<T> clazz, final int id) {
-		if (id != 0) {
-			// return storage.getProperty(clazz, id).get();
-			return (T) Optional.ofNullable(properties.get(id)).get();
-		} else {
-			return getEmpty(clazz);
-		}
+		return id == 0 ? getEmpty(clazz) : (T) Optional.ofNullable(properties.get(id)).get();
 	}
 
 	public Class<? extends SerializableProperty> getClass(final String name) {
@@ -122,11 +116,7 @@ public class SerializablePropertyController {
 	}
 
 	public String toString(final SerializableProperty value) {
-		if (value != null) {
-			return Integer.toString(value.getId());
-		} else {
-			return "0";
-		}
+		return value == null ? "0" : Integer.toString(value.getId());
 	}
 
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,
@@ -180,10 +170,9 @@ public class SerializablePropertyController {
 					| SecurityException e) {
 				throw new RuntimeException("Unable to get field 'EMPTY' from type " + clazz.getSimpleName(), e);
 			}
-		} else {
-			throw new RuntimeException(
-					"Type " + clazz.getName() + " is not a " + SerializableProperty.class.getSimpleName());
 		}
+		throw new RuntimeException(
+				"Type " + clazz.getName() + " is not a " + SerializableProperty.class.getSimpleName());
 	}
 
 	public <T> T clone(final T original) {

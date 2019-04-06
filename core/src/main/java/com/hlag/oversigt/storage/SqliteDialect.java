@@ -51,7 +51,7 @@ public class SqliteDialect implements SqlDialect {
 			sql.append(" WHERE ");
 
 			// equals
-			boolean needAnd;
+			final boolean needAnd;
 			if (where != null && !where.isEmpty()) {
 				sql.append(where.stream().map(s -> s + " = ?").collect(Collectors.joining(" AND ")));
 				needAnd = true;

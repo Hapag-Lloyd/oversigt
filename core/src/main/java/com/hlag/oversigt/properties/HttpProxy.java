@@ -43,8 +43,7 @@ public class HttpProxy extends SerializableProperty {
 	public java.net.Proxy getProxy() {
 		if (Strings.isNullOrEmpty(getHostname())) {
 			return java.net.Proxy.NO_PROXY;
-		} else {
-			return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 		}
+		return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 	}
 }

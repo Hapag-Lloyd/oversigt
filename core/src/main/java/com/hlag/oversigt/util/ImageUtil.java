@@ -54,9 +54,9 @@ public final class ImageUtil {
 		return "/assets/preview/" + serviceClassName + ".png";
 	}
 
-	private static String getResourcePathForWidget(String widget) {
-		widget = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, widget);
-		return "statics/widgets/" + widget + "/" + widget + ".png";
+	private static String getResourcePathForWidget(final String widget) {
+		final String widgetResourceName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, widget);
+		return "statics/widgets/" + widgetResourceName + "/" + widgetResourceName + ".png";
 	}
 
 	private static String getUrlPathForWidget(final String widget) {

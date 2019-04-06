@@ -85,6 +85,7 @@ public class MailboxInfoRetriever {
 		return tasks.get(key);
 	}
 
+	@SuppressWarnings("resource")
 	private List<Task> loadTasks(final Key key) throws Exception {
 		final ExchangeService service = getService(key);
 
@@ -125,6 +126,7 @@ public class MailboxInfoRetriever {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private MailboxFolder loadMailbox(final Key key) throws Exception {
 		final MailboxFolder mailboxFolder = new MailboxFolder(key.getMailboxName(), key.getFolderName());
 

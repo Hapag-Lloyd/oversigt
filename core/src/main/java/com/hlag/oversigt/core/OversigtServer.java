@@ -69,6 +69,7 @@ import com.hlag.oversigt.web.LoginHandler;
 import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 
+import de.larssh.utils.Nullables;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import io.undertow.Handlers;
@@ -479,23 +480,9 @@ public class OversigtServer extends AbstractIdleService {
 		eventBus.post(event);
 	}
 
+	@SuppressWarnings("resource")
 	private HttpHandler createAssetsHandler() {
-		return Handlers.resource(new ClassPathResourceManager("statics") {
-			@Override
-			protected URL getResourceUrl(final String realPath) {
-				if (realPath.startsWith("statics/widgets/")) {
-					final String end = realPath.substring("statics/widgets/".length());
-					return Arrays.stream(widgetsPaths)
-							.map(s -> s + end)
-							.map(OversigtServer::getResourceUrl)
-							.filter(not(Objects::isNull))
-							.findFirst()
-							.orElse(null);
-				} else {
-					return super.getResourceUrl(realPath);
-				}
-			}
-		});
+		return Handlers.resource(new AssetsClassPathResourceManager("statics", widgetsPaths));
 	}
 
 	private static URL getResourceUrl(final String path) {
@@ -506,6 +493,7 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private HttpHandler createSwaggerUiHandler() {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
@@ -596,25 +584,23 @@ public class OversigtServer extends AbstractIdleService {
 		return manager.start();
 	}
 
-	private DeploymentInfo createUndertowDeployment(final ResteasyDeployment deployment, String mapping) {
-		if (mapping == null) {
-			mapping = "/";
+	private DeploymentInfo createUndertowDeployment(final ResteasyDeployment deployment, final String mapping) {
+		String mappingString = Nullables.orElse(mapping, "/");
+		if (!mappingString.startsWith("/")) {
+			mappingString = "/" + mappingString;
 		}
-		if (!mapping.startsWith("/")) {
-			mapping = "/" + mapping;
+		if (!mappingString.endsWith("/")) {
+			mappingString += "/";
 		}
-		if (!mapping.endsWith("/")) {
-			mapping += "/";
-		}
-		mapping = mapping + "*";
+		mappingString = mappingString + "*";
 		String prefix = null;
-		if (!mapping.equals("/*")) {
-			prefix = mapping.substring(0, mapping.length() - 2);
+		if (!mappingString.equals("/*")) {
+			prefix = mappingString.substring(0, mappingString.length() - 2);
 		}
 		final ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServlet30Dispatcher.class)//
 				.setAsyncSupported(true)
 				.setLoadOnStartup(1)
-				.addMapping(mapping);
+				.addMapping(mappingString);
 		if (prefix != null) {
 			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
 		}
@@ -647,5 +633,28 @@ public class OversigtServer extends AbstractIdleService {
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
 		final Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
+	}
+
+	private static final class AssetsClassPathResourceManager extends ClassPathResourceManager {
+		private final String[] widgetsPaths;
+
+		private AssetsClassPathResourceManager(final String prefix, final String[] widgetsPaths) {
+			super(prefix);
+			this.widgetsPaths = widgetsPaths;
+		}
+
+		@Override
+		protected URL getResourceUrl(final String realPath) {
+			if (realPath.startsWith("statics/widgets/")) {
+				final String end = realPath.substring("statics/widgets/".length());
+				return Arrays.stream(widgetsPaths)
+						.map(s -> s + end)
+						.map(OversigtServer::getResourceUrl)
+						.filter(not(Objects::isNull))
+						.findFirst()
+						.orElse(null);
+			}
+			return super.getResourceUrl(realPath);
+		}
 	}
 }
