@@ -18,6 +18,8 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.MapEvent;
 import com.hlag.oversigt.sources.event.MapEvent.Point;
 
+import de.larssh.utils.Nullables;
+
 @EventSource(displayName = "World Map", view = "Worldmap", hiddenDataItems = { "updated-at-message" })
 public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, MapEvent> {
 
@@ -50,11 +52,10 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 				break;
 			}
 		}
-		if (mapping != null) {
-			return new Point(id, dlong, dlat, mapping.fill, mapping.stroke, mapping.size);
-		} else {
+		if (mapping == null) {
 			return new Point(id, dlong, dlat);
 		}
+		return new Point(id, dlong, dlat, mapping.fill, mapping.stroke, mapping.size);
 	}
 
 	@Property(name = "Query",
@@ -70,11 +71,7 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 
 	@Property(name = "Type Mappings", description = "Change the color (type) of a point based on column values")
 	public TypeMapping[] getTypeMappings() {
-		if (typeMappings != null) {
-			return typeMappings;
-		} else {
-			return new TypeMapping[0];
-		}
+		return Nullables.orElseGet(typeMappings, () -> new TypeMapping[0]);
 	}
 
 	public void setTypeMappings(final TypeMapping[] typeMappings) {

@@ -294,16 +294,15 @@ public class MailSender {
 	}
 
 	private javax.mail.Authenticator createAuthenticator() {
-		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
-			return new javax.mail.Authenticator() {
-				@Override
-				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication(username, password);
-				}
-			};
-		} else {
+		if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
 			return null;
 		}
+		return new javax.mail.Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		};
 	}
 
 	private Properties createProperties() {

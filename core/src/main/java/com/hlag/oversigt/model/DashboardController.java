@@ -82,11 +82,14 @@ import com.hlag.oversigt.storage.Storage;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SimpleReadWriteLock;
-import com.hlag.oversigt.util.SneakyException;
 import com.hlag.oversigt.util.StringUtils;
+import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
+
+import de.larssh.utils.Collectors;
+import de.larssh.utils.function.ThrowingFunction;
 
 @Singleton
 public class DashboardController {
@@ -303,7 +306,7 @@ public class DashboardController {
 				.map(DashboardController::findAddonJarFiles)
 				.flatMap(Collection::stream)
 				.map(Path::toUri)
-				.map(SneakyException.sneaky(URI::toURL))
+				.map(ThrowingFunction.throwing(URI::toURL))
 				.collect(toSet())
 				.toArray(new URL[0]);
 		final List<String> classNamesToLoad;
@@ -488,7 +491,7 @@ public class DashboardController {
 				= createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
 		instance.getDescriptor()
 				.getProperties()
-				.forEach(SneakyException.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
+				.forEach(ThrowingConsumer.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
 	}
 
 	String getValueString(final EventSourceProperty property, final Object value) {
@@ -596,8 +599,7 @@ public class DashboardController {
 					.getProperties()
 					.stream()
 					.filter(instance::hasPropertyValue)
-					.forEach(SneakyException//
-							.sneakc(p -> p.getSetter().invoke(service, instance.getPropertyValue(p))));
+					.forEach(ThrowingConsumer.sneakc(p -> p.getSetter().invoke(service, instance.getPropertyValue(p))));
 
 			// start service
 			LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
@@ -993,18 +995,20 @@ public class DashboardController {
 
 	private Map<String, String> collectAllowedValues(final Class<?> clazz) {
 		if (clazz.isEnum()) {
-			return Utils.toLinkedMap(Stream.of(clazz.getEnumConstants())//
-					.map(e -> (Enum<?>) e), Enum::name, Enum::toString);
-		} else if (clazz == ZoneId.class) {
-			return Utils.toLinkedMap(ZoneId.getAvailableZoneIds()//
+			return Stream.of(clazz.getEnumConstants())//
+					.map(e -> (Enum<?>) e)
+					.collect(Collectors.toLinkedHashMap(Enum::name, Enum::toString));
+		}
+		if (clazz == ZoneId.class) {
+			return ZoneId.getAvailableZoneIds()//
 					.stream()
-					.sorted(String::compareToIgnoreCase), Function.identity(), Function.identity());
-		} else if (clazz == Locale.class) {
-			return Utils.toLinkedMap(
-					Stream.of(Locale.getAvailableLocales())
-							.sorted((a, b) -> a.getDisplayName().compareTo(b.getDisplayName())),
-					l -> l.toString().toLowerCase(),
-					Locale::getDisplayName);
+					.sorted(String::compareToIgnoreCase)
+					.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));
+		}
+		if (clazz == Locale.class) {
+			return Stream.of(Locale.getAvailableLocales())
+					.sorted((a, b) -> a.getDisplayName().compareTo(b.getDisplayName()))
+					.collect(Collectors.toLinkedHashMap(l -> l.toString().toLowerCase(), Locale::getDisplayName));
 		}
 		return Collections.emptyMap();
 	}

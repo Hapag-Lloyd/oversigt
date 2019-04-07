@@ -46,6 +46,8 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 
+import de.larssh.utils.function.ThrowingFunction;
+
 @Singleton
 public class JsonUtils {
 	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
@@ -206,7 +208,8 @@ public class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, JsonHint hint) {
+	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, final JsonHint hint) {
+		JsonHint jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
 		} else if (clazz == boolean.class || clazz == Boolean.class) {
@@ -253,11 +256,11 @@ public class JsonUtils {
 				map.put("unique", true);
 			}
 			if (componentType instanceof Class && ((Class<?>) componentType).isAnnotationPresent(JsonHint.class)) {
-				hint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
+				jsonHint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
 			}
-			if (hint != null && hint.arrayStyle() != ArrayStyle.DEFAULT) {
-				if (hint.arrayStyle().value() != null) {
-					map.put("format", hint.arrayStyle().value());
+			if (jsonHint != null && jsonHint.arrayStyle() != ArrayStyle.DEFAULT) {
+				if (jsonHint.arrayStyle().value() != null) {
+					map.put("format", jsonHint.arrayStyle().value());
 				}
 			} else {
 				final Map<String, Object> items = (Map<String, Object>) map.get("items");
@@ -303,11 +306,11 @@ public class JsonUtils {
 					false);
 
 			if (clazz.isAnnotationPresent(JsonHint.class)) {
-				hint = clazz.getAnnotation(JsonHint.class);
+				jsonHint = clazz.getAnnotation(JsonHint.class);
 			}
-			if (hint != null) {
-				if (!Strings.isNullOrEmpty(hint.headerTemplate())) {
-					map.put("headerTemplate", hint.headerTemplate());
+			if (jsonHint != null) {
+				if (!Strings.isNullOrEmpty(jsonHint.headerTemplate())) {
+					map.put("headerTemplate", jsonHint.headerTemplate());
 				}
 			}
 			return map;
@@ -324,12 +327,13 @@ public class JsonUtils {
 		}
 	}
 
-	private static Map<String, Object> toJsonSchema_internal(final Type type, JsonHint hint) {
+	private static Map<String, Object> toJsonSchema_internal(final Type type, final JsonHint hint) {
 		if (type instanceof Class) {
+			JsonHint jsonHint = hint;
 			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
-				hint = ((Class<?>) type).getAnnotation(JsonHint.class);
+				jsonHint = ((Class<?>) type).getAnnotation(JsonHint.class);
 			}
-			return toJsonSchema_internal((Class<?>) type, hint);
+			return toJsonSchema_internal((Class<?>) type, jsonHint);
 		} else if (type instanceof ParameterizedType) {
 			return toJsonSchema_internal(((ParameterizedType) type).getActualTypeArguments()[0], hint);
 		} else if (type instanceof TypeVariable) {

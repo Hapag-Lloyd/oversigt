@@ -52,7 +52,8 @@ public class TextProcessor {
 		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
 	}
 
-	public String process(String string) {
+	public String process(final String value) {
+		String string = value;
 		final Matcher mainMatcher = PATTERN_DATA_REPLACEMENT.matcher(string);
 		while (mainMatcher.find()) {
 			final String target = mainMatcher.group();

@@ -76,20 +76,18 @@ public class ApiApplication extends Application {
 				final Annotation[] annotations,
 				final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
-			if (jType != null) {
-				final Class<?> cls = jType.getRawClass();
-				if (cls.equals(Color.class)) {
-					final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
-					// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
-					map.put(PropertyBuilder.PropertyId.TYPE, "string");
-					map.put(PropertyBuilder.PropertyId.EXAMPLE, "#11223344");
-					return PropertyBuilder.build("string", "#rrggbbaa", map);
-				} else {
-					return chain.next().resolveProperty(type, context, annotations, chain);
-				}
-			} else {
+			if (jType == null) {
 				return null;
 			}
+			final Class<?> cls = jType.getRawClass();
+			if (!cls.equals(Color.class)) {
+				return chain.next().resolveProperty(type, context, annotations, chain);
+			}
+			final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
+			map.put(PropertyBuilder.PropertyId.TYPE, "string");
+			map.put(PropertyBuilder.PropertyId.EXAMPLE, "#11223344");
+			return PropertyBuilder.build("string", "#rrggbbaa", map);
 		}
 
 		@Override
@@ -107,22 +105,20 @@ public class ApiApplication extends Application {
 				final Annotation[] annotations,
 				final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
-			if (jType != null) {
-				final Class<?> cls = jType.getRawClass();
-				if (cls.equals(Duration.class)) {
-					final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
-					// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
-					map.put(PropertyBuilder.PropertyId.TYPE, "string");
-					map.put(PropertyBuilder.PropertyId.EXAMPLE, "PT1H");
-					map.put(PropertyBuilder.PropertyId.PATTERN,
-							"^P(?:(0+)Y)?(?:(0+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$");
-					return PropertyBuilder.build("string", null, map);
-				} else {
-					return chain.next().resolveProperty(type, context, annotations, chain);
-				}
-			} else {
+			if (jType == null) {
 				return null;
 			}
+			final Class<?> cls = jType.getRawClass();
+			if (!cls.equals(Duration.class)) {
+				return chain.next().resolveProperty(type, context, annotations, chain);
+			}
+			final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
+			map.put(PropertyBuilder.PropertyId.TYPE, "string");
+			map.put(PropertyBuilder.PropertyId.EXAMPLE, "PT1H");
+			map.put(PropertyBuilder.PropertyId.PATTERN,
+					"^P(?:(0+)Y)?(?:(0+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$");
+			return PropertyBuilder.build("string", null, map);
 		}
 
 		@Override

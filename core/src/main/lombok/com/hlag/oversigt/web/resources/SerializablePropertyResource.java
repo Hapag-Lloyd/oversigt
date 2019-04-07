@@ -35,7 +35,7 @@ import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Role;
-import com.hlag.oversigt.util.SneakyException;
+import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
@@ -183,10 +183,9 @@ public class SerializablePropertyResource {
 		final SerializableProperty prop = spController.getProperty(clazz, id);
 		if (prop.getId() == id) {
 			return ok(toMapWithoutPassword(prop)).build();
-		} else {
-			return ErrorResponse
-					.notFound("Serializable property of type '" + className + "' with id " + id + " does not exist.");
 		}
+		return ErrorResponse
+				.notFound("Serializable property of type '" + className + "' with id " + id + " does not exist.");
 	}
 
 	@PUT
@@ -222,7 +221,7 @@ public class SerializablePropertyResource {
 		}
 
 		spController.getMembers(clazz)
-				.forEach(SneakyException.sneakc(m -> m.set(prop, map.get(m.getName()).toString())));
+				.forEach(ThrowingConsumer.sneakc(m -> m.set(prop, map.get(m.getName()).toString())));
 		spController.updateProperty(prop);
 		dController.restartInstancesUsingSerializableProperty(prop);
 

@@ -58,16 +58,15 @@ public final class ClassRenameDetector {
 				.collect(toSet());
 		if (candidates.size() == 1) {
 			return candidates.iterator().next().getValue();
-		} else {
-			if (candidates.isEmpty()) {
-				LOGGER.warn("No moved class found for name: {}", className);
-			} else if (candidates.size() > 1) {
-				LOGGER.warn("Multiple moved candidates found for class [{}]: {}",
-						className,
-						candidates.stream().map(Entry::getKey).collect(joining(", ")));
-			}
-			return null;
 		}
+		if (candidates.isEmpty()) {
+			LOGGER.warn("No moved class found for name: {}", className);
+		} else if (candidates.size() > 1) {
+			LOGGER.warn("Multiple moved candidates found for class [{}]: {}",
+					className,
+					candidates.stream().map(Entry::getKey).collect(joining(", ")));
+		}
+		return null;
 	}
 
 	private static final MetricStringDistance DISTANCE = new Levenshtein();
@@ -83,16 +82,15 @@ public final class ClassRenameDetector {
 				.collect(toList());
 		if (candidates.size() == 1) {
 			return candidates.iterator().next().getFirst();
-		} else {
-			if (candidates.isEmpty()) {
-				LOGGER.warn("No renamed class found for name: {}", className);
-			} else if (candidates.size() > 1) {
-				LOGGER.warn("Multiple renamed candidates found for class [{}]: {}",
-						className,
-						candidates.stream().map(Tuple::getFirst).map(EventSourceKey::getKey).collect(joining(", ")));
-			}
-			return null;
 		}
+		if (candidates.isEmpty()) {
+			LOGGER.warn("No renamed class found for name: {}", className);
+		} else if (candidates.size() > 1) {
+			LOGGER.warn("Multiple renamed candidates found for class [{}]: {}",
+					className,
+					candidates.stream().map(Tuple::getFirst).map(EventSourceKey::getKey).collect(joining(", ")));
+		}
+		return null;
 	}
 
 	public static EventSourceKey detectComplexRename(final Map<String, EventSourceKey> keys, final String className) {

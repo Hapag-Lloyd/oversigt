@@ -60,6 +60,7 @@ import com.hlag.oversigt.web.api.NoChangeLog;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Nullables;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -172,31 +173,26 @@ public class SystemResource {
 	public Response getLogFileContent(@PathParam("filename") @NotBlank final String filename,
 			@QueryParam("lines") @ApiParam(required = false,
 					defaultValue = "0",
-					value = "Number of lines to read from the log file. Negative value to read from the end of the file.") Integer lineCount)
+					value = "Number of lines to read from the log file. Negative value to read from the end of the file.") final Integer nullableLineCount)
 			throws IOException {
-		if (lineCount == null) {
-			lineCount = 0;
-		}
+		final int lineCount = Nullables.orElse(nullableLineCount, 0);
 
 		final java.nio.file.Path logfile = Paths.get("log", filename);
-		if (Files.exists(logfile)) {
-			Collection<String> lines;
-
-			try (Stream<String> lineStream = Files.lines(logfile)) {
-				if (lineCount == 0) {
-					lines = lineStream.collect(Collectors.toList());
-				} else if (lineCount > 0) {
-					lines = lineStream.limit(lineCount).collect(Collectors.toList());
-				} else {
-					final int iLineCount = -lineCount.intValue();
-					lines = lineStream.collect(Collectors.toCollection(() -> EvictingQueue.create(iLineCount)));
-				}
-			}
-
-			return ok(lines).build();
-		} else {
+		if (!Files.exists(logfile)) {
 			return notFound("The log file '" + filename + "' does not exist.");
 		}
+
+		Collection<String> lines;
+		try (Stream<String> lineStream = Files.lines(logfile)) {
+			if (lineCount == 0) {
+				lines = lineStream.collect(Collectors.toList());
+			} else if (lineCount > 0) {
+				lines = lineStream.limit(lineCount).collect(Collectors.toList());
+			} else {
+				lines = lineStream.collect(Collectors.toCollection(() -> EvictingQueue.create(-lineCount)));
+			}
+		}
+		return ok(lines).build();
 	}
 
 	@GET
@@ -308,16 +304,16 @@ public class SystemResource {
 		final Collection<OversigtEvent> events = new ArrayList<>(eventSender.getCachedEvents());
 		if (Strings.isNullOrEmpty(filter)) {
 			return ok(events).build();
-		} else {
-			final Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
-			if (!event.isPresent()) {
-				return ErrorResponse.notFound("The event source does not exist", filter);
-			}
-
-			final List<OversigtEvent> eventList
-					= Arrays.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
-			return ok(eventList).build();
 		}
+
+		final Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
+		if (!event.isPresent()) {
+			return ErrorResponse.notFound("The event source does not exist", filter);
+		}
+
+		final List<OversigtEvent> eventList
+				= Arrays.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
+		return ok(eventList).build();
 	}
 
 	@GET

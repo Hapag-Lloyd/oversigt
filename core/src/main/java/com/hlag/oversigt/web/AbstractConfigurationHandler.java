@@ -94,9 +94,8 @@ public class AbstractConfigurationHandler implements HttpHandler {
 			final Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
 			if (matcher.find()) {
 				return new Tuple<>(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
-			} else {
-				return new Tuple<>(filename, null);
 			}
+			return new Tuple<>(filename, null);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -231,9 +230,8 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		final String preferred = getPreferredInitialPage();
 		if (preferred != null && availablePages.contains(preferred)) {
 			return preferred;
-		} else {
-			return availablePages.iterator().next();
 		}
+		return availablePages.iterator().next();
 	}
 
 	protected String getTemplateName(final HttpServerExchange exchange, final PageInfo pi) {

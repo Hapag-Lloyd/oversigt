@@ -69,33 +69,34 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 				new UnpreparedStatementPreventingInvocationHandler(connection));
 	}
 
+	@SuppressWarnings("resource")
 	private Connection getConnection() {
-		if (getDatabaseConnection() != DatabaseConnection.EMPTY) {
-			try {
-				// Load the driver
-				getDatabaseConnection().loadDriverClass();
-				getLogger().info("Loaded JDBC driver.");
-
-				// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
-				final Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
-						getCredentials().getUsername(),
-						getCredentials().getPassword());
-				// Commit changes manually
-				con.setAutoCommit(false);
-				con.setReadOnly(true);
-				con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-				getLogger().info("Created JDBC connection to the data source.");
-				return wrapConnection(con);
-			} catch (final ClassNotFoundException e) {
-				return failure("Could not load JDBC driver.", e);
-			} catch (final SQLException e) {
-				return failure("Failed connecting to data base.", e);
-			}
-		} else {
+		if (getDatabaseConnection() == DatabaseConnection.EMPTY) {
 			return failure("Database connection is not configured.");
+		}
+		try {
+			// Load the driver
+			getDatabaseConnection().loadDriverClass();
+			getLogger().info("Loaded JDBC driver.");
+
+			// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
+			final Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
+					getCredentials().getUsername(),
+					getCredentials().getPassword());
+			// Commit changes manually
+			con.setAutoCommit(false);
+			con.setReadOnly(true);
+			con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+			getLogger().info("Created JDBC connection to the data source.");
+			return wrapConnection(con);
+		} catch (final ClassNotFoundException e) {
+			return failure("Could not load JDBC driver.", e);
+		} catch (final SQLException e) {
+			return failure("Failed connecting to data base.", e);
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private boolean withConnection(final DBConnectionConsumer function) throws SQLException {
 		Connection connection = null;
 		try {

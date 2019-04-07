@@ -56,11 +56,10 @@ public class ApiAuthenticationUtils {
 		// Throw an Exception if the credentials are invalid
 
 		final Principal principal = authenticator.login(username, password);
-		if (principal != null) {
-			return principal;
-		} else {
+		if (principal == null) {
 			throw new RuntimeException("Unable to log in");
 		}
+		return principal;
 	}
 
 	public String issueToken(final Principal principal) throws IllegalArgumentException, UnsupportedEncodingException {

@@ -38,8 +38,7 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 
 		if (violations.isEmpty()) {
 			return invocation.proceed();
-		} else {
-			throw new ApiValidationException(invocation.getMethod(), violations);
 		}
+		throw new ApiValidationException(invocation.getMethod(), violations);
 	}
 }

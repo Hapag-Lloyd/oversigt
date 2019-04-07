@@ -3,6 +3,8 @@ package com.hlag.oversigt.util;
 import java.io.IOException;
 import java.util.function.BiFunction;
 
+import de.larssh.utils.SneakyException;
+
 @FunctionalInterface
 public interface ThrowingBiFunction<T, U, R> extends BiFunction<T, U, R> {
 	@Override

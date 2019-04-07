@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -39,7 +40,6 @@ import com.hlag.oversigt.properties.ServerConnection;
 import com.hlag.oversigt.sources.data.DisplayOption;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
-import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Nullables;
 
@@ -109,8 +109,10 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 		// If not getShowEmptyCategories then remove empty DisplayOption entries
 		if (!getShowEmptyCategories()) {
-			issuesPerCategory
-					= Utils.toLinkedMap(issuesPerCategory.entrySet().stream().filter(e -> !e.getValue().isEmpty()));
+			issuesPerCategory = issuesPerCategory.entrySet()
+					.stream()
+					.filter(e -> !e.getValue().isEmpty())
+					.collect(de.larssh.utils.Collectors.toLinkedHashMap(Entry::getKey, Entry::getValue));
 		}
 
 		return issuesPerCategory;
@@ -266,14 +268,15 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 					if (contains(auths, "getUserFromBasicAuthentication") && contains(auths, "checkAuthenticated")) {
 						if (getJiraCredentials() == null || getJiraCredentials() == Credentials.EMPTY) {
 							return failure("No credentials configured.");
-						} else {
-							return failure("Unable to log in to JIRA. Username: " + getJiraCredentials().getUsername());
 						}
+						return failure("Unable to log in to JIRA. Username: " + getJiraCredentials().getUsername());
 					}
 				}
-			} else if (Throwables.getRootCause(throwable) instanceof SocketTimeoutException) {
+			}
+			if (Throwables.getRootCause(throwable) instanceof SocketTimeoutException) {
 				return failure("JIRA not available: Timeout");
-			} else if (Throwables.getRootCause(throwable) instanceof JSONException) {
+			}
+			if (Throwables.getRootCause(throwable) instanceof JSONException) {
 				return failure("JIRA not available: Invalid JSON returned from server");
 			}
 			previous = throwable;

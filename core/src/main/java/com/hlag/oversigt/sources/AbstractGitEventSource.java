@@ -119,11 +119,10 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 	}
 
 	protected Predicate<RevCommit> isCommitAfter(final Instant from) {
-		if (from != null) {
-			return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from, null);
-		} else {
+		if (from == null) {
 			return x -> true;
 		}
+		return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from, null);
 	}
 
 	protected <T> Predicate<T> between(@Nonnull final Function<T, Instant> getTimeFunction,
@@ -167,6 +166,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		throw new RuntimeException("Cannot recognize url: " + getRepositoryUrl());
 	}
 
+	@SuppressWarnings("resource")
 	private Git createLocalGitRepository(final String repositoryUrl) throws IOException {
 		getLogger().info("Creating local repository [{}]: ", repositoryUrl);
 		final FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -204,7 +204,8 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 	}
 
 	private CredentialsProvider createCredentialsProvider(final Path localRepositoryPath) {
-		return new GitCredentialsProvider(localRepositoryPath.endsWith(".git") ? localRepositoryPath : localRepositoryPath.resolve(".git"));
+		return new GitCredentialsProvider(
+				localRepositoryPath.endsWith(".git") ? localRepositoryPath : localRepositoryPath.resolve(".git"));
 	}
 
 	private final class GitCredentialsProvider extends CredentialsProvider {

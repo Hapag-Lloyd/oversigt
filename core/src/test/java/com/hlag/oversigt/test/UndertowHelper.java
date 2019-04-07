@@ -13,8 +13,7 @@ import org.xnio.conduits.ConduitStreamSourceChannel;
 import org.xnio.conduits.StreamSinkConduit;
 import org.xnio.conduits.StreamSourceConduit;
 
-import com.hlag.oversigt.util.SneakyException;
-
+import de.larssh.utils.SneakyException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ServerConnection;
 import io.undertow.server.handlers.form.FormData;

@@ -72,13 +72,11 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 			logChange(exchange, "Created dashboard %s - enabled: %s", dashboard.getId(), dashboard.isEnabled());
 			if (dashboard.isEnabled()) {
 				return redirect("/" + dashboard.getId() + "/config");
-			} else {
-				mailSender.sendNewDashboard(getHelper().getPrincipal(exchange).get(), dashboard);
-				return redirect("/" + dashboard.getId() + "/create/create");
 			}
-		} else {
-			throw new RuntimeException("The dashboard to be created already exists.");
+			mailSender.sendNewDashboard(getHelper().getPrincipal(exchange).get(), dashboard);
+			return redirect("/" + dashboard.getId() + "/create/create");
 		}
+		throw new RuntimeException("The dashboard to be created already exists.");
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
@@ -94,9 +92,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 				logChange(exchange, "Enabled dashboard %s", dashboard.getId());
 			}
 			return redirect("/" + dashboard.getId() + "/config");
-		} else {
-			throw new RuntimeException("The dashboard to be enabled doesn't exists.");
 		}
+		throw new RuntimeException("The dashboard to be enabled doesn't exists.");
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
@@ -108,9 +105,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 			dashboard.getOwners().forEach(authenticator::reloadRoles);
 			logChange(exchange, "Deleted dashboard %s", dashboard.getId());
 			return redirect("/" + dashboard.getId());
-		} else {
-			throw new RuntimeException("The dashboard to be deleted doesn't exists.");
 		}
+		throw new RuntimeException("The dashboard to be deleted doesn't exists.");
 	}
 
 	protected ActionResponse doAction_abort(final HttpServerExchange exchange, final FormData formData) {

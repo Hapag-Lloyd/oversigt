@@ -62,9 +62,8 @@ public class ClassPathResourceManager implements ResourceManager {
 		final URL resourceUrl = getResourceUrl(realPath);
 		if (resourceUrl == null) {
 			return null;
-		} else {
-			return new URLResource(resourceUrl, path);
 		}
+		return new URLResource(resourceUrl, path);
 	}
 
 	protected URL getResourceUrl(final String realPath) {

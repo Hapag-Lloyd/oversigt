@@ -63,12 +63,11 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 	protected TwoColumnListEvent<String> produceExchangeEvent() throws Exception {
 		final String mailboxName = getMailboxName();
 		final List<Task> tasks = MailboxInfoRetriever.getInstance().getTasks(mailboxName);
-		if (tasks != null) {
-			final TwoColumnListEvent<String> event = createEvent(tasks);
-			return event;
-		} else {
+		if (tasks == null) {
 			return null;
 		}
+		final TwoColumnListEvent<String> event = createEvent(tasks);
+		return event;
 	}
 
 	private TwoColumnListEvent<String> createEvent(final List<Task> tasks) {
@@ -93,10 +92,11 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 			case Low:
 				labelStyle += "opacity: 0.75;";
 				break;
-			case Normal:
-				break;
 			case High:
 				labelStyle += "font-weight: bold;";
+				break;
+			case Normal:
+			default:
 				break;
 			}
 

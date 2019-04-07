@@ -325,13 +325,12 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		if (preventingDashboards == null || preventingDashboards.isEmpty()) {
 			logChange(exchange, "Delete event source id[%s]", eventSourceId);
 			return redirect(exchange.getRequestURI());
-		} else {
-			logChange(exchange,
-					"Try to delete event source id[%s], preventing dashboards: %s",
-					eventSourceId,
-					preventingDashboards);
-			return okJson(preventingDashboards);
 		}
+		logChange(exchange,
+				"Try to delete event source id[%s], preventing dashboards: %s",
+				eventSourceId,
+				preventingDashboards);
+		return okJson(preventingDashboards);
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)

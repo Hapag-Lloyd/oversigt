@@ -80,9 +80,8 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 			return Optional.of(MailboxInfoRetriever.createService(getServerConnection().getUrl(),
 					getCredentials().getUsername(),
 					getCredentials().getPassword()));
-		} else {
-			return Optional.empty();
 		}
+		return Optional.empty();
 	}
 
 	@Override
@@ -92,18 +91,17 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		} catch (final Exception e) {
 			if (isExceptionToIgnore(e)) {
 				return null;
-			} else if (isLoginException(e)) {
+			}
+			if (isLoginException(e)) {
 				return failure(String.format("Unable to log in with user '%s' to %s",
 						getCredentials() != null ? getCredentials().getUsername() : "",
 						getServerConnection() != null ? getServerConnection().getUrl() : ""));
-			} else {
-				final String message = getFailureMessage(e);
-				if (message != null) {
-					return failure(message, e);
-				} else {
-					return failure("Unable to produce Exchange event", e);
-				}
 			}
+			final String message = getFailureMessage(e);
+			if (message == null) {
+				return failure("Unable to produce Exchange event", e);
+			}
+			return failure(message, e);
 		}
 	}
 

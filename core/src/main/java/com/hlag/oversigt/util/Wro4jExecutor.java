@@ -91,18 +91,17 @@ public class Wro4jExecutor {
 				ReturnValue.find(HttpServletRequest.class, "getRequestURI", groupWithExtension));
 
 		// mock response
-		final ByteArrayOutputStream resultOutputStream = new ByteArrayOutputStream();
-		final HttpServletResponse response = ClassProxy.create(HttpServletResponse.class,
-				ReturnValue.find(HttpServletResponse.class,
-						"getOutputStream",
-						new DelegatingServletOutputStream(resultOutputStream)));
+		try (ByteArrayOutputStream resultOutputStream = new ByteArrayOutputStream();
+				DelegatingServletOutputStream delegatingServletOutputStream
+						= new DelegatingServletOutputStream(resultOutputStream)) {
+			final HttpServletResponse response = ClassProxy.create(HttpServletResponse.class,
+					ReturnValue.find(HttpServletResponse.class, "getOutputStream", delegatingServletOutputStream));
 
-		// init context
-		final WroConfiguration config = Context.get().getConfig();
-		config.setIgnoreEmptyGroup(true);
-		Context.set(Context.webContext(request, response, ClassProxy.create(FilterConfig.class)), config);
+			// init context
+			final WroConfiguration config = Context.get().getConfig();
+			config.setIgnoreEmptyGroup(true);
+			Context.set(Context.webContext(request, response, ClassProxy.create(FilterConfig.class)), config);
 
-		try {
 			// perform processing
 			managerFactory.create().process();
 			return Optional.of(new String(resultOutputStream.toByteArray(), StandardCharsets.UTF_8));
@@ -168,7 +167,7 @@ public class Wro4jExecutor {
 					final UriLocator locator = super.getInstance(uri);
 					// ensure standalone context is provided to each locator requiring it for
 					// initialization.
-					if (locator != null && locator instanceof StandaloneContextAware) {
+					if (locator instanceof StandaloneContextAware) {
 						((StandaloneContextAware) locator).initialize(getStandaloneContext());
 					}
 					return locator;

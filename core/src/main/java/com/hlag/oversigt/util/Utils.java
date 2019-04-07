@@ -165,18 +165,6 @@ public final class Utils {
 		return values;
 	}
 
-	public static <K, V> Map<K, V> toLinkedMap(final Stream<Entry<K, V>> stream) {
-		return toLinkedMap(stream, Entry::getKey, Entry::getValue);
-	}
-
-	public static <K, T, V> Map<K, V> toLinkedMap(final Stream<T> stream,
-			final Function<? super T, ? extends K> keyMapper,
-			final Function<? super T, ? extends V> valueMapper) {
-		return stream.collect(Collectors.toMap(keyMapper, valueMapper, (k, v) -> {
-			throw new IllegalStateException(String.format("Duplicate key %s", k));
-		}, LinkedHashMap::new));
-	}
-
 	public static String notNullOrEmpty(final String string, final String message) {
 		if (requireNonNull(string, message).isEmpty()) {
 			throw new IllegalArgumentException(message);

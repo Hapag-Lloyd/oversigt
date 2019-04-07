@@ -30,6 +30,8 @@ import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Nullables;
+
 @EventSource(view = "Rickshawgraph", displayName = "CPU Usage")
 public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphEvent> {
 	private final Map<ZonedDateTime, Map<Server, Integer>> values = new TreeMap<>();
@@ -90,18 +92,17 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 	private int getUnixCpuUsage(final Server server) {
 		final double usage = SshConnection.getConnection(server.hostname, server.port, server.username, server.password)
 				.getCpuUsage();
-		if (!Double.isNaN(usage)) {
-			int percent = (int) (100 * usage + 0.5);
-			if (percent < 0) {
-				percent = 0;
-			}
-			if (percent > 100) {
-				percent = 100;
-			}
-			return percent;
-		} else {
+		if (Double.isNaN(usage)) {
 			return 0;
 		}
+		int percent = (int) (100 * usage + 0.5);
+		if (percent < 0) {
+			percent = 0;
+		}
+		if (percent > 100) {
+			percent = 100;
+		}
+		return percent;
 	}
 
 	@SuppressWarnings("unused")
@@ -176,11 +177,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	@Property(name = "Servers", description = "The servers to check.")
 	public Server[] getServers() {
-		if (servers != null) {
-			return servers;
-		} else {
-			return new Server[0];
-		}
+		return Nullables.orElseGet(servers, () -> new Server[0]);
 	}
 
 	public void setServers(final Server[] servers) {

@@ -59,9 +59,8 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	protected String getFailureMessage(final Exception e) {
 		if (e instanceof IllegalArgumentException && getClass() == ExchangeMailboxEventSource.class) {
 			return failure(String.format("Unable to read folder %s in mailbox %s", getFolderName(), getMailboxName()));
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	private HlBarChartEvent createEvent(final List<Mail> mails) {

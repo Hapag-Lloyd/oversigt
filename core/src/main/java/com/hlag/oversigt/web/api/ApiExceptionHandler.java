@@ -18,7 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.util.SneakyException;
+
+import de.larssh.utils.SneakyException;
 
 @Provider
 public class ApiExceptionHandler implements ExceptionMapper<Exception> {
@@ -50,26 +51,25 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 		if (!debug) {
 			return ErrorResponse.internalServerError(uuid,
 					"Internal server error. More details can be found in the server log file.");
-		} else {
-			final String[] accepts = request.getHeader("accept").split(",");
-			for (final String accept : accepts) {
-				final String[] parts = accept.split(";");
-				switch (parts[0].trim().toLowerCase()) {
-				case "application/json":
-				case "application/xml":
-					final StringWriter sw = new StringWriter();
-					final PrintWriter pw = new PrintWriter(sw);
-					pw.println("ID: " + uuid.toString());
-					pw.println();
-					exception.printStackTrace(pw);
-					return Response.status(Status.INTERNAL_SERVER_ERROR)
-							.entity(sw.toString())
-							.type(MediaType.TEXT_PLAIN_TYPE)
-							.build();
-				default:
-				}
-			}
-			throw new SneakyException(exception);
 		}
+		final String[] accepts = request.getHeader("accept").split(",");
+		for (final String accept : accepts) {
+			final String[] parts = accept.split(";");
+			switch (parts[0].trim().toLowerCase()) {
+			case "application/json":
+			case "application/xml":
+				final StringWriter sw = new StringWriter();
+				final PrintWriter pw = new PrintWriter(sw);
+				pw.println("ID: " + uuid.toString());
+				pw.println();
+				exception.printStackTrace(pw);
+				return Response.status(Status.INTERNAL_SERVER_ERROR)
+						.entity(sw.toString())
+						.type(MediaType.TEXT_PLAIN_TYPE)
+						.build();
+			default:
+			}
+		}
+		throw new SneakyException(exception);
 	}
 }

@@ -121,11 +121,10 @@ public class Authentication {
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
 		} catch (final Exception e) {}
-		if (newToken != null) {
-			return ok(createTokenMap(newToken)).build();
-		} else {
+		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
+		return ok(createTokenMap(newToken)).build();
 	}
 
 	@GET

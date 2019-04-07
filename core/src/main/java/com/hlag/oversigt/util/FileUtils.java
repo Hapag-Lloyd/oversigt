@@ -1,6 +1,5 @@
 package com.hlag.oversigt.util;
 
-import static com.hlag.oversigt.util.SneakyException.sneakc;
 import static java.util.stream.Collectors.toList;
 
 import java.io.File;
@@ -33,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
+import de.larssh.utils.SneakyException;
+import de.larssh.utils.function.ThrowingConsumer;
+
 public final class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
 
@@ -53,7 +55,7 @@ public final class FileUtils {
 			LOGGER.info("Deleting folder [{}]", root.toAbsolutePath().toString());
 			Files.walk(root)//
 					.sorted(Comparator.reverseOrder())
-					.forEach(sneakc(Files::deleteIfExists));
+					.forEach(ThrowingConsumer.throwing(Files::deleteIfExists));
 		} catch (final IOException e) {
 			throw new SneakyException(e);
 		}
@@ -73,12 +75,10 @@ public final class FileUtils {
 			final List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
 			if (jarPathParts.size() == 2) {
 				return getFileSystem(URI.create(jarPathParts.get(0))).getPath(jarPathParts.get(1));
-			} else {
-				throw new RuntimeException("Unable to interpret path: " + uri);
 			}
-		} else {
-			return Paths.get(uri);
+			throw new RuntimeException("Unable to interpret path: " + uri);
 		}
+		return Paths.get(uri);
 	}
 
 	public static FileSystem getFileSystem(final URI uri) {
@@ -101,29 +101,28 @@ public final class FileUtils {
 	}
 
 	private static Stream<Path> streamResources(final Path classpathEntry) {
-		if (Files.isRegularFile(classpathEntry)) {
-			final Optional<String> extension = getExtension(classpathEntry);
-			if (extension.isPresent()) {
-				switch (extension.get().toLowerCase()) {
-				case "jar":
-				case "zip":
-					return listResourcesFromJar(classpathEntry).stream();
-				default:
-					// nothing
-				}
-			}
-			throw new RuntimeException("Unable to handle file for resource scanning: " + classpathEntry);
-		} else {
+		if (!Files.isRegularFile(classpathEntry)) {
 			return streamResourcesFromDirectory(classpathEntry);
 		}
+		final Optional<String> extension = getExtension(classpathEntry);
+		if (extension.isPresent()) {
+			switch (extension.get().toLowerCase()) {
+			case "jar":
+			case "zip":
+				return listResourcesFromJar(classpathEntry).stream();
+			default:
+				// nothing
+			}
+		}
+		throw new RuntimeException("Unable to handle file for resource scanning: " + classpathEntry);
 	}
 
 	private static List<Path> listResourcesFromJar(final Path zip) {
 		final String uriString = "jar:" + zip.toUri().toString();
 
-		final FileSystem fileSystem = getFileSystem(URI.create(uriString));
 		final LinkedList<Path> paths = new LinkedList<>();
-		try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
+		try (FileSystem fileSystem = getFileSystem(URI.create(uriString));
+				JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
 			JarEntry entry = null;
 			while ((entry = jarInputStream.getNextJarEntry()) != null) {
 				paths.add(fileSystem.getPath(entry.getName()));
@@ -182,11 +181,10 @@ public final class FileUtils {
 
 	public static Optional<String> getExtension(final String filename) {
 		final int lastIndex = filename.lastIndexOf('.');
-		if (lastIndex >= 0) {
-			return Optional.of(filename.substring(lastIndex + 1));
-		} else {
+		if (lastIndex < 0) {
 			return Optional.empty();
 		}
+		return Optional.of(filename.substring(lastIndex + 1));
 	}
 
 	private FileUtils() {

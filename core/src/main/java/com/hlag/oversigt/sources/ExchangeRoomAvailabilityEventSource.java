@@ -116,11 +116,9 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 					service,
 					day.atStartOfDay(getZoneId()),
 					day.plusDays(1).atStartOfDay(getZoneId()));
-		} else {
-			return Stream.of(rooms)
-					.collect(Collectors.toMap(Function.identity(),
-							room -> getMeetingsViaAppointment(room, service, day)));
 		}
+		return Stream.of(rooms)
+				.collect(Collectors.toMap(Function.identity(), room -> getMeetingsViaAppointment(room, service, day)));
 	}
 
 	private List<Meeting> getMeetingsViaAppointment(final Room room,

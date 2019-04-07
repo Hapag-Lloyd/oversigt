@@ -71,21 +71,18 @@ public class HttpServerExchangeHandler {
 	FormData getFormData(final HttpServerExchange exchange) throws IOException {
 		final Builder builder = FormParserFactory.builder();
 		builder.setDefaultCharset("UTF-8");
-		final FormDataParser parser = builder.build().createParser(exchange);
-		return parser.parseBlocking();
+		try (final FormDataParser parser = builder.build().createParser(exchange)) {
+			return parser.parseBlocking();
+		}
 	}
 
 	public Optional<Session> getSession(final HttpServerExchange exchange) {
 		// To retrive the SessionManager use the attachmentKey
-		final SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
+		final SessionManager sessionManager = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
 		// same goes to SessionConfig
 		final SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
 
-		if (sm != null) {
-			return Optional.ofNullable(sm.getSession(exchange, sessionConfig));
-		} else {
-			return Optional.empty();
-		}
+		return Optional.ofNullable(sessionManager).map(s -> s.getSession(exchange, sessionConfig));
 	}
 
 	public Optional<Principal> getPrincipal(final HttpServerExchange exchange) {

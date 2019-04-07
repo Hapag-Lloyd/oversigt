@@ -371,11 +371,10 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 		final List<Map<String, Object>> maybeData
 				= load(TABLE_DASHBOARD, "*", "ID", id, rs -> readColumnValues(rs, COLUMNS_DASHBOARD));
 
-		if (!maybeData.isEmpty()) {
-			return loadDashboard(maybeData.get(0));
-		} else {
+		if (maybeData.isEmpty()) {
 			return null;
 		}
+		return loadDashboard(maybeData.get(0));
 	}
 
 	public Dashboard loadDashboard(final Map<String, Object> data) {

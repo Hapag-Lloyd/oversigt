@@ -306,9 +306,8 @@ public class EventSourceInstanceResource {
 			final Set<String> dashboards = controller.deleteEventSourceInstance(instanceId, force);
 			if (dashboards == null) {
 				return ok().build();
-			} else {
-				return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
 			}
+			return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
 		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}

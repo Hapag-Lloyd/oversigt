@@ -108,15 +108,15 @@ public class DashboardResource {
 	public Response createDashboard(@Context final SecurityContext securityContext,
 			@QueryParam("dashboardId") @NotNull final String id,
 			@QueryParam("owner") @NotNull @UserId final String ownerUserId,
-			@QueryParam("enabled") @ApiParam(defaultValue = "false") boolean enabled) {
+			@QueryParam("enabled") @ApiParam(defaultValue = "false") final boolean enabled) {
 		Dashboard dashboard = dashboardController.getDashboard(id);
 		if (dashboard != null) {
 			return Response.seeOther(URI.create(uri.getAbsolutePath() + "/" + id)).build();
 		}
 
-		enabled = enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN);
-		dashboard
-				= dashboardController.createDashboard(id, Principal.loadPrincipal(authenticator, ownerUserId), enabled);
+		dashboard = dashboardController.createDashboard(id,
+				Principal.loadPrincipal(authenticator, ownerUserId),
+				enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));
 		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId()))//
 				.entity(dashboard)
 				.type(MediaType.APPLICATION_JSON_TYPE)
@@ -212,11 +212,10 @@ public class DashboardResource {
 		if (newDashboardData.containsKey("enabled")) {
 			newDashboard.setEnabled(Boolean.parseBoolean(newDashboardData.get("enabled").toString()));
 		}
-		if (dashboardController.updateDashboard(newDashboard)) {
-			return ok(dashboardController.getDashboard(id)).build();
-		} else {
+		if (!dashboardController.updateDashboard(newDashboard)) {
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
+		return ok(dashboardController.getDashboard(id)).build();
 	}
 
 	@PUT
@@ -281,20 +280,20 @@ public class DashboardResource {
 
 		// update dashboard data
 		// =====================
-		if (dashboardController.updateDashboard(newDashboardData)) {
-			// return dashboard info
-			// =====================
-			final Dashboard changedDashboard = dashboardController.getDashboard(id);
-
-			// reload user rights
-			users.addAll(Stream.concat(changedDashboard.getOwners().stream(), changedDashboard.getEditors().stream())
-					.collect(toSet()));
-			users.forEach(authenticator::reloadRoles);
-
-			return ok(changedDashboard).build();
-		} else {
+		if (!dashboardController.updateDashboard(newDashboardData)) {
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
+
+		// return dashboard info
+		// =====================
+		final Dashboard changedDashboard = dashboardController.getDashboard(id);
+
+		// reload user rights
+		users.addAll(Stream.concat(changedDashboard.getOwners().stream(), changedDashboard.getEditors().stream())
+				.collect(toSet()));
+		users.forEach(authenticator::reloadRoles);
+
+		return ok(changedDashboard).build();
 	}
 
 	@PUT
@@ -355,11 +354,10 @@ public class DashboardResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response deleteDashboard(@PathParam("dashboardId") final String id) {
-		if (dashboardController.deleteDashboard(id)) {
-			return ok().build();
-		} else {
+		if (!dashboardController.deleteDashboard(id)) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
+		return ok().build();
 	}
 
 	@Getter

@@ -23,7 +23,7 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
-import com.hlag.oversigt.util.SneakyException;
+import com.hlag.oversigt.util.ThrowingIntFunction;
 import com.hlag.oversigt.util.Utils;
 
 @EventSource(displayName = "SQL Graph", view = "Rickshawgraph")
@@ -76,7 +76,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
 		final List<List<Long>> data = readFromDatabase(connection,
 				rs -> IntStream.range(1, rs.getMetaData().getColumnCount() + 1)
-						.mapToObj(SneakyException.sneakyInt(rs::getLong))
+						.mapToObj(ThrowingIntFunction.sneakyInt(rs::getLong))
 						.collect(toList()),
 				getSqlStatement());
 

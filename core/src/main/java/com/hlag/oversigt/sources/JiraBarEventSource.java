@@ -26,27 +26,26 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 	@Override
 	protected HlBarChartEvent produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
-
-		if (issues != null) {
-			final int maxMailsPerCategory
-					= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));
-			final long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();
-
-			final List<Category> categories = new ArrayList<>();
-			for (final Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
-				final DisplayOption displayOption = entry.getKey();
-				final int count = entry.getValue().size();
-
-				final Serie serie = getSerie(displayOption.getColor(), count, maxMailsPerCategory);
-				categories.add(new Category(Integer.toString(count),
-						displayOption.formatDisplayValue(count),
-						Arrays.asList(serie)));
-			}
-
-			return new HlBarChartEvent(categories, Long.toString(sumMails));
-		} else {
+		if (issues == null) {
 			return null;
 		}
+
+		final int maxMailsPerCategory
+				= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));
+		final long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();
+
+		final List<Category> categories = new ArrayList<>();
+		for (final Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
+			final DisplayOption displayOption = entry.getKey();
+			final int count = entry.getValue().size();
+
+			final Serie serie = getSerie(displayOption.getColor(), count, maxMailsPerCategory);
+			categories.add(new Category(Integer.toString(count),
+					displayOption.formatDisplayValue(count),
+					Arrays.asList(serie)));
+		}
+
+		return new HlBarChartEvent(categories, Long.toString(sumMails));
 	}
 
 	private Serie getSerie(final Color color, final int value, final int maximum) {

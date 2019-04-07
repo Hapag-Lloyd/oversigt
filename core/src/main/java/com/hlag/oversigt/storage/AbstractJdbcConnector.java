@@ -185,16 +185,14 @@ public abstract class AbstractJdbcConnector implements Closeable {
 				LOGGER.debug("Executing INSERT");
 			}
 			stmt.executeUpdate();
-			if (getGeneratedKey != null) {
-				try (ResultSet gkrs = stmt.getGeneratedKeys()) {
-					if (gkrs.next()) {
-						return getGeneratedKey.apply(gkrs);
-					} else {
-						throw new DatabaseException("Unable to get generated keys. ResultSet is empty.", sql);
-					}
-				}
-			} else {
+			if (getGeneratedKey == null) {
 				return null;
+			}
+			try (ResultSet gkrs = stmt.getGeneratedKeys()) {
+				if (gkrs.next()) {
+					return getGeneratedKey.apply(gkrs);
+				}
+				throw new DatabaseException("Unable to get generated keys. ResultSet is empty.", sql);
 			}
 		}
 	}
@@ -247,11 +245,10 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			final String[] columnNames) {
 		if (values != null && values.length == 1) {
 			return load(table, columnToRead, columnToCheck, values[0], rs -> readColumnValues(rs, columnNames));
-		} else {
-			final String sql = getDialect()
-					.select(table, Lists.newArrayList("*"), columnToCheck, values != null ? values.length : -1);
-			return load(sql, rs -> readColumnValues(rs, columnNames), values);
 		}
+		final String sql = getDialect()
+				.select(table, Lists.newArrayList("*"), columnToCheck, values != null ? values.length : -1);
+		return load(sql, rs -> readColumnValues(rs, columnNames), values);
 	}
 
 	protected <T> List<T> load(final String table,

@@ -20,11 +20,11 @@ import javax.ws.rs.core.Response;
 import com.google.common.base.CaseFormat;
 import com.google.common.io.Resources;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.util.SneakyException;
 import com.hlag.oversigt.util.Wro4jExecutor;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
+import de.larssh.utils.SneakyException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -44,18 +44,14 @@ public class ViewResource {
 	@PermitAll
 	@NoChangeLog
 	public Response readHtml(@PathParam("viewId") @NotNull @NotBlank final String viewId) {
-		// return readValue(viewId, "html", MediaType.TEXT_HTML_TYPE,
-		// Function.identity());
 		if (doesViewExist(viewId)) {
 			final Optional<String> content = readContent(getResourceUrl(viewId, "html"));
 			if (content.isPresent()) {
 				return Response.ok(content.get(), MediaType.TEXT_HTML_TYPE).build();
-			} else {
-				return ErrorResponse.notFound("View does not exist.");
 			}
-		} else {
-			return ErrorResponse.notFound("View does not exist.");
 		}
+		return ErrorResponse.notFound("View does not exist.");
+
 	}
 
 	@GET
@@ -71,12 +67,10 @@ public class ViewResource {
 			final Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.CSS);
 			if (out.isPresent()) {
 				return Response.ok(out.get(), "text/css").build();
-			} else {
-				return ErrorResponse.internalServerError(UUID.randomUUID(), "Unable to generate view content");
 			}
-		} else {
-			return ErrorResponse.notFound("View does not exist.");
+			return ErrorResponse.internalServerError(UUID.randomUUID(), "Unable to generate view content");
 		}
+		return ErrorResponse.notFound("View does not exist.");
 	}
 
 	@GET
@@ -92,12 +86,10 @@ public class ViewResource {
 			final Optional<String> out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.JS);
 			if (out.isPresent()) {
 				return Response.ok(out.get(), "application/javascript").build();
-			} else {
-				return ErrorResponse.internalServerError(UUID.randomUUID(), "Unable to generate view content");
 			}
-		} else {
-			return ErrorResponse.notFound("View does not exist.");
+			return ErrorResponse.internalServerError(UUID.randomUUID(), "Unable to generate view content");
 		}
+		return ErrorResponse.notFound("View does not exist.");
 	}
 
 	private static String getName(final String viewId) {

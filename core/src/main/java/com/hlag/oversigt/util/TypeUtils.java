@@ -42,6 +42,8 @@ import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Member;
 
+import de.larssh.utils.Nullables;
+
 public class TypeUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
@@ -182,12 +184,7 @@ public class TypeUtils {
 
 	private static Object get(final Method method, final Object target) {
 		try {
-			final Object object = method.invoke(target);
-			if (object != null) {
-				return object/* TODO why did we convert to string here? .toString() */;
-			} else {
-				return null;
-			}
+			return method.invoke(target);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -213,18 +210,15 @@ public class TypeUtils {
 	}
 
 	static Stream<Field> streamFields(final Class<?> clazz) {
-		if (clazz != Object.class) {
-			return Stream.concat(Stream.of(clazz.getDeclaredFields()), streamFields(clazz.getSuperclass()));
-		} else {
+		if (clazz == Object.class) {
 			return Stream.empty();
 		}
+		return Stream.concat(Stream.of(clazz.getDeclaredFields()), streamFields(clazz.getSuperclass()));
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <C> Constructor<C> getAppropriateConstructor(final Class<C> c, Object[] initArgs) {
-		if (initArgs == null) {
-			initArgs = new Object[0];
-		}
+	public static <C> Constructor<C> getAppropriateConstructor(final Class<C> c, final Object[] initArguments) {
+		final Object[] initArgs = Nullables.orElseGet(initArguments, () -> new Object[0]);
 		for (@SuppressWarnings("rawtypes")
 		final Constructor con : c.getDeclaredConstructors()) {
 			@SuppressWarnings("rawtypes")
@@ -332,39 +326,39 @@ public class TypeUtils {
 						| InvocationTargetException e) {
 					throw new RuntimeException("Unable to create instance of class: " + clazz.getName(), e);
 				}
-			} else {
-				final List<Method> fabricMethods = Arrays//
-						.stream(clazz.getDeclaredMethods())//
-						.filter(m -> (m.getModifiers() & Modifier.STATIC) != 0)//
-						.filter(m -> m.getParameterTypes().length == parameters.length)//
-						.filter(m -> clazz.isAssignableFrom(m.getReturnType()))//
-						.filter(m -> {
-							for (int i = 0; i < parameters.length; ++i) {
-								if (!m.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {
-									return false;
-								}
-							}
-							return true;
-						})
-						.collect(Collectors.toList());
-				if (fabricMethods.size() == 1) {
-					return invokeStaticMethod(fabricMethods.get(0), parameters);
-				} else if (fabricMethods.size() > 1) {
-					final Optional<T> maybe = tryStaticMethods(fabricMethods,
-							new String[] {
-									"parse",
-									"create",
-									"compile",
-									"get",
-									"createInstance",
-									"getInstance",
-									"construct" },
-							parameters);
-					return maybe.get();
-				} else {
-					throw new RuntimeException("No fitting constructor or method found for class: " + clazz.getName());
-				}
 			}
+
+			final List<Method> fabricMethods = Arrays//
+					.stream(clazz.getDeclaredMethods())//
+					.filter(m -> (m.getModifiers() & Modifier.STATIC) != 0)//
+					.filter(m -> m.getParameterTypes().length == parameters.length)//
+					.filter(m -> clazz.isAssignableFrom(m.getReturnType()))//
+					.filter(m -> {
+						for (int i = 0; i < parameters.length; ++i) {
+							if (!m.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {
+								return false;
+							}
+						}
+						return true;
+					})
+					.collect(Collectors.toList());
+			if (fabricMethods.size() == 1) {
+				return invokeStaticMethod(fabricMethods.get(0), parameters);
+			}
+			if (fabricMethods.size() > 1) {
+				final Optional<T> maybe = tryStaticMethods(fabricMethods,
+						new String[] {
+								"parse",
+								"create",
+								"compile",
+								"get",
+								"createInstance",
+								"getInstance",
+								"construct" },
+						parameters);
+				return maybe.get();
+			}
+			throw new RuntimeException("No fitting constructor or method found for class: " + clazz.getName());
 		}
 	}
 
@@ -399,32 +393,35 @@ public class TypeUtils {
 		}
 	}
 
-	public static Method getMethod(Class<?> clazz, final List<String> methodNames, final Class<?>[] parameterTypes) {
-		if (methodNames == null || methodNames.size() == 0) {
+	public static Method getMethod(final Class<?> clazz,
+			final List<String> methodNames,
+			final Class<?>[] parameterTypes) {
+		if (methodNames == null || methodNames.isEmpty()) {
 			return null;
 		}
 
-		while (clazz != Object.class) {
+		Class<?> currentClazz = clazz;
+		while (currentClazz != Object.class) {
 			final Optional<Method> method = Stream//
-					.of(clazz.getDeclaredMethods())//
+					.of(currentClazz.getDeclaredMethods())//
 					.filter(m -> methodNames.contains(m.getName()))//
 					.filter(m -> Arrays.deepEquals(m.getParameterTypes(), parameterTypes))
 					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))//
 					.findFirst();
 			if (method.isPresent()) {
 				return method.get();
-			} else {
-				clazz = clazz.getSuperclass();
 			}
+			currentClazz = currentClazz.getSuperclass();
 		}
 		return null;
 	}
 
-	private static int getClassDepth(Class<?> clazz) {
+	private static int getClassDepth(final Class<?> clazz) {
+		Class<?> currentClass = clazz;
 		int i = 1;
-		while (clazz != null && clazz != Object.class) {
-			++i;
-			clazz = clazz.getSuperclass();
+		while (currentClass != null && currentClass != Object.class) {
+			i += 1;
+			currentClass = currentClass.getSuperclass();
 		}
 		return i;
 	}

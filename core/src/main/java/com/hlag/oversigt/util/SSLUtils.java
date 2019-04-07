@@ -30,7 +30,10 @@ public final class SSLUtils {
 
 	public static SSLContext createSSLContext(final SSLConfiguration config) {
 		try {
-			return createSSLContext_unsafe(config);
+			final KeyStore keyStore = loadKeyStore(Resources.getResource(config.keystore), config.keystorePassword);
+			final KeyStore trustStore
+					= loadKeyStore(Resources.getResource(config.truststore), config.truststorePassword);
+			return createSSLContext(keyStore, config.keystoreEntryPassword, trustStore);
 		} catch (UnrecoverableKeyException
 				| KeyManagementException
 				| KeyStoreException
@@ -39,15 +42,6 @@ public final class SSLUtils {
 				| IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	private static SSLContext createSSLContext_unsafe(final SSLConfiguration config) throws UnrecoverableKeyException,
-			KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-		final URL keystoreUrl = Resources.getResource(config.keystore);
-		final URL truststoreUrl = Resources.getResource(config.truststore);
-		final KeyStore keystore = loadKeyStore(keystoreUrl, config.keystorePassword);
-		final KeyStore truststore = loadKeyStore(truststoreUrl, config.truststorePassword);
-		return createSSLContext(keystore, config.keystoreEntryPassword, truststore);
 	}
 
 	private static SSLContext createSSLContext(final KeyStore keyStore,
