@@ -1,6 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -9,8 +8,45 @@
 		<version>0.6-SNAPSHOT</version>
 	</parent>
 
-	<name>Oversigt UI</name>
 	<artifactId>oversigt-ui</artifactId>
+
+	<name>Oversigt UI</name>
+	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+	<organization>
+		<name>Hapag-Lloyd AG</name>
+		<url>https://www.hapag-lloyd.com/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Hapag-Lloyd AG</name>
+			<url>https://www.hapag-lloyd.com/</url>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
+		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
+		<url>https://github.com/Hapag-Lloyd/oversigt</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis</system>
+		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
+	</ciManagement>
+
+	<properties>
+		<mdep.analyze.skip>true</mdep.analyze.skip>
+	</properties>
 
 	<build>
 		<plugins>
@@ -24,7 +60,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/target/angular2</outputDirectory>
+							<outputDirectory>${project.basedir}/target/angular2</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/angular2</directory>
@@ -39,8 +75,8 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>exec-maven-plugin</artifactId>
 				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.4.0</version>
 				<executions>
 					<execution>
@@ -55,7 +91,7 @@
 							<arguments>
 								<argument>install</argument>
 							</arguments>
-							<workingDirectory>${basedir}/target/angular2</workingDirectory>
+							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
 							<target>
 								<echo message="npm install" />
 							</target>
@@ -79,7 +115,7 @@
 								<argument>--base-href</argument>
 								<argument>/config/</argument>
 							</arguments>
-							<workingDirectory>${basedir}/target/angular2</workingDirectory>
+							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
 							<target>
 								<echo message="ng build"/>
 							</target>
@@ -90,7 +126,6 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
 				<executions>
 					<execution>
 						<id>add-resource</id>
@@ -101,7 +136,7 @@
 						<configuration>
 							<resources>
 								<resource>
-									<directory>${basedir}/target/angular2/dist</directory>
+									<directory>${project.basedir}/target/angular2/dist</directory>
 								</resource>
 							</resources>
 						</configuration>
