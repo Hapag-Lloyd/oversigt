@@ -9,7 +9,7 @@ public interface Authenticator extends AutoCloseable {
 
 	Principal readPrincipal(String username);
 
-	public class NoAuthenticator implements Authenticator {
+	class NoAuthenticator implements Authenticator {
 		@Override
 		public Principal login(final String username, final String password) {
 			return null;

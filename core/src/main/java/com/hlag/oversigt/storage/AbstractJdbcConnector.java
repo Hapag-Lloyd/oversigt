@@ -53,25 +53,17 @@ public abstract class AbstractJdbcConnector implements Closeable {
 
 	private PreparedStatement prepare(final String sql, final boolean returnGeneratedKeys, final Object... values)
 			throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("Preparing statement: {}", sql);
-			}
-			stmt = getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Preparing statement: {}", sql);
+		}
+		try (PreparedStatement stmt
+				= getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0)) {
 			if (values != null) {
-				for (int i = 0; i < values.length; ++i) {
+				for (int i = 0; i < values.length; i += 1) {
 					stmt.setObject(i + 1, getDialect().convertValue(values[i]));
 				}
 			}
 			return stmt;
-		} catch (final SQLException e) {
-			try {
-				if (stmt != null) {
-					stmt.close();
-				}
-			} catch (final SQLException e1) {}
-			throw e;
 		}
 	}
 
@@ -202,14 +194,6 @@ public abstract class AbstractJdbcConnector implements Closeable {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> List<T> load(final String table,
-			final String columnToRead,
-			final String columnToCheck,
-			final Object value) {
-		return load(table, columnToRead, columnToCheck, value, rs -> (T) rs.getObject(1));
-	}
-
-	@SuppressWarnings("unchecked")
 	protected <T> List<T> loadWithOneLike(final String table,
 			final String columnToRead,
 			final String[] columnsToCheck,
@@ -251,6 +235,14 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		return load(sql, rs -> readColumnValues(rs, columnNames), values);
 	}
 
+	@SuppressWarnings("unchecked")
+	protected <T> List<T> load(final String table,
+			final String columnToRead,
+			final String columnToCheck,
+			final Object value) {
+		return load(table, columnToRead, columnToCheck, value, rs -> (T) rs.getObject(1));
+	}
+
 	protected <T> List<T> load(final String table,
 			final String columnToRead,
 			final String columnToCheckA,
@@ -261,7 +253,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		final String sql = getDialect().select(table,
 				Arrays.asList(columnToRead),
 				Arrays.asList(Objects.requireNonNull(columnToCheckA), Objects.requireNonNull(columnToCheckB)));
-		return load(sql, converter, new Object[] { valueA, valueB });
+		return load(sql, converter, valueA, valueB);
 	}
 
 	protected <T> List<T> load(final String table,
@@ -283,27 +275,6 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		} catch (final Exception e) {
 			throw new DatabaseException("Unable to read", sql, e);
 		}
-	}
-
-	private Object[] simplify(final Object... objects) {
-		final List<Object> out = new ArrayList<>();
-		for (final Object object : objects) {
-			if (object instanceof Object[]) {
-				out.addAll(Arrays.asList((Object[]) object));
-			} else {
-				out.add(object);
-			}
-		}
-		return out.toArray();
-	}
-
-	protected <T> List<T> getList(final ResultSet rs, final ThrowingFunction<ResultSet, T> converter)
-			throws SQLException {
-		final List<T> list = new ArrayList<>();
-		while (rs.next()) {
-			list.add(converter.apply(rs));
-		}
-		return list;
 	}
 
 	protected <T> List<T> load(final String sql, final ThrowingFunction<ResultSet, T> converter) {
@@ -332,6 +303,27 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			LOGGER.debug("Executed SELECT ({} lines)", items.size());
 		}
 		return items;
+	}
+
+	private Object[] simplify(final Object... objects) {
+		final List<Object> out = new ArrayList<>();
+		for (final Object object : objects) {
+			if (object instanceof Object[]) {
+				out.addAll(Arrays.asList((Object[]) object));
+			} else {
+				out.add(object);
+			}
+		}
+		return out.toArray();
+	}
+
+	protected <T> List<T> getList(final ResultSet rs, final ThrowingFunction<ResultSet, T> converter)
+			throws SQLException {
+		final List<T> list = new ArrayList<>();
+		while (rs.next()) {
+			list.add(converter.apply(rs));
+		}
+		return list;
 	}
 
 	protected static Timestamp now() {

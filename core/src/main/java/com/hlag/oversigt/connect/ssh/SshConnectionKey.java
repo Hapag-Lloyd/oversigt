@@ -3,8 +3,7 @@ package com.hlag.oversigt.connect.ssh;
 import java.util.Comparator;
 
 class SshConnectionKey implements Comparable<SshConnectionKey> {
-	@SuppressWarnings("rawtypes")
-	protected static final Comparator COMPARATOR = //
+	protected static final Comparator<SshConnectionKey> COMPARATOR = //
 			Comparator.comparing(SshConnectionKey::getHostname)
 					.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
 					.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
@@ -33,7 +32,6 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 		return username;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public int compareTo(final SshConnectionKey that) {
 		return COMPARATOR.compare(this, that);

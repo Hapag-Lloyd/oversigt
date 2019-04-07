@@ -3,18 +3,18 @@ package com.hlag.oversigt.security;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Role {
+public final class Role {
 	public static final String ROLE_NAME_SERVER_ADMIN = "server.admin";
 
 	public static final String ROLE_NAME_GENERAL_DASHBOARD_OWNER = "server.dashboard.owner";
 
 	public static final String ROLE_NAME_GENERAL_DASHBOARD_EDITOR = "server.dashboard.editor";
 
-	static Role SERVER_ADMIN = new Role(null, ROLE_NAME_SERVER_ADMIN);
+	static final Role SERVER_ADMIN = new Role(null, ROLE_NAME_SERVER_ADMIN);
 
-	static Role DASHBOARD_OWNER = new Role(SERVER_ADMIN, ROLE_NAME_GENERAL_DASHBOARD_OWNER);
+	static final Role DASHBOARD_OWNER = new Role(SERVER_ADMIN, ROLE_NAME_GENERAL_DASHBOARD_OWNER);
 
-	static Role DASHBOARD_EDITOR = new Role(DASHBOARD_OWNER, ROLE_NAME_GENERAL_DASHBOARD_EDITOR);
+	static final Role DASHBOARD_EDITOR = new Role(DASHBOARD_OWNER, ROLE_NAME_GENERAL_DASHBOARD_EDITOR);
 
 	private static Map<String, Role> dashboardOwnerRoles = new HashMap<>();
 

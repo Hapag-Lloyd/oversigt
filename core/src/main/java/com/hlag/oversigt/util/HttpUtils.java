@@ -6,10 +6,6 @@ import io.undertow.util.StatusCodes;
 
 public final class HttpUtils {
 
-	private HttpUtils() {
-		throw new RuntimeException();
-	}
-
 	public static <T> T reloadWithGet(final HttpServerExchange exchange) {
 		return redirect(exchange, exchange.getRequestURI(), false, true);
 	}
@@ -18,7 +14,7 @@ public final class HttpUtils {
 			final String location,
 			final boolean permanent,
 			final boolean changeToGet) {
-		int code = StatusCodes.FOUND;
+		final int code;
 		if (permanent) {
 			if (changeToGet) {
 				code = StatusCodes.MOVED_PERMANENTLY;
@@ -80,15 +76,15 @@ public final class HttpUtils {
 	 * @param in byte[]
 	 * @return String
 	 */
-	public static String encodeByteArrayToUrlString(final byte in[]) {
-		byte ch = 0x00;
+	@SuppressWarnings("checkstyle:IllegalToken")
+	public static String encodeByteArrayToUrlString(final byte[] in) {
 		int i = 0;
 		if (in == null || in.length <= 0) {
 			return null;
 		}
 
-		final String pseudo[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
-		final StringBuilder out = new StringBuilder(in.length * 2);
+		final String[] pseudo = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
+		final StringBuilder out = new StringBuilder(2 * in.length);
 
 		while (i < in.length) {
 			// First check to see if we need ASCII or HEX
@@ -101,10 +97,10 @@ public final class HttpUtils {
 					|| in[i] == '.'
 					|| in[i] == '!') {
 				out.append((char) in[i]);
-				i++;
+				i += 1;
 			} else {
 				out.append('%');
-				ch = (byte) (in[i] & 0xF0); // Strip off high nibble
+				byte ch = (byte) (in[i] & 0xF0); // Strip off high nibble
 				ch = (byte) (ch >>> 4); // shift the bits down
 				ch = (byte) (ch & 0x0F); // must do this is high order bit is
 				// on!
@@ -113,13 +109,14 @@ public final class HttpUtils {
 				ch = (byte) (in[i] & 0x0F); // Strip off low nibble
 				out.append(pseudo[ch]); // convert the nibble to a
 				// String Character
-				i++;
+				i += 1;
 			}
 		}
 
-		final String rslt = new String(out);
+		return out.toString();
+	}
 
-		return rslt;
-
+	private HttpUtils() {
+		throw new UnsupportedOperationException();
 	}
 }

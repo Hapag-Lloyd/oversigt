@@ -28,7 +28,7 @@ class SshConnectionWithPassword extends SshConnection {
 		return session;
 	}
 
-	private static class FixedUserInfo implements UserInfo {
+	private static final class FixedUserInfo implements UserInfo {
 
 		private final String password;
 

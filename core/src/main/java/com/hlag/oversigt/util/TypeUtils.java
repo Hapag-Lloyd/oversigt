@@ -44,7 +44,7 @@ import com.hlag.oversigt.properties.SerializableProperty.Member;
 
 import de.larssh.utils.Nullables;
 
-public class TypeUtils {
+public final class TypeUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
 
@@ -68,7 +68,7 @@ public class TypeUtils {
 		LOGGER.info("Inspecting classes using ClassLoader[{}] and package[{}]",
 				Thread.currentThread().getContextClassLoader(),
 				packageToSearch);
-		Set<ClassInfo> classes;
+		final Set<ClassInfo> classes;
 		try {
 			classes = ClassPath//
 					.from(Thread.currentThread().getContextClassLoader())
@@ -87,15 +87,9 @@ public class TypeUtils {
 				.map(Optional::get)//
 				.filter(c -> !c.isInterface())//
 				.filter(filter)//
-				.filter(c -> (c.getModifiers() & Modifier.ABSTRACT) == 0)//
+				.filter(c -> !Modifier.isAbstract(c.getModifiers()))//
 				.map(c -> (Class<T>) c);
 		return stream;
-	}
-
-	public static void bindClasses(final Package packageToSearch,
-			final Predicate<Class<?>> filter,
-			final Binder binder) {
-		findClasses(packageToSearch, filter).forEach(binder::bind);
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final ClassLoader classLoader,
@@ -111,9 +105,15 @@ public class TypeUtils {
 				.map(Optional::get)
 				.filter(c -> !c.isInterface())//
 				.filter(predicate)//
-				.filter(c -> (c.getModifiers() & Modifier.ABSTRACT) == 0)//
+				.filter(c -> !Modifier.isAbstract(c.getModifiers()))//
 				.map(c -> (Class<T>) c);
 		return stream;
+	}
+
+	public static void bindClasses(final Package packageToSearch,
+			final Predicate<Class<?>> filter,
+			final Binder binder) {
+		findClasses(packageToSearch, filter).forEach(binder::bind);
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class TypeUtils {
 	private static Optional<Class<?>> loadClassInfo(final ClassInfo classInfo) {
 		try {
 			return Optional.of(classInfo.load());
-		} catch (Exception | NoClassDefFoundError e) {
+		} catch (final Exception | NoClassDefFoundError e) {
 			LOGGER.trace("Class cannot be loaded: {}", classInfo.getName(), e);
 			return Optional.empty();
 		}
@@ -135,7 +135,7 @@ public class TypeUtils {
 	private static Optional<Class<?>> loadClassInfo(final ClassLoader classLoader, final String className) {
 		try {
 			return Optional.of(classLoader.loadClass(className));
-		} catch (Exception | NoClassDefFoundError e) {
+		} catch (final Exception | NoClassDefFoundError e) {
 			LOGGER.trace("Class cannot be loaded: {}", className, e);
 			return Optional.empty();
 		}
@@ -163,8 +163,8 @@ public class TypeUtils {
 
 	public static Stream<String> getMembers(final Class<?> clazz) {
 		return streamFields(clazz) //
-				.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)
-				.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)
+				.filter(f -> !Modifier.isTransient(f.getModifiers()))
+				.filter(f -> !Modifier.isStatic(f.getModifiers()))
 				.map(Field::getName);
 	}
 
@@ -196,12 +196,12 @@ public class TypeUtils {
 		try {
 			members.add(new SerializablePropertyMember(SerializableProperty.class.getDeclaredField("id")));
 			members.add(new SerializablePropertyMember(SerializableProperty.class.getDeclaredField("name")));
-		} catch (NoSuchFieldException | SecurityException e) {
+		} catch (final NoSuchFieldException | SecurityException e) {
 			throw new RuntimeException("Unable to find standard values", e);
 		}
 		members.addAll(streamFields(clazz)//
-				.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)//
-				.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)//
+				.filter(f -> !Modifier.isTransient(f.getModifiers()))//
+				.filter(f -> !Modifier.isStatic(f.getModifiers()))//
 				.map(SerializablePropertyMember::new)//
 				.collect(Collectors.toList()));
 		members = new ArrayList<>(members);
@@ -219,16 +219,15 @@ public class TypeUtils {
 	@SuppressWarnings("unchecked")
 	public static <C> Constructor<C> getAppropriateConstructor(final Class<C> c, final Object[] initArguments) {
 		final Object[] initArgs = Nullables.orElseGet(initArguments, () -> new Object[0]);
-		for (@SuppressWarnings("rawtypes")
-		final Constructor con : c.getDeclaredConstructors()) {
-			@SuppressWarnings("rawtypes")
-			final Class[] types = con.getParameterTypes();
+		for (final Constructor<?> constructor : c.getDeclaredConstructors()) {
+			final Class<?>[] types = constructor.getParameterTypes();
 			if (types.length != initArgs.length) {
 				continue;
 			}
 			boolean match = true;
-			for (int i = 0; i < types.length; i++) {
-				final Class<?> need = types[i], got = initArgs[i].getClass();
+			for (int i = 0; i < types.length; i += 1) {
+				final Class<?> need = types[i];
+				final Class<?> got = initArgs[i].getClass();
 				if (!need.isAssignableFrom(got)) {
 					if (need.isPrimitive()) {
 						match = int.class.equals(need) && Integer.class.equals(got)
@@ -246,7 +245,7 @@ public class TypeUtils {
 				}
 			}
 			if (match) {
-				return con;
+				return (Constructor<C>) constructor;
 			}
 		}
 		throw new IllegalArgumentException("Cannot find an appropriate constructor for class "
@@ -307,7 +306,7 @@ public class TypeUtils {
 					.stream(clazz.getDeclaredConstructors())//
 					.filter(c -> c.getParameterCount() == parameters.length)
 					.filter(c -> {
-						for (int i = 0; i < parameters.length; ++i) {
+						for (int i = 0; i < parameters.length; i += 1) {
 							if (!c.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {
 								return false;
 							}
@@ -320,7 +319,7 @@ public class TypeUtils {
 				constructors.get(0).setAccessible(true);
 				try {
 					return (T) constructors.get(0).newInstance(parameters);
-				} catch (InstantiationException
+				} catch (final InstantiationException
 						| IllegalAccessException
 						| IllegalArgumentException
 						| InvocationTargetException e) {
@@ -330,11 +329,11 @@ public class TypeUtils {
 
 			final List<Method> fabricMethods = Arrays//
 					.stream(clazz.getDeclaredMethods())//
-					.filter(m -> (m.getModifiers() & Modifier.STATIC) != 0)//
+					.filter(m -> Modifier.isStatic(m.getModifiers()))//
 					.filter(m -> m.getParameterTypes().length == parameters.length)//
 					.filter(m -> clazz.isAssignableFrom(m.getReturnType()))//
 					.filter(m -> {
-						for (int i = 0; i < parameters.length; ++i) {
+						for (int i = 0; i < parameters.length; i += 1) {
 							if (!m.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {
 								return false;
 							}
@@ -441,7 +440,11 @@ public class TypeUtils {
 	private static final Comparator<Method> CLASS_DEPTH_COMPARATOR
 			= (a, b) -> -Integer.compare(getClassDepth(a.getReturnType()), getClassDepth(b.getReturnType()));
 
-	private static class IndexOfComparator implements Comparator<Method> {
+	private TypeUtils() {
+		throw new UnsupportedOperationException();
+	}
+
+	private static final class IndexOfComparator implements Comparator<Method> {
 		private final List<String> methodNames;
 
 		private IndexOfComparator(final List<String> methodNames) {
@@ -454,7 +457,7 @@ public class TypeUtils {
 		}
 	}
 
-	public static class SerializablePropertyMember {
+	public static final class SerializablePropertyMember {
 		private final Field field;
 
 		private final String name;
@@ -521,7 +524,7 @@ public class TypeUtils {
 		public void set(final SerializableProperty property, final Object object) throws MemberMissingException {
 			try {
 				field.set(property, object);
-			} catch (IllegalArgumentException | IllegalAccessException e) {
+			} catch (final IllegalArgumentException | IllegalAccessException e) {
 				throw new RuntimeException("Unable to set value of member '" + getName() + "': " + object.toString(),
 						e);
 			}
@@ -530,7 +533,7 @@ public class TypeUtils {
 		public Object get(final SerializableProperty property) {
 			try {
 				return field.get(property);
-			} catch (IllegalArgumentException | IllegalAccessException e) {
+			} catch (final IllegalArgumentException | IllegalAccessException e) {
 				throw new RuntimeException("Unable to get value of member '" + getName() + "'", e);
 			}
 		}
@@ -609,19 +612,21 @@ public class TypeUtils {
 				final Class<?> type = field.getType();
 				if (type == String.class && field.getName().toLowerCase().contains("password")) {
 					return password;
-				} else if (type == Color.class) {
-					return color;
-				} else if (type == String.class) {
-					return text;
-				} else if (Number.class.isAssignableFrom(type) || type.isPrimitive() && type != boolean.class) {
-					return number;
-				} else {
-					throw new RuntimeException("Unknown class: " + type.getName());
 				}
+				if (type == Color.class) {
+					return color;
+				}
+				if (type == String.class) {
+					return text;
+				}
+				if (Number.class.isAssignableFrom(type) || type.isPrimitive() && type != boolean.class) {
+					return number;
+				}
+				throw new RuntimeException("Unknown class: " + type.getName());
 			}
 		}
 
-		public static class MemberMissingException extends Exception {
+		public static final class MemberMissingException extends Exception {
 			private static final long serialVersionUID = 9022818290418219308L;
 
 			private MemberMissingException(final String message) {
@@ -631,7 +636,7 @@ public class TypeUtils {
 		}
 	}
 
-	public static class ClassProxy implements InvocationHandler {
+	public static final class ClassProxy implements InvocationHandler {
 		@SuppressWarnings("unchecked")
 		public static <T> T create(final Class<T> clazz, final ReturnValue... returns) {
 			return (T) Proxy.newProxyInstance(ClassProxy.class.getClassLoader(),
@@ -655,7 +660,7 @@ public class TypeUtils {
 		}
 	}
 
-	public static class ReturnValue {
+	public static final class ReturnValue {
 		public static ReturnValue find(final Class<?> clazz, final String methodName, final Object returnValue) {
 			return new ReturnValue(Arrays.stream(clazz.getMethods())//
 					.filter(m -> m.getName().equals(methodName))

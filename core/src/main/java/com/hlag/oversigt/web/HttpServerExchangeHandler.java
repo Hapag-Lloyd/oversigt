@@ -71,7 +71,7 @@ public class HttpServerExchangeHandler {
 	FormData getFormData(final HttpServerExchange exchange) throws IOException {
 		final Builder builder = FormParserFactory.builder();
 		builder.setDefaultCharset("UTF-8");
-		try (final FormDataParser parser = builder.build().createParser(exchange)) {
+		try (FormDataParser parser = builder.build().createParser(exchange)) {
 			return parser.parseBlocking();
 		}
 	}

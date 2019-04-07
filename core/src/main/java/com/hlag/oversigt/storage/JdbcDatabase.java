@@ -65,8 +65,8 @@ import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
 
 @Singleton
-public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
-	private static final Logger LOGGER = LoggerFactory.getLogger(JDBCDatabase.class);
+public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcDatabase.class);
 
 	private static final String TYPE_PROPERTY = "PROPERTY";
 
@@ -81,7 +81,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 	private final JsonUtils json;
 
 	@Inject
-	public JDBCDatabase(final SqlDialect dialect,
+	public JdbcDatabase(final SqlDialect dialect,
 			@Named("databaseLocation") final String databaseLocation,
 			@Named("databaseName") final String schema,
 			@Named("databaseUsername") final String username,
@@ -101,7 +101,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 			checkTable(TABLE_WIDGET, COLUMN_OPTIONS_WIDGET);
 			checkTable(TABLE_WIDGET_DATA, COLUMN_OPTIONS_WIDGET_DATA);
 			checkTable(TABLE_VALUES, COLUMN_OPTIONS_VALUES);
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (final SQLException | ClassNotFoundException e) {
 			throw new RuntimeException("Unable to create database connection", e);
 		}
 	}
@@ -122,7 +122,7 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 				final String sql = getDialect().createTable(tableName, options);
 				executeUpdate(sql);
 			} else {
-				List<Map<String, Object>> columnProperties;
+				final List<Map<String, Object>> columnProperties;
 				try (ResultSet columns = databaseMetaData.getColumns(null, null, tableName, "%")) {
 					columnProperties = load(columns,
 							rs -> readColumnValues(rs,
@@ -135,10 +135,10 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 				}
 				for (final ColumnOptions option : options) {
 					final Optional<Map<String, Object>> foundColumnProperties = columnProperties.stream()
-							.filter(cp -> option.name.equals(cp.get("COLUMN_NAME")))
+							.filter(cp -> option.getName().equals(cp.get("COLUMN_NAME")))
 							.findFirst();
 					if (!foundColumnProperties.isPresent()) {
-						LOGGER.info("Altering table " + tableName + ". Adding column " + option.name);
+						LOGGER.info("Altering table " + tableName + ". Adding column " + option.getName());
 						final String sql = getDialect().alterTableAddColumn(tableName, option);
 						executeUpdate(sql);
 					} else {
@@ -477,6 +477,20 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 		createOrUpdateWidgetProperties(widget.getId(), values, exisitingNames);
 	}
 
+	private void createOrUpdateWidgetProperties(final int widgetId,
+			final Map<String, String> entries,
+			final Collection<String> exisitingNames) {
+		for (final Entry<String, String> e : entries.entrySet()) {
+			if (exisitingNames.contains(e.getKey())) {
+				// update
+				updateByTwoKey(TABLE_WIDGET_DATA, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
+			} else {
+				// create
+				insert(TABLE_WIDGET_DATA, null, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
+			}
+		}
+	}
+
 	@Override
 	public List<Widget> loadWidgetDatas(final Dashboard dashboard,
 			final Function<String, EventSourceInstance> instanceProvider) {
@@ -584,20 +598,6 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 		createOrUpdateWidgetProperties(widget);
 	}
 
-	private void createOrUpdateWidgetProperties(final int widgetId,
-			final Map<String, String> entries,
-			final Collection<String> exisitingNames) {
-		for (final Entry<String, String> e : entries.entrySet()) {
-			if (exisitingNames.contains(e.getKey())) {
-				// update
-				updateByTwoKey(TABLE_WIDGET_DATA, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
-			} else {
-				// create
-				insert(TABLE_WIDGET_DATA, null, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
-			}
-		}
-	}
-
 	@Override
 	public void deleteWidget(final Widget widget) {
 		deleteWidget(widget.getId());
@@ -653,10 +653,10 @@ public class JDBCDatabase extends AbstractJdbcConnector implements Storage {
 		params[0] = id;
 		params[1] = name;
 		System.arraycopy(parameters, 0, params, 2, parameters.length);
-		T value;
+		final T value;
 		try {
 			value = TypeUtils.getAppropriateConstructor(clazz, params).newInstance(params);
-		} catch (InstantiationException
+		} catch (final InstantiationException
 				| IllegalAccessException
 				| IllegalArgumentException
 				| InvocationTargetException e) {

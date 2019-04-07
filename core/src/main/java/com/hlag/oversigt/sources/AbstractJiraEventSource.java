@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -112,7 +111,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			issuesPerCategory = issuesPerCategory.entrySet()
 					.stream()
 					.filter(e -> !e.getValue().isEmpty())
-					.collect(de.larssh.utils.Collectors.toLinkedHashMap(Entry::getKey, Entry::getValue));
+					.collect(de.larssh.utils.Collectors.toLinkedHashMap());
 		}
 
 		return issuesPerCategory;

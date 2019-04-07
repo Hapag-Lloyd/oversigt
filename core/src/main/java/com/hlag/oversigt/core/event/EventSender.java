@@ -253,7 +253,7 @@ public class EventSender {
 		return !event.getClass().isAnnotationPresent(NoCache.class);
 	}
 
-	private static class EventSendTask {
+	private static final class EventSendTask {
 		private ServerSentEventConnection connection;
 
 		private OversigtEvent event;

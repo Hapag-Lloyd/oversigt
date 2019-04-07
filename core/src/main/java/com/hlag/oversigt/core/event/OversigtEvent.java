@@ -5,6 +5,7 @@ import static java.time.LocalDateTime.now;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -27,7 +28,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 
 	private String moreinfo = null;
 
-	private final transient LocalDateTime internal_createdOn = now();
+	private final transient LocalDateTime createdOn = now();
 
 	private transient Duration lifetime = null;
 
@@ -55,7 +56,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	boolean isValid() {
-		return internal_createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());
+		return createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());
 	}
 
 	void setApplicationId(final String applicationId) {
@@ -88,7 +89,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 
 	@JsonIgnore
 	public LocalDateTime getCreatedOn() {
-		return internal_createdOn;
+		return createdOn;
 	}
 
 	@Override
@@ -97,15 +98,29 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	@Override
+	public boolean equals(final Object object) {
+		if (!(object instanceof OversigtEvent)) {
+			return false;
+		}
+		return Objects.equals(getId(), ((OversigtEvent) object).getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(getId());
+	}
+
+	@Override
 	public int compareTo(final OversigtEvent that) {
 		if (id == null && that.id == null) {
 			return 0;
-		} else if (id == null) {
-			return -1;
-		} else if (that.id == null) {
-			return 1;
-		} else {
-			return getId().compareTo(that.getId());
 		}
+		if (id == null) {
+			return -1;
+		}
+		if (that.id == null) {
+			return 1;
+		}
+		return getId().compareTo(that.getId());
 	}
 }

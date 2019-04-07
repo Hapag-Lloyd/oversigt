@@ -55,7 +55,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	protected TextEvent produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
 
-		String body;
+		final String body;
 		try {
 			body = downloadString(createConfiguredConnection());
 			logDebug(getLogger(), "Downloaded body");
@@ -68,7 +68,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		final List<?> elements = extractElements(body);
 		logDebug(getLogger(), "Extracted text: %s", elements.toString());
 
-		String output;
+		final String output;
 		if (elements.isEmpty()) {
 			output = getDefaultValue();
 		} else if (hasStringFormat()) {

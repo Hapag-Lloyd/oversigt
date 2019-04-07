@@ -7,6 +7,7 @@ import static com.hlag.oversigt.util.Utils.logTrace;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -60,17 +61,19 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private String processValueExtractions(final String downloadedContent) {
-		Object value = Arrays//
-				.stream(getValueExtractions())
+		Object value = Arrays.stream(getValueExtractions())
 				.filter(ve -> ve.filter(downloadedContent))
 				.map(ve -> ve.process(downloadedContent))
 				.collect(getSummarization().getCollector());
 		if (value instanceof Optional) {
-			value = ((Optional) value).orElse("");
+			final Optional<?> optional = (Optional<?>) value;
+			if (!optional.isPresent()) {
+				return "";
+			}
+			value = optional.get();
 		}
-		return value.toString();
+		return Objects.toString(value);
 	}
 
 	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match")

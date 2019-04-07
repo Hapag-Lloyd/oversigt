@@ -100,9 +100,10 @@ public class DashboardController {
 	private static final Collection<String> RESERVED_DATA_BINDINGS = Arrays.asList("title");
 
 	private static DashboardController instance = null;
+
 	{
 		instance = this;
-		EventSourceKey.eventSourceRenamer.set(this::updateEventSourceClasses);
+		EventSourceKey.setEventSourceRenamer(this::updateEventSourceClasses);
 	}
 
 	static DashboardController getInstance() {
@@ -136,9 +137,9 @@ public class DashboardController {
 	private final Collection<EventSourceDescriptor> eventSourceDescriptors = new HashSet<>();
 
 	// access to this map is synchronized through the lock object
-	private final SimpleReadWriteLock eventSourceInstances_lock = new SimpleReadWriteLock();
+	private final SimpleReadWriteLock eventSourceInstancesLock = new SimpleReadWriteLock();
 
-	private volatile Map<EventSourceInstance, Service> eventSourceInstances_internal = new HashMap<>();
+	private volatile Map<EventSourceInstance, Service> eventSourceInstancesInternal = new HashMap<>();
 
 	public Collection<String> getDashboardIds() {
 		return dashboards.keySet();
@@ -146,17 +147,6 @@ public class DashboardController {
 
 	public Dashboard getDashboard(final String id) {
 		return dashboards.get(id);
-	}
-
-	public void loadDashboards() {
-		dashboards.clear();
-		dashboards.putAll(storage//
-				.loadDashboards()
-				.stream()
-				.peek(db -> LOGGER.info("Loading dashboard: {} ({})", db.getId(), db.getTitle()))
-				.peek(db -> db.getModifiableWidgets()//
-						.addAll(storage.loadWidgetDatas(db, this::getEventSourceInstance)))
-				.collect(toMap(Dashboard::getId, Function.identity())));
 	}
 
 	Dashboard getDashboard(final Widget widget) {
@@ -168,6 +158,17 @@ public class DashboardController {
 						.anyMatch(i -> i == widget.getId()))
 				.findAny()
 				.get();
+	}
+
+	public void loadDashboards() {
+		dashboards.clear();
+		dashboards.putAll(storage//
+				.loadDashboards()
+				.stream()
+				.peek(db -> LOGGER.info("Loading dashboard: {} ({})", db.getId(), db.getTitle()))
+				.peek(db -> db.getModifiableWidgets()//
+						.addAll(storage.loadWidgetDatas(db, this::getEventSourceInstance)))
+				.collect(toMap(Dashboard::getId, Function.identity())));
 	}
 
 	/**
@@ -312,8 +313,8 @@ public class DashboardController {
 		final List<String> classNamesToLoad;
 		try {
 			classNamesToLoad = TypeUtils.listClassesInJarFiles(jarFileUrls);
-		} catch (final IOException e1) {
-			throw new RuntimeException("Unable to scan JAR files", e1);
+		} catch (final IOException e) {
+			throw new RuntimeException("Unable to scan JAR files", e);
 		}
 		@SuppressWarnings("resource")
 		final ClassLoader addonClassLoader
@@ -362,43 +363,43 @@ public class DashboardController {
 
 	@SuppressWarnings("unchecked")
 	private <S extends Service> S getService(final EventSourceInstance instance) {
-		return eventSourceInstances_lock.read(() -> (S) eventSourceInstances_internal.get(instance));
+		return eventSourceInstancesLock.read(() -> (S) eventSourceInstancesInternal.get(instance));
 	}
 
 	private void setService(final EventSourceInstance instance, final Service service) {
-		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.put(instance, service));
+		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, service));
 	}
 
 	private void unsetService(final EventSourceInstance instance) {
-		eventSourceInstances_lock.write(() -> eventSourceInstances_internal.put(instance, null));
+		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, null));
 	}
 
 	private void removeEventSourceInstance(final EventSourceInstance instance) {
-		eventSourceInstances_lock.write(() -> {
+		eventSourceInstancesLock.write(() -> {
 			/*
 			 * This method is a work around because (why ever)
 			 * <code>eventSourceInstances_internal.remove(instance);</code> didn't work and
 			 * did not remove the instance from the map.
 			 */
-			final Map<EventSourceInstance, Service> newMap = eventSourceInstances_internal.entrySet()
+			final Map<EventSourceInstance, Service> newMap = eventSourceInstancesInternal.entrySet()
 					.stream()
 					.filter(e -> !e.getKey().equals(instance))
 					.collect(LinkedHashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), LinkedHashMap::putAll);
-			eventSourceInstances_internal.clear();
-			eventSourceInstances_internal.putAll(newMap);
+			eventSourceInstancesInternal.clear();
+			eventSourceInstancesInternal.putAll(newMap);
 		});
 	}
 
 	public Collection<EventSourceInstance> getEventSourceInstances() {
-		return eventSourceInstances_lock.read(() -> new HashSet<>(eventSourceInstances_internal.keySet()));
+		return eventSourceInstancesLock.read(() -> new HashSet<>(eventSourceInstancesInternal.keySet()));
 	}
 
 	public EventSourceInstance getEventSourceInstance(final String id) {
-		return eventSourceInstances_lock.read(() -> eventSourceInstances_internal.keySet()
-				.stream()
-				.filter(i -> id.equals(i.getId()))
-				.findAny()
-				.get()); // TODO replace by orElseThrow()
+		return eventSourceInstancesLock.read(
+				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get()); // TODO
+																															// replace
+																															// by
+																															// orElseThrow()
 	}
 
 	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewName) {
@@ -512,7 +513,7 @@ public class DashboardController {
 					} else {
 						return value.toString();
 					}
-		} catch (IllegalArgumentException | SecurityException e) {
+		} catch (final IllegalArgumentException | SecurityException e) {
 			throw new RuntimeException("Unable to convert property '" + property.getName() + "' to string", e);
 		}
 	}
@@ -735,16 +736,6 @@ public class DashboardController {
 		return deleteEventSourceInstance(eventSourceId, false);
 	}
 
-	public Set<String> getEventSourceInstanceUsage(final String eventSourceId) {
-		return dashboards.values()
-				.stream()
-				.filter(d -> d.getWidgets()
-						.stream()
-						.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
-				.map(Dashboard::getId)
-				.collect(toSet());
-	}
-
 	public Set<String> deleteEventSourceInstance(final String eventSourceId, final boolean force) {
 		final EventSourceInstance instance = getEventSourceInstance(eventSourceId);
 
@@ -770,6 +761,16 @@ public class DashboardController {
 		return null;
 	}
 
+	public Set<String> getEventSourceInstanceUsage(final String eventSourceId) {
+		return dashboards.values()
+				.stream()
+				.filter(d -> d.getWidgets()
+						.stream()
+						.anyMatch(w -> w.getEventSourceInstance().getId().equals(eventSourceId)))
+				.map(Dashboard::getId)
+				.collect(toSet());
+	}
+
 	private <T extends Service> T createServiceInstance(final Class<T> serviceClass,
 			final Class<? extends Module> moduleClass,
 			final String id) {
@@ -787,8 +788,8 @@ public class DashboardController {
 		return TypeUtils.createInstance(moduleClass);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Object createObjectFromString(final EventSourceProperty property, final String string) {
+	@SuppressWarnings("unchecked")
+	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property, final String string) {
 		final Class<?> type = property.getClazz();
 		try {
 			if (type == null || String.class == type) {
@@ -822,11 +823,11 @@ public class DashboardController {
 				throw new RuntimeException("Unknown primitive type: " + type);
 			}
 			if (Enum.class.isAssignableFrom(type)) {
-				Enum enumValue = null;
+				final Enum<T> enumValue;
 				if (string != null) {
-					enumValue = Enum.valueOf((Class<Enum>) type, string);
+					enumValue = Enum.valueOf((Class<T>) type, string);
 				} else {
-					enumValue = (Enum) type.getEnumConstants()[0];
+					enumValue = (Enum<T>) type.getEnumConstants()[0];
 				}
 				// method.invoke(eventSource, enumValue);
 				return enumValue;
@@ -993,6 +994,42 @@ public class DashboardController {
 		return esProperty;
 	}
 
+	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
+		final String displayName;
+		final String description;
+		final String inputType;
+		final boolean customValuesAllowed;
+		final List<String> allowedValues = new ArrayList<>();
+
+		if (properties != null) {
+			displayName = properties.getProperty("dataItem." + name + ".title", name);
+			description = properties.getProperty("dataItem." + name + ".description");
+			inputType = properties.getProperty("dataItem." + name + ".type", "text");
+			customValuesAllowed = Boolean
+					.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
+			allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
+		} else {
+			displayName = name;
+			description = null;
+			inputType = "text";
+			customValuesAllowed = false;
+		}
+
+		final EventSourceProperty property = new EventSourceProperty(name,
+				displayName,
+				Strings.emptyToNull(description),
+				getType(displayName, inputType, null, false, allowedValues),
+				customValuesAllowed,
+				null,
+				null,
+				null,
+				null,
+				false,
+				null);
+		allowedValues.forEach(v -> property.addAllowedValue(v, v));
+		return property;
+	}
+
 	private Map<String, String> collectAllowedValues(final Class<?> clazz) {
 		if (clazz.isEnum()) {
 			return Stream.of(clazz.getEnumConstants())//
@@ -1146,42 +1183,6 @@ public class DashboardController {
 				.forEach(descriptor::addDataItem);
 
 		return descriptor;
-	}
-
-	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
-		final String displayName;
-		final String description;
-		final String inputType;
-		final boolean customValuesAllowed;
-		final List<String> allowedValues = new ArrayList<>();
-
-		if (properties != null) {
-			displayName = properties.getProperty("dataItem." + name + ".title", name);
-			description = properties.getProperty("dataItem." + name + ".description");
-			inputType = properties.getProperty("dataItem." + name + ".type", "text");
-			customValuesAllowed = Boolean
-					.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
-			allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
-		} else {
-			displayName = name;
-			description = null;
-			inputType = "text";
-			customValuesAllowed = false;
-		}
-
-		final EventSourceProperty property = new EventSourceProperty(name,
-				displayName,
-				Strings.emptyToNull(description),
-				getType(displayName, inputType, null, false, allowedValues),
-				customValuesAllowed,
-				null,
-				null,
-				null,
-				null,
-				false,
-				null);
-		allowedValues.forEach(v -> property.addAllowedValue(v, v));
-		return property;
 	}
 
 	private static void addDataItemsFromHtml(final Collection<String> dataItems, final Path folder) throws IOException {

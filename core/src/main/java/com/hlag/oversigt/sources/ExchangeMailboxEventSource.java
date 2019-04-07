@@ -75,15 +75,6 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		return createEvent(categoryInfos, mails.size());
 	}
 
-	private Set<CategoryInfo> createCategoryInfos() {
-		final Set<CategoryInfo> infos = new LinkedHashSet<>();
-		infos.add(new CategoryInfo(getDefaultDisplayOption()));
-		for (final DisplayOption option : getDisplayOptions()) {
-			infos.add(new CategoryInfo(option));
-		}
-		return infos;
-	}
-
 	private HlBarChartEvent createEvent(final Set<CategoryInfo> categoryInfos, final int noOfMails) {
 		final List<Category> categories = new ArrayList<>();
 		final int maxNumberOfMails = Math.max(3, getMaxNumberOfMails(categoryInfos));
@@ -100,6 +91,15 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 			}
 		}
 		return new HlBarChartEvent(categories, Integer.toString(noOfMails));
+	}
+
+	private Set<CategoryInfo> createCategoryInfos() {
+		final Set<CategoryInfo> infos = new LinkedHashSet<>();
+		infos.add(new CategoryInfo(getDefaultDisplayOption()));
+		for (final DisplayOption option : getDisplayOptions()) {
+			infos.add(new CategoryInfo(option));
+		}
+		return infos;
 	}
 
 	private Serie createStrechedSerie(final Color backgroundColor, final int value, final int maximum) {
@@ -139,52 +139,9 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 			info = infos.stream().filter(i -> i.option == getDefaultDisplayOption()).findAny().get();
 		}
 
-		info.total++;
+		info.total += 1;
 		if (!mail.isRead()) {
-			info.unread++;
-		}
-	}
-
-	private static class CategoryInfo {
-
-		private final DisplayOption option;
-
-		private int total = 0;
-
-		private int unread = 0;
-
-		CategoryInfo(final DisplayOption option) {
-			this.option = Objects.requireNonNull(option);
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (option.getDisplayValue() == null ? 0 : option.getDisplayValue().hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object that) {
-			if (this == that) {
-				return true;
-			}
-			if (that == null) {
-				return false;
-			}
-			if (this.getClass() != that.getClass()) {
-				return false;
-			}
-			final CategoryInfo thatOther = (CategoryInfo) that;
-			if (option.getDisplayValue() == null) {
-				if (thatOther.option.getDisplayValue() != null) {
-					return false;
-				}
-			} else if (!option.getDisplayValue().equals(thatOther.option.getDisplayValue())) {
-				return false;
-			}
-			return true;
+			info.unread += 1;
 		}
 	}
 
@@ -277,5 +234,48 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	public void setReloadInterval(final Duration reloadInterval) {
 		this.reloadInterval = reloadInterval;
+	}
+
+	private static class CategoryInfo {
+
+		private final DisplayOption option;
+
+		private int total = 0;
+
+		private int unread = 0;
+
+		CategoryInfo(final DisplayOption option) {
+			this.option = Objects.requireNonNull(option);
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (option.getDisplayValue() == null ? 0 : option.getDisplayValue().hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object that) {
+			if (this == that) {
+				return true;
+			}
+			if (that == null) {
+				return false;
+			}
+			if (this.getClass() != that.getClass()) {
+				return false;
+			}
+			final CategoryInfo thatOther = (CategoryInfo) that;
+			if (option.getDisplayValue() == null) {
+				if (thatOther.option.getDisplayValue() != null) {
+					return false;
+				}
+			} else if (!option.getDisplayValue().equals(thatOther.option.getDisplayValue())) {
+				return false;
+			}
+			return true;
+		}
 	}
 }

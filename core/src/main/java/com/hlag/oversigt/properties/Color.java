@@ -263,8 +263,11 @@ public class Color {
 		final float g;
 		final float b;
 
+		// achromatic
 		if (s == 0f) {
-			r = g = b = l; // achromatic
+			r = l;
+			g = l;
+			b = l;
 		} else {
 			final float q = l < 0.5f ? l * (1 + s) : l + s - l * s;
 			final float p = 2 * l - q;

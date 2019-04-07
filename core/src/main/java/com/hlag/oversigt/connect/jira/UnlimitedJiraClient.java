@@ -13,7 +13,7 @@ import com.google.common.collect.Table;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
-class UnlimitedJiraClient implements JiraClient {
+final class UnlimitedJiraClient implements JiraClient {
 
 	private static final Table<String, String, UnlimitedJiraClient> CLIENT_CACHE = HashBasedTable.create();
 
@@ -27,11 +27,11 @@ class UnlimitedJiraClient implements JiraClient {
 		return CLIENT_CACHE.get(connection.getUrl(), credentials.getUsername());
 	}
 
-	final ServerConnection connection;
+	private final ServerConnection connection;
 
-	final Credentials credentials;
+	private final Credentials credentials;
 
-	volatile JiraRestClient jiraClient;
+	private volatile JiraRestClient jiraClient;
 
 	private UnlimitedJiraClient(final ServerConnection connection, final Credentials credentials)
 			throws JiraClientException {

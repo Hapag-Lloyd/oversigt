@@ -54,10 +54,6 @@ public class JsonUtils {
 		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
 	}
 
-	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
-		return (json, type, context) -> converter.apply(json.getAsString());
-	}
-
 	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
 		return new StdSerializer<T>(clazz) {
 			private static final long serialVersionUID = 1L;
@@ -68,6 +64,10 @@ public class JsonUtils {
 				gen.writeString(converter.apply(value));
 			}
 		};
+	}
+
+	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
+		return (json, type, context) -> converter.apply(json.getAsString());
 	}
 
 	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,
@@ -158,7 +158,7 @@ public class JsonUtils {
 
 	@SuppressWarnings("unchecked")
 	public String toJsonSchema(final Class<?> clazz, final JsonHint hint) {
-		Map<String, Object> schema;
+		final Map<String, Object> schema;
 		if (!SerializableProperty.class.isAssignableFrom(clazz)) {
 			schema = map("$schema",
 					"http://json-schema.org/schema#",
@@ -194,7 +194,7 @@ public class JsonUtils {
 				ids.add(0, 0);
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
-		} catch (NoSuchFieldException | SecurityException ignore) {}
+		} catch (final NoSuchFieldException | SecurityException ignore) {}
 		return map("type",
 				"string",
 				"uniqueItems",
@@ -269,9 +269,7 @@ public class JsonUtils {
 				}
 			}
 			return map;
-		} else if (clazz == Color.class)
-
-		{
+		} else if (clazz == Color.class) {
 			return map("type", "string", "format", "color");
 		} else if (clazz == LocalDate.class) {
 			return map("type", "string", "format", "date");
@@ -280,8 +278,8 @@ public class JsonUtils {
 		} else {
 			// check for notnull
 			final List<Field> fields = TypeUtils.streamFields(clazz)
-					.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)//
-					.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)//
+					.filter(f -> !Modifier.isTransient(f.getModifiers()))//
+					.filter(f -> !Modifier.isStatic(f.getModifiers()))//
 					.collect(Collectors.toList());
 			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
 			for (final Field field : fields) {
@@ -317,16 +315,6 @@ public class JsonUtils {
 		}
 	}
 
-	private static boolean isRequired(final Field field) {
-		if (field.isAnnotationPresent(Nullable.class)) {
-			return false;
-		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {
-			return field.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class).required();
-		} else {
-			return true;
-		}
-	}
-
 	private static Map<String, Object> toJsonSchema_internal(final Type type, final JsonHint hint) {
 		if (type instanceof Class) {
 			JsonHint jsonHint = hint;
@@ -344,6 +332,16 @@ public class JsonUtils {
 			return map();
 		} else {
 			throw new RuntimeException("Unknown type: " + type);
+		}
+	}
+
+	private static boolean isRequired(final Field field) {
+		if (field.isAnnotationPresent(Nullable.class)) {
+			return false;
+		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {
+			return field.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class).required();
+		} else {
+			return true;
 		}
 	}
 

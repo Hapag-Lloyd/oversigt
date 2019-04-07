@@ -52,11 +52,11 @@ import com.google.inject.name.Named;
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
-	private static int SOCKET_TIMEOUT = 60;
+	private static int socketTimeout = 60;
 
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
 		final HttpClientOptions options = new HttpClientOptions();
-		options.setSocketTimeout(SOCKET_TIMEOUT, TimeUnit.SECONDS); // XXX
+		options.setSocketTimeout(socketTimeout, TimeUnit.SECONDS); // XXX
 
 		final DefaultHttpClientFactory<?> defaultHttpClientFactory
 				= new DefaultHttpClientFactory<>(new NoOpEventPublisher(),
@@ -116,7 +116,7 @@ public class AsynchronousHttpClientFactory {
 	 * These properties are used to present JRJC as a User-Agent during http
 	 * requests.
 	 */
-	private static class RestClientApplicationProperties implements ApplicationProperties {
+	private static final class RestClientApplicationProperties implements ApplicationProperties {
 
 		private final String baseUrl;
 

@@ -115,7 +115,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 							.plusDays(1)
 							.atStartOfDay(getZoneId()));
 
-			FindItemsResults<Appointment> findResults;
+			final FindItemsResults<Appointment> findResults;
 			try {
 				findResults = service.get().findAppointments(WellKnownFolderName.Calendar, calendarView);
 			} catch (final Exception e) {
@@ -132,7 +132,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			final LocalDate now = LocalDate.now(getZoneId());
 
 			// for all day appointments, write "ganztägig"
-			String duration;
+			final String duration;
 
 			if (appointment.getIsAllDayEvent()) {
 				final LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
@@ -197,7 +197,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 		final HolidayManager m = HolidayManager.getInstance(ManagerParameters.create(getHolidayCalendar()));
 		final String area = Strings.emptyToNull(getHolidayArea());
-		Set<Holiday> holidays;
+		final Set<Holiday> holidays;
 		if (area != null) {
 			holidays = m.getHolidays(now,
 					now.plus(getMaximumPointInFuture()).plus(getMaximumPointInFuture()),
@@ -338,7 +338,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{ self.correctName }}")
-	private static class HolidayNameCorrection implements JsonBasedData {
+	private static final class HolidayNameCorrection implements JsonBasedData {
 		@NotNull
 		private String apiName = "API Name";
 

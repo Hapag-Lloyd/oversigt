@@ -206,27 +206,7 @@ public class OversigtServer extends AbstractIdleService {
 			throw new RuntimeException("No http listeners configured.");
 		}
 
-		addListener(new Listener() {
-			@Override
-			public void running() {
-				LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
-						server.getListenerInfo()
-								.stream()
-								.map(li -> (InetSocketAddress) li.getAddress())
-								.mapToInt(InetSocketAddress::getPort)
-								.toArray());
-			}
-
-			@Override
-			public void failed(final State from, final Throwable failure) {
-				LOGGER.error("Embedded Oversigt server failed from: " + from, failure);
-			}
-
-			@Override
-			public void stopping(final State from) {
-				LOGGER.info("Stopping embedded Oversigt server");
-			}
-		}, MoreExecutors.directExecutor());
+		addListener(new OversigtServerListener(server), MoreExecutors.directExecutor());
 	}
 
 	@Override
@@ -276,18 +256,10 @@ public class OversigtServer extends AbstractIdleService {
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
 				// dashboard configuration
-				.get("/{dashboard}/config", this::redirectToConfigPage/*
-																		 * securedDashboardConfigurationHandler
-																		 */)//
-				.post("/{dashboard}/config", this::redirectToConfigPage/*
-																		 * securedDashboardConfigurationHandler
-																		 */)//
-				.get("/{dashboard}/config/{page}", this::redirectToConfigPage/*
-																				 * securedDashboardConfigurationHandler
-																				 */)//
-				.post("/{dashboard}/config/{page}", this::redirectToConfigPage/*
-																				 * securedDashboardConfigurationHandler
-																				 */)//
+				.get("/{dashboard}/config", this::redirectToConfigPage)//
+				.post("/{dashboard}/config", this::redirectToConfigPage)//
+				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)//
+				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)//
 				.get("/{dashboard}/create", securedDashboardCreationHandler)//
 				.post("/{dashboard}/create", securedDashboardCreationHandler)//
 				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
@@ -633,6 +605,34 @@ public class OversigtServer extends AbstractIdleService {
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
 		final Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
+	}
+
+	private static final class OversigtServerListener extends Listener {
+		private final Undertow server;
+
+		private OversigtServerListener(final Undertow server) {
+			this.server = server;
+		}
+
+		@Override
+		public void running() {
+			LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
+					server.getListenerInfo()
+							.stream()
+							.map(li -> (InetSocketAddress) li.getAddress())
+							.mapToInt(InetSocketAddress::getPort)
+							.toArray());
+		}
+
+		@Override
+		public void failed(final State from, final Throwable failure) {
+			LOGGER.error("Embedded Oversigt server failed from: " + from, failure);
+		}
+
+		@Override
+		public void stopping(final State from) {
+			LOGGER.info("Stopping embedded Oversigt server");
+		}
 	}
 
 	private static final class AssetsClassPathResourceManager extends ClassPathResourceManager {

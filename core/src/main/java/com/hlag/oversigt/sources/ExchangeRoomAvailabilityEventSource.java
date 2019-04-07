@@ -180,7 +180,9 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	}
 
 	private TimeWindow getTimeWindow(final ZonedDateTime fromTime, final ZonedDateTime toTime) {
-		assert fromTime.isBefore(toTime);
+		if (!fromTime.isBefore(toTime)) {
+			throw new RuntimeException();
+		}
 
 		final LocalDate fromDate = fromTime.toLocalDate();
 		LocalDate toDate = toTime.toLocalDate();
@@ -236,11 +238,11 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 	@JsonHint(headerTemplate = "{{self.name}}", arrayStyle = ArrayStyle.TABLE)
 	public static class Room implements JsonBasedData, Comparable<Room> {
-		public String name = "RoomName";
+		private String name = "RoomName";
 
-		public String smtpAddress = "roomname@exchange.com";
+		private String smtpAddress = "roomname@exchange.com";
 
-		public String roomNumber = "123";
+		private String roomNumber = "123";
 
 		@Override
 		public int compareTo(final Room that) {
@@ -253,7 +255,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 	}
 
-	public static class Meeting {
+	public static final class Meeting {
 
 		private final Room room;
 

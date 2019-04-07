@@ -3,10 +3,8 @@ package com.hlag.oversigt.connect.ssh;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -149,24 +147,6 @@ public abstract class SshConnection {
 		return percent;
 	}
 
-	public List<ProcessInfo> getTopProcesses(final String... greps) {
-		// | grep DataFlowEngine | grep -v ksh | head"
-		String command = "ps -e -o pcpu,args | /bin/sort -u -r";
-		for (final String grep : greps) {
-			command += " | grep " + grep;
-		}
-		command += " | head";
-		final String result = runSshCommand(command);
-		final String[] lines = result.split("[\\r\\n]+");
-
-		final List<ProcessInfo> processes = new ArrayList<>();
-		for (final String line : lines) {
-			final String[] process = line.trim().split("[\\s]+", 2);
-			processes.add(new ProcessInfo(process[1], Double.parseDouble(process[0])));
-		}
-		return processes;
-	}
-
 	public String getTopas() {
 		final String filename = "hl_topas_" + UUID.randomUUID().toString() + ".tmp";
 		final String[] commands = new String[] { //
@@ -177,18 +157,6 @@ public abstract class SshConnection {
 		// String string = runSshCommand(session, "(sleep 3; echo q)|topas");
 		final String string = runShellCommands(commands);
 		return string;
-	}
-
-	public static final class ProcessInfo {
-
-		public final String name;
-
-		public final double usage;
-
-		private ProcessInfo(final String name, final double usage) {
-			this.name = name;
-			this.usage = usage;
-		}
 	}
 
 	private static double parseCpuUsage(final String string) {
@@ -213,7 +181,7 @@ public abstract class SshConnection {
 			final InputStream in = channel.getInputStream();
 			channel.connect();
 
-			try (final ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+			try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 				final byte[] buffer = new byte[1024];
 				while (true) {
 					while (in.available() > 0) {
@@ -262,8 +230,7 @@ public abstract class SshConnection {
 			out.print("exit");
 			out.flush();
 
-			try (final InputStream in = channel.getInputStream();
-					final ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+			try (InputStream in = channel.getInputStream(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 				final byte[] buffer = new byte[1024];
 				while (true) {
 					while (in.available() > 0) {

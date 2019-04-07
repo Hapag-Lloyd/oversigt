@@ -19,7 +19,7 @@ import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Finals;
 
-public class EventSourceKey implements Comparable<EventSourceKey> {
+public final class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
 			= Utils.caseInsensitiveComparator(EventSourceKey::getDisplayName);
 
@@ -29,13 +29,17 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 	public static final Comparator<EventSourceKey> COMPARATOR
 			= COMPARATOR_BY_DISPLAY_NAME.thenComparing(COMPARATOR_BY_KEY);
 
-	static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
+	private static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
 
 	static final String PREFIX_CLASS = Finals.constant("class:");
 
 	static final String PREFIX_WIDGET = Finals.constant("widget:");
 
 	private static final Map<String, EventSourceKey> KEYS = Collections.synchronizedMap(new HashMap<>());
+
+	static void setEventSourceRenamer(final EventSourceRenamer eventSourceRenamer) {
+		EventSourceKey.eventSourceRenamer.set(eventSourceRenamer);
+	}
 
 	private static EventSourceKey findKeyFromClass(final String className) {
 		EventSourceKey key = detectPackageMove(KEYS, className);
@@ -75,6 +79,11 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		return KEYS.get(key);
 	}
 
+	@NotNull
+	public String getKey() {
+		return key;
+	}
+
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
 		String displayName = null;
 		if (clazz.isAnnotationPresent(EventSource.class)) {
@@ -105,11 +114,6 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 	private EventSourceKey(final String key, final String displayName) {
 		this.key = key;
 		this.displayName = displayName;
-	}
-
-	@NotNull
-	public String getKey() {
-		return key;
 	}
 
 	@NotNull

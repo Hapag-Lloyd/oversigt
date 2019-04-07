@@ -2,6 +2,9 @@ package com.hlag.oversigt.storage;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.OptionalInt;
+
+import de.larssh.utils.OptionalInts;
 
 public interface SqlDialect {
 
@@ -65,23 +68,23 @@ public interface SqlDialect {
 
 	class ColumnOptions {
 
-		final String name;
+		private final String name;
 
-		final ColumnType type;
+		private final ColumnType type;
 
-		final boolean nullable;
+		private final boolean nullable;
 
-		final Object defaultValue;
+		private final Object defaultValue;
 
-		final boolean primaryKey;
+		private final boolean primaryKey;
 
-		final boolean autoincrement;
+		private final boolean autoincrement;
 
-		final boolean unique;
+		private final boolean unique;
 
-		final Integer length;
+		private final Integer length;
 
-		final Integer precision;
+		private final Integer precision;
 
 		public ColumnOptions(final String name,
 				final ColumnType type,
@@ -109,8 +112,40 @@ public interface SqlDialect {
 			this.unique = unique;
 		}
 
+		public Object getDefaultValue() {
+			return defaultValue;
+		}
+
 		public String getName() {
 			return name;
+		}
+
+		public OptionalInt getLength() {
+			return OptionalInts.ofNullable(length);
+		}
+
+		public OptionalInt getPrecision() {
+			return OptionalInts.ofNullable(precision);
+		}
+
+		public ColumnType getType() {
+			return type;
+		}
+
+		public boolean isAutoincrement() {
+			return autoincrement;
+		}
+
+		public boolean isNullable() {
+			return nullable;
+		}
+
+		public boolean isPrimaryKey() {
+			return primaryKey;
+		}
+
+		public boolean isUnique() {
+			return unique;
 		}
 	}
 }

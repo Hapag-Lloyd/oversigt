@@ -12,7 +12,7 @@ public @interface JsonHint {
 
 	ArrayStyle arrayStyle() default ArrayStyle.DEFAULT;
 
-	public enum ArrayStyle {
+	enum ArrayStyle {
 		DEFAULT(null),
 		GRID(null),
 		TABLE("table"),

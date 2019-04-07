@@ -12,15 +12,15 @@ import javax.xml.datatype.DatatypeFactory;
 import com.google.inject.Inject;
 import com.jayway.jsonpath.Configuration;
 
-public class TextProcessor {
+public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
 			= Pattern.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
 
 	@Inject
-	private static Configuration JSON_PATH_CONFIGURATION;
+	private static Configuration jsonPathConfiguration;
 
 	@Inject
-	private static DatatypeFactory DATATYPE_FACTORY;
+	private static DatatypeFactory dataTypeFactory;
 
 	public static TextProcessor create() {
 		return new TextProcessor();
@@ -36,7 +36,7 @@ public class TextProcessor {
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
-		final DatetimeFunction datetimeFunction = new DatetimeFunction(DATATYPE_FACTORY);
+		final DatetimeFunction datetimeFunction = new DatetimeFunction(dataTypeFactory);
 		registerFunction("datetime", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 		registerFunction("date", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE));
 		registerFunction("time", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_TIME));
@@ -45,7 +45,7 @@ public class TextProcessor {
 
 	public TextProcessor registerJsonPathFunction(final String json) {
 		return registerFunction("jsonpath",
-				jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
+				jsonpath -> new JsonPathFunction(jsonPathConfiguration, json).apply(jsonpath));
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {
@@ -56,18 +56,13 @@ public class TextProcessor {
 		String string = value;
 		final Matcher mainMatcher = PATTERN_DATA_REPLACEMENT.matcher(string);
 		while (mainMatcher.find()) {
-			final String target = mainMatcher.group();
-			String replacement;
-
 			final String processorName = mainMatcher.group("processor");
-			if (processors.containsKey(processorName)) {
-				final String input = mainMatcher.group("input");
-				replacement = processors.get(processorName).apply(input);
-			} else {
+			if (!processors.containsKey(processorName)) {
 				throw new RuntimeException("Data replacement '" + mainMatcher.group(1) + "' is unknown.");
 			}
 
-			string = string.replace(target, replacement);
+			string = string.replace(mainMatcher.group(),
+					processors.get(processorName).apply(mainMatcher.group("input")));
 		}
 		return string;
 	}

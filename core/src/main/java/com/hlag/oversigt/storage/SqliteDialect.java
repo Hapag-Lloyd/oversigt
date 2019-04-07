@@ -141,8 +141,8 @@ public class SqliteDialect implements SqlDialect {
 	@Override
 	public String createTable(final String name, final ColumnOptions... columns) {
 		String sql = "CREATE TABLE " + name + " (";
-		final long pkColumnCount = Stream.of(columns).filter(c -> c.primaryKey).count();
-		final boolean hasUnique = Stream.of(columns).filter(c -> c.unique).findAny().isPresent();
+		final long pkColumnCount = Stream.of(columns).filter(c -> c.isPrimaryKey()).count();
+		final boolean hasUnique = Stream.of(columns).filter(c -> c.isUnique()).findAny().isPresent();
 		sql += Stream//
 				.of(columns)//
 				.map(c -> getColumnDefinition(c, pkColumnCount == 1))//
@@ -151,8 +151,8 @@ public class SqliteDialect implements SqlDialect {
 			sql += ", PRIMARY KEY ("
 					+ Stream//
 							.of(columns)//
-							.filter(c -> c.primaryKey)//
-							.map(c -> c.name)//
+							.filter(c -> c.isPrimaryKey())//
+							.map(c -> c.getName())//
 							.collect(Collectors.joining(",")) //
 					+ ")";
 		}
@@ -160,8 +160,8 @@ public class SqliteDialect implements SqlDialect {
 			sql += ", UNIQUE ("
 					+ Stream//
 							.of(columns)//
-							.filter(c -> c.unique)//
-							.map(c -> c.name)//
+							.filter(c -> c.isUnique())//
+							.map(c -> c.getName())//
 							.collect(Collectors.joining(",")) //
 					+ ")";
 		}
@@ -171,16 +171,17 @@ public class SqliteDialect implements SqlDialect {
 
 	@Override
 	public String alterTableAddColumn(final String tableName, final ColumnOptions option) {
-		String sql = "ALTER TABLE " + tableName + " ADD COLUMN " + option.name + " " + getTypeName(option.type);
-		if (!option.nullable) {
+		String sql
+				= "ALTER TABLE " + tableName + " ADD COLUMN " + option.getName() + " " + getTypeName(option.getType());
+		if (!option.isNullable()) {
 			sql += " NOT NULL";
 		}
-		if (option.defaultValue != null) {
+		if (option.getDefaultValue() != null) {
 			sql += " DEFAULT ";
-			if (option.defaultValue instanceof String) {
-				sql += "'" + option.defaultValue + "'";
+			if (option.getDefaultValue() instanceof String) {
+				sql += "'" + option.getDefaultValue() + "'";
 			} else {
-				sql += option.defaultValue;
+				sql += option.getDefaultValue();
 			}
 		}
 		return sql;
@@ -204,14 +205,14 @@ public class SqliteDialect implements SqlDialect {
 	}
 
 	private String getColumnDefinition(final ColumnOptions column, final boolean withPrimaryKey) {
-		String sql = column.name + " " + getTypeName(column.type);
-		if (withPrimaryKey && column.primaryKey) {
+		String sql = column.getName() + " " + getTypeName(column.getType());
+		if (withPrimaryKey && column.isPrimaryKey()) {
 			sql += " PRIMARY KEY";
 		}
-		if (column.autoincrement) {
+		if (column.isAutoincrement()) {
 			sql += " AUTOINCREMENT";
 		}
-		if (column.nullable) {
+		if (column.isNullable()) {
 			sql += " NULL";
 		} else {
 			sql += " NOT NULL";

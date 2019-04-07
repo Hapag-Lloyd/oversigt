@@ -33,7 +33,8 @@ public class EventSourceNameGenerator {
 		String name = basename;
 		int i = 1;
 		while (names.contains(name)) {
-			name = basename + " " + ++i;
+			name = basename + " " + i;
+			i += 1;
 		}
 
 		return name;

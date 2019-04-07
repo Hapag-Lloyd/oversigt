@@ -48,31 +48,6 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		return Arrays.asList(new ApiModule());
 	}
 
-	private static class ApiModule extends AbstractModule {
-		@Override
-		protected void configure() {
-			final List<Class<? extends Annotation>> annotations
-					= Arrays.asList(io.swagger.annotations.Api.class, javax.ws.rs.ext.Provider.class);
-			final Predicate<Class<?>> predicate
-					= clazz -> annotations.stream().filter(clazz::isAnnotationPresent).findAny().isPresent();
-			// TODO Create possibility to register more packages to scan
-			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());
-			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());
-
-			final ApiValidationInterceptor interceptor = new ApiValidationInterceptor();
-			binder().requestInjection(interceptor);
-			binder().bindInterceptor(Matchers.annotatedWith(Path.class),
-					Matchers.annotatedWith(GET.class)
-							.or(Matchers.annotatedWith(POST.class))
-							.or(Matchers.annotatedWith(PUT.class))
-							.or(Matchers.annotatedWith(PATCH.class))
-							.or(Matchers.annotatedWith(DELETE.class))
-							.or(Matchers.annotatedWith(HEAD.class))
-							.or(Matchers.annotatedWith(OPTIONS.class)),
-					interceptor);
-		}
-	}
-
 	@Override
 	protected void withInjector(final Injector injector) {
 		processInjector(injector, this::checkClassMethods);
@@ -207,12 +182,10 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@SafeVarargs
 	private static boolean hasAnnotations(final Annotation[] annotations,
 			final Class<? extends Annotation>... classes) {
-		for (@SuppressWarnings("rawtypes")
-		final Class clazz : classes) {
+		for (final Class<?> clazz : classes) {
 			if (FindAnnotation.findAnnotation(annotations, clazz) != null) {
 				return true;
 			}
@@ -234,6 +207,31 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 
 		ApiBootstrapException(final String message) {
 			super(message);
+		}
+	}
+
+	private static class ApiModule extends AbstractModule {
+		@Override
+		protected void configure() {
+			final List<Class<? extends Annotation>> annotations
+					= Arrays.asList(io.swagger.annotations.Api.class, javax.ws.rs.ext.Provider.class);
+			final Predicate<Class<?>> predicate
+					= clazz -> annotations.stream().filter(clazz::isAnnotationPresent).findAny().isPresent();
+			// TODO Create possibility to register more packages to scan
+			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());
+			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());
+
+			final ApiValidationInterceptor interceptor = new ApiValidationInterceptor();
+			binder().requestInjection(interceptor);
+			binder().bindInterceptor(Matchers.annotatedWith(Path.class),
+					Matchers.annotatedWith(GET.class)
+							.or(Matchers.annotatedWith(POST.class))
+							.or(Matchers.annotatedWith(PUT.class))
+							.or(Matchers.annotatedWith(PATCH.class))
+							.or(Matchers.annotatedWith(DELETE.class))
+							.or(Matchers.annotatedWith(HEAD.class))
+							.or(Matchers.annotatedWith(OPTIONS.class)),
+					interceptor);
 		}
 	}
 }

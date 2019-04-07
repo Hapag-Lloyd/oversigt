@@ -34,7 +34,7 @@ public final class SSLUtils {
 			final KeyStore trustStore
 					= loadKeyStore(Resources.getResource(config.truststore), config.truststorePassword);
 			return createSSLContext(keyStore, config.keystoreEntryPassword, trustStore);
-		} catch (UnrecoverableKeyException
+		} catch (final UnrecoverableKeyException
 				| KeyManagementException
 				| KeyStoreException
 				| NoSuchAlgorithmException
@@ -58,11 +58,32 @@ public final class SSLUtils {
 		trustManagerFactory.init(trustStore);
 		final TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
 
-		SSLContext sslContext;
-		sslContext = SSLContext.getInstance("TLS");
+		final SSLContext sslContext = SSLContext.getInstance("TLS");
 		sslContext.init(keyManagers, trustManagers, null);
-
 		return sslContext;
+	}
+
+	private static SSLContext createSslContext() {
+		try {
+			final SSLContext sslContext = SSLContext.getInstance("SSL");
+
+			final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+				@Override
+				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+
+				@Override
+				public void checkClientTrusted(final X509Certificate[] certs, final String authType) {}
+
+				@Override
+				public void checkServerTrusted(final X509Certificate[] certs, final String authType) {}
+			} };
+			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+			return sslContext;
+		} catch (final NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException("Unable to create SSLContext", e);
+		}
 	}
 
 	private static KeyStore loadKeyStore(final URL url, final String password)
@@ -72,6 +93,16 @@ public final class SSLUtils {
 			keystore.load(stream, password.toCharArray());
 			return keystore;
 		}
+	}
+
+	private static final Map<String, SSLContext> sslContexts = Collections.synchronizedMap(new HashMap<>());
+
+	private static SSLContext getSslContext(final String id) {
+		return sslContexts.computeIfAbsent(id, x -> createSslContext());
+	}
+
+	public static SSLSocketFactory getNonCheckingSSLSocketFactory(final String id) {
+		return getSslContext(id).getSocketFactory();
 	}
 
 	public static class SSLConfiguration {
@@ -100,38 +131,5 @@ public final class SSLUtils {
 		public SSLContext createSSLContext() {
 			return SSLUtils.createSSLContext(this);
 		}
-	}
-
-	private static final Map<String, SSLContext> sslContexts = Collections.synchronizedMap(new HashMap<>());
-
-	private static SSLContext getSslContext(final String id) {
-		return sslContexts.computeIfAbsent(id, x -> createSslContext());
-	}
-
-	private static SSLContext createSslContext() {
-		try {
-			final SSLContext sslContext = SSLContext.getInstance("SSL");
-
-			final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-				@Override
-				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-					return null;
-				}
-
-				@Override
-				public void checkClientTrusted(final X509Certificate[] certs, final String authType) {}
-
-				@Override
-				public void checkServerTrusted(final X509Certificate[] certs, final String authType) {}
-			} };
-			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-			return sslContext;
-		} catch (NoSuchAlgorithmException | KeyManagementException e) {
-			throw new RuntimeException("Unable to create SSLContext", e);
-		}
-	}
-
-	public static SSLSocketFactory getNonCheckingSSLSocketFactory(final String id) {
-		return getSslContext(id).getSocketFactory();
 	}
 }

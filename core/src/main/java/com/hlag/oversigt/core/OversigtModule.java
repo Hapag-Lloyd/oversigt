@@ -57,7 +57,7 @@ import com.hlag.oversigt.model.EventSourceNameGenerator;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.RoleProvider;
-import com.hlag.oversigt.storage.JDBCDatabase;
+import com.hlag.oversigt.storage.JdbcDatabase;
 import com.hlag.oversigt.storage.Storage;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.MailSender;
@@ -133,7 +133,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(SerializablePropertyController.class);
 
 		// database
-		binder().bind(Storage.class).to(JDBCDatabase.class);
+		binder().bind(Storage.class).to(JdbcDatabase.class);
 
 		// REST API
 		binder().bind(Application.class).to(ApiApplication.class);

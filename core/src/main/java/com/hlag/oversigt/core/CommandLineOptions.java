@@ -15,7 +15,7 @@ import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import de.larssh.utils.Nullables;
 
-public class CommandLineOptions {
+public final class CommandLineOptions {
 
 	public static CommandLineOptions parse(final String[] args) {
 		final CommandLineOptions options = new CommandLineOptions();

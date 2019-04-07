@@ -1,10 +1,11 @@
 package com.hlag.oversigt.core;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
@@ -146,13 +147,23 @@ public final class Oversigt {
 		}
 	}
 
+	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Could not dispatch event");
+		if (context.getEvent() instanceof OversigtEvent) {
+			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
+		}
+		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
+		LOGGER.error(sb.toString(), throwable);
+	}
+
 	/**
 	 * Oversigt builder
 	 */
 	public static class Builder {
 
 		/* List of extension-modules */
-		private List<Module> modules = new LinkedList<>();
+		private final List<Module> modules = new LinkedList<>();
 
 		private CommandLineOptions options = null;
 
@@ -163,8 +174,8 @@ public final class Oversigt {
 		 * @return this builder
 		 */
 		public Builder registerModule(@Nullable final Module... modules) {
-			if (null != modules) {
-				Collections.addAll(this.modules, modules);
+			if (modules != null) {
+				this.modules.addAll(Arrays.asList(modules));
 			}
 			return this;
 		}
@@ -180,28 +191,13 @@ public final class Oversigt {
 		 * @return Oversigt
 		 */
 		public Oversigt build() {
-			final Oversigt[] oversigt = new Oversigt[] { null };
-			final Injector createdInjector = Guice//
-					.createInjector(//
-							new OversigtModule(//
-									options,
-									() -> oversigt[0].shutdown(), //
-									ImmutableList.//
-									<Module>builder()//
-											.addAll(modules)//
-											.build()));
+			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
+			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
+					oversigt.get()::shutdown,
+					ImmutableList.<Module>builder().addAll(modules).build()));
 
-			return oversigt[0] = new Oversigt(createdInjector);
+			oversigt.set(new Oversigt(createdInjector));
+			return oversigt.get();
 		}
-	}
-
-	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Could not dispatch event");
-		if (context.getEvent() instanceof OversigtEvent) {
-			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
-		}
-		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
-		LOGGER.error(sb.toString(), throwable);
 	}
 }

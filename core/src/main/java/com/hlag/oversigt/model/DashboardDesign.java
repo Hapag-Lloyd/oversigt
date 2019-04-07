@@ -8,7 +8,7 @@ import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;
 
-public class DashboardDesign {
+public final class DashboardDesign {
 	static final int TILE_DISTANCE = Finals.constant(6);
 
 	static int getRows(final Dashboard dashboard) {
@@ -110,6 +110,10 @@ public class DashboardDesign {
 				smooth(dashboard.getForegroundColorStart(),
 						dashboard.getForegroundColorEnd(),
 						(position - 1 + size) / (double) total) };
+	}
+
+	private DashboardDesign() {
+		throw new UnsupportedOperationException();
 	}
 
 	public static class StyleAddon {
