@@ -56,15 +56,14 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		if (LOGGER.isDebugEnabled()) {
 			LOGGER.debug("Preparing statement: {}", sql);
 		}
-		try (PreparedStatement stmt
-				= getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0)) {
-			if (values != null) {
-				for (int i = 0; i < values.length; i += 1) {
-					stmt.setObject(i + 1, getDialect().convertValue(values[i]));
-				}
+		final PreparedStatement statement
+				= getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
+		if (values != null) {
+			for (int i = 0; i < values.length; i += 1) {
+				statement.setObject(i + 1, getDialect().convertValue(values[i]));
 			}
-			return stmt;
 		}
+		return statement;
 	}
 
 	protected Map<String, Object> readColumnValues(final ResultSet rs, final String[] columnNames) throws SQLException {

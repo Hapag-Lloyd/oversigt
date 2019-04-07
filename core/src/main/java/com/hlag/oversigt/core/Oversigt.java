@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -193,7 +194,7 @@ public final class Oversigt {
 		public Oversigt build() {
 			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
 			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
-					oversigt.get()::shutdown,
+					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown),
 					ImmutableList.<Module>builder().addAll(modules).build()));
 
 			oversigt.set(new Oversigt(createdInjector));

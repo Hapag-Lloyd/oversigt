@@ -206,7 +206,7 @@ public class OversigtServer extends AbstractIdleService {
 			throw new RuntimeException("No http listeners configured.");
 		}
 
-		addListener(new OversigtServerListener(server), MoreExecutors.directExecutor());
+		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());
 	}
 
 	@Override
@@ -607,12 +607,8 @@ public class OversigtServer extends AbstractIdleService {
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
 	}
 
-	private static final class OversigtServerListener extends Listener {
-		private final Undertow server;
-
-		private OversigtServerListener(final Undertow server) {
-			this.server = server;
-		}
+	private final class OversigtServerListener extends Listener {
+		private OversigtServerListener() {}
 
 		@Override
 		public void running() {
