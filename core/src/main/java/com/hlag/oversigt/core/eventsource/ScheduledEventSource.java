@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ import com.hlag.oversigt.core.event.OversigtEvent;
  * @author avarabyeu
  */
 public abstract class ScheduledEventSource<T extends OversigtEvent> extends AbstractScheduledService {
+	private static final int ALLOWED_NUMBER_OF_FAILED_CALLS = 5;
 	private static final Map<String, Logger> LOGGERS = Collections.synchronizedMap(new HashMap<>());
 
 	/**
@@ -54,6 +56,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	private AtomicBoolean immediateExecution = new AtomicBoolean(false);
 	private ZonedDateTime lastRun = null;
 	private ZonedDateTime lastSuccessfulRun = null;
+	private final AtomicInteger numberOfFailedRuns = new AtomicInteger(0);
 
 	private ZonedDateTime lastFailureDateTime = null;
 	private String lastFailureDescription = null;
@@ -91,7 +94,13 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			failure("Event source threw an exception", e);
 			setLastRunNow(false);
 			removeLastEvent();
-			if (!(e instanceof Exception)) {
+			if (numberOfFailedRuns.incrementAndGet() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
+				logWarn(getLogger(),
+						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
+						numberOfFailedRuns.get(),
+						ALLOWED_NUMBER_OF_FAILED_CALLS);
+				stopAsync();
+			} else if (!(e instanceof Exception)) {
 				logError(getLogger(), "Error occurred. Stopping service.");
 				stopAsync();
 			}
