@@ -269,7 +269,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 			// set correct HTTP method
 			final String method;
-			URLConnection newConnection = url.openConnection();
+			URLConnection newConnection = url.openConnection(getHttpProxy().getProxy());
 			if (newConnection instanceof HttpURLConnection) {
 				HttpURLConnection httpConnection = (HttpURLConnection) newConnection;
 				if (status == HttpURLConnection.HTTP_SEE_OTHER) {
