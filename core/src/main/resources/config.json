@@ -1,6 +1,6 @@
 {
 	"debug": true,
-	"hostname": "https://dashboard",
+	"hostname": "http://localhost",
 	"listeners": [
 		{
 			"port": 80
