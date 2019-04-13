@@ -3,6 +3,7 @@ package com.hlag.oversigt.sources;
 import static com.hlag.oversigt.util.Utils.logDebug;
 import static com.hlag.oversigt.util.Utils.logInfo;
 import static com.hlag.oversigt.util.Utils.logTrace;
+import static com.hlag.oversigt.util.Utils.logWarn;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -19,7 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -144,6 +148,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		for (int i = 0; i < addresses.size(); ++i) {
 			final InternetAddress internetAddress = addresses.get(i);
 			if (connection != null) {
+				logDebug(getLogger(), "Reading cookie from old connection");
+				final String newCookie = connection.getHeaderField("Set-Cookie");
+				logTrace(getLogger(), "New Cookie: %s", cookie);
+				if (newCookie != null) {
+					cookie = newCookie;
+				}
+
 				logDebug(getLogger(), "Closing connection");
 				connection.getInputStream().close();
 				connection = null;
@@ -190,11 +201,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 						addresses.add(new InternetAddress(reps.get(0), null));
 					}
 				}
-				final String newCookie = connection.getHeaderField("Set-Cookie");
-				logTrace(getLogger(), "New Cookie: %s", cookie);
-				if (newCookie != null) {
-					cookie = newCookie;
-				}
 			}
 		}
 		return connection;
@@ -228,12 +234,18 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		if (connection instanceof HttpURLConnection) {
 			return handleRedirects((HttpURLConnection) connection);
 		}
+		logWarn(getLogger(),
+				"Encountered URLConnection of type [%s]. Unable to handle redirect.",
+				connection.getClass().getName());
 		return connection;
 	}
 
 	private URLConnection handleRedirects(final HttpURLConnection connection) throws IOException {
+		final Map<String, List<String>> headerParameters
+				= Collections.unmodifiableMap(new LinkedHashMap<>(connection.getRequestProperties()));
+
 		final int status = connection.getResponseCode();
-		if (status == HttpURLConnection.HTTP_OK) {
+		if (status >= 200 && status < 300) /* status == HttpURLConnection.HTTP_OK */ {
 			return connection;
 		}
 
@@ -259,7 +271,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 			// set correct HTTP method
 			final String method;
-			final URLConnection newConnection = url.openConnection();
+			final URLConnection newConnection = url.openConnection(getHttpProxy().getProxy());
 			if (newConnection instanceof HttpURLConnection) {
 				final HttpURLConnection httpConnection = (HttpURLConnection) newConnection;
 				if (status == HttpURLConnection.HTTP_SEE_OTHER) {
@@ -281,8 +293,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			newConnection.setIfModifiedSince(connection.getIfModifiedSince());
 			newConnection.setReadTimeout(connection.getReadTimeout());
 			newConnection.setUseCaches(connection.getUseCaches());
-			connection.getRequestProperties()
-					.entrySet()
+			headerParameters.entrySet()
 					.stream()
 					.filter(e -> !Arrays.asList("Host", "Connection").contains(e.getKey()))
 					.filter(e -> method == null || !e.getKey().startsWith(method + " "))
