@@ -1,5 +1,6 @@
 <div *ngIf="value !== null; else nullValue" [ngSwitch]="schemaObject.type"
     style="overflow: auto; display: inline-block;width:100%;">
+    <em>{{schemaObject.title}}</em>
   <app-json-array *ngSwitchCase="'array'" [schemaObject]="schemaObject.items" [(ngModel)]="value" [displayFormat]="schemaObject.format" [showMainTitle]="showMainTitle"></app-json-array>
   <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitles]="showTitles"></app-json-object>
   <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
