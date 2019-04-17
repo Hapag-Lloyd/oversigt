@@ -13,7 +13,7 @@ import com.hlag.oversigt.properties.ServerConnection;
  * @deprecated Use {@link LimitedJiraClient} instead
  */
 @Deprecated
-public class SynchronizedJiraClient extends JiraClientFilter {
+class SynchronizedJiraClient extends JiraClientFilter {
 
 	private SynchronizedJiraClient(JiraClient jiraClient) {
 		super(jiraClient);

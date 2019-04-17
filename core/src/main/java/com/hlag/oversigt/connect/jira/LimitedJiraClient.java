@@ -9,7 +9,14 @@ import com.hlag.oversigt.properties.ServerConnection;
 
 import io.atlassian.util.concurrent.atomic.AtomicInteger;
 
-public class LimitedJiraClient extends JiraClientFilter {
+/**
+ * JIRA client that limits the number of simultaneous calls.
+ *
+ * @author neumaol
+ * @deprecated Use {@link ThreadedJiraClient} instead
+ */
+@Deprecated
+class LimitedJiraClient extends JiraClientFilter {
 	private static final RateLimiter RATE_LIMITER = RateLimiter.create(1.0);
 
 	private static final AtomicInteger runningSearches = new AtomicInteger(0);
