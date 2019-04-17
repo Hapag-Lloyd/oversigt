@@ -9,7 +9,7 @@
       <div class="card-block">
         <app-simple-editor name="widget_name" [id]="'widget_name'" [title]="'Name'" [(ngModel)]="widget.name" [readOnly]="false"></app-simple-editor>
         <app-simple-editor name="widget_title" [id]="'widget_title'" [title]="'Title'" [(ngModel)]="widget.title" [readOnly]="false"></app-simple-editor>
-        <app-simple-editor name="widget_type" [id]="'widget_type'" [title]="'Type'" [(ngModel)]="widget.type" [readOnly]="true"></app-simple-editor>
+        <app-simple-editor name="widget_type" [id]="'widget_type'" [title]="'Type'" [(ngModel)]="eventSourceInstanceInfo.instanceDetails.name" [readOnly]="true"></app-simple-editor>
         <app-simple-editor name="widget_pos" [id]="'widget_pos'" [title]="'Position'" [(ngModel)]="widgetPosition" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
         <app-simple-editor name="widget_size" [id]="'widget_size'" [title]="'Size'" [(ngModel)]="widgetSize" [inputType]="'number'" [readOnly]="false"></app-simple-editor>
         <app-simple-editor name="widget_backgroundColor" [id]="'widget_backgroundColor'" [title]="'Background Color'" [(ngModel)]="widget.backgroundColor" [inputType]="'color'" [readOnly]="false"></app-simple-editor>

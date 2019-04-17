@@ -88,6 +88,7 @@
 
 <ng-template #esProperties>
   <app-simple-editor name="esName" [id]="'name'" [title]="'Event Source Name'" [(ngModel)]="parsedInstanceDetails.name"></app-simple-editor>
+  <app-config-eventsource-editor *ngIf="parsedInstanceDetails.frequency" [name]="'Frequency'" [property]="frequencyProperty" [(ngModel)]="parsedInstanceDetails.frequency"></app-config-eventsource-editor>
   <app-config-eventsource-editor *ngFor="let property of eventSourceDescriptor.properties" name="{{property.name}}"
     [property]="property" [(ngModel)]="parsedInstanceDetails.properties[property.name]"></app-config-eventsource-editor>
 </ng-template>
