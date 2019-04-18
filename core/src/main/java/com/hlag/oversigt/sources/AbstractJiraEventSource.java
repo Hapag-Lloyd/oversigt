@@ -30,7 +30,7 @@ import com.atlassian.jira.rest.client.api.domain.User;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.hlag.oversigt.connect.jira.JiraClientException;
-import com.hlag.oversigt.connect.jira.LimitedJiraClient;
+import com.hlag.oversigt.connect.jira.JiraClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -69,7 +69,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		// List all issues as defined by JQL query
 		final List<Issue> issues;
 		try {
-			issues = new LimitedJiraClient(getJiraConnection(), getJiraCredentials()).search(getQuery());
+			issues = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials()).search(getQuery());
 		} catch (final Exception e) {
 			return handleException(e);
 		}

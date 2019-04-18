@@ -45,6 +45,13 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   usage: DashboardInfo[] = [];
   addable: DashboardInfo[] = [];
 
+  // property for frequency
+  frequencyProperty = {
+    displayName: 'Frequency',
+    description: 'How often shall the event source be executed?',
+    inputType: 'duration'
+  };
+
   // parsed instance details for display
   get parsedInstanceDetails(): ParsedEventSourceInstanceDetails {
     return this._parsedInstanceDetails;

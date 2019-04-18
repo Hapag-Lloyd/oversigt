@@ -69,7 +69,12 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		});
 
 		Collections.reverse(series);
-		return new ComplexGraphEvent(series, String.format(labelFormat, values.get(values.lastKey()).toArray()));
+
+		final List<Long> displayValues = new ArrayList<>();
+		if (!values.isEmpty()) {
+			displayValues.addAll(values.get(values.lastKey()));
+		}
+		return new ComplexGraphEvent(series, String.format(labelFormat, displayValues.toArray()));
 	}
 
 	@Override
