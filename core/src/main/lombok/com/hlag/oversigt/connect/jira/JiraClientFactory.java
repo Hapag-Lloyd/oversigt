@@ -7,7 +7,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class JiraClientFactory {
-	public JiraClient createJiraClient(ServerConnection serverConnection, Credentials credentials)
+	public static JiraClient createJiraClient(final ServerConnection serverConnection, final Credentials credentials)
 			throws JiraClientException {
 		return new ThreadedJiraClient(serverConnection, credentials);
 	}
