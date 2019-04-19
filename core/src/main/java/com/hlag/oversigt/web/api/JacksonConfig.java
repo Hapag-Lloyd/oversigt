@@ -14,12 +14,12 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 	private final ObjectMapper objectMapper;
 
 	@Inject
-	public JacksonConfig(ObjectMapper objectMapper) {
+	public JacksonConfig(final ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 
 	@Override
-	public ObjectMapper getContext(Class<?> objectType) {
+	public ObjectMapper getContext(final Class<?> objectType) {
 		return objectMapper;
 	}
 }

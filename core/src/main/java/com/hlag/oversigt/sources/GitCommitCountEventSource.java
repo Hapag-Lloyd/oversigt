@@ -10,8 +10,8 @@ public class GitCommitCountEventSource extends AbstractGitCommitEventSource<Over
 
 	@Override
 	protected OversigtEvent produceEvent() throws Exception {
-		long commitCount = streamLog(s -> s.count());
-		NumberEvent event = new NumberEvent((int) commitCount, (int) lastCommitCount);
+		final long commitCount = streamLog(s -> s.count());
+		final NumberEvent event = new NumberEvent((int) commitCount, (int) lastCommitCount);
 		lastCommitCount = commitCount;
 		return event;
 	}

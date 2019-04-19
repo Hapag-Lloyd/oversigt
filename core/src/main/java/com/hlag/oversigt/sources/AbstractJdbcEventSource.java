@@ -29,6 +29,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 	protected static final Logger DB_LOGGER = LoggerFactory.getLogger("db");
 
 	private DatabaseConnection databaseConnection = DatabaseConnection.EMPTY;
+
 	private Credentials credentials = Credentials.EMPTY;
 
 	private Duration databaseQueryInterval = Duration.ofHours(1);
@@ -38,16 +39,18 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		return databaseConnection;
 	}
 
-	public void setDatabaseConnection(DatabaseConnection databaseConnection) {
+	public void setDatabaseConnection(final DatabaseConnection databaseConnection) {
 		this.databaseConnection = databaseConnection;
 	}
 
-	@Property(name = "Credentials", description = "The credentials to be used to connect to the database.", needsRestart = true)
+	@Property(name = "Credentials",
+			description = "The credentials to be used to connect to the database.",
+			needsRestart = true)
 	public Credentials getCredentials() {
 		return credentials;
 	}
 
-	public void setCredentials(Credentials credentials) {
+	public void setCredentials(final Credentials credentials) {
 		this.credentials = credentials;
 	}
 
@@ -56,44 +59,45 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		return databaseQueryInterval;
 	}
 
-	public void setDatabaseQueryInterval(Duration databaseQueryInterval) {
+	public void setDatabaseQueryInterval(final Duration databaseQueryInterval) {
 		this.databaseQueryInterval = databaseQueryInterval;
 	}
 
-	private Connection wrapConnection(Connection connection) {
+	private Connection wrapConnection(final Connection connection) {
 		return (Connection) Proxy.newProxyInstance(getClass().getClassLoader(),
 				new Class[] { Connection.class },
 				new UnpreparedStatementPreventingInvocationHandler(connection));
 	}
 
+	@SuppressWarnings("resource")
 	private Connection getConnection() {
-		if (getDatabaseConnection() != DatabaseConnection.EMPTY) {
-			try {
-				// Load the driver
-				getDatabaseConnection().loadDriverClass();
-				getLogger().info("Loaded JDBC driver.");
-
-				// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
-				Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
-						getCredentials().getUsername(),
-						getCredentials().getPassword());
-				// Commit changes manually
-				con.setAutoCommit(false);
-				con.setReadOnly(true);
-				con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-				getLogger().info("Created JDBC connection to the data source.");
-				return wrapConnection(con);
-			} catch (ClassNotFoundException e) {
-				return failure("Could not load JDBC driver.", e);
-			} catch (SQLException e) {
-				return failure("Failed connecting to data base.", e);
-			}
-		} else {
+		if (getDatabaseConnection() == DatabaseConnection.EMPTY) {
 			return failure("Database connection is not configured.");
+		}
+		try {
+			// Load the driver
+			getDatabaseConnection().loadDriverClass();
+			getLogger().info("Loaded JDBC driver.");
+
+			// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
+			final Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
+					getCredentials().getUsername(),
+					getCredentials().getPassword());
+			// Commit changes manually
+			con.setAutoCommit(false);
+			con.setReadOnly(true);
+			con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+			getLogger().info("Created JDBC connection to the data source.");
+			return wrapConnection(con);
+		} catch (final ClassNotFoundException e) {
+			return failure("Could not load JDBC driver.", e);
+		} catch (final SQLException e) {
+			return failure("Failed connecting to data base.", e);
 		}
 	}
 
-	private boolean withConnection(DBConnectionConsumer function) throws SQLException {
+	@SuppressWarnings("resource")
+	private boolean withConnection(final DBConnectionConsumer function) throws SQLException {
 		Connection connection = null;
 		try {
 			connection = getConnection();
@@ -106,7 +110,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 				try {
 					connection.rollback();
 					connection.close();
-				} catch (SQLException e) {
+				} catch (final SQLException e) {
 					getLogger().warn("Unable to rollback and close DB connection", e);
 				}
 			}
@@ -123,7 +127,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			try {
 				withConnection(this::gatherDatabaseInfo);
 				lastDbAccessDateTime = LocalDateTime.now();
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 				return failure("Unable to gather database info", e);
 			}
 		}
@@ -134,18 +138,18 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	protected abstract T produceEventFromData();
 
-	public static <T> List<T> readFromDatabase(Connection connection,
-			ResultSetFunction<T> readOneLine,
-			String sql,
-			Object... parameters) throws SQLException {
+	public static <T> List<T> readFromDatabase(final Connection connection,
+			final ResultSetFunction<T> readOneLine,
+			final String sql,
+			final Object... parameters) throws SQLException {
 
-		long time = System.currentTimeMillis();
+		final long time = System.currentTimeMillis();
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-			for (int i = 0; i < parameters.length; ++i) {
+			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
 			return readFromDatabase(stmt, readOneLine);
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
 			throw e;
 		} finally {
@@ -154,17 +158,18 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
-	private static <T> List<T> readFromDatabase(PreparedStatement statement, ResultSetFunction<T> readOneLine)
-			throws SQLException {
+	private static <T> List<T> readFromDatabase(final PreparedStatement statement,
+			final ResultSetFunction<T> readOneLine) throws SQLException {
 		try (ResultSet rs = statement.executeQuery()) {
 			return readFromDatabase(rs, readOneLine);
 		}
 	}
 
-	private static <T> List<T> readFromDatabase(ResultSet rs, ResultSetFunction<T> readOneLine) throws SQLException {
-		List<T> list = new ArrayList<>();
+	private static <T> List<T> readFromDatabase(final ResultSet rs, final ResultSetFunction<T> readOneLine)
+			throws SQLException {
+		final List<T> list = new ArrayList<>();
 		while (rs.next()) {
-			T item = readOneLine.readLine(rs);
+			final T item = readOneLine.readLine(rs);
 			list.add(item);
 		}
 		return list;
@@ -180,15 +185,15 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		T readLine(ResultSet resultSet) throws SQLException;
 	}
 
-	private static class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
+	private static final class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
 		private final Connection connection;
 
-		private UnpreparedStatementPreventingInvocationHandler(Connection connection) {
+		private UnpreparedStatementPreventingInvocationHandler(final Connection connection) {
 			this.connection = connection;
 		}
 
 		@Override
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 			if (method.getDeclaringClass() == Connection.class && "createStatement".equals(method.getName())) {
 				throw new RuntimeException(
 						"Oversigt does not allow unprepared statements. Please use #prepareStatement instead.");

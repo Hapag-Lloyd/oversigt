@@ -13,12 +13,13 @@ public class HttpProxy extends SerializableProperty {
 
 	@Member(icon = "hdd", size = 4)
 	private String hostname;
+
 	@Member(icon = "ellipsis", size = 2)
 	private int port;
 
-	public HttpProxy(int id, String name, String host, int port) {
+	public HttpProxy(final int id, final String name, final String host, final int port) {
 		super(id, name);
-		this.hostname = host;
+		hostname = host;
 		this.port = port;
 	}
 
@@ -26,7 +27,7 @@ public class HttpProxy extends SerializableProperty {
 		return hostname;
 	}
 
-	public void setHostname(String hostname) {
+	public void setHostname(final String hostname) {
 		this.hostname = hostname;
 	}
 
@@ -34,7 +35,7 @@ public class HttpProxy extends SerializableProperty {
 		return port;
 	}
 
-	public void setPort(int port) {
+	public void setPort(final int port) {
 		this.port = port;
 	}
 
@@ -42,8 +43,7 @@ public class HttpProxy extends SerializableProperty {
 	public java.net.Proxy getProxy() {
 		if (Strings.isNullOrEmpty(getHostname())) {
 			return java.net.Proxy.NO_PROXY;
-		} else {
-			return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 		}
+		return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 	}
 }

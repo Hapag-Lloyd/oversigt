@@ -14,7 +14,9 @@ import com.hlag.oversigt.properties.ServerConnection;
 
 public class ThreadedJiraClient extends JiraClientFilter {
 	private static final int NUMBER_OF_THREADS = 4;
+
 	private static final int TIMEOUT = 3;
+
 	private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MINUTES;
 
 	private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
@@ -25,18 +27,19 @@ public class ThreadedJiraClient extends JiraClientFilter {
 	}
 
 	/**
-	 * Perform the JIRA search using a separate thread. The executing thread is handled by an
-	 * executor service.
+	 * Perform the JIRA search using a separate thread. The executing thread is
+	 * handled by an executor service.
 	 *
-	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int, int)
+	 * @see com.hlag.oversigt.connect.jira.JiraClient#search(java.lang.String, int,
+	 *      int)
 	 */
 	@Override
-	public List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException {
+	public List<Issue> search(final String jql, final int maxResults, final int startAt) throws JiraClientException {
 		try {
 			return EXECUTOR.invokeAny(Arrays.asList(() -> getJiraClient().search(jql, maxResults, startAt)),
 					TIMEOUT,
 					TIMEOUT_UNIT);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+		} catch (final InterruptedException | ExecutionException | TimeoutException e) {
 			if (e.getCause() != null && e.getCause() instanceof JiraClientException) {
 				throw (JiraClientException) e.getCause();
 			}

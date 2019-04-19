@@ -5,17 +5,17 @@
 /*
  * Copyright (C) 2012 Atlassian
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.atlassian.jira.rest.client.internal.async;
 
@@ -52,29 +52,27 @@ import com.google.inject.name.Named;
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
-	private static int SOCKET_TIMEOUT = 60;
+	private static int socketTimeout = 60;
 
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
 		final HttpClientOptions options = new HttpClientOptions();
-		options.setSocketTimeout(SOCKET_TIMEOUT, TimeUnit.SECONDS); // XXX
+		options.setSocketTimeout(socketTimeout, TimeUnit.SECONDS); // XXX
 
-		final DefaultHttpClientFactory<?> defaultHttpClientFactory = new DefaultHttpClientFactory<>(
-				new NoOpEventPublisher(),
-				new RestClientApplicationProperties(serverUri),
-				new ThreadLocalContextManager<Object>() {
-					@Override
-					public Object getThreadLocalContext() {
-						return null;
-					}
+		final DefaultHttpClientFactory<?> defaultHttpClientFactory
+				= new DefaultHttpClientFactory<>(new NoOpEventPublisher(),
+						new RestClientApplicationProperties(serverUri),
+						new ThreadLocalContextManager<Object>() {
+							@Override
+							public Object getThreadLocalContext() {
+								return null;
+							}
 
-					@Override
-					public void setThreadLocalContext(Object context) {
-					}
+							@Override
+							public void setThreadLocalContext(final Object context) {}
 
-					@Override
-					public void clearThreadLocalContext() {
-					}
-				});
+							@Override
+							public void clearThreadLocalContext() {}
+						});
 
 		final HttpClient httpClient = defaultHttpClientFactory.create(options);
 
@@ -102,31 +100,28 @@ public class AsynchronousHttpClientFactory {
 
 	private static class NoOpEventPublisher implements EventPublisher {
 		@Override
-		public void publish(Object o) {
-		}
+		public void publish(final Object o) {}
 
 		@Override
-		public void register(Object o) {
-		}
+		public void register(final Object o) {}
 
 		@Override
-		public void unregister(Object o) {
-		}
+		public void unregister(final Object o) {}
 
 		@Override
-		public void unregisterAll() {
-		}
+		public void unregisterAll() {}
 	}
 
 	/**
-	 * These properties are used to present JRJC as a User-Agent during http requests.
+	 * These properties are used to present JRJC as a User-Agent during http
+	 * requests.
 	 */
-	private static class RestClientApplicationProperties implements ApplicationProperties {
+	private static final class RestClientApplicationProperties implements ApplicationProperties {
 
 		private final String baseUrl;
 
-		private RestClientApplicationProperties(URI jiraURI) {
-			this.baseUrl = jiraURI.getPath();
+		private RestClientApplicationProperties(final URI jiraURI) {
+			baseUrl = jiraURI.getPath();
 		}
 
 		@Override
@@ -139,7 +134,7 @@ public class AsynchronousHttpClientFactory {
 		 */
 		@Nonnull
 		@Override
-		public String getBaseUrl(UrlMode urlMode) {
+		public String getBaseUrl(final UrlMode urlMode) {
 			return baseUrl;
 		}
 
@@ -189,7 +184,7 @@ public class AsynchronousHttpClientFactory {
 
 		private static final String UNKNOWN_VERSION = "unknown";
 
-		static String getVersion(String groupId, String artifactId) {
+		static String getVersion(final String groupId, final String artifactId) {
 			final Properties props = new Properties();
 			InputStream resourceAsStream = null;
 			try {
@@ -197,7 +192,7 @@ public class AsynchronousHttpClientFactory {
 						String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId));
 				props.load(resourceAsStream);
 				return props.getProperty("version", UNKNOWN_VERSION);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
 				logger.debug("Got the following exception", e);
 				return UNKNOWN_VERSION;
@@ -205,7 +200,7 @@ public class AsynchronousHttpClientFactory {
 				if (resourceAsStream != null) {
 					try {
 						resourceAsStream.close();
-					} catch (IOException ioe) {
+					} catch (final IOException ioe) {
 						// ignore
 					}
 				}

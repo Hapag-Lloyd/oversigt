@@ -5,6 +5,7 @@ import static java.time.LocalDateTime.now;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -20,29 +21,33 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	private static final Duration DEFAULT_LIFETIME = Duration.ofHours(1);
 
 	private String applicationId;
+
 	private String id;
+
 	private long updatedAt;
+
 	private String moreinfo = null;
 
-	private final transient LocalDateTime internal_createdOn = now();
+	private final transient LocalDateTime createdOn = now();
+
 	private transient Duration lifetime = null;
 
 	/* Do not populate if you don't need dynamic title */
 	private String title;
 
 	public OversigtEvent() {
-		this.updatedAt = Instant.now().getEpochSecond();
+		updatedAt = Instant.now().getEpochSecond();
 	}
 
 	public String getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(final String id) {
 		this.id = id;
 	}
 
-	public void setLifetime(Duration lifetime) {
+	public void setLifetime(final Duration lifetime) {
 		this.lifetime = lifetime;
 	}
 
@@ -51,10 +56,10 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	boolean isValid() {
-		return internal_createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());
+		return createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());
 	}
 
-	void setApplicationId(String applicationId) {
+	void setApplicationId(final String applicationId) {
 		this.applicationId = applicationId;
 	}
 
@@ -70,7 +75,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
@@ -78,13 +83,13 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return moreinfo;
 	}
 
-	public void setMoreinfo(String moreinfo) {
+	public void setMoreinfo(final String moreinfo) {
 		this.moreinfo = moreinfo;
 	}
 
 	@JsonIgnore
 	public LocalDateTime getCreatedOn() {
-		return internal_createdOn;
+		return createdOn;
 	}
 
 	@Override
@@ -93,15 +98,29 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	@Override
-	public int compareTo(OversigtEvent that) {
-		if (this.id == null && that.id == null) {
-			return 0;
-		} else if (this.id == null) {
-			return -1;
-		} else if (that.id == null) {
-			return 1;
-		} else {
-			return this.getId().compareTo(that.getId());
+	public boolean equals(final Object object) {
+		if (!(object instanceof OversigtEvent)) {
+			return false;
 		}
+		return Objects.equals(getId(), ((OversigtEvent) object).getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(getId());
+	}
+
+	@Override
+	public int compareTo(final OversigtEvent that) {
+		if (id == null && that.id == null) {
+			return 0;
+		}
+		if (id == null) {
+			return -1;
+		}
+		if (that.id == null) {
+			return 1;
+		}
+		return getId().compareTo(that.getId());
 	}
 }

@@ -17,7 +17,8 @@ import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.sources.event.ReloadEvent;
 
 /**
- * Scheduled EventSource - produces events with specified time period. Basically, based on Guava's
+ * Scheduled EventSource - produces events with specified time period.
+ * Basically, based on Guava's
  * {@link com.google.common.util.concurrent.AbstractScheduledService}
  *
  * @author neumaol
@@ -40,34 +41,31 @@ public class NightlyReloaderService extends AbstractScheduledService {
 	}
 
 	/**
-	 * Executes one iteration of {@link com.google.common.util.concurrent.AbstractScheduledService}
-	 * Sends event to event bus
+	 * Executes one iteration of
+	 * {@link com.google.common.util.concurrent.AbstractScheduledService} Sends
+	 * event to event bus
 	 */
 	@Override
 	protected final void runOneIteration() {
-		Collection<String> dashboards = dashboardController.getDashboardIds();
+		final Collection<String> dashboards = dashboardController.getDashboardIds();
 		if (LOGGER.isDebugEnabled()) {
 			LOGGER.debug("Sending reload event to " + dashboards);
 		}
 		sendEvent(new ReloadEvent(dashboards));
 	}
 
-	protected final void sendEvent(OversigtEvent event) {
+	protected final void sendEvent(final OversigtEvent event) {
 		if (null != event) {
 			event.setId(getEventId());
-			this.eventBus.post(event);
+			eventBus.post(event);
 		}
 	}
 
 	@Override
 	protected final Scheduler scheduler() {
-		LocalDateTime tomorrowMidnight = LocalDateTime.now()
-				.withHour(0)
-				.withMinute(0)
-				.withSecond(0)
-				.withNano(0)
-				.plusDays(1);
-		Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();
+		final LocalDateTime tomorrowMidnight
+				= LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).plusDays(1);
+		final Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();
 		return Scheduler.newFixedDelaySchedule(//
 				durationUntilMidnight.getSeconds(), //
 				Duration.ofDays(1).getSeconds(), //

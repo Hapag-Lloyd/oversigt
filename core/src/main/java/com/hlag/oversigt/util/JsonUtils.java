@@ -46,33 +46,37 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 
+import de.larssh.utils.function.ThrowingFunction;
+
 @Singleton
 public class JsonUtils {
-	public static <T> JsonSerializer<T> serializer(ThrowingFunction<T, String> converter) {
+	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
 		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
 	}
 
-	public static <T> JsonDeserializer<T> deserializer(ThrowingFunction<String, T> converter) {
-		return (json, type, context) -> converter.apply(json.getAsString());
-	}
-
-	public static <T> StdSerializer<T> serializer(Class<T> clazz, ThrowingFunction<T, String> converter) {
+	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
 		return new StdSerializer<T>(clazz) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void serialize(T value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+			public void serialize(final T value, final JsonGenerator gen, final SerializerProvider provider)
+					throws IOException {
 				gen.writeString(converter.apply(value));
 			}
 		};
 	}
 
-	public static <T> StdDeserializer<T> deserializer(Class<T> clazz, ThrowingFunction<String, T> converter) {
+	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
+		return (json, type, context) -> converter.apply(json.getAsString());
+	}
+
+	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,
+			final ThrowingFunction<String, T> converter) {
 		return new StdDeserializer<T>(clazz) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public T deserialize(JsonParser p, DeserializationContext ctxt)
+			public T deserialize(final JsonParser p, final DeserializationContext ctxt)
 					throws IOException, JsonProcessingException {
 				return converter.apply(p.getValueAsString());
 			}
@@ -81,50 +85,50 @@ public class JsonUtils {
 
 	@Inject
 	private Gson gson;
+
 	@Inject
 	private Storage storage;
 
-	public String toJson(Object object) {
+	public String toJson(final Object object) {
 		return gson.toJson(object);
 	}
 
-	public <T> T fromJson(String json, Type type) {
+	public <T> T fromJson(final String json, final Type type) {
 		return gson.fromJson(json, type);
 	}
 
 	/**
 	 * Remove keys from the JSON string
 	 *
-	 * @param json
-	 *            the JSON to work on
-	 * @param filter
-	 *            determine whether a key should stay in the JSON or not. If the {@link Predicate}
-	 *            returns <code>false</code> the key will be removed.
+	 * @param json   the JSON to work on
+	 * @param filter determine whether a key should stay in the JSON or not. If the
+	 *               {@link Predicate} returns <code>false</code> the key will be
+	 *               removed.
 	 * @return the stripped JSON
 	 */
-	public String removeKeysFromJson(String json, Predicate<String> filter) {
+	public String removeKeysFromJson(final String json, final Predicate<String> filter) {
 		return toJson(removeKeys(gson.fromJson(json, Object.class), filter));
 	}
 
 	/**
-	 * Remove all keys from the JSON string that contain the phrase "password" (not case sensitive)
+	 * Remove all keys from the JSON string that contain the phrase "password" (not
+	 * case sensitive)
 	 *
-	 * @param string
-	 *            the JSON to work on
+	 * @param string the JSON to work on
 	 * @return the JSON without keys containing "password" (not case sensitive)
 	 */
-	public String removePasswordsFromJson(String string) {
+	public String removePasswordsFromJson(final String string) {
 		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Object removeKeys(Object json, Predicate<String> filter) {
+	private Object removeKeys(final Object json, final Predicate<String> filter) {
 		if (json instanceof Collection) {
 			removeKeys((Collection<?>) json, filter);
 		} else if (json instanceof Map) {
 			removeKeys((Map<String, Object>) json, filter);
 		} else if (json instanceof Double) {
-			long l = ((Double) json).longValue();
+			final long l = ((Double) json).longValue();
 			if ((double) l == (Double) json) {
 				return l;
 			}
@@ -132,14 +136,14 @@ public class JsonUtils {
 		return json;
 	}
 
-	private void removeKeys(Collection<?> json, Predicate<String> filter) {
-		for (Object e : json) {
+	private void removeKeys(final Collection<?> json, final Predicate<String> filter) {
+		for (final Object e : json) {
 			removeKeys(e, filter);
 		}
 	}
 
-	private void removeKeys(Map<String, Object> json, Predicate<String> filter) {
-		for (Entry<String, Object> e : json.entrySet()) {
+	private void removeKeys(final Map<String, Object> json, final Predicate<String> filter) {
+		for (final Entry<String, Object> e : json.entrySet()) {
 			if (!filter.test(e.getKey())) {
 				e.setValue(null);
 			} else {
@@ -148,13 +152,13 @@ public class JsonUtils {
 		}
 	}
 
-	public String toJsonSchema(Class<?> clazz) {
+	public String toJsonSchema(final Class<?> clazz) {
 		return toJsonSchema(clazz, null);
 	}
 
 	@SuppressWarnings("unchecked")
-	public String toJsonSchema(Class<?> clazz, JsonHint hint) {
-		Map<String, Object> schema;
+	public String toJsonSchema(final Class<?> clazz, final JsonHint hint) {
+		final Map<String, Object> schema;
 		if (!SerializableProperty.class.isAssignableFrom(clazz)) {
 			schema = map("$schema",
 					"http://json-schema.org/schema#",
@@ -175,29 +179,28 @@ public class JsonUtils {
 		return gson.toJson(schema);
 	}
 
-	private Map<String, Object> toJsonSchema_SerializablePropertyEnum(Class<? extends SerializableProperty> clazz) {
-		List<? extends SerializableProperty> props = storage.listProperties(clazz);
-		List<String> names = new ArrayList<>(
-				props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
-		List<Integer> ids = new ArrayList<>(
-				props.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
-		List<Map<String, Object>> maps = props.stream()
-				.map(p -> map("value", p.getId(), "title", p.getName()))
-				.collect(Collectors.toList());
+	private Map<String, Object> toJsonSchema_SerializablePropertyEnum(
+			final Class<? extends SerializableProperty> clazz) {
+		final List<? extends SerializableProperty> props = storage.listProperties(clazz);
+		final List<String> names
+				= new ArrayList<>(props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
+		final List<Integer> ids
+				= new ArrayList<>(props.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
+		final List<Map<String, Object>> maps
+				= props.stream().map(p -> map("value", p.getId(), "title", p.getName())).collect(Collectors.toList());
 		try {
 			if (clazz.getDeclaredField("EMPTY") != null) {
 				names.add(0, "\u00a0");
 				ids.add(0, 0);
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
-		} catch (NoSuchFieldException | SecurityException ignore) {
-		}
+		} catch (final NoSuchFieldException | SecurityException ignore) {}
 		return map("type",
 				"string",
 				"uniqueItems",
 				true, // TODO check whether this should always be true
-				//				"enum",
-				//				names,
+				// "enum",
+				// names,
 				"oversigt-ids",
 				ids,
 				"enumSource",
@@ -205,7 +208,8 @@ public class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchema_internal(Class<?> clazz, JsonHint hint) {
+	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, final JsonHint hint) {
+		JsonHint jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
 		} else if (clazz == boolean.class || clazz == Boolean.class) {
@@ -227,7 +231,7 @@ public class JsonUtils {
 		} else if (clazz == BigDecimal.class) {
 			return makeNumber(false, null, null);
 		} else if (Enum.class.isAssignableFrom(clazz)) {
-			List<Map<String, Object>> abc = Arrays.stream(clazz.getEnumConstants())
+			final List<Map<String, Object>> abc = Arrays.stream(clazz.getEnumConstants())
 					.map(e -> map("value", ((Enum<?>) e).name(), "title", e.toString()))
 					.collect(Collectors.toList());
 			return map("type",
@@ -241,8 +245,8 @@ public class JsonUtils {
 		} else if (SerializableProperty.class.isAssignableFrom(clazz)) {
 			return map("type", "string", "$ref", "/schema/" + clazz.getName(), "oversigt-property", clazz.getName());
 		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
-			Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
-			Map<String, Object> map = map("type",
+			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
+			final Map<String, Object> map = map("type",
 					"array",
 					"items",
 					toJsonSchema_internal(componentType, null),
@@ -252,22 +256,20 @@ public class JsonUtils {
 				map.put("unique", true);
 			}
 			if (componentType instanceof Class && ((Class<?>) componentType).isAnnotationPresent(JsonHint.class)) {
-				hint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
+				jsonHint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
 			}
-			if (hint != null && hint.arrayStyle() != ArrayStyle.DEFAULT) {
-				if (hint.arrayStyle().value() != null) {
-					map.put("format", hint.arrayStyle().value());
+			if (jsonHint != null && jsonHint.arrayStyle() != ArrayStyle.DEFAULT) {
+				if (jsonHint.arrayStyle().value() != null) {
+					map.put("format", jsonHint.arrayStyle().value());
 				}
 			} else {
-				Map<String, Object> items = (Map<String, Object>) map.get("items");
+				final Map<String, Object> items = (Map<String, Object>) map.get("items");
 				if (items.containsKey("properties") && ((Map<?, ?>) items.get("properties")).size() <= 3) {
 					map.put("format", "table");
 				}
 			}
 			return map;
-		} else if (clazz == Color.class)
-
-		{
+		} else if (clazz == Color.class) {
 			return map("type", "string", "format", "color");
 		} else if (clazz == LocalDate.class) {
 			return map("type", "string", "format", "date");
@@ -275,22 +277,22 @@ public class JsonUtils {
 			return map("type", "string", "format", "time");
 		} else {
 			// check for notnull
-			List<Field> fields = TypeUtils.streamFields(clazz)
-					.filter(f -> (f.getModifiers() & Modifier.TRANSIENT) == 0)//
-					.filter(f -> (f.getModifiers() & Modifier.STATIC) == 0)//
+			final List<Field> fields = TypeUtils.streamFields(clazz)
+					.filter(f -> !Modifier.isTransient(f.getModifiers()))//
+					.filter(f -> !Modifier.isStatic(f.getModifiers()))//
 					.collect(Collectors.toList());
-			Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
-			for (Field field : fields) {
+			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
+			for (final Field field : fields) {
 				JsonHint fieldHint = null;
 				if (field.isAnnotationPresent(JsonHint.class)) {
 					fieldHint = field.getAnnotation(JsonHint.class);
 				}
-				Map<String, Object> map = JsonUtils.toJsonSchema_internal(field.getType(), fieldHint);
+				final Map<String, Object> map = JsonUtils.toJsonSchema_internal(field.getType(), fieldHint);
 				map.put("title", makeFirstCharacterCapital(field.getName()));
 				getFormat(field).ifPresent(format -> map.put("format", format));
 				fieldsMap.put(field.getName(), map);
 			}
-			Map<String, Object> map = map("type",
+			final Map<String, Object> map = map("type",
 					"object", //
 					"title",
 					makeFirstCharacterCapital(clazz.getSimpleName()),
@@ -302,18 +304,38 @@ public class JsonUtils {
 					false);
 
 			if (clazz.isAnnotationPresent(JsonHint.class)) {
-				hint = clazz.getAnnotation(JsonHint.class);
+				jsonHint = clazz.getAnnotation(JsonHint.class);
 			}
-			if (hint != null) {
-				if (!Strings.isNullOrEmpty(hint.headerTemplate())) {
-					map.put("headerTemplate", hint.headerTemplate());
+			if (jsonHint != null) {
+				if (!Strings.isNullOrEmpty(jsonHint.headerTemplate())) {
+					map.put("headerTemplate", jsonHint.headerTemplate());
 				}
 			}
 			return map;
 		}
 	}
 
-	private static boolean isRequired(Field field) {
+	private static Map<String, Object> toJsonSchema_internal(final Type type, final JsonHint hint) {
+		if (type instanceof Class) {
+			JsonHint jsonHint = hint;
+			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
+				jsonHint = ((Class<?>) type).getAnnotation(JsonHint.class);
+			}
+			return toJsonSchema_internal((Class<?>) type, jsonHint);
+		} else if (type instanceof ParameterizedType) {
+			return toJsonSchema_internal(((ParameterizedType) type).getActualTypeArguments()[0], hint);
+		} else if (type instanceof TypeVariable) {
+			// TypeVariable<?> tv = (TypeVariable<?>) type;
+			// AnnotatedType[] at = tv.getAnnotatedBounds();
+			// Type[] b = tv.getBounds();
+			// GenericDeclaration d = tv.getGenericDeclaration();
+			return map();
+		} else {
+			throw new RuntimeException("Unknown type: " + type);
+		}
+	}
+
+	private static boolean isRequired(final Field field) {
 		if (field.isAnnotationPresent(Nullable.class)) {
 			return false;
 		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {
@@ -323,27 +345,8 @@ public class JsonUtils {
 		}
 	}
 
-	private static Map<String, Object> toJsonSchema_internal(Type type, JsonHint hint) {
-		if (type instanceof Class) {
-			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
-				hint = ((Class<?>) type).getAnnotation(JsonHint.class);
-			}
-			return toJsonSchema_internal((Class<?>) type, hint);
-		} else if (type instanceof ParameterizedType) {
-			return toJsonSchema_internal(((ParameterizedType) type).getActualTypeArguments()[0], hint);
-		} else if (type instanceof TypeVariable) {
-			//                                              TypeVariable<?> tv = (TypeVariable<?>) type;
-			//                                              AnnotatedType[] at = tv.getAnnotatedBounds();
-			//                                              Type[] b = tv.getBounds();
-			//                                              GenericDeclaration d = tv.getGenericDeclaration();
-			return map();
-		} else {
-			throw new RuntimeException("Unknown type: " + type);
-		}
-	}
-
-	private static Map<String, Object> makeNumber(boolean wholeNumbers, Object min, Object max) {
-		Map<String, Object> map = map("type", "number");
+	private static Map<String, Object> makeNumber(final boolean wholeNumbers, final Object min, final Object max) {
+		final Map<String, Object> map = map("type", "number");
 		if (min != null) {
 			map.put("minimum", min);
 		}
@@ -356,19 +359,19 @@ public class JsonUtils {
 		return map;
 	}
 
-	private static String makeFirstCharacterCapital(String string) {
+	private static String makeFirstCharacterCapital(final String string) {
 		return Character.toUpperCase(string.charAt(0)) + string.substring(1);
 	}
 
-	private static <E extends Enum<?>> String[] getEnumConstants(Class<E> clazz) {
+	private static <E extends Enum<?>> String[] getEnumConstants(final Class<E> clazz) {
 		return Stream.of((Object[]) clazz.getEnumConstants())
 				.map(o -> ((Enum<?>) o).name())
 				.collect(Collectors.toList())
 				.toArray(new String[0]);
 	}
 
-	private static Optional<String> getFormat(Field field) {
-		String name = field.getName().toLowerCase();
+	private static Optional<String> getFormat(final Field field) {
+		final String name = field.getName().toLowerCase();
 		if (name.contains("password")) {
 			return Optional.of("password");
 		} else if (name.contains("mail")) {

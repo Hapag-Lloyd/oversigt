@@ -49,17 +49,20 @@ import com.hlag.oversigt.util.LazyInitializedReference;
 
 public abstract class AbstractGitEventSource<E extends OversigtEvent> extends AbstractSslAwareEventSource<E> {
 	private String repositoryUrl;
+
 	private Credentials credentials = Credentials.EMPTY;
+
 	private TemporalAmount lookBack = Period.ofWeeks(1);
 
 	private LazyInitializedReference<Git> git = new LazyInitializedReference<>(this::createGitRepository);
 
-	@Property(name = "Look Back", description = "The amount of time to look into the past. Leave emtpy to use all commits.")
+	@Property(name = "Look Back",
+			description = "The amount of time to look into the past. Leave emtpy to use all commits.")
 	public TemporalAmount getLookBack() {
 		return lookBack;
 	}
 
-	public void setLookBack(TemporalAmount lookBack) {
+	public void setLookBack(final TemporalAmount lookBack) {
 		this.lookBack = lookBack;
 	}
 
@@ -68,16 +71,17 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		return repositoryUrl;
 	}
 
-	public void setRepositoryUrl(String repositoryUrl) {
+	public void setRepositoryUrl(final String repositoryUrl) {
 		this.repositoryUrl = repositoryUrl;
 	}
 
-	@Property(name = "Git Credentials", description = "The credentials to be used for logging in to the git repository.")
+	@Property(name = "Git Credentials",
+			description = "The credentials to be used for logging in to the git repository.")
 	public Credentials getCredentials() {
 		return credentials;
 	}
 
-	public void setCredentials(Credentials credentials) {
+	public void setCredentials(final Credentials credentials) {
 		this.credentials = credentials;
 	}
 
@@ -98,29 +102,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		return git.get();
 	}
 
-	protected synchronized <R> R streamLog(Function<Stream<RevCommit>, R> function)
-			throws NoHeadException, GitAPIException, IOException {
-		return function.apply(streamLog());
-	}
-
-	protected Predicate<RevCommit> isCommitAfter(Instant from) {
-		if (from != null) {
-			return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from, null);
-		} else {
-			return x -> true;
-		}
-	}
-
-	protected <T> Predicate<T> between(@Nonnull Function<T, Instant> getTimeFunction,
-			@Nonnull Instant from,
-			@Nullable Instant to) {
-		return r -> {
-			Instant time = getTimeFunction.apply(r);//Instant.ofEpochSecond(r.getCommitTime());
-			return (null == to || time.isBefore(to)) && time.isAfter(from);
-		};
-	}
-
-	private synchronized Stream<RevCommit> streamLog() throws NoHeadException, GitAPIException, IOException {
+	private synchronized Stream<RevCommit> streamLog() throws GitAPIException, IOException {
 		fetch();
 		return StreamSupport//
 				.stream(getGit()//
@@ -131,14 +113,35 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 				.filter(isCommitAfter(getEarliestPointToTakeIntoAccount()));
 	}
 
+	protected synchronized <R> R streamLog(final Function<Stream<RevCommit>, R> function)
+			throws NoHeadException, GitAPIException, IOException {
+		return function.apply(streamLog());
+	}
+
+	protected Predicate<RevCommit> isCommitAfter(final Instant from) {
+		if (from == null) {
+			return x -> true;
+		}
+		return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from, null);
+	}
+
+	protected <T> Predicate<T> between(@Nonnull final Function<T, Instant> getTimeFunction,
+			@Nonnull final Instant from,
+			@Nullable final Instant to) {
+		return r -> {
+			final Instant time = getTimeFunction.apply(r);
+			return (null == to || time.isBefore(to)) && time.isAfter(from);
+		};
+	}
+
 	private synchronized void fetch() {
 		try {
 			getLogger().info("Pulling updates of GIT repository [{}]",
 					getGit().getRepository().getDirectory().getAbsolutePath());
 			withCredentials(getGit().fetch()).call();
-			PullResult pullResult = withCredentials(getGit().pull()).call();
+			final PullResult pullResult = withCredentials(getGit().pull()).call();
 			getLogger().info("Fetched from [{}]. Result [{}]", pullResult.getFetchedFrom(), pullResult.isSuccessful());
-		} catch (GitAPIException e) {
+		} catch (final GitAPIException e) {
 			getLogger().error(String.format("Cannot PULL repository [%s]",
 					getGit().getRepository().getDirectory().getAbsolutePath()), e);
 		}
@@ -151,26 +154,27 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		if (getRepositoryUrl().contains(":")) {
 			final String protocol = getRepositoryUrl().substring(0, getRepositoryUrl().indexOf(":")).toLowerCase();
 			switch (protocol) {
-				case "http":
-				case "https":
-				case "git":
-					return createRemoteGitRepository(getRepositoryUrl());
-				case "file":
-					return createLocalGitRepository(getRepositoryUrl());
-				default:
+			case "http":
+			case "https":
+			case "git":
+				return createRemoteGitRepository(getRepositoryUrl());
+			case "file":
+				return createLocalGitRepository(getRepositoryUrl());
+			default:
 			}
 		}
 		throw new RuntimeException("Cannot recognize url: " + getRepositoryUrl());
 	}
 
-	private Git createLocalGitRepository(String repositoryUrl) throws IOException {
+	@SuppressWarnings("resource")
+	private Git createLocalGitRepository(final String repositoryUrl) throws IOException {
 		getLogger().info("Creating local repository [{}]: ", repositoryUrl);
-		FileRepositoryBuilder builder = new FileRepositoryBuilder();
-		Repository repo = builder.setGitDir(new File(repositoryUrl)).setMustExist(true).build();
+		final FileRepositoryBuilder builder = new FileRepositoryBuilder();
+		final Repository repo = builder.setGitDir(new File(repositoryUrl)).setMustExist(true).build();
 		return new Git(repo);
 	}
 
-	private Git createRemoteGitRepository(String repositoryUrl)
+	private Git createRemoteGitRepository(final String repositoryUrl)
 			throws GitAPIException, IOException, URISyntaxException {
 		getLogger().info("Creating remote repository [{}] ", repositoryUrl);
 		// Create temp-directory
@@ -190,72 +194,78 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		return git;
 	}
 
-	private <T, Y, C extends GitCommand<Y>, X extends TransportCommand<C, T>> X withCredentials(X command) {
+	private <T, Y, C extends GitCommand<Y>, X extends TransportCommand<C, T>> X withCredentials(final X command) {
 		command.setCredentialsProvider(createCredentialsProvider(getGit().getRepository().getDirectory()));
 		return command;
 	}
 
-	private CredentialsProvider createCredentialsProvider(File localRepositoryPath) {
+	private CredentialsProvider createCredentialsProvider(final File localRepositoryPath) {
 		return createCredentialsProvider(localRepositoryPath.toPath());
 	}
 
-	private CredentialsProvider createCredentialsProvider(Path localRepositoryPath) {
-		final Path gitPath = localRepositoryPath.getFileName().toString().equals(".git")
-				? localRepositoryPath
-				: localRepositoryPath.resolve(".git");
-		return new CredentialsProvider() {
-			@Override
-			public boolean supports(CredentialItem... items) {
-				return isUsernamePassword(items) || isSkipSslTrust(items);
-			}
+	private CredentialsProvider createCredentialsProvider(final Path localRepositoryPath) {
+		return new GitCredentialsProvider(
+				localRepositoryPath.endsWith(".git") ? localRepositoryPath : localRepositoryPath.resolve(".git"));
+	}
 
-			@Override
-			public boolean isInteractive() {
-				return false;
-			}
+	private final class GitCredentialsProvider extends CredentialsProvider {
+		private final Path gitPath;
 
-			@Override
-			public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
-				if (isUsernamePassword(items)) {
-					for (CredentialItem item : items) {
-						if (item instanceof Username) {
-							((Username) item).setValue(getCredentials().getUsername());
-						} else if (item instanceof Password) {
-							((Password) item).setValue(getCredentials().getPassword().toCharArray());
-						}
+		private GitCredentialsProvider(final Path gitPath) {
+			this.gitPath = gitPath;
+		}
+
+		@Override
+		public boolean supports(final CredentialItem... items) {
+			return isUsernamePassword(items) || isSkipSslTrust(items);
+		}
+
+		@Override
+		public boolean isInteractive() {
+			return false;
+		}
+
+		@Override
+		public boolean get(final URIish uri, final CredentialItem... items) throws UnsupportedCredentialItem {
+			if (isUsernamePassword(items)) {
+				for (final CredentialItem item : items) {
+					if (item instanceof Username) {
+						((Username) item).setValue(getCredentials().getUsername());
+					} else if (item instanceof Password) {
+						((Password) item).setValue(getCredentials().getPassword().toCharArray());
 					}
-					return true;
-				} else if (!isCheckSSL() && isSkipSslTrust(items)) {
-					// JGitText.get().sslTrustForNow
-					String message = MessageFormat.format(JGitText.get().sslTrustForRepo,
-							gitPath.toAbsolutePath().toString());
-					for (CredentialItem item : items) {
-						if (item instanceof YesNoType //
-								&& item.getPromptText().equals(message)) {
-							((YesNoType) item).setValue(true);
-						}
-					}
-					return true;
 				}
-				return false;
+				return true;
+			} else if (!isCheckSSL() && isSkipSslTrust(items)) {
+				// JGitText.get().sslTrustForNow
+				final String message
+						= MessageFormat.format(JGitText.get().sslTrustForRepo, gitPath.toAbsolutePath().toString());
+				for (final CredentialItem item : items) {
+					if (item instanceof YesNoType //
+							&& item.getPromptText().equals(message)) {
+						((YesNoType) item).setValue(true);
+					}
+				}
+				return true;
 			}
+			return false;
+		}
 
-			private boolean isSkipSslTrust(CredentialItem[] items) {
-				return items.length == 4 //
-						&& items[0] instanceof InformationalMessage //
-						&& items[1] instanceof YesNoType //
-						&& items[2] instanceof YesNoType //
-						&& items[3] instanceof YesNoType //
-						&& items[0].getPromptText().endsWith(JGitText.get().sslFailureTrustExplanation);
-			}
+		private boolean isSkipSslTrust(final CredentialItem[] items) {
+			return items.length == 4 //
+					&& items[0] instanceof InformationalMessage //
+					&& items[1] instanceof YesNoType //
+					&& items[2] instanceof YesNoType //
+					&& items[3] instanceof YesNoType //
+					&& items[0].getPromptText().endsWith(JGitText.get().sslFailureTrustExplanation);
+		}
 
-			private boolean isUsernamePassword(CredentialItem[] items) {
-				return items.length == 2//
-						&& (items[0] instanceof Username//
-								&& items[1] instanceof Password//
-								|| items[0] instanceof Password//
-										&& items[1] instanceof Username);
-			}
-		};
+		private boolean isUsernamePassword(final CredentialItem[] items) {
+			return items.length == 2//
+					&& (items[0] instanceof Username//
+							&& items[1] instanceof Password//
+							|| items[0] instanceof Password//
+									&& items[1] instanceof Username);
+		}
 	}
 }

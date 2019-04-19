@@ -10,6 +10,7 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 public class Birthday {
 	@NotNull
 	private String name;
+
 	@NotNull
 	private LocalDate date;
 
@@ -17,7 +18,7 @@ public class Birthday {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -25,7 +26,7 @@ public class Birthday {
 		return date;
 	}
 
-	public void setDate(LocalDate date) {
+	public void setDate(final LocalDate date) {
 		this.date = date;
 	}
 }

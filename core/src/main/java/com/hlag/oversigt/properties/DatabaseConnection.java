@@ -8,10 +8,11 @@ public class DatabaseConnection extends SerializableProperty {
 
 	@Member(icon = "file", size = 4)
 	private String driverClassName;
+
 	@Member(icon = "cloud", size = 4)
 	private String jdbcUrl;
 
-	public DatabaseConnection(int id, String name, String driverClassName, String jdbcUrl) {
+	public DatabaseConnection(final int id, final String name, final String driverClassName, final String jdbcUrl) {
 		super(id, name);
 		this.driverClassName = driverClassName;
 		this.jdbcUrl = jdbcUrl;

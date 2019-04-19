@@ -24,7 +24,7 @@ abstract class SimpleEventSource<T extends OversigtEvent> extends AbstractExecut
 	@Inject
 	private String eventId;
 
-	protected final void sendEvent(T t) {
+	protected final void sendEvent(final T t) {
 		if (null != t) {
 			t.setId(eventId);
 			this.eventBus.post(t);

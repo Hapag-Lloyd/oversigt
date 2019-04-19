@@ -30,9 +30,10 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 		red("color: red;", "");
 
 		private final String labelStyle;
+
 		private final String valueStyle;
 
-		private Style(String labelStyle, String valueStyle) {
+		Style(final String labelStyle, final String valueStyle) {
 			this.labelStyle = labelStyle;
 			this.valueStyle = valueStyle;
 		}
@@ -60,27 +61,26 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 
 	@Override
 	protected TwoColumnListEvent<String> produceExchangeEvent() throws Exception {
-		String mailboxName = getMailboxName();
-		List<Task> tasks = MailboxInfoRetriever.getInstance().getTasks(mailboxName);
-		if (tasks != null) {
-			TwoColumnListEvent<String> event = createEvent(tasks);
-			return event;
-		} else {
+		final String mailboxName = getMailboxName();
+		final List<Task> tasks = MailboxInfoRetriever.getInstance().getTasks(mailboxName);
+		if (tasks == null) {
 			return null;
 		}
+		final TwoColumnListEvent<String> event = createEvent(tasks);
+		return event;
 	}
 
-	private TwoColumnListEvent<String> createEvent(List<Task> tasks) {
+	private TwoColumnListEvent<String> createEvent(final List<Task> tasks) {
 		return new TwoColumnListEvent<>(tasks.stream().map(t -> createItem(t)).collect(Collectors.toList()));
 	}
 
-	private ListEventItem<String> createItem(Task task) {
+	private ListEventItem<String> createItem(final Task task) {
 		try {
 			String subject = task.getSubject();
 			String labelStyle = "";
 			String valueStyle = "";
-			for (Style style : Style.values()) {
-				String searchTerm = "[" + style.name() + "]";
+			for (final Style style : Style.values()) {
+				final String searchTerm = "[" + style.name() + "]";
 				if (subject.contains(searchTerm)) {
 					subject = subject.replace(searchTerm, "");
 					labelStyle += style.getLabelStyle();
@@ -89,35 +89,38 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 			}
 
 			switch (task.getImportance()) {
-				case Low:
-					labelStyle += "opacity: 0.75;";
-					break;
-				case Normal:
-					break;
-				case High:
-					labelStyle += "font-weight: bold;";
-					break;
+			case Low:
+				labelStyle += "opacity: 0.75;";
+				break;
+			case High:
+				labelStyle += "font-weight: bold;";
+				break;
+			case Normal:
+			default:
+				break;
 			}
 
 			String createdAtStr = null;
 			if (isShowDateColumn()) {
-				ZonedDateTime createdAt = task.getDateTimeCreated().toInstant().atZone(getZoneId());
+				final ZonedDateTime createdAt = task.getDateTimeCreated().toInstant().atZone(getZoneId());
 				if (createdAt.toLocalDate().isBefore(LocalDate.now(getZoneId()))) {
-					createdAtStr = createdAt.toLocalDate()
-							.format(DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY));
+					createdAtStr
+							= createdAt.toLocalDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY));
 				} else {
 					createdAtStr = createdAt.format(DateTimeFormatter.ofPattern("HH:mm", Locale.GERMANY));
 				}
 			}
 
 			return new ListEventItem<>(subject, createdAtStr, labelStyle, valueStyle);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Unable to read task details", e);
 		}
 	}
 
 	private String mailboxName = "";
+
 	private Duration reloadInterval = Duration.ofMinutes(1);
+
 	private boolean showDateColumn = true;
 
 	@Property(name = "Mailbox Name", description = "The name of the mailbox to inspect")
@@ -125,26 +128,28 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 		return mailboxName;
 	}
 
-	public void setMailboxName(String mailboxName) {
+	public void setMailboxName(final String mailboxName) {
 		this.mailboxName = mailboxName;
 	}
 
 	@Override
-	@Property(name = "Reload Interval", description = "How often should the event source query the server to get mailbox information?")
+	@Property(name = "Reload Interval",
+			description = "How often should the event source query the server to get mailbox information?")
 	public Duration getReloadInterval() {
 		return reloadInterval;
 	}
 
-	public void setReloadInterval(Duration reloadInterval) {
+	public void setReloadInterval(final Duration reloadInterval) {
 		this.reloadInterval = reloadInterval;
 	}
 
-	@Property(name = "Show Date Column", description = "Determines whether the widget should show the date column or not")
+	@Property(name = "Show Date Column",
+			description = "Determines whether the widget should show the date column or not")
 	public boolean isShowDateColumn() {
 		return showDateColumn;
 	}
 
-	public void setShowDateColumn(boolean showDateColumn) {
+	public void setShowDateColumn(final boolean showDateColumn) {
 		this.showDateColumn = showDateColumn;
 	}
 }

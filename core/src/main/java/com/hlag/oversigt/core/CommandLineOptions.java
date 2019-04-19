@@ -13,15 +13,17 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
-public class CommandLineOptions {
+import de.larssh.utils.Nullables;
 
-	public static CommandLineOptions parse(String[] args) {
-		CommandLineOptions options = new CommandLineOptions();
-		CmdLineParser parser = new CmdLineParser(options);
+public final class CommandLineOptions {
+
+	public static CommandLineOptions parse(final String[] args) {
+		final CommandLineOptions options = new CommandLineOptions();
+		final CmdLineParser parser = new CmdLineParser(options);
 		try {
 			parser.parseArgument(args);
 			return options;
-		} catch (CmdLineException e) {
+		} catch (final CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
 			// an error message.
@@ -34,19 +36,26 @@ public class CommandLineOptions {
 		}
 	}
 
-	private CommandLineOptions() {
-	}
+	private CommandLineOptions() {}
 
-	@Option(name = "--startEventSources", usage = "When starting the server also start all event sources", handler = BooleanOptionHandler.class, required = false)
+	@Option(name = "--startEventSources",
+			usage = "When starting the server also start all event sources",
+			handler = BooleanOptionHandler.class,
+			required = false)
 	private boolean startEventSources = false;
 
-	@Option(name = "--delete", usage = "delete event sources from database where the event source class does not exist any more", handler = BooleanOptionHandler.class, required = false)
+	@Option(name = "--delete",
+			usage = "delete event sources from database where the event source class does not exist any more",
+			handler = BooleanOptionHandler.class,
+			required = false)
 	private boolean deleteNonExistingEventSourceFromDatabase = false;
 
 	@Option(name = "--ldapBindPassword", required = false)
 	private String ldapBindPasswordFallback = "";
 
-	@Option(name = "--debug", handler = BooleanOptionHandler.class, usage = "Enables extra output for debugging purpose. Should not be used in production mode.")
+	@Option(name = "--debug",
+			handler = BooleanOptionHandler.class,
+			usage = "Enables extra output for debugging purpose. Should not be used in production mode.")
 	private boolean debugFallback = false;
 
 	public boolean isStartEventSources() {
@@ -70,20 +79,15 @@ public class CommandLineOptions {
 			return Stream//
 					.of(Introspector.getBeanInfo(getClass(), Object.class).getPropertyDescriptors())//
 					.collect(Collectors.toMap(PropertyDescriptor::getName, pd -> get(pd.getReadMethod())));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private String get(Method method) {
+	private String get(final Method method) {
 		try {
-			Object object = method.invoke(this);
-			if (object != null) {
-				return object.toString();
-			} else {
-				return null;
-			}
-		} catch (Exception e) {
+			return Nullables.map(method.invoke(this), Object::toString);
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

@@ -11,42 +11,53 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.text.WordUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Strings;
 import com.hlag.oversigt.sources.data.JsonHint;
+
+import de.larssh.utils.Optionals;
 
 public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	@NotBlank
 	private String name = null;
+
 	@NotBlank
 	private final String displayName;
+
 	private final String description;
+
 	@NotBlank
-	private final String inputType;//= "text";
+	private final String inputType;
+
 	private final Map<@NotNull String, @NotNull String> allowedValues = new LinkedHashMap<>();
+
 	private final boolean customValuesAllowed;
 
 	@JsonIgnore
 	private final Method getter;
+
 	@JsonIgnore
 	private final Method setter;
+
 	@JsonIgnore
 	private final Class<?> clazz;
+
 	@JsonIgnore
 	private final JsonHint hint;
+
 	private final boolean json;
+
 	private final String jsonSchema;
 
-	EventSourceProperty(@NotBlank String name,
-			@NotBlank String displayName,
-			String description,
-			String inputType,
-			boolean customValuesAllowed,
-			Method getter,
-			Method setter,
-			Class<?> clazz,
-			JsonHint hint,
-			boolean json,
-			String jsonSchema) {
+	EventSourceProperty(@NotBlank final String name,
+			@NotBlank final String displayName,
+			final String description,
+			final String inputType,
+			final boolean customValuesAllowed,
+			final Method getter,
+			final Method setter,
+			final Class<?> clazz,
+			final JsonHint hint,
+			final boolean json,
+			final String jsonSchema) {
 		this.name = name;
 		this.displayName = displayName;
 		this.description = description != null && description.trim().length() > 1 ? description : null;
@@ -60,11 +71,9 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		this.jsonSchema = jsonSchema;
 	}
 
-	void addAllowedValue(@NotNull String value, String title) {
-		if (Strings.isNullOrEmpty(title)) {
-			title = WordUtils.capitalizeFully(value.replace('_', ' '));
-		}
-		allowedValues.put(value, title);
+	void addAllowedValue(@NotNull final String value, final String title) {
+		allowedValues.put(value,
+				Optionals.ofNonEmpty(title).orElseGet(() -> WordUtils.capitalizeFully(value.replace('_', ' '))));
 	}
 
 	public String getName() {
@@ -121,16 +130,12 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	@JsonIgnore
 	public String getType() {
-		if (getter != null) {
-			return "PROPERTY";
-		} else {
-			return "DATA";
-		}
+		return getter == null ? "DATA" : "PROPERTY";
 	}
 
 	@Override
-	public int compareTo(EventSourceProperty that) {
-		return this.getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(final EventSourceProperty that) {
+		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
 	}
 
 	@Override

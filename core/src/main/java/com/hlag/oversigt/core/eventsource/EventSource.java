@@ -17,7 +17,8 @@ import com.google.inject.Module;
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface EventSource {
 	/**
-	 * Defines the display name of the event source. If this field is left out the event source's class name will be used.
+	 * Defines the display name of the event source. If this field is left out the
+	 * event source's class name will be used.
 	 *
 	 * @return the display name of the event source
 	 */
@@ -25,33 +26,49 @@ public @interface EventSource {
 
 	String description() default "";
 
-	/**Defines the name of the widget that will be used to render the data produced by this event source
+	/**
+	 * Defines the name of the widget that will be used to render the data produced
+	 * by this event source
+	 *
 	 * @return the name of the widget to be used
 	 */
 	String view();
 
-	/**Lists data items that users may change to configure the appearance of the rendered widget
+	/**
+	 * Lists data items that users may change to configure the appearance of the
+	 * rendered widget
+	 *
 	 * @return a list of data item names
 	 */
 	String[] dataItems() default {};
 
-	/**Widgets may bring a lot of data items. Sometimes it is not meaningful to show those data items to the user so with this attribute you have the possibility to hide these data items form the user.
+	/**
+	 * Widgets may bring a lot of data items. Sometimes it is not meaningful to show
+	 * those data items to the user so with this attribute you have the possibility
+	 * to hide these data items form the user.
+	 *
 	 * @return a list of data item names
 	 */
 	String[] hiddenDataItems() default {};
 
-	/**Provide default values for data items of widgets
+	/**
+	 * Provide default values for data items of widgets
+	 *
 	 * @return a list of default values
 	 */
 	DataItemDefault[] dataItemDefaults() default {};
 
-	/**Provides custom Guice configuration for event source instances of the current event source
+	/**
+	 * Provides custom Guice configuration for event source instances of the current
+	 * event source
+	 *
 	 * @return a {@link Module} class object describing the module to use
 	 */
 	Class<? extends Module> explicitConfiguration() default NOP.class;
 
-	/**Empty Module to provide an empty Guice configuration if the event source does not need custom configuration
+	/**
+	 * Empty Module to provide an empty Guice configuration if the event source does
+	 * not need custom configuration
 	 */
-	interface NOP extends Module {
-	}
+	interface NOP extends Module {}
 }

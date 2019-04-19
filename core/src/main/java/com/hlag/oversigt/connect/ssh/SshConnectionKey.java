@@ -3,17 +3,18 @@ package com.hlag.oversigt.connect.ssh;
 import java.util.Comparator;
 
 class SshConnectionKey implements Comparable<SshConnectionKey> {
-	@SuppressWarnings("rawtypes")
-	protected static final Comparator COMPARATOR = //
+	protected static final Comparator<SshConnectionKey> COMPARATOR = //
 			Comparator.comparing(SshConnectionKey::getHostname)
 					.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
 					.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
 
 	private final String hostname;
+
 	private final int port;
+
 	private final String username;
 
-	protected SshConnectionKey(String hostname, int port, String username) {
+	protected SshConnectionKey(final String hostname, final int port, final String username) {
 		this.hostname = hostname;
 		this.port = port;
 		this.username = username;
@@ -31,9 +32,8 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 		return username;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public int compareTo(SshConnectionKey that) {
+	public int compareTo(final SshConnectionKey that) {
 		return COMPARATOR.compare(this, that);
 	}
 
@@ -48,7 +48,7 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -58,7 +58,7 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		SshConnectionKey other = (SshConnectionKey) obj;
+		final SshConnectionKey other = (SshConnectionKey) obj;
 		if (hostname == null) {
 			if (other.hostname != null) {
 				return false;

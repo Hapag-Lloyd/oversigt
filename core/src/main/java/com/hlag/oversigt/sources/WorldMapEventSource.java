@@ -18,6 +18,8 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.MapEvent;
 import com.hlag.oversigt.sources.event.MapEvent.Point;
 
+import de.larssh.utils.Nullables;
+
 @EventSource(displayName = "World Map", view = "Worldmap", hiddenDataItems = { "updated-at-message" })
 public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, MapEvent> {
 
@@ -34,48 +36,45 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 		return DatabaseCache.createCache(this::readShipPositions);
 	}
 
-	private Collection<Point> readShipPositions(Connection connection) throws SQLException {
+	private Collection<Point> readShipPositions(final Connection connection) throws SQLException {
 		return readFromDatabase(connection, this::readPoint, getQuery());
 	}
 
-	private Point readPoint(ResultSet rs) throws SQLException {
-		String id = rs.getString("ID_NUMBER");
-		double dlong = rs.getDouble("LONGITUDE");
-		double dlat = rs.getDouble("LATITUDE");
+	private Point readPoint(final ResultSet rs) throws SQLException {
+		final String id = rs.getString("ID_NUMBER");
+		final double dlong = rs.getDouble("LONGITUDE");
+		final double dlat = rs.getDouble("LATITUDE");
 		TypeMapping mapping = null;
-		for (TypeMapping tm : getTypeMappings()) {
-			String dbValue = Strings.nullToEmpty(rs.getString(tm.field)).trim();
+		for (final TypeMapping tm : getTypeMappings()) {
+			final String dbValue = Strings.nullToEmpty(rs.getString(tm.field)).trim();
 			if (Strings.nullToEmpty(tm.value).equals(dbValue)) {
 				mapping = tm;
 				break;
 			}
 		}
-		if (mapping != null) {
-			return new Point(id, dlong, dlat, mapping.fill, mapping.stroke, mapping.size);
-		} else {
+		if (mapping == null) {
 			return new Point(id, dlong, dlat);
 		}
+		return new Point(id, dlong, dlat, mapping.fill, mapping.stroke, mapping.size);
 	}
 
-	@Property(name = "Query", description = "The query used to read position information. The result must contain three columns: ID_NUMBER, LONGITUDE, LATITUDE. Each point will be identified by the ID_NUMBER. Once an ID_NUMBER is known the point belonging to it will be moved with every subsequent call. If the latest query result does not contain a record with the respective ID_NUMBER the point will be removed from the map. Additional columns can be used to use the type mappings e.g. for different colors of the single points.", type = "sql")
+	@Property(name = "Query",
+			description = "The query used to read position information. The result must contain three columns: ID_NUMBER, LONGITUDE, LATITUDE. Each point will be identified by the ID_NUMBER. Once an ID_NUMBER is known the point belonging to it will be moved with every subsequent call. If the latest query result does not contain a record with the respective ID_NUMBER the point will be removed from the map. Additional columns can be used to use the type mappings e.g. for different colors of the single points.",
+			type = "sql")
 	public String getQuery() {
 		return query;
 	}
 
-	public void setQuery(String query) {
+	public void setQuery(final String query) {
 		this.query = query;
 	}
 
 	@Property(name = "Type Mappings", description = "Change the color (type) of a point based on column values")
 	public TypeMapping[] getTypeMappings() {
-		if (typeMappings != null) {
-			return typeMappings;
-		} else {
-			return new TypeMapping[0];
-		}
+		return Nullables.orElseGet(typeMappings, () -> new TypeMapping[0]);
 	}
 
-	public void setTypeMappings(TypeMapping[] typeMappings) {
+	public void setTypeMappings(final TypeMapping[] typeMappings) {
 		this.typeMappings = typeMappings;
 	}
 
@@ -87,15 +86,23 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 	@JsonHint(arrayStyle = ArrayStyle.TABS, headerTemplate = "Mapping {{i1}}")
 	public static class TypeMapping {
 		private final String field;
+
 		private final String value;
+
 		@NotNull
 		private final Color fill;
+
 		@NotNull
 		private final Color stroke;
+
 		@NotNull
 		private final double size;
 
-		public TypeMapping(String field, String value, Color fill, Color stroke, double size) {
+		public TypeMapping(final String field,
+				final String value,
+				final Color fill,
+				final Color stroke,
+				final double size) {
 			this.field = field;
 			this.value = value;
 			this.fill = fill;

@@ -41,7 +41,8 @@ import ro.isdc.wro.model.resource.locator.factory.ConfigurableLocatorFactory;
 import ro.isdc.wro.model.resource.locator.factory.UriLocatorFactory;
 
 /**
- * Defines most common properties used by wro4j build-time solution infrastructure.
+ * Defines most common properties used by wro4j build-time solution
+ * infrastructure.
  *
  * @author Alex Objelean
  */
@@ -54,15 +55,18 @@ public class Wro4jExecutor {
 			"        <js>classpath:statics/widgets/{{viewName}}/**.js</js>\n" + //
 			"        <js>classpath:statics/widgets/{{viewName}}/**.coffee</js>\n" + //
 			"        <css>classpath:statics/widgets/{{viewName}}/**.scss</css>\n" + //
-			//"        <css>classpath:statics/widgets/{{viewName}}/**.css</css>\n" + //
+			// " <css>classpath:statics/widgets/{{viewName}}/**.css</css>\n" + //
 			"    </group>\n" + //
 			"</groups>\n";
-	private static final String WRO_PROPERTIES = "preProcessors=cssUrlRewriting,coffeeScript\r\npostProcessors=rubySassCss";
+
+	private static final String WRO_PROPERTIES
+			= "preProcessors=cssUrlRewriting,coffeeScript\r\npostProcessors=rubySassCss";
 
 	private static final String GROUP = "group";
+
 	private final ConfigurableWroManagerFactory managerFactory;
 
-	public Wro4jExecutor(String viewName, boolean minimize) {
+	public Wro4jExecutor(final String viewName, final boolean minimize) {
 		try {
 			Context.set(Context.standaloneContext());
 			managerFactory = new ConfigurableWroManagerFactory(WRO_PROPERTIES,
@@ -78,7 +82,7 @@ public class Wro4jExecutor {
 		}
 	}
 
-	public final Optional<String> execute(ResourceType resourceType) {
+	public final Optional<String> execute(final ResourceType resourceType) {
 		final String groupWithExtension = GROUP + "." + resourceType.name().toLowerCase();
 
 		// mock request
@@ -87,18 +91,17 @@ public class Wro4jExecutor {
 				ReturnValue.find(HttpServletRequest.class, "getRequestURI", groupWithExtension));
 
 		// mock response
-		final ByteArrayOutputStream resultOutputStream = new ByteArrayOutputStream();
-		final HttpServletResponse response = ClassProxy.create(HttpServletResponse.class,
-				ReturnValue.find(HttpServletResponse.class,
-						"getOutputStream",
-						new DelegatingServletOutputStream(resultOutputStream)));
+		try (ByteArrayOutputStream resultOutputStream = new ByteArrayOutputStream();
+				DelegatingServletOutputStream delegatingServletOutputStream
+						= new DelegatingServletOutputStream(resultOutputStream)) {
+			final HttpServletResponse response = ClassProxy.create(HttpServletResponse.class,
+					ReturnValue.find(HttpServletResponse.class, "getOutputStream", delegatingServletOutputStream));
 
-		// init context
-		final WroConfiguration config = Context.get().getConfig();
-		config.setIgnoreEmptyGroup(true);
-		Context.set(Context.webContext(request, response, ClassProxy.create(FilterConfig.class)), config);
+			// init context
+			final WroConfiguration config = Context.get().getConfig();
+			config.setIgnoreEmptyGroup(true);
+			Context.set(Context.webContext(request, response, ClassProxy.create(FilterConfig.class)), config);
 
-		try {
 			// perform processing
 			managerFactory.create().process();
 			return Optional.of(new String(resultOutputStream.toByteArray(), StandardCharsets.UTF_8));
@@ -109,17 +112,19 @@ public class Wro4jExecutor {
 	}
 
 	/**
-	* Default implementation which use a property file to read the pre & post processors to be used during processing.
-	*
-	* @author Alex Objelean
-	* @created 2 Aug 2011
-	* @since 1.4.0
-	*/
+	 * Default implementation which use a property file to read the pre & post
+	 * processors to be used during processing.
+	 *
+	 * @author Alex Objelean
+	 * @created 2 Aug 2011
+	 * @since 1.4.0
+	 */
 	private static class ConfigurableWroManagerFactory extends ConfigurableStandaloneContextAwareManagerFactory {
 		private final String properties;
+
 		private final String wroXml;
 
-		ConfigurableWroManagerFactory(String properties, String wroXml) {
+		ConfigurableWroManagerFactory(final String properties, final String wroXml) {
 			this.properties = properties;
 			this.wroXml = wroXml;
 		}
@@ -160,8 +165,9 @@ public class Wro4jExecutor {
 				@Override
 				public UriLocator getInstance(final String uri) {
 					final UriLocator locator = super.getInstance(uri);
-					// ensure standalone context is provided to each locator requiring it for initialization.
-					if (locator != null && locator instanceof StandaloneContextAware) {
+					// ensure standalone context is provided to each locator requiring it for
+					// initialization.
+					if (locator instanceof StandaloneContextAware) {
 						((StandaloneContextAware) locator).initialize(getStandaloneContext());
 					}
 					return locator;
@@ -177,11 +183,11 @@ public class Wro4jExecutor {
 		@Override
 		protected Properties createProperties() {
 			try {
-				Reader reader = new StringReader(properties);
+				final Reader reader = new StringReader(properties);
 				final Properties properties = new Properties();
 				properties.load(reader);
 				return properties;
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new UncheckedIOException(e);
 			}
 		}

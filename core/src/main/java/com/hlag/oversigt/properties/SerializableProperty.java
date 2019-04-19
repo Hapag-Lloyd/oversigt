@@ -4,22 +4,24 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
- * This interface marks classes that will be stored in the database in a separate tables.
+ * This interface marks classes that will be stored in the database in a
+ * separate tables.
  *
  * @author neumaol
- *
  */
 public abstract class SerializableProperty implements Comparable<SerializableProperty> {
 
 	private final int id;
+
 	private String name;
 
-	protected SerializableProperty(int id, String name) {
+	protected SerializableProperty(final int id, final String name) {
 		this.id = id;
 		this.name = name;
 	}
@@ -32,13 +34,13 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
 	@Override
-	public int compareTo(SerializableProperty that) {
-		return String.CASE_INSENSITIVE_ORDER.compare(this.getName(), that.getName());
+	public int compareTo(final SerializableProperty that) {
+		return String.CASE_INSENSITIVE_ORDER.compare(getName(), that.getName());
 	}
 
 	@Override
@@ -47,8 +49,13 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	}
 
 	@Override
-	public final boolean equals(Object that) {
+	public final boolean equals(final Object that) {
 		return this == that;
+	}
+
+	@Override
+	public final int hashCode() {
+		return Objects.hashCode(this);
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -62,14 +69,17 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	}
 
 	/**
-	 * Use this annotation to add an description to the annotated object. Unlike JavaDoc this description can be inspected at runtime.
+	 * Use this annotation to add an description to the annotated object. Unlike
+	 * JavaDoc this description can be inspected at runtime.
 	 *
 	 * @author Olaf Neumann
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.TYPE, ElementType.FIELD })
 	public static @interface Description {
-		/**The description of the annotated object
+		/**
+		 * The description of the annotated object
+		 *
 		 * @return the description
 		 */
 		String value();

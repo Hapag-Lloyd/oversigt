@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,6 +34,7 @@ import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.util.JsonUtils;
 
+import de.larssh.utils.OptionalLongs;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.AttachmentKey;
 
@@ -41,31 +43,36 @@ public class EventSender {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventSender.class);
 
 	private static final AttachmentKey<RateLimiter> RATE_LIMITER_KEY = AttachmentKey.create(RateLimiter.class);
+
 	public static final AttachmentKey<Dashboard> DASHBOARD_KEY = AttachmentKey.create(Dashboard.class);
 
 	@Named("application-id")
 	@Inject
 	private String applicationId;
-	private final Optional<Long> rateLimit;
+
+	private final OptionalLong rateLimit;
 
 	// Send events in another thread
 	private final BlockingQueue<EventSendTask> eventsToSend = new LinkedBlockingQueue<>();
+
 	private final Thread thread;
 
 	private final Map<String, OversigtEvent> cachedEvents = Collections.synchronizedMap(new HashMap<>());
-	private final Map<ServerSentEventConnection, Map<String, LocalDateTime>> sentEventTimestamps = Collections
-			.synchronizedMap(new WeakHashMap<>());
+
+	private final Map<ServerSentEventConnection, Map<String, LocalDateTime>> sentEventTimestamps
+			= Collections.synchronizedMap(new WeakHashMap<>());
+
 	private final JsonUtils json;
 
 	private final Duration defaultEventLifetime;
 
 	@Inject
-	public EventSender(JsonUtils json,
-			@Named("discardEventsAfter") Duration discardEventsAfter,
-			@Named("rateLimit") @Nullable Long rateLimit) {
+	public EventSender(final JsonUtils json,
+			@Named("discardEventsAfter") final Duration discardEventsAfter,
+			@Named("rateLimit") @Nullable final Long rateLimit) {
 		this.json = json;
-		this.defaultEventLifetime = discardEventsAfter;
-		this.rateLimit = Optional.ofNullable(rateLimit);
+		defaultEventLifetime = discardEventsAfter;
+		this.rateLimit = rateLimit == null ? OptionalLong.empty() : OptionalLong.of(rateLimit);
 
 		thread = new Thread(this::sendQueuedTasks, "EventSender");
 		thread.setDaemon(true);
@@ -74,7 +81,7 @@ public class EventSender {
 	}
 
 	@Subscribe
-	void cacheEvent(OversigtEvent event) {
+	void cacheEvent(final OversigtEvent event) {
 		if (shouldCacheEvent(event)) {
 			if (event.getLifetime() == null) {
 				event.setLifetime(defaultEventLifetime);
@@ -94,8 +101,8 @@ public class EventSender {
 	}
 
 	@Subscribe
-	void newConnectionAdded(ServerSentEventConnection connection) {
-		rateLimit.map(RateLimiter::create)
+	void newConnectionAdded(final ServerSentEventConnection connection) {
+		OptionalLongs.mapToObj(rateLimit, RateLimiter::create)
 				.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
 		logInfo(LOGGER,
 				"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
@@ -108,16 +115,16 @@ public class EventSender {
 	}
 
 	@Subscribe
-	void removeEventWithId(String id) {
+	void removeEventWithId(final String id) {
 		synchronized (cachedEvents) {
-			boolean deleted = cachedEvents.values().removeIf(event -> event.getId().equals(id));
+			final boolean deleted = cachedEvents.values().removeIf(event -> event.getId().equals(id));
 			if (deleted) {
 				logWarn(LOGGER, "Deleted cached events for ID [%s]", id);
 			}
 		}
 	}
 
-	private boolean shouldSendEventToConnection(OversigtEvent event, ServerSentEventConnection connection) {
+	private boolean shouldSendEventToConnection(final OversigtEvent event, final ServerSentEventConnection connection) {
 		// always send uncached events
 		if (!shouldCacheEvent(event)) {
 			return true;
@@ -132,7 +139,7 @@ public class EventSender {
 
 		// special handling for error events
 		if (event instanceof ErrorEvent) {
-			OversigtEvent cachedEvent = cachedEvents.get(event.getId());
+			final OversigtEvent cachedEvent = cachedEvents.get(event.getId());
 			return cachedEvent == null //
 					|| cachedEvent instanceof ErrorEvent;
 		}
@@ -140,7 +147,7 @@ public class EventSender {
 		return true;
 	}
 
-	public void sendEventToConnection(OversigtEvent event, ServerSentEventConnection connection) {
+	public void sendEventToConnection(final OversigtEvent event, final ServerSentEventConnection connection) {
 		if (shouldSendEventToConnection(event, connection)) {
 			eventsToSend.add(new EventSendTask(connection, event));
 		}
@@ -149,28 +156,28 @@ public class EventSender {
 	private void sendQueuedTasks() {
 		while (true) {
 			try {
-				EventSendTask task = eventsToSend.take();
+				final EventSendTask task = eventsToSend.take();
 				processTask(task);
 				moveTasksForConnectionToBack(task.connection);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				LOGGER.error("Waiting for new events has been interrupted.", e);
 			}
 		}
 	}
 
-	private void processTask(EventSendTask task) {
+	private void processTask(final EventSendTask task) {
 		try {
 			processTask(task.connection, task.event);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LOGGER.error("Unable to send event.", e);
 		}
 	}
 
-	private void processTask(ServerSentEventConnection connection, OversigtEvent event) {
+	private void processTask(final ServerSentEventConnection connection, final OversigtEvent event) {
 		final boolean isErrorEvent = event instanceof ErrorEvent;
-		final Map<String, LocalDateTime> timestampsForConnection = sentEventTimestamps.computeIfAbsent(connection,
-				c -> Collections.synchronizedMap(new HashMap<>()));
-		LocalDateTime lastEventTimestamp = timestampsForConnection.get(event.getId());
+		final Map<String, LocalDateTime> timestampsForConnection
+				= sentEventTimestamps.computeIfAbsent(connection, c -> Collections.synchronizedMap(new HashMap<>()));
+		final LocalDateTime lastEventTimestamp = timestampsForConnection.get(event.getId());
 		if (isErrorEvent //
 				|| lastEventTimestamp == null //
 				|| lastEventTimestamp.isEqual(event.getCreatedOn()) //
@@ -184,7 +191,7 @@ public class EventSender {
 
 			// Send event
 			logDebug(LOGGER, "Sending event [%s]", event.getId());
-			String json = toJson(event);
+			final String json = toJson(event);
 			connection.send(json);
 
 			// note when this connection got the last event of this ID
@@ -194,11 +201,11 @@ public class EventSender {
 		}
 	}
 
-	private void moveTasksForConnectionToBack(ServerSentEventConnection connection) {
+	private void moveTasksForConnectionToBack(final ServerSentEventConnection connection) {
 		synchronized (eventsToSend) {
 			// find tasks with the same connection
-			List<EventSendTask> tasksWithSameConnection = new LinkedList<>();
-			for (EventSendTask task : eventsToSend) {
+			final List<EventSendTask> tasksWithSameConnection = new LinkedList<>();
+			for (final EventSendTask task : eventsToSend) {
 				if (task.connection == connection) {
 					tasksWithSameConnection.add(task);
 				}
@@ -218,15 +225,14 @@ public class EventSender {
 		}
 	}
 
-	private String toJson(OversigtEvent event) {
+	private String toJson(final OversigtEvent event) {
 		if (event instanceof JsonEvent) {
 			return ((JsonEvent) event).getJson();
-		} else {
-			return json.toJson(event);
 		}
+		return json.toJson(event);
 	}
 
-	private static boolean doesDashboardContainEventId(Dashboard dashboard, String eventId) {
+	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {
 		return dashboard//
 				.getWidgets()
 				.stream()
@@ -235,7 +241,7 @@ public class EventSender {
 				.anyMatch(eventId::equals);
 	}
 
-	private static boolean shouldRemoveEvent(OversigtEvent event) {
+	private static boolean shouldRemoveEvent(final OversigtEvent event) {
 		final boolean remove = !(event instanceof ErrorEvent) && !event.isValid();
 		if (remove) {
 			logWarn(LOGGER, "Deleting cached event [%s]. Event lifetime was [%s]", event.getId(), event.getLifetime());
@@ -243,15 +249,16 @@ public class EventSender {
 		return remove;
 	}
 
-	private static boolean shouldCacheEvent(OversigtEvent event) {
+	private static boolean shouldCacheEvent(final OversigtEvent event) {
 		return !event.getClass().isAnnotationPresent(NoCache.class);
 	}
 
-	private static class EventSendTask {
+	private static final class EventSendTask {
 		private ServerSentEventConnection connection;
+
 		private OversigtEvent event;
 
-		private EventSendTask(ServerSentEventConnection connection, OversigtEvent event) {
+		private EventSendTask(final ServerSentEventConnection connection, final OversigtEvent event) {
 			this.connection = connection;
 			this.event = event;
 		}

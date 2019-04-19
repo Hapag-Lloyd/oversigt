@@ -19,13 +19,15 @@ public class RoleProvider {
 	@Inject
 	@Named("serverAdmins")
 	private List<String> adminUserIds;
+
 	@Inject
 	private Storage storage;
+
 	@Inject
 	private DashboardController controller;
 
-	public Set<Role> getRoles(String userid) {
-		Set<Role> roles = new HashSet<>();
+	public Set<Role> getRoles(final String userid) {
+		final Set<Role> roles = new HashSet<>();
 
 		if (adminUserIds.contains(userid.toLowerCase().trim())) {
 			roles.add(Role.SERVER_ADMIN);
@@ -53,11 +55,15 @@ public class RoleProvider {
 		return roles;
 	}
 
-	private static void addWithDefaultRole(Collection<Role> roles, Stream<Role> rolesToAdd, Role defaultRole) {
+	private static void addWithDefaultRole(final Collection<Role> roles,
+			final Stream<Role> rolesToAdd,
+			final Role defaultRole) {
 		addWithDefaultRole(roles, rolesToAdd.collect(toSet()), defaultRole);
 	}
 
-	private static void addWithDefaultRole(Collection<Role> roles, Collection<Role> rolesToAdd, Role defaultRole) {
+	private static void addWithDefaultRole(final Collection<Role> roles,
+			final Collection<Role> rolesToAdd,
+			final Role defaultRole) {
 		if (rolesToAdd != null && !rolesToAdd.isEmpty()) {
 			roles.addAll(rolesToAdd);
 			roles.add(defaultRole);

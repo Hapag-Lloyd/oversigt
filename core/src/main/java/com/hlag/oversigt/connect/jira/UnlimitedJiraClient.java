@@ -13,11 +13,11 @@ import com.google.common.collect.Table;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
-class UnlimitedJiraClient implements JiraClient {
+final class UnlimitedJiraClient implements JiraClient {
 
 	private static final Table<String, String, UnlimitedJiraClient> CLIENT_CACHE = HashBasedTable.create();
 
-	synchronized static JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
+	static synchronized JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
 			throws JiraClientException {
 		if (!CLIENT_CACHE.contains(connection.getUrl(), credentials.getUsername())) {
 			CLIENT_CACHE.put(connection.getUrl(),
@@ -27,9 +27,11 @@ class UnlimitedJiraClient implements JiraClient {
 		return CLIENT_CACHE.get(connection.getUrl(), credentials.getUsername());
 	}
 
-	final ServerConnection connection;
-	final Credentials credentials;
-	volatile JiraRestClient jiraClient;
+	private final ServerConnection connection;
+
+	private final Credentials credentials;
+
+	private volatile JiraRestClient jiraClient;
 
 	private UnlimitedJiraClient(final ServerConnection connection, final Credentials credentials)
 			throws JiraClientException {
@@ -42,7 +44,7 @@ class UnlimitedJiraClient implements JiraClient {
 
 		this.connection = connection;
 		this.credentials = credentials;
-		this.jiraClient = null;
+		jiraClient = null;
 	}
 
 	private JiraRestClient getJiraRestClient() throws JiraClientException {
@@ -52,7 +54,7 @@ class UnlimitedJiraClient implements JiraClient {
 						new URI(connection.getUrl()),
 						credentials.getUsername(),
 						credentials.getPassword());
-			} catch (URISyntaxException e) {
+			} catch (final URISyntaxException e) {
 				throw new JiraClientException("Jira URI is invalid.", e);
 			}
 		}
@@ -62,18 +64,17 @@ class UnlimitedJiraClient implements JiraClient {
 	private void resetJiraRestClient() {
 		try {
 			jiraClient.close();
-		} catch (Exception ignore) {
-		}
+		} catch (final Exception ignore) {}
 		jiraClient = null;
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException {
+	public List<Issue> search(final String jql, final int maxResults, final int startAt) throws JiraClientException {
 		try {
 			return Lists.newArrayList(
 					getJiraRestClient().getSearchClient().searchJql(jql, maxResults, startAt, null).get().getIssues());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			resetJiraRestClient();
 			throw new JiraClientException("Failed searching Jira.", e);
 		}

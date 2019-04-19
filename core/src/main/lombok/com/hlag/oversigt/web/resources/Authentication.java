@@ -60,14 +60,15 @@ public class Authentication {
 
 	@Inject
 	private ApiAuthenticationUtils authentication;
+
 	@Inject
 	private RoleProvider roleProvider;
 
 	@Context
 	private SecurityContext securityContext;
 
-	private static Map<String, String> createTokenMap(String token) {
-		Map<String, String> map = new HashMap<>();
+	private static Map<String, String> createTokenMap(final String token) {
+		final Map<String, String> map = new HashMap<>();
 		map.put("token", token);
 		return map;
 	}
@@ -81,20 +82,20 @@ public class Authentication {
 			@ApiResponse(code = 403, message = "Log in failed") //
 	})
 	@ApiOperation("Log in a user")
-	public Response authenticateUser(@FormParam("username") String username,
-			@FormParam("password") @ApiParam(format = "password") String password) {
+	public Response authenticateUser(@FormParam("username") final String username,
+			@FormParam("password") @ApiParam(format = "password") final String password) {
 		try {
 			// Authenticate the user using the credentials provided
-			Principal principal = authentication.authenticate(username, password);
+			final Principal principal = authentication.authenticate(username, password);
 
 			// Issue a token for the user
-			String token = authentication.issueToken(principal);
+			final String token = authentication.issueToken(principal);
 			Utils.logChange(principal, "logged in");
 
 			// Return the token on the response
 			return ok(new AuthData(principal.getUsername(), principal.getName(), token, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LOGGER.warn("MAYBE " + username + " - tried to authenticate", e);
 			return ErrorResponse.forbidden("The user and password combination is unknown.");
 		}
@@ -110,22 +111,20 @@ public class Authentication {
 	})
 	@ApiOperation("Renew the authentication token")
 	@NoChangeLog
-	public Response renewToken(
-			@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false, value = "The JWT to renew") String token) {
+	public Response renewToken(@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false,
+			value = "The JWT to renew") final String token) {
 		String newToken = null;
 		try {
-			Principal principal = authentication.validateToken(token);
+			final Principal principal = authentication.validateToken(token);
 			newToken = authentication.issueToken(principal);
 
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (Exception e) {
-		}
-		if (newToken != null) {
-			return ok(createTokenMap(newToken)).build();
-		} else {
+		} catch (final Exception e) {}
+		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
+		return ok(createTokenMap(newToken)).build();
 	}
 
 	@GET
@@ -134,8 +133,8 @@ public class Authentication {
 	@ApiResponses({ //
 			@ApiResponse(code = 200, message = "A list of roles the current user has.", response = AuthData.class), //
 	})
-	@ApiOperation(value = "Get user roles", authorizations = {
-			@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@ApiOperation(value = "Get user roles",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@JwtSecured
 	public Response getRoles() {
@@ -155,15 +154,17 @@ public class Authentication {
 	@Path("/check-token")
 	@ApiOperation("Check a token's validity")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "The check was successful and the result can be found in the response body", response = boolean.class) })
+			@ApiResponse(code = 200,
+					message = "The check was successful and the result can be found in the response body",
+					response = boolean.class) })
 	@NoChangeLog
-	public boolean checkToken(
-			@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false, value = "The JWT to check") String token) {
+	public boolean checkToken(@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false,
+			value = "The JWT to check") final String token) {
 		try {
 			authentication.validateToken(token);
-			return true; //ok(true).build();
-		} catch (Exception e) {
-			return false; //ok(false).build();
+			return true; // ok(true).build();
+		} catch (final Exception e) {
+			return false; // ok(false).build();
 		}
 	}
 
@@ -172,13 +173,16 @@ public class Authentication {
 	@AllArgsConstructor
 	public static class AuthData {
 		private String userId;
+
 		private String displayName;
+
 		private String token;
+
 		@NotNull
 		private Set<@NotBlank String> roles;
 
-		AuthData(Set<String> roles) {
-			this.token = null;
+		AuthData(final Set<String> roles) {
+			token = null;
 			this.roles = roles;
 		}
 	}

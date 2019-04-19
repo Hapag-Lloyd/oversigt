@@ -60,6 +60,7 @@ import com.hlag.oversigt.web.api.NoChangeLog;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Nullables;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -83,22 +84,25 @@ public class SystemResource {
 
 	@Inject
 	private DashboardController dashboardController;
+
 	@Inject
 	private SerializablePropertyController spController;
 
 	@Inject
 	private OversigtConfiguration configuration;
+
 	@Inject
 	private JsonUtils json;
 
 	@Inject
-	public SystemResource(@Named("Shutdown") Runnable shutdown) {
-		this.shutdownRunnable = shutdown;
+	public SystemResource(@Named("Shutdown") final Runnable shutdown) {
+		shutdownRunnable = shutdown;
 	}
 
 	@POST
 	@Path("/shutdown")
-	@ApiResponses({ @ApiResponse(code = 202, message = "Server shutdown initiated."),
+	@ApiResponses({
+			@ApiResponse(code = 202, message = "Server shutdown initiated."),
 			@ApiResponse(code = 401, message = "If the user is not authorized.") })
 	@JwtSecured
 	@ApiOperation(value = "Shut down the server", //
@@ -109,8 +113,7 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (Exception ignore) {
-			}
+			} catch (final Exception ignore) {}
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();
@@ -137,7 +140,10 @@ public class SystemResource {
 	@GET
 	@Path("/logfiles")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "A list of available log files will be transferred.", response = String.class, responseContainer = "list") })
+			@ApiResponse(code = 200,
+					message = "A list of available log files will be transferred.",
+					response = String.class,
+					responseContainer = "list") })
 	@JwtSecured
 	@ApiOperation(value = "List available log files", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
@@ -154,53 +160,57 @@ public class SystemResource {
 	@GET
 	@Path("/logfiles/{filename}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The requested lines of the log file will be transferred", response = String.class, responseContainer = "list") })
+			@ApiResponse(code = 200,
+					message = "The requested lines of the log file will be transferred",
+					response = String.class,
+					responseContainer = "list") })
 	@JwtSecured
 	@ApiOperation(value = "Retreive log file content", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
-	public Response getLogFileContent(@PathParam("filename") @NotBlank String filename,
-			@QueryParam("lines") @ApiParam(required = false, defaultValue = "0", value = "Number of lines to read from the log file. Negative value to read from the end of the file.") Integer lineCount)
+	public Response getLogFileContent(@PathParam("filename") @NotBlank final String filename,
+			@QueryParam("lines") @ApiParam(required = false,
+					defaultValue = "0",
+					value = "Number of lines to read from the log file. Negative value to read from the end of the file.") final Integer nullableLineCount)
 			throws IOException {
-		if (lineCount == null) {
-			lineCount = 0;
-		}
+		final int lineCount = Nullables.orElse(nullableLineCount, 0);
 
-		java.nio.file.Path logfile = Paths.get("log", filename);
-		if (Files.exists(logfile)) {
-			Collection<String> lines;
-
-			try (Stream<String> lineStream = Files.lines(logfile)) {
-				if (lineCount == 0) {
-					lines = lineStream.collect(Collectors.toList());
-				} else if (lineCount > 0) {
-					lines = lineStream.limit(lineCount).collect(Collectors.toList());
-				} else {
-					int iLineCount = -lineCount.intValue();
-					lines = lineStream.collect(Collectors.toCollection(() -> EvictingQueue.create(iLineCount)));
-				}
-			}
-
-			return ok(lines).build();
-		} else {
+		final java.nio.file.Path logfile = Paths.get("log", filename);
+		if (!Files.exists(logfile)) {
 			return notFound("The log file '" + filename + "' does not exist.");
 		}
+
+		Collection<String> lines;
+		try (Stream<String> lineStream = Files.lines(logfile)) {
+			if (lineCount == 0) {
+				lines = lineStream.collect(Collectors.toList());
+			} else if (lineCount > 0) {
+				lines = lineStream.limit(lineCount).collect(Collectors.toList());
+			} else {
+				lines = lineStream.collect(Collectors.toCollection(() -> EvictingQueue.create(-lineCount)));
+			}
+		}
+		return ok(lines).build();
 	}
 
 	@GET
 	@Path("/loggers")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of the current loggers", response = LoggerInfo.class, responseContainer = "list") })
+			@ApiResponse(code = 200,
+					message = "A list of the current loggers",
+					response = LoggerInfo.class,
+					responseContainer = "list") })
 	@JwtSecured
 	@ApiOperation(value = "Get a list of the server's loggers", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@NoChangeLog
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public List<LoggerInfo> getLoggers(
-			@QueryParam("configuredLevelsOnly") @ApiParam(required = false, defaultValue = "false", value = "Whether to filter the logger infos") boolean onlyConfigured) {
+	public List<LoggerInfo> getLoggers(@QueryParam("configuredLevelsOnly") @ApiParam(required = false,
+			defaultValue = "false",
+			value = "Whether to filter the logger infos") final boolean onlyConfigured) {
 		Predicate<LoggerInfo> filter = l -> true;
 		if (onlyConfigured) {
 			filter = l -> l.level != null;
@@ -212,7 +222,7 @@ public class SystemResource {
 	}
 
 	private Stream<Logger> getLoggerStream() {
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 		return context.getLoggerList().stream();
 	}
 
@@ -225,13 +235,13 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
-	public Response setLogLevel(@PathParam("logger") @NotBlank String loggerName,
-			@QueryParam("level") @ApiParam(required = true) @NotBlank String levelName) {
+	public Response setLogLevel(@PathParam("logger") @NotBlank final String loggerName,
+			@QueryParam("level") @ApiParam(required = true) @NotBlank final String levelName) {
 
-		Level level = Level.valueOf(levelName);
+		final Level level = Level.valueOf(levelName);
 
-		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-		Logger logger = context.getLogger(loggerName);
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		final Logger logger = context.getLogger(loggerName);
 		logger.setLevel(level);
 
 		return ok().build();
@@ -240,7 +250,10 @@ public class SystemResource {
 	@GET
 	@Path("/log-levels")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of the avaiblable log levels", response = String.class, responseContainer = "list") })
+			@ApiResponse(code = 200,
+					message = "A list of the avaiblable log levels",
+					response = String.class,
+					responseContainer = "list") })
 	@ApiOperation(value = "Get a list of available log levels")
 	@PermitAll
 	@NoChangeLog
@@ -251,7 +264,10 @@ public class SystemResource {
 	@GET
 	@Path("/threads")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of the current threads", response = ThreadInfo.class, responseContainer = "list") })
+			@ApiResponse(code = 200,
+					message = "A list of the current threads",
+					response = ThreadInfo.class,
+					responseContainer = "list") })
 	@JwtSecured
 	@ApiOperation(value = "Get a list the server's threads", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
@@ -269,8 +285,13 @@ public class SystemResource {
 	@GET
 	@Path("/cached-events")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of the cached events", response = OversigtEvent.class, responseContainer = "list"),
-			@ApiResponse(code = 404, message = "The filtered event source does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "A list of the cached events",
+					response = OversigtEvent.class,
+					responseContainer = "list"),
+			@ApiResponse(code = 404,
+					message = "The filtered event source does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Retrieve the cached events", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
@@ -278,34 +299,37 @@ public class SystemResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response getCachedEvents(
-			@QueryParam("eventSourceId") @ApiParam(value = "Optional filter to get only one cached event", required = false) String filter) {
-		Collection<OversigtEvent> events = new ArrayList<>(eventSender.getCachedEvents());
+			@QueryParam("eventSourceId") @ApiParam(value = "Optional filter to get only one cached event",
+					required = false) final String filter) {
+		final Collection<OversigtEvent> events = new ArrayList<>(eventSender.getCachedEvents());
 		if (Strings.isNullOrEmpty(filter)) {
 			return ok(events).build();
-		} else {
-			Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
-			if (!event.isPresent()) {
-				return ErrorResponse.notFound("The event source does not exist", filter);
-			}
-
-			List<OversigtEvent> eventList = Arrays
-					.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
-			return ok(eventList).build();
 		}
+
+		final Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
+		if (!event.isPresent()) {
+			return ErrorResponse.notFound("The event source does not exist", filter);
+		}
+
+		final List<OversigtEvent> eventList
+				= Arrays.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
+		return ok(eventList).build();
 	}
 
 	@GET
 	@Path("/users/{userId}/validity")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A boolean indicating whether or not the user id is valid", response = boolean.class) })
+			@ApiResponse(code = 200,
+					message = "A boolean indicating whether or not the user id is valid",
+					response = boolean.class) })
 	@JwtSecured
 	@ApiOperation(value = "Check a userid's validity", //
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
-	public boolean isUserValid(
-			@PathParam("userId") @ApiParam(value = "The ID of the user to check", required = true) String userId) {
+	public boolean isUserValid(@PathParam("userId") @ApiParam(value = "The ID of the user to check",
+			required = true) final String userId) {
 		return authenticator.isUsernameValid(userId);
 	}
 
@@ -324,8 +348,8 @@ public class SystemResource {
 	@ApiResponses({ @ApiResponse(code = 200, message = "Search all server objects", response = ServerInfo.class) })
 	@ApiOperation(value = "Server wide search for objects")
 	@NoChangeLog
-	public Response searchAllObjects(
-			@QueryParam("query") @ApiParam(value = "Text to search for", required = true) final String rawSearchString) {
+	public Response searchAllObjects(@QueryParam("query") @ApiParam(value = "Text to search for",
+			required = true) final String rawSearchString) {
 		if (rawSearchString == null || rawSearchString.trim().length() == 0) {
 			return ErrorResponse.badRequest("The search text must not be empty.");
 		}
@@ -385,13 +409,15 @@ public class SystemResource {
 
 	public static class LoggerInfo {
 		private final String name;
+
 		private final Level level;
+
 		private final Level effectiveLevel;
 
-		public LoggerInfo(Logger logger) {
-			this.name = logger.getName();
-			this.level = logger.getLevel();
-			this.effectiveLevel = logger.getEffectiveLevel();
+		public LoggerInfo(final Logger logger) {
+			name = logger.getName();
+			level = logger.getLevel();
+			effectiveLevel = logger.getEffectiveLevel();
 		}
 
 		public String getName() {
@@ -409,17 +435,21 @@ public class SystemResource {
 
 	public static class ThreadInfo {
 		private final String name;
+
 		private final long id;
+
 		private final int priority;
+
 		private final State state;
+
 		private final StackTraceElement[] stackTrace;
 
-		public ThreadInfo(Thread thread) {
-			this.name = thread.getName();
-			this.id = thread.getId();
-			this.priority = thread.getPriority();
-			this.state = thread.getState();
-			this.stackTrace = thread.getStackTrace();
+		public ThreadInfo(final Thread thread) {
+			name = thread.getName();
+			id = thread.getId();
+			priority = thread.getPriority();
+			state = thread.getState();
+			stackTrace = thread.getStackTrace();
 		}
 
 		public String getName() {
@@ -446,6 +476,7 @@ public class SystemResource {
 	@Getter
 	public static class ServerInfo {
 		private final String name = Oversigt.APPLICATION_NAME;
+
 		private final String version = Oversigt.APPLICATION_VERSION;
 	}
 
@@ -454,8 +485,11 @@ public class SystemResource {
 	@JsonInclude(content = Include.NON_NULL)
 	public static class SearchResult {
 		private final String title;
+
 		private final String id;
+
 		private final String type;
+
 		@Nullable
 		private final String subtype;
 	}

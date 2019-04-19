@@ -21,56 +21,62 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 
 public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> extends AbstractGitEventSource<E> {
 	private int limit = 5;
+
 	private String[] usersToSuppress = new String[0];
+
 	private NameMapping[] nameMappings = new NameMapping[0];
 
-	@Property(name = "Limit", description = "The maximum number of committers to display. Values below 1 display all committers.")
+	@Property(name = "Limit",
+			description = "The maximum number of committers to display. Values below 1 display all committers.")
 	public int getLimit() {
 		return limit;
 	}
 
-	public void setLimit(int limit) {
+	public void setLimit(final int limit) {
 		this.limit = limit;
 	}
 
-	@Property(name = "Users to suppress", description = "If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.")
+	@Property(name = "Users to suppress",
+			description = "If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.")
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public String[] getUsersToSuppress() {
 		return usersToSuppress != null ? usersToSuppress : new String[0];
 	}
 
-	public void setUsersToSuppress(String[] usersToSuppress) {
+	public void setUsersToSuppress(final String[] usersToSuppress) {
 		this.usersToSuppress = usersToSuppress;
 	}
 
-	@Property(name = "Name mappings", description = "Some users have different user names. Use these mappings to map all the known user names to one single name.")
+	@Property(name = "Name mappings",
+			description = "Some users have different user names. Use these mappings to map all the known user names to one single name.")
 	public NameMapping[] getNameMappings() {
 		return nameMappings != null ? nameMappings : new NameMapping[0];
 	}
 
-	public void setNameMappings(NameMapping[] nameMappings) {
+	public void setNameMappings(final NameMapping[] nameMappings) {
 		this.nameMappings = nameMappings;
 	}
 
-	protected <R> R streamLogWithoutFilteredUsers(Function<Stream<RevCommit>, R> function)
+	protected <R> R streamLogWithoutFilteredUsers(final Function<Stream<RevCommit>, R> function)
 			throws NoHeadException, GitAPIException, IOException {
-		Set<String> usersToSuppress = new HashSet<>(Arrays.asList(getUsersToSuppress()));
+		final Set<String> usersToSuppress = new HashSet<>(Arrays.asList(getUsersToSuppress()));
 		return streamLog(
 				s -> function.apply(s.filter(rv -> !usersToSuppress.contains(rv.getCommitterIdent().getName()))));
 	}
 
 	protected Function<String, String> createNameMapper() {
-		Map<String, String> nameMap = Arrays.stream(getNameMappings())
-				.collect(toMap(NameMapping::getName, NameMapping::getMapTo));
+		final Map<String, String> nameMap
+				= Arrays.stream(getNameMappings()).collect(toMap(NameMapping::getName, NameMapping::getMapTo));
 		return x -> nameMap.computeIfAbsent(x, Function.identity());
 	}
 
 	@JsonHint(headerTemplate = "{{self.name}}", arrayStyle = ArrayStyle.GRID)
 	public static class NameMapping {
 		private final String name;
+
 		private final String mapTo;
 
-		public NameMapping(String name, String mapTo) {
+		public NameMapping(final String name, final String mapTo) {
 			this.name = name;
 			this.mapTo = mapTo;
 		}

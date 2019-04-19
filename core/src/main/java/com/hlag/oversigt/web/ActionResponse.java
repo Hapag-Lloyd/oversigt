@@ -7,7 +7,7 @@ class ActionResponse {
 		return doGetRedirect();
 	}
 
-	public static ActionResponse serverError(String text) {
+	public static ActionResponse serverError(final String text) {
 		return new ActionResponse(false, false, StatusCodes.INTERNAL_SERVER_ERROR, text, null);
 	}
 
@@ -15,29 +15,33 @@ class ActionResponse {
 		return new ActionResponse(true, false, null, null, null);
 	}
 
-	public static ActionResponse okJson(Object object) {
+	public static ActionResponse okJson(final Object object) {
 		return new ActionResponse(false, false, StatusCodes.OK, object, null);
 	}
 
-	public static ActionResponse redirect(String url) {
+	public static ActionResponse redirect(final String url) {
 		return new ActionResponse(false, false, null, null, url);
 	}
 
 	private final boolean doGetRedirect;
+
 	private final boolean doNoAction;
+
 	private final Integer statusCode;
+
 	private final Object jsonObject;
+
 	private final String redirect;
 
 	ActionResponse() {
 		this(false, true, null, null, null);
 	}
 
-	private ActionResponse(boolean doGetRedirect,
-			boolean doNoAction,
-			Integer statusCode,
-			Object jsonObject,
-			String redirect) {
+	private ActionResponse(final boolean doGetRedirect,
+			final boolean doNoAction,
+			final Integer statusCode,
+			final Object jsonObject,
+			final String redirect) {
 		this.doGetRedirect = doGetRedirect;
 		this.doNoAction = doNoAction;
 		this.statusCode = statusCode;
@@ -67,7 +71,7 @@ class ActionResponse {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 
 		sb.append(getStatusCode()).append(" ").append("\n");
 		if (getRedirect() != null) {

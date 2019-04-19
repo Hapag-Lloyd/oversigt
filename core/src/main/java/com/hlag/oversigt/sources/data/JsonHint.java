@@ -12,14 +12,14 @@ public @interface JsonHint {
 
 	ArrayStyle arrayStyle() default ArrayStyle.DEFAULT;
 
-	public static enum ArrayStyle {
+	enum ArrayStyle {
 		DEFAULT(null),
 		GRID(null),
 		TABLE("table"),
 		TABS("tabs");
 		private final String value;
 
-		private ArrayStyle(String value) {
+		ArrayStyle(final String value) {
 			this.value = value;
 		}
 

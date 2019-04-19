@@ -17,22 +17,31 @@ import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.util.Utils;
 
-public class EventSourceKey implements Comparable<EventSourceKey> {
-	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME = Utils
-			.caseInsensitiveComparator(EventSourceKey::getDisplayName);
-	private static final Comparator<EventSourceKey> COMPARATOR_BY_KEY = Utils
-			.caseSensitiveComparator(EventSourceKey::getKey);
-	public static final Comparator<EventSourceKey> COMPARATOR = COMPARATOR_BY_DISPLAY_NAME
-			.thenComparing(COMPARATOR_BY_KEY);
+import de.larssh.utils.Finals;
 
-	static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
+public final class EventSourceKey implements Comparable<EventSourceKey> {
+	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
+			= Utils.caseInsensitiveComparator(EventSourceKey::getDisplayName);
 
-	static final String PREFIX_CLASS = "class:";
-	static final String PREFIX_WIDGET = "widget:";
+	private static final Comparator<EventSourceKey> COMPARATOR_BY_KEY
+			= Utils.caseSensitiveComparator(EventSourceKey::getKey);
+
+	public static final Comparator<EventSourceKey> COMPARATOR
+			= COMPARATOR_BY_DISPLAY_NAME.thenComparing(COMPARATOR_BY_KEY);
+
+	private static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
+
+	static final String PREFIX_CLASS = Finals.constant("class:");
+
+	static final String PREFIX_WIDGET = Finals.constant("widget:");
 
 	private static final Map<String, EventSourceKey> KEYS = Collections.synchronizedMap(new HashMap<>());
 
-	private static EventSourceKey findKeyFromClass(String className) {
+	static void setEventSourceRenamer(final EventSourceRenamer eventSourceRenamer) {
+		EventSourceKey.eventSourceRenamer.set(eventSourceRenamer);
+	}
+
+	private static EventSourceKey findKeyFromClass(final String className) {
 		EventSourceKey key = detectPackageMove(KEYS, className);
 		if (key == null) {
 			key = detectSimpleRename(KEYS, className);
@@ -40,14 +49,13 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		if (key == null) {
 			key = detectComplexRename(KEYS, className);
 		}
-		if (key != null) {
-			return key;
-		} else {
+		if (key == null) {
 			throw new RuntimeException("Unable to find matching class for: " + className);
 		}
+		return key;
 	}
 
-	private static EventSourceKey findKeyFromWidget(String widget) {
+	private static EventSourceKey findKeyFromWidget(final String widget) {
 		// TODO detect widget renamings
 		throw new RuntimeException("Unknown widget id: " + widget);
 	}
@@ -57,18 +65,23 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 			final String type = getType(key);
 			final String subKey = getSubKey(key);
 			switch (type) {
-				case "class":
-					EventSourceKey newKey = findKeyFromClass(subKey);
-					Optional.ofNullable(eventSourceRenamer.get())
-							.ifPresent(r -> r.changeEventSourceName(subKey, getSubKey(newKey.getKey())));
-					return newKey;
-				case "widget":
-					return findKeyFromWidget(subKey);
-				default:
-					throw new InvalidKeyException("Unknown EventSourceKey type: " + type);
+			case "class":
+				final EventSourceKey newKey = findKeyFromClass(subKey);
+				Optional.ofNullable(eventSourceRenamer.get())
+						.ifPresent(r -> r.changeEventSourceName(subKey, getSubKey(newKey.getKey())));
+				return newKey;
+			case "widget":
+				return findKeyFromWidget(subKey);
+			default:
+				throw new InvalidKeyException("Unknown EventSourceKey type: " + type);
 			}
 		}
 		return KEYS.get(key);
+	}
+
+	@NotNull
+	public String getKey() {
+		return key;
 	}
 
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
@@ -86,7 +99,7 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		return addKey(new EventSourceKey("widget:" + widgetName, Strings.nullToEmpty(displayName)));
 	}
 
-	private static EventSourceKey addKey(EventSourceKey key) {
+	private static EventSourceKey addKey(final EventSourceKey key) {
 		if (KEYS.containsKey(key.getKey())) {
 			throw new RuntimeException("Duplicate key: " + key);
 		}
@@ -95,16 +108,12 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	private final String key;
+
 	private final String displayName;
 
-	private EventSourceKey(String key, String displayName) {
+	private EventSourceKey(final String key, final String displayName) {
 		this.key = key;
 		this.displayName = displayName;
-	}
-
-	@NotNull
-	public String getKey() {
-		return key;
 	}
 
 	@NotNull
@@ -112,11 +121,11 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		return displayName;
 	}
 
-	private static String getType(String key) {
+	private static String getType(final String key) {
 		return key.substring(0, key.indexOf(":"));
 	}
 
-	private static String getSubKey(String key) {
+	private static String getSubKey(final String key) {
 		return key.substring(key.indexOf(":") + 1);
 	}
 
@@ -129,7 +138,7 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -141,7 +150,7 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 		} else if (getClass() != obj.getClass()) {
 			return false;
 		}
-		EventSourceKey other = (EventSourceKey) obj;
+		final EventSourceKey other = (EventSourceKey) obj;
 		if (key == null) {
 			if (other.key != null) {
 				return false;
@@ -153,7 +162,7 @@ public class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	@Override
-	public int compareTo(EventSourceKey that) {
+	public int compareTo(final EventSourceKey that) {
 		return COMPARATOR_BY_KEY.compare(this, that);
 	}
 

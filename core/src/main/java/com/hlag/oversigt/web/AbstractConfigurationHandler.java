@@ -47,6 +47,7 @@ import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Nullables;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.undertow.server.HttpHandler;
@@ -63,16 +64,17 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return LOGGERS.computeIfAbsent(getClass(), LoggerFactory::getLogger);
 	}
 
-	protected void logChange(HttpServerExchange exchange, String string, Object... objects) {
-		String username = getHelper().getPrincipal(exchange).map(Principal::getUsername).orElse("%unknown%");
+	protected void logChange(final HttpServerExchange exchange, final String string, final Object... objects) {
+		final String username = getHelper().getPrincipal(exchange).map(Principal::getUsername).orElse("%unknown%");
 		Utils.logChange(username, string, objects);
 	}
 
 	private static final Pattern PAGE_NUMBER_PATTERN = Pattern.compile("^(?:[0-9]+_)?(.+)$");
-	private static final Pattern CONFIG_LAYOUT_PATTERN = Pattern
-			.compile("<@layout\\.ConfigurationLayout\\s+\"([^\"]*)\"(?:\\s+\"([^\"]*)\")?>");
 
-	private static PageInfo getPageInfo(String path) {
+	private static final Pattern CONFIG_LAYOUT_PATTERN
+			= Pattern.compile("<@layout\\.ConfigurationLayout\\s+\"([^\"]*)\"(?:\\s+\"([^\"]*)\")?>");
+
+	private static PageInfo getPageInfo(final String path) {
 		String filename = Paths.get(path).getFileName().toString();
 		if (filename.toLowerCase().startsWith("page_")) {
 			filename = filename.substring("page_".length());
@@ -80,22 +82,21 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		if (filename.toLowerCase().endsWith(".ftl.html")) {
 			filename = filename.substring(0, filename.length() - ".ftl.html".length());
 		}
-		Tuple<String, String> info = getConfigPatternInfo(path);
-		Matcher m = PAGE_NUMBER_PATTERN.matcher(filename);
+		final Tuple<String, String> info = getConfigPatternInfo(path);
+		final Matcher m = PAGE_NUMBER_PATTERN.matcher(filename);
 		m.find();
 		return new PageInfo(m.group(1), path, info.getFirst(), info.getSecond());
 	}
 
-	private static Tuple<String, String> getConfigPatternInfo(String filename) {
+	private static Tuple<String, String> getConfigPatternInfo(final String filename) {
 		try {
-			String content = readContentString(filename);
-			Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
+			final String content = readContentString(filename);
+			final Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
 			if (matcher.find()) {
 				return new Tuple<>(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
-			} else {
-				return new Tuple<>(filename, null);
 			}
-		} catch (Exception e) {
+			return new Tuple<>(filename, null);
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -108,34 +109,38 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	 * @return the resource content interpreted as string with UTF-8 encoding
 	 * @throws IOException if reading the resource fails
 	 */
-	private static String readContentString(String urlPath) throws IOException {
-		URL url = Resources.getResource(urlPath);
+	private static String readContentString(final String urlPath) throws IOException {
+		final URL url = Resources.getResource(urlPath);
 		Preconditions.checkNotNull(url, "Unable to read bytes: %s", urlPath);
 		return IOUtils.toString(url, Charsets.UTF_8);
 	}
 
 	@Inject
 	private Configuration templateConfiguration;
+
 	@Inject
 	private JsonUtils json;
+
 	private final DashboardController dashboardController;
+
 	private final HttpServerExchangeHandler exchangeHelper;
+
 	@Inject
 	@Named("debug")
 	private boolean debug;
 
 	private final Map<String, PageInfo> pages = new LinkedHashMap<>();
 
-	protected AbstractConfigurationHandler(DashboardController dashboardController,
-			HttpServerExchangeHandler exchangeHelper,
-			String path,
-			String[] filenames) {
+	protected AbstractConfigurationHandler(final DashboardController dashboardController,
+			final HttpServerExchangeHandler exchangeHelper,
+			final String path,
+			final String[] filenames) {
 		this.dashboardController = dashboardController;
 		this.exchangeHelper = exchangeHelper;
 		getLogger()
 				.info("Initializing configuration handler for path: " + path + " with " + filenames.length + " pages");
-		for (String filename : filenames) {
-			PageInfo pi = getPageInfo(path + filename);
+		for (final String filename : filenames) {
+			final PageInfo pi = getPageInfo(path + filename);
 			pages.put(pi.getName(), pi);
 		}
 	}
@@ -148,21 +153,21 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return exchangeHelper;
 	}
 
-	protected Map<String, Object> getModel(HttpServerExchange exchange, String page) {
+	protected Map<String, Object> getModel(final HttpServerExchange exchange, final String page) {
 		return null;
 	}
 
-	private Map<String, Object> getExtendedModel(HttpServerExchange exchange, String page) {
+	private Map<String, Object> getExtendedModel(final HttpServerExchange exchange, final String page) {
 		Map<String, Object> model = getModel(exchange, page);
 		if (model == null) {
 			model = new HashMap<>();
 		}
-		Optional<Principal> principal = exchangeHelper.getPrincipal(exchange);
+		final Optional<Principal> principal = exchangeHelper.getPrincipal(exchange);
 		model.putAll(map(//
 				"principal",
 				principal.orElse(null),
 				"menuItems",
-				this.pages.entrySet()
+				pages.entrySet()
 						.stream()
 						.filter(p -> principal.map(p.getValue()::isAllowedFor).orElse(false))
 						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
@@ -174,18 +179,18 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return model;
 	}
 
-	protected final Optional<Dashboard> maybeGetDashboard(HttpServerExchange exchange) {
+	protected final Optional<Dashboard> maybeGetDashboard(final HttpServerExchange exchange) {
 		return exchangeHelper.query(exchange, "dashboard").map(dashboardController::getDashboard);
 	}
 
-	protected final Dashboard getDashboard(HttpServerExchange exchange) {
+	protected final Dashboard getDashboard(final HttpServerExchange exchange) {
 		return maybeGetDashboard(exchange).get();
 	}
 
-	protected final void printException(HttpServerExchange exchange, Throwable throwable) {
+	protected final void printException(final HttpServerExchange exchange, final Throwable throwable) {
 		LoggerFactory.getLogger(getClass()).error("Unable to serve request", throwable);
 		exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("<html>");
 		sb.append("<head><title>500 - Internal Server Error</title></head>");
 		sb.append("<body>");
@@ -203,7 +208,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	@Override
-	public void handleRequest(HttpServerExchange exchange) throws Exception {
+	public void handleRequest(final HttpServerExchange exchange) throws Exception {
 		try {
 			if (GET.equals(exchange.getRequestMethod())) {
 				exchangeHelper.doNonBlocking(this::handleRequestGet, exchange);
@@ -212,7 +217,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 			} else {
 				exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			printException(exchange, e);
 		}
 	}
@@ -221,52 +226,51 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return null;
 	}
 
-	private String getInitialPage(Collection<String> availablePages) {
-		String preferred = getPreferredInitialPage();
+	private String getInitialPage(final Collection<String> availablePages) {
+		final String preferred = getPreferredInitialPage();
 		if (preferred != null && availablePages.contains(preferred)) {
 			return preferred;
-		} else {
-			return availablePages.iterator().next();
 		}
+		return availablePages.iterator().next();
 	}
 
-	protected String getTemplateName(HttpServerExchange exchange, PageInfo pi) {
+	protected String getTemplateName(final HttpServerExchange exchange, final PageInfo pi) {
 		return pi.filename;
 	}
 
-	protected String getContentType(HttpServerExchange exchange, PageInfo pi) {
+	protected String getContentType(final HttpServerExchange exchange, final PageInfo pi) {
 		return "text/html";
 	}
 
-	private void handleRequestGet(HttpServerExchange exchange) throws Exception {
-		String page = exchangeHelper.query(exchange, "page").orElse(null);
+	private void handleRequestGet(final HttpServerExchange exchange) throws Exception {
+		final String page = exchangeHelper.query(exchange, "page").orElse(null);
 		if (Strings.isNullOrEmpty(page)) {
 			String url = exchange.getRequestURI();
 			while (url.endsWith("/")) {
 				url = url.substring(0, url.length() - 1);
 			}
-			url += "/" + getInitialPage(this.pages.keySet());
+			url += "/" + getInitialPage(pages.keySet());
 			HttpUtils.redirect(exchange, url, false, true);
 			return;
 		}
 		if (!Strings.isNullOrEmpty(page)) {
-			if (this.pages.containsKey(page)) {
-				final PageInfo pi = this.pages.get(page);
+			if (pages.containsKey(page)) {
+				final PageInfo pi = pages.get(page);
 				if (pi.needsPrincipal() && !exchangeHelper.getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
 					forbidden(exchange);
 					return;
 				}
 				try {
-					String templateFilename = getTemplateName(exchange, pi);
-					Template template = templateConfiguration.getTemplate(templateFilename);
-					StringWriter writer = new StringWriter();
+					final String templateFilename = getTemplateName(exchange, pi);
+					final Template template = templateConfiguration.getTemplate(templateFilename);
+					final StringWriter writer = new StringWriter();
 					template.process(getExtendedModel(exchange, page), writer);
-					String content = writer.toString();
+					final String content = writer.toString();
 					exchange.setStatusCode(StatusCodes.OK);
 					exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, getContentType(exchange, pi));
 					exchange.getResponseSender().send(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
 					exchange.endExchange();
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					getLogger().error("Unable to write page from template", e);
 					printException(exchange, e);
 					exchange.endExchange();
@@ -275,14 +279,12 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				notFound(exchange, "Page '" + page + "' not found");
 			}
 		} else {
-			HttpUtils.redirect(exchange,
-					exchange.getRequestURI() + "/" + this.pages.keySet().iterator().next(),
-					false,
-					true);
+			HttpUtils
+					.redirect(exchange, exchange.getRequestURI() + "/" + pages.keySet().iterator().next(), false, true);
 		}
 	}
 
-	protected boolean isAjax(FormData data) {
+	protected boolean isAjax(final FormData data) {
 		return Optional//
 				.ofNullable(data.getFirst("ajax"))//
 				.map(FormValue::getValue)//
@@ -290,32 +292,28 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				.orElse(false);
 	}
 
-	private Method getMethod(String name, Object... objects) {
+	private Method getMethod(final String name, final Object... objects) {
 		try {
-			if (objects == null) {
-				objects = new Object[0];
+			final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
+			final Class<?>[] classes = new Class<?>[objs.length];
+			for (int i = 0; i < objs.length; i += 1) {
+				classes[i] = objs[i].getClass();
 			}
-			Class<?>[] classes = new Class<?>[objects.length];
-			for (int i = 0; i < objects.length; ++i) {
-				classes[i] = objects[i].getClass();
-			}
-			// classes[classes.length - 1] = FormData.class;
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (Exception ignore) {
-			return null;
-		}
+		} catch (final Exception ignore) {}
+		return null;
 	}
 
-	protected void handleRequestPost(HttpServerExchange exchange) throws IOException {
+	protected void handleRequestPost(final HttpServerExchange exchange) throws IOException {
 		final FormData formData = exchangeHelper.getFormData(exchange);
 		final Optional<String> action = Optional.ofNullable(formData.getFirst("action")).map(FormValue::getValue);
 
 		try {
 			if (action.isPresent()) {
-				Method method = getMethod(action.get(), exchange, formData);
+				final Method method = getMethod(action.get(), exchange, formData);
 				if (method != null) {
 					if (method.isAnnotationPresent(NeedsRole.class)) {
-						NeedsRole needsRole = method.getAnnotation(NeedsRole.class);
+						final NeedsRole needsRole = method.getAnnotation(NeedsRole.class);
 						boolean proceed = false;
 						if (!needsRole.dashboard()) {
 							proceed = exchangeHelper.getPrincipal(exchange)//
@@ -323,8 +321,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 									.orElse(false);
 						} else {
 							proceed = exchangeHelper.getPrincipal(exchange)//
-									.map(p -> p.hasRole(needsRole.role().getRole().getDashboardSpecificRole(
-											getDashboard(exchange).getId())))//
+									.map(p -> p.hasRole(needsRole.role()
+											.getRole()
+											.getDashboardSpecificRole(getDashboard(exchange).getId())))//
 									.orElse(false);
 						}
 						if (!proceed) {
@@ -338,7 +337,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 							object = new ActionResponse();
 						}
 						if (object instanceof ActionResponse) {
-							ActionResponse response = (ActionResponse) object;
+							final ActionResponse response = (ActionResponse) object;
 							if (response.isDoNoAction()) {
 								// nothing
 							} else if (response.isDoGetRedirect()) {
@@ -369,7 +368,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				badRequest(exchange, "No action found");
 				return;
 			}
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			printException(exchange, e);
 			return;
 		}
@@ -377,15 +376,18 @@ public class AbstractConfigurationHandler implements HttpHandler {
 
 	protected static class PageInfo implements Comparable<PageInfo> {
 		private final String name;
+
 		private final String filename;
+
 		private final String title;
+
 		private final Role neededRole;
 
-		PageInfo(String name, String filename, String title, String neededRole) {
+		PageInfo(final String name, final String filename, final String title, final String neededRole) {
 			this(name, filename, title, Roles.maybeFromString(neededRole).map(Roles::getRole).orElse(null));
 		}
 
-		PageInfo(String name, String filename, String title, Role neededRole) {
+		PageInfo(final String name, final String filename, final String title, final Role neededRole) {
 			this.name = Objects.requireNonNull(name);
 			this.filename = Objects.requireNonNull(filename);
 			this.title = Objects.requireNonNull(title);
@@ -403,26 +405,26 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 
 		@Override
-		public boolean equals(Object other) {
+		public boolean equals(final Object other) {
 			if (other instanceof PageInfo) {
-				PageInfo that = (PageInfo) other;
-				return this.name.equals(that.name) //
-						&& this.filename.equals(that.filename) //
-						&& this.title.equals(that.title);
+				final PageInfo that = (PageInfo) other;
+				return name.equals(that.name) //
+						&& filename.equals(that.filename) //
+						&& title.equals(that.title);
 			}
 			return false;
 		}
 
 		@Override
-		public int compareTo(PageInfo that) {
-			return this.filename.compareTo(that.filename);
+		public int compareTo(final PageInfo that) {
+			return filename.compareTo(that.filename);
 		}
 
 		public String getName() {
 			return name;
 		}
 
-		public boolean isAllowedFor(Principal principal) {
+		public boolean isAllowedFor(final Principal principal) {
 			return !needsPrincipal() || principal != null && principal.hasRole(neededRole);
 		}
 

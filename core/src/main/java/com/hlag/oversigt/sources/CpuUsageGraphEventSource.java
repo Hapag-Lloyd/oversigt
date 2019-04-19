@@ -30,22 +30,24 @@ import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
 import com.hlag.oversigt.util.Utils;
 
+import de.larssh.utils.Nullables;
+
 @EventSource(view = "Rickshawgraph", displayName = "CPU Usage")
 public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphEvent> {
 	private final Map<ZonedDateTime, Map<Server, Integer>> values = new TreeMap<>();
 
 	private Server[] servers = new Server[] { new Server() };
+
 	private int historyLength = 10;
 
-	public CpuUsageGraphEventSource() {
-	}
+	public CpuUsageGraphEventSource() {}
 
 	@Override
 	protected ComplexGraphEvent produceEvent() {
-		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
 		// get usages from hosts
-		Map<Server, Integer> usages = Arrays//
+		final Map<Server, Integer> usages = Arrays//
 				.stream(getServers())//
 				.parallel()//
 				.collect(Collectors.toMap(Function.identity(), this::getCpuUsage));
@@ -55,10 +57,10 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		values.keySet().removeIf(now.minusMinutes(getHistoryLength())::isAfter);
 
 		// graphen berechnen
-		long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
-		Map<String, Series> series = new TreeMap<>(String.CASE_INSENSITIVE_ORDER.reversed());
-		for (Server server : getServers()) {
-			List<Point> points = values//
+		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
+		final Map<String, Series> series = new TreeMap<>(String.CASE_INSENSITIVE_ORDER.reversed());
+		for (final Server server : getServers()) {
+			final List<Point> points = values//
 					.entrySet()
 					.stream()
 					.map(e -> new Point(e.getKey().toEpochSecond() - secondsOffset,
@@ -70,43 +72,42 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		return new ComplexGraphEvent(new ArrayList<>(series.values()));
 	}
 
-	private int getCpuUsage(Server server) {
-		int usage;
+	private int getCpuUsage(final Server server) {
+		final int usage;
 		switch (server.operatingSystem) {
-			case Linux:
-			case Aix:
-				usage = getUnixCpuUsage(server);
-				break;
-			//			case Windows:
-			//				usage = getWindowsCpuUsage(server);
-			//				break;
-			default:
-				throw new RuntimeException("Unknown operating system: " + server.operatingSystem.name());
+		case Linux:
+		case Aix:
+			usage = getUnixCpuUsage(server);
+			break;
+		// case Windows:
+		// usage = getWindowsCpuUsage(server);
+		// break;
+		default:
+			throw new RuntimeException("Unknown operating system: " + server.operatingSystem.name());
 		}
 		Utils.logInfo(getSpecialLogger(), "%s: %s", server.hostname, usage);
 		return usage;
 	}
 
-	private int getUnixCpuUsage(Server server) {
-		double usage = SshConnection.getConnection(server.hostname, server.port, server.username, server.password)
+	private int getUnixCpuUsage(final Server server) {
+		final double usage = SshConnection.getConnection(server.hostname, server.port, server.username, server.password)
 				.getCpuUsage();
-		if (!Double.isNaN(usage)) {
-			int percent = (int) (100 * usage + 0.5);
-			if (percent < 0) {
-				percent = 0;
-			}
-			if (percent > 100) {
-				percent = 100;
-			}
-			return percent;
-		} else {
+		if (Double.isNaN(usage)) {
 			return 0;
 		}
+		int percent = (int) (100 * usage + 0.5);
+		if (percent < 0) {
+			percent = 0;
+		}
+		if (percent > 100) {
+			percent = 100;
+		}
+		return percent;
 	}
 
 	@SuppressWarnings("unused")
 	@Deprecated
-	private int getWindowsCpuUsage(Server server) {
+	private int getWindowsCpuUsage(final Server server) {
 		Path temp = null;
 		Path batch = null;
 		Path stdout = null;
@@ -122,7 +123,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 			try (Writer writer = new FileWriter(batch.toFile())) {
 				writer.append(String.format(
 						"%s -accepteula -nobanner \"%s\" -u \"%s\" -p \"%s\" wmic cpu get LoadPercentage 1>\"%s\" 2>\"%s\"\r\nexit",
-						"", //PSEXEC_PATH,
+						"", // PSEXEC_PATH,
 						server.hostname,
 						server.username,
 						server.password,
@@ -131,8 +132,8 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 			}
 
 			// Execute PsExec
-			int exitCode = new ProcessBuilder("cmd", "/C", "start", "/MIN", "/WAIT", batch.toString()).start()
-					.waitFor();
+			final int exitCode
+					= new ProcessBuilder("cmd", "/C", "start", "/MIN", "/WAIT", batch.toString()).start().waitFor();
 			if (exitCode != 0) {
 				getLogger().error("Failed executing PsExec. Exit code: " + exitCode);
 				return 0;
@@ -140,10 +141,8 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 			// Read stdout
 			try (BufferedReader reader = Files.newBufferedReader(stdout)) {
-				List<String> lines = reader.lines()
-						.map(String::trim)
-						.filter(l -> !l.isEmpty())
-						.collect(Collectors.toList());
+				final List<String> lines
+						= reader.lines().map(String::trim).filter(l -> !l.isEmpty()).collect(Collectors.toList());
 
 				if (lines.size() < 2) {
 					getLogger().error("Expected at least 2 filled lines in stdout of PsExec, got: " + lines.size());
@@ -162,16 +161,15 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 				}
 				return percentage / (lines.size() - 1);
 			}
-		} catch (InterruptedException | IOException e) {
+		} catch (final InterruptedException | IOException e) {
 			getLogger().error("Exception while getting CPU usage.", e);
 			return 0;
 		} finally {
-			for (Path path : new Path[] { stderr, stdout, batch, temp }) {
+			for (final Path path : new Path[] { stderr, stdout, batch, temp }) {
 				if (path != null) {
 					try {
 						path.toFile().delete();
-					} catch (Exception ignore) {
-					}
+					} catch (final Exception ignore) {}
 				}
 			}
 		}
@@ -179,14 +177,10 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	@Property(name = "Servers", description = "The servers to check.")
 	public Server[] getServers() {
-		if (servers != null) {
-			return servers;
-		} else {
-			return new Server[0];
-		}
+		return Nullables.orElseGet(servers, () -> new Server[0]);
 	}
 
-	public void setServers(Server[] servers) {
+	public void setServers(final Server[] servers) {
 		this.servers = servers;
 	}
 
@@ -195,21 +189,26 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		return historyLength;
 	}
 
-	public void setHistoryLength(int historyLength) {
+	public void setHistoryLength(final int historyLength) {
 		this.historyLength = historyLength;
 	}
 
 	@JsonHint(headerTemplate = "{{ self.name }}", arrayStyle = ArrayStyle.TABS)
 	private static class Server implements JsonBasedData {
 		private String name = "DisplayName";
+
 		@NotNull
 		private String hostname = "hostname";
+
 		@NotNull
 		private int port = 22;
+
 		@NotNull
 		private String username = "username";
+
 		@NotNull
 		private String password = "password";
+
 		@NotNull
 		private OperatingSystem operatingSystem = OperatingSystem.Aix;
 
@@ -223,9 +222,9 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		}
 	}
 
-	private static enum OperatingSystem {
+	private enum OperatingSystem {
 		Aix,
 		Linux,
-		//	Windows
+		// Windows
 	}
 }

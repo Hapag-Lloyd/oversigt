@@ -64,35 +64,43 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Api(tags = { "EventSource" }, authorizations = {
-		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Api(tags = { "EventSource" },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/instances")
 @Singleton
 public class EventSourceInstanceResource {
 	private static JsonUtils json = null;
+
 	@Inject
 	private DashboardController controller;
 
 	@Context
 	private UriInfo uri;
+
 	@Context
 	private SecurityContext securityContext;
 
 	@Inject
-	public EventSourceInstanceResource(JsonUtils jsonUtils) {
+	public EventSourceInstanceResource(final JsonUtils jsonUtils) {
 		json = jsonUtils;
 	}
 
 	@GET
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of existing event source instances", response = EventSourceInstanceInfo.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returns a list of existing event source instances",
+					response = EventSourceInstanceInfo.class,
+					responseContainer = "List") })
 	@JwtSecured
 	@ApiOperation(value = "List existing event source instances")
 	@NoChangeLog
 	public Response listInstances(
-			@QueryParam("containing") @ApiParam(required = false, value = "Filter to reduce the number of listed instances") @Nullable String containing,
-			@QueryParam("limit") @ApiParam(required = false, value = "Maximum number of instances to be returned") @Nullable Integer limit,
-			@QueryParam("onlyStartable") @ApiParam(required = false, value = "Only return instances that can be started") @Nullable Boolean onlyStartable) {
+			@QueryParam("containing") @ApiParam(required = false,
+					value = "Filter to reduce the number of listed instances") @Nullable final String containing,
+			@QueryParam("limit") @ApiParam(required = false,
+					value = "Maximum number of instances to be returned") @Nullable final Integer limit,
+			@QueryParam("onlyStartable") @ApiParam(required = false,
+					value = "Only return instances that can be started") @Nullable final Boolean onlyStartable) {
 
 		Predicate<EventSourceInstance> containingFilter = i -> true;
 		Predicate<EventSourceInstance> startableFilter = i -> true;
@@ -121,30 +129,36 @@ public class EventSourceInstanceResource {
 	@POST
 	@Path("/")
 	@ApiResponses({
-			@ApiResponse(code = 201, message = "Event source instance created", response = EventSourceInstanceDetails.class),
-			@ApiResponse(code = 400, message = "The data provided by the client is invalid", response = ErrorResponse.class),
-			@ApiResponse(code = 404, message = "There is no event source descriptor named by the given key", response = ErrorResponse.class) })
+			@ApiResponse(code = 201,
+					message = "Event source instance created",
+					response = EventSourceInstanceDetails.class),
+			@ApiResponse(code = 400,
+					message = "The data provided by the client is invalid",
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404,
+					message = "There is no event source descriptor named by the given key",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Create event source instance")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response createInstance(
-			@QueryParam("key") @ApiParam(value = "The key of the event source descriptor to be used") @NotBlank String keyString) {
+	public Response createInstance(@QueryParam("key") @ApiParam(
+			value = "The key of the event source descriptor to be used") @NotBlank final String keyString) {
 		EventSourceKey key;
 		try {
 			key = EventSourceKey.getKey(keyString);
-		} catch (InvalidKeyException e) {
+		} catch (final InvalidKeyException e) {
 			return ErrorResponse.badRequest("The key '" + keyString + "' is invalid.");
 		}
 
 		EventSourceDescriptor descriptor;
 		try {
 			descriptor = controller.getEventSourceDescriptor(key);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("No descriptor found for key: " + keyString);
 		}
 
-		EventSourceInstance instance = controller.createEventSourceInstance(descriptor,
-				(Principal) securityContext.getUserPrincipal());
+		final EventSourceInstance instance
+				= controller.createEventSourceInstance(descriptor, (Principal) securityContext.getUserPrincipal());
 		return created(URI.create(uri.getAbsolutePath() + "/" + instance.getId()))
 				.entity(new EventSourceInstanceDetails(instance))
 				.build();
@@ -153,18 +167,22 @@ public class EventSourceInstanceResource {
 	@GET
 	@Path("/{id}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns details of the requested event source instance", response = FullEventSourceInstanceInfo.class),
-			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "Returns details of the requested event source instance",
+					response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 404,
+					message = "The event source instance with the given id does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read event source instance")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
-	public Response readInstance(@PathParam("id") @NotBlank String instanceId) {
+	public Response readInstance(@PathParam("id") @NotBlank final String instanceId) {
 		try {
 			// read object
-			FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);
+			final FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);
 			return ok(info).build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -172,21 +190,25 @@ public class EventSourceInstanceResource {
 	@GET
 	@Path("/{id}/usage")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns the usage of the event source instance", response = DashboardInfo.class, responseContainer = "List")
-			//, @ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class)
+			@ApiResponse(code = 200,
+					message = "Returns the usage of the event source instance",
+					response = DashboardInfo.class,
+					responseContainer = "List")
+			// , @ApiResponse(code = 404, message = "The event source instance with the
+			// given id does not exist", response = ErrorResponse.class)
 	})
 	@JwtSecured
 	@ApiOperation(value = "Read event source instance usage")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_EDITOR)
 	@NoChangeLog
-	public Response readInstanceUsage(@PathParam("id") @NotBlank String instanceId) {
+	public Response readInstanceUsage(@PathParam("id") @NotBlank final String instanceId) {
 		try {
 			return ok(controller.getEventSourceInstanceUsage(instanceId)
 					.stream()
 					.map(controller::getDashboard)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList())).build();
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -194,17 +216,22 @@ public class EventSourceInstanceResource {
 	@PUT
 	@Path("/{id}")
 	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The event source instance has been updated", response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 200,
+					message = "The event source instance has been updated",
+					response = FullEventSourceInstanceInfo.class),
 			@ApiResponse(code = 400, message = "The data is invalid", response = ErrorResponse.class),
-			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 404,
+					message = "The event source instance with the given id does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Update event source instance")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response updateInstance(@PathParam("id") @NotBlank String instanceId, EventSourceInstanceDetails details) {
+	public Response updateInstance(@PathParam("id") @NotBlank final String instanceId,
+			final EventSourceInstanceDetails details) {
 		EventSourceInstance instance;
 		try {
 			instance = controller.getEventSourceInstance(instanceId);
-		} catch (NoSuchElementException e) {
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 
@@ -217,7 +244,7 @@ public class EventSourceInstanceResource {
 		if (!instance.getDescriptor().isScheduledService() && details.frequency != null) {
 			return ErrorResponse.badRequest("The event source does not take a frequency");
 		}
-		HashSet<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
+		final HashSet<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
 		unnessaccaryDataItems.removeAll(instance.getDescriptor()//
 				.getDataItems()
 				.stream()
@@ -250,7 +277,7 @@ public class EventSourceInstanceResource {
 					newInstance.removeProperty(p);
 				}
 			});
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return ErrorResponse.badRequest("Invalid event source instance values", e);
 		}
 
@@ -262,35 +289,40 @@ public class EventSourceInstanceResource {
 	@Path("/{id}")
 	@ApiResponses({ //
 			@ApiResponse(code = 200, message = "The event source instance has been deleted"),
-			@ApiResponse(code = 404, message = "The event source instance with the given id does not exist", response = ErrorResponse.class),
-			@ApiResponse(code = 422, message = "There widgets using this event source instance and the force parameter has not been set to true", response = ErrorResponse.class) })
+			@ApiResponse(code = 404,
+					message = "The event source instance with the given id does not exist",
+					response = ErrorResponse.class),
+			@ApiResponse(code = 422,
+					message = "There widgets using this event source instance and the force parameter has not been set to true",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Delete event source instance")
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
-	public Response deleteInstance(@PathParam("id") @NotBlank String instanceId,
-			@QueryParam("force") @ApiParam(required = false, defaultValue = "false", value = "true to also remove all widgets using this event source") boolean force) {
+	public Response deleteInstance(@PathParam("id") @NotBlank final String instanceId,
+			@QueryParam("force") @ApiParam(required = false,
+					defaultValue = "false",
+					value = "true to also remove all widgets using this event source") final boolean force) {
 		try {
-			Set<String> dashboards = controller.deleteEventSourceInstance(instanceId, force);
+			final Set<String> dashboards = controller.deleteEventSourceInstance(instanceId, force);
 			if (dashboards == null) {
 				return ok().build();
-			} else {
-				return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
 			}
-		} catch (NoSuchElementException e) {
+			return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
+		} catch (final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 	}
 
-	FullEventSourceInstanceInfo getInstanceInfo(String instanceId) {
-		EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
+	FullEventSourceInstanceInfo getInstanceInfo(final String instanceId) {
+		final EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
 		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
 				EventSourceInstanceState.fromInstance(controller, instance));
 	}
 
-	static Map<String, String> getValueMap(Stream<EventSourceProperty> propertyStream,
-			Function<EventSourceProperty, String> getValue,
-			Predicate<EventSourceProperty> hasValue,
-			boolean removeEmpty) {
+	static Map<String, String> getValueMap(final Stream<EventSourceProperty> propertyStream,
+			final Function<EventSourceProperty, String> getValue,
+			final Predicate<EventSourceProperty> hasValue,
+			final boolean removeEmpty) {
 		return removePasswords(propertyStream//
 				.filter(p -> !(removeEmpty && !hasValue.test(p)))
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
@@ -302,14 +334,14 @@ public class EventSourceInstanceResource {
 				})), "");
 	}
 
-	private static Map<String, String> getPropertyMap(EventSourceInstance instance) {
+	private static Map<String, String> getPropertyMap(final EventSourceInstance instance) {
 		return getValueMap(instance.getDescriptor().getProperties().stream(),
 				instance::getPropertyValueString,
 				instance::hasPropertyValue,
 				false);
 	}
 
-	private static Map<String, String> getDataItemMap(EventSourceInstance instance) {
+	private static Map<String, String> getDataItemMap(final EventSourceInstance instance) {
 		return getValueMap(instance.getDescriptor().getDataItems().stream(),
 				instance::getPropertyValueString,
 				instance::hasPropertyValue,
@@ -321,23 +353,29 @@ public class EventSourceInstanceResource {
 	public static class EventSourceInstanceInfo {
 		@NotBlank
 		private String id;
+
 		@NotBlank
 		private String name;
+
 		private boolean isService;
+
 		private boolean enabled;
+
 		private boolean running;
+
 		private boolean hasError;
+
 		@NotNull
 		private List<@NotNull DashboardInfo> usedBy;
 
-		public EventSourceInstanceInfo(EventSourceInstance instance, DashboardController controller) {
-			this.id = instance.getId();
-			this.name = instance.getName();
-			this.isService = instance.getDescriptor().getServiceClass() != null;
-			this.enabled = instance.isEnabled();
-			this.running = controller.isRunning(instance);
-			this.hasError = controller.hasException(instance);
-			this.usedBy = new ArrayList<>(controller//
+		public EventSourceInstanceInfo(final EventSourceInstance instance, final DashboardController controller) {
+			id = instance.getId();
+			name = instance.getName();
+			isService = instance.getDescriptor().getServiceClass() != null;
+			enabled = instance.isEnabled();
+			running = controller.isRunning(instance);
+			hasError = controller.hasException(instance);
+			usedBy = new ArrayList<>(controller//
 					.getDashboardsWhereEventSourceIsUsed(instance)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList()));
@@ -351,28 +389,33 @@ public class EventSourceInstanceResource {
 	public static class EventSourceInstanceDetails {
 		@NotBlank
 		private String eventSourceDescriptor;
+
 		@NotBlank
 		private String id;
+
 		@NotBlank
 		private String name;
+
 		private boolean enabled;
+
 		private Duration frequency;
+
 		@NotNull
 		private Map<@NotBlank String, @NotNull String> properties;
+
 		@NotNull
 		private Map<@NotBlank String, @NotNull String> dataItems;
 
-		public EventSourceInstanceDetails(EventSourceInstance instance) {
-			this(
-				instance.getDescriptor().getKey().getKey(),
-				instance.getId(),
-				instance.getName(),
-				instance.isEnabled(),
-				instance.getFrequency(),
-				getPropertyMap(instance),
-				getDataItemMap(instance)/*
-										 * , instance.getCreatedBy(), instance.getLastChangeBy()
-										 */);
+		public EventSourceInstanceDetails(final EventSourceInstance instance) {
+			this(instance.getDescriptor().getKey().getKey(),
+					instance.getId(),
+					instance.getName(),
+					instance.isEnabled(),
+					instance.getFrequency(),
+					getPropertyMap(instance),
+					getDataItemMap(instance)/*
+											 * , instance.getCreatedBy(), instance.getLastChangeBy()
+											 */);
 		}
 	}
 
@@ -381,6 +424,7 @@ public class EventSourceInstanceResource {
 	@ToString
 	public static class FullEventSourceInstanceInfo {
 		private EventSourceInstanceDetails instanceDetails;
+
 		private EventSourceInstanceState instanceState;
 	}
 }

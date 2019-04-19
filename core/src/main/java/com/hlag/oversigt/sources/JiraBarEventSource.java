@@ -20,35 +20,35 @@ import com.hlag.oversigt.sources.event.HlBarChartEvent.Serie;
 @EventSource(view = "HlBarChart", displayName = "Jira Tickets (as Bar)")
 public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent> {
 	private int serieMinimum = 3;
+
 	private double minimumHeight = 0.35;
 
 	@Override
 	protected HlBarChartEvent produceEvent() {
-		Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
-
-		if (issues != null) {
-			int maxMailsPerCategory = Math.max(getSerieMinimum(),
-					issues.values().stream().mapToInt(Collection::size).max().orElse(0));
-			long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();
-
-			List<Category> categories = new ArrayList<>();
-			for (Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
-				DisplayOption displayOption = entry.getKey();
-				int count = entry.getValue().size();
-
-				Serie serie = getSerie(displayOption.getColor(), count, maxMailsPerCategory);
-				categories.add(new Category(Integer.toString(count),
-						displayOption.formatDisplayValue(count),
-						Arrays.asList(serie)));
-			}
-
-			return new HlBarChartEvent(categories, Long.toString(sumMails));
-		} else {
+		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
+		if (issues == null) {
 			return null;
 		}
+
+		final int maxMailsPerCategory
+				= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));
+		final long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();
+
+		final List<Category> categories = new ArrayList<>();
+		for (final Entry<DisplayOption, Set<Issue>> entry : issues.entrySet()) {
+			final DisplayOption displayOption = entry.getKey();
+			final int count = entry.getValue().size();
+
+			final Serie serie = getSerie(displayOption.getColor(), count, maxMailsPerCategory);
+			categories.add(new Category(Integer.toString(count),
+					displayOption.formatDisplayValue(count),
+					Arrays.asList(serie)));
+		}
+
+		return new HlBarChartEvent(categories, Long.toString(sumMails));
 	}
 
-	private Serie getSerie(Color color, int value, int maximum) {
+	private Serie getSerie(final Color color, final int value, final int maximum) {
 		double height = 0;
 		if (value > 0 && maximum > 1) {
 			height = getMinimumHeight() + (double) (value - 1) / (maximum - 1) * (1 - getMinimumHeight());
@@ -61,7 +61,7 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 		return minimumHeight;
 	}
 
-	public void setMinimumHeight(double minimumHeight) {
+	public void setMinimumHeight(final double minimumHeight) {
 		this.minimumHeight = minimumHeight;
 	}
 
@@ -71,7 +71,7 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 		return serieMinimum;
 	}
 
-	public void setSerieMinimum(int serieMinimum) {
+	public void setSerieMinimum(final int serieMinimum) {
 		this.serieMinimum = serieMinimum;
 	}
 }

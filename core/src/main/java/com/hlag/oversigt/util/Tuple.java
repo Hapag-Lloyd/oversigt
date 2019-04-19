@@ -8,14 +8,15 @@ import java.util.function.Predicate;
 
 public class Tuple<A, B> {
 	private final A a;
+
 	private final B b;
 
-	public Tuple(A a, B b) {
+	public Tuple(final A a, final B b) {
 		this.a = a;
 		this.b = b;
 	}
 
-	public Tuple(Entry<A, B> entry) {
+	public Tuple(final Entry<A, B> entry) {
 		this(entry.getKey(), entry.getValue());
 	}
 
@@ -32,36 +33,36 @@ public class Tuple<A, B> {
 		return String.format("Tuple [a=%s, b=%s]", a, b);
 	}
 
-	public <T> T map(Function<Tuple<A, B>, T> mapper) {
+	public <T> T map(final Function<Tuple<A, B>, T> mapper) {
 		return mapper.apply(this);
 	}
 
-	public <T> T map(BiFunction<A, B, T> mapper) {
+	public <T> T map(final BiFunction<A, B, T> mapper) {
 		return mapper.apply(getFirst(), getSecond());
 	}
 
-	public <C> Tuple<C, B> mapFirst(Function<A, C> mapper) {
+	public <C> Tuple<C, B> mapFirst(final Function<A, C> mapper) {
 		return new Tuple<>(mapper.apply(getFirst()), getSecond());
 	}
 
-	public <C> Tuple<A, C> mapSecond(Function<B, C> mapper) {
+	public <C> Tuple<A, C> mapSecond(final Function<B, C> mapper) {
 		return new Tuple<>(getFirst(), mapper.apply(getSecond()));
 	}
 
-	public Optional<Tuple<A, B>> filter(Predicate<Tuple<A, B>> filter) {
+	public Optional<Tuple<A, B>> filter(final Predicate<Tuple<A, B>> filter) {
 		return filter.test(this) ? Optional.of(this) : Optional.empty();
 	}
 
-	public Tuple<Optional<A>, B> filterFirst(Predicate<A> filter) {
+	public Tuple<Optional<A>, Optional<B>> filter(final Predicate<A> filterFirst, final Predicate<B> filterSecond) {
+		return new Tuple<>(filterFirst.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(),
+				filterSecond.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
+	}
+
+	public Tuple<Optional<A>, B> filterFirst(final Predicate<A> filter) {
 		return new Tuple<>(filter.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(), getSecond());
 	}
 
-	public Tuple<A, Optional<B>> filterSecond(Predicate<B> filter) {
+	public Tuple<A, Optional<B>> filterSecond(final Predicate<B> filter) {
 		return new Tuple<>(getFirst(), filter.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
-	}
-
-	public Tuple<Optional<A>, Optional<B>> filter(Predicate<A> filterFirst, Predicate<B> filterSecond) {
-		return new Tuple<>(filterFirst.test(getFirst()) ? Optional.of(getFirst()) : Optional.empty(),
-				filterSecond.test(getSecond()) ? Optional.of(getSecond()) : Optional.empty());
 	}
 }

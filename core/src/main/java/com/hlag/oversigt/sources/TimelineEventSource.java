@@ -41,21 +41,31 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEvent> {
 	// TODO internationalize these strings
 	private static final String UNTIL = "until ";
+
 	private static final String TODAY = "Today";
+
 	private static final String ALL_DAY = "all day";
+
 	private static final String ALL_DAY_UNTIL = ALL_DAY + ", " + UNTIL;
 
 	private Period maximumPointInFuture = Period.ofMonths(3);
+
 	private int minimumEventCount = 0;
 
-	private Color colorToday = Color.Green;//"#008000"; // green
-	private Color colorAppointment = Color.Blue;//"#0000FF"; // blue
-	private Color colorBirthday = Color.Yellow;//"#FFFF00"; // yellow
-	private Color colorHoliday = Color.Grey;//"#808080"; // grey
-	private Color colorOutOfOffice = Color.Blue;//"#808080"; // blue
-	private Color colorMailbox = Color.Blue;//"#808080"; // blue
+	private Color colorToday = Color.Green;
+
+	private Color colorAppointment = Color.Blue;
+
+	private Color colorBirthday = Color.Yellow;
+
+	private Color colorHoliday = Color.Grey;
+
+	private Color colorOutOfOffice = Color.Blue;
+
+	private Color colorMailbox = Color.Blue;
 
 	private HolidayCalendar holidayCalendar = HolidayCalendar.GERMANY;
+
 	private String holidayArea = "hh";
 
 	private Locale locale = Locale.getDefault();
@@ -69,8 +79,8 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	@Override
 	protected TimelineEvent produceExchangeEvent() throws Exception {
-		TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
-		LocalDate now = LocalDate.now(getZoneId());
+		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
+		final LocalDate now = LocalDate.now(getZoneId());
 
 		fillTimelineEvent(now, event);
 
@@ -84,49 +94,50 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return event;
 	}
 
-	protected void fillTimelineEvent(LocalDate now, TimelineEvent event) {
+	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {
 		addBirthdays(event, now);
 		addHolidays(event, now);
 		addExchangeCalendar(event, now);
 	}
 
-	private void addExchangeCalendar(TimelineEvent event, LocalDate now) {
-		Optional<ExchangeService> service = createExchangeService();
+	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
+		final Optional<ExchangeService> service = createExchangeService();
 		if (service.isPresent()) {
 			/*
-			 * start search two month in the past to fetch all running all day appointments, 5 month
-			 * to handle a maternity leave for up to 2.5 months. running all day events are also
-			 * shown if they started in the past and continue to now or the future.
+			 * start search two month in the past to fetch all running all day appointments,
+			 * 5 month to handle a maternity leave for up to 2.5 months. running all day
+			 * events are also shown if they started in the past and continue to now or the
+			 * future.
 			 */
-			CalendarView calendarView = getCalendarView(now.minusMonths(5).atStartOfDay(getZoneId()),
+			final CalendarView calendarView = getCalendarView(now.minusMonths(5).atStartOfDay(getZoneId()),
 					now.plus(getMaximumPointInFuture())
 							.plus(getMaximumPointInFuture())
 							.plusDays(1)
 							.atStartOfDay(getZoneId()));
 
-			FindItemsResults<Appointment> findResults;
+			final FindItemsResults<Appointment> findResults;
 			try {
 				findResults = service.get().findAppointments(WellKnownFolderName.Calendar, calendarView);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				throw new RuntimeException("Unable to find appointments", e);
 			}
 			findResults.getItems().forEach(a -> addAppointment(event, a));
 		}
 	}
 
-	private void addAppointment(TimelineEvent event, Appointment appointment) {
+	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
 		try {
-			ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
-			ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
-			LocalDate now = LocalDate.now(getZoneId());
+			final ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
+			final ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
+			final LocalDate now = LocalDate.now(getZoneId());
 
-			//for all day appointments, write "ganztägig"
-			String duration;
+			// for all day appointments, write "ganztägig"
+			final String duration;
 
 			if (appointment.getIsAllDayEvent()) {
-				LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
-				boolean endSameDay = endDate.isEqual(start.toLocalDate());
-				boolean endsToday = endDate.isEqual(now);
+				final LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
+				final boolean endSameDay = endDate.isEqual(start.toLocalDate());
+				final boolean endsToday = endDate.isEqual(now);
 
 				if (endSameDay || endsToday) {
 					duration = ALL_DAY;
@@ -134,20 +145,20 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 					duration = ALL_DAY_UNTIL + endDate.format(DateTimeFormatter.ofPattern("d. MMM", getLocale()));
 				}
 			} else {
-				//not an all day event
-				boolean startInPast = start.toLocalDate().isBefore(now);
+				// not an all day event
+				final boolean startInPast = start.toLocalDate().isBefore(now);
 
 				if (startInPast) {
 					duration = UNTIL + end.format(DateTimeFormatter.ofPattern("d. MMM, HH:mm", getLocale()));
 				} else {
-					//begins today or in future: show start time (date is always shown)
+					// begins today or in future: show start time (date is always shown)
 					duration = start.format(DateTimeFormatter.ofPattern("HH:mm", getLocale()));
 				}
 			}
 
-			String title = String.format("%s (%s)", appointment.getSubject(), duration);
+			final String title = String.format("%s (%s)", appointment.getSubject(), duration);
 
-			//for out of office and mailbox handling use special colors
+			// for out of office and mailbox handling use special colors
 			Color color = colorAppointment;
 
 			if (LegacyFreeBusyStatus.OOF.equals(appointment.getLegacyFreeBusyStatus())) {
@@ -162,29 +173,31 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 					appointment.getEnd().toInstant().atZone(getZoneId()).toLocalDate(),
 					appointment.getIsAllDayEvent(),
 					color);
-		} catch (ServiceLocalException ignore) {
-		}
+		} catch (final ServiceLocalException ignore) {}
 	}
 
-	private void addBirthdays(TimelineEvent event, LocalDate now) {
-		for (Birthday birthday : getBirthdays()) {
+	private void addBirthdays(final TimelineEvent event, final LocalDate now) {
+		for (final Birthday birthday : getBirthdays()) {
 			if (birthday.getDate() != null) {
 				LocalDate date = birthday.getDate().withYear(now.getYear());
 				if (date.isBefore(now)) {
 					date = date.plusYears(1);
 				}
-				event.addEvent(birthday.getName() + " (" + birthday.getDate().until(date).getYears()
-						+ ")", date, date, true, colorBirthday);
+				event.addEvent(birthday.getName() + " (" + birthday.getDate().until(date).getYears() + ")",
+						date,
+						date,
+						true,
+						colorBirthday);
 			}
 		}
 	}
 
-	private void addHolidays(TimelineEvent event, LocalDate now) {
-		Color fontColor = Color.LightGrey;
+	private void addHolidays(final TimelineEvent event, final LocalDate now) {
+		final Color fontColor = Color.LightGrey;
 
-		HolidayManager m = HolidayManager.getInstance(ManagerParameters.create(getHolidayCalendar()));
-		String area = Strings.emptyToNull(getHolidayArea());
-		Set<Holiday> holidays;
+		final HolidayManager m = HolidayManager.getInstance(ManagerParameters.create(getHolidayCalendar()));
+		final String area = Strings.emptyToNull(getHolidayArea());
+		final Set<Holiday> holidays;
 		if (area != null) {
 			holidays = m.getHolidays(now,
 					now.plus(getMaximumPointInFuture()).plus(getMaximumPointInFuture()),
@@ -204,12 +217,13 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 				.orElse(apiName);
 	}
 
-	@Property(name = "Holiday Name Correction", description = "Some holiday names are not the common used names. If you wish to change that name displayd in the UI please change it here.")
+	@Property(name = "Holiday Name Correction",
+			description = "Some holiday names are not the common used names. If you wish to change that name displayd in the UI please change it here.")
 	public HolidayNameCorrection[] getHolidayNameCorrections() {
 		return corrections;
 	}
 
-	public void setHolidayNameCorrections(HolidayNameCorrection[] corrections) {
+	public void setHolidayNameCorrections(final HolidayNameCorrection[] corrections) {
 		this.corrections = corrections;
 	}
 
@@ -221,13 +235,14 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return minimumEventCount;
 	}
 
-	@Property(name = "Maximum Point of Time in Future", description = "How far should this event source look into the future at maximum")
-	public void setMaximumPointInFuture(Period maximumPointInFuture) {
+	@Property(name = "Maximum Point of Time in Future",
+			description = "How far should this event source look into the future at maximum")
+	public void setMaximumPointInFuture(final Period maximumPointInFuture) {
 		this.maximumPointInFuture = maximumPointInFuture;
 	}
 
 	@Property(name = "Minimum events count", description = "Set to zero to disable")
-	public void setMinimumEventCount(int minimumEventCount) {
+	public void setMinimumEventCount(final int minimumEventCount) {
 		this.minimumEventCount = minimumEventCount;
 	}
 
@@ -266,31 +281,31 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return locale;
 	}
 
-	public void setLocale(Locale locale) {
+	public void setLocale(final Locale locale) {
 		this.locale = locale;
 	}
 
-	public void setColorToday(Color colorToday) {
+	public void setColorToday(final Color colorToday) {
 		this.colorToday = colorToday;
 	}
 
-	public void setColorMailbox(Color colorMailbox) {
+	public void setColorMailbox(final Color colorMailbox) {
 		this.colorMailbox = colorMailbox;
 	}
 
-	public void setColorOutOfOffice(Color colorOutOfOffice) {
+	public void setColorOutOfOffice(final Color colorOutOfOffice) {
 		this.colorOutOfOffice = colorOutOfOffice;
 	}
 
-	public void setColorAppointment(Color colorAppointment) {
+	public void setColorAppointment(final Color colorAppointment) {
 		this.colorAppointment = colorAppointment;
 	}
 
-	public void setColorBirthday(Color colorBirthday) {
+	public void setColorBirthday(final Color colorBirthday) {
 		this.colorBirthday = colorBirthday;
 	}
 
-	public void setColorHoliday(Color colorHoliday) {
+	public void setColorHoliday(final Color colorHoliday) {
 		this.colorHoliday = colorHoliday;
 	}
 
@@ -299,16 +314,17 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return holidayCalendar;
 	}
 
-	public void setHolidayCalendar(HolidayCalendar holidayCalendar) {
+	public void setHolidayCalendar(final HolidayCalendar holidayCalendar) {
 		this.holidayCalendar = holidayCalendar;
 	}
 
-	@Property(name = "Holiday Area", description = "The area within the Holiday Calendar to be used to determine local holidays")
+	@Property(name = "Holiday Area",
+			description = "The area within the Holiday Calendar to be used to determine local holidays")
 	public String getHolidayArea() {
 		return holidayArea;
 	}
 
-	public void setHolidayArea(String holidayArea) {
+	public void setHolidayArea(final String holidayArea) {
 		this.holidayArea = holidayArea;
 	}
 
@@ -317,18 +333,19 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return birthdays;
 	}
 
-	public void setBirthdays(Birthday[] birthdays) {
+	public void setBirthdays(final Birthday[] birthdays) {
 		this.birthdays = birthdays;
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{ self.correctName }}")
-	private static class HolidayNameCorrection implements JsonBasedData {
+	private static final class HolidayNameCorrection implements JsonBasedData {
 		@NotNull
 		private String apiName = "API Name";
+
 		@NotNull
 		private String correctName = "Correct Name";
 
-		private HolidayNameCorrection(String apiName, String correctName) {
+		private HolidayNameCorrection(final String apiName, final String correctName) {
 			this.apiName = apiName;
 			this.correctName = correctName;
 		}

@@ -1,6 +1,7 @@
 package com.hlag.oversigt.util;
 
-import static com.hlag.oversigt.util.Utils.*;
+import static com.hlag.oversigt.util.Utils.logChange;
+import static com.hlag.oversigt.util.Utils.map;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -51,12 +52,14 @@ public class MailSender {
 
 	@Inject
 	private Configuration templateConfiguration;
+
 	@Inject
 	private Authenticator authenticator;
 
 	@Inject
 	@Named("hostname")
 	private String dashboardHostname;
+
 	@Inject
 	@Named("serverAdmins")
 	private List<String> adminUserIds;
@@ -64,23 +67,28 @@ public class MailSender {
 	@Inject
 	@Named("mailSenderHost")
 	private String host;
+
 	@Inject
 	@Named("mailSenderPort")
 	private int port;
+
 	@Inject
 	@Named("mailSenderStartTls")
 	private boolean startTls;
+
 	@Inject
 	@Named("mailSenderUsername")
 	private String username;
+
 	@Inject
 	@Named("mailSenderPassword")
 	private String password;
+
 	@Inject
 	@Named("mailSenderAddress")
 	private String senderAddress;
 
-	public void sendNewDashboard(Principal sender, Dashboard dashboard) {
+	public void sendNewDashboard(final Principal sender, final Dashboard dashboard) {
 		sendMailToAdmins(sender,
 				"New dashboard requested",
 				"A new dashboard has been created...",
@@ -88,14 +96,17 @@ public class MailSender {
 				map("dashboard", dashboard));
 	}
 
-	public void sendPermissionsReceived(Principal sender,
-			Collection<String> receiverUserId,
-			Roles role,
-			Dashboard dashboard) {
+	public void sendPermissionsReceived(final Principal sender,
+			final Collection<String> receiverUserId,
+			final Roles role,
+			final Dashboard dashboard) {
 		receiverUserId.forEach(receiver -> sendPermissionsReceived(sender, receiver, role, dashboard));
 	}
 
-	public void sendPermissionsReceived(Principal sender, String receiverUserId, Roles role, Dashboard dashboard) {
+	public void sendPermissionsReceived(final Principal sender,
+			final String receiverUserId,
+			final Roles role,
+			final Dashboard dashboard) {
 		sendMailToUserId(sender,
 				receiverUserId,
 				"New permission received",
@@ -104,7 +115,7 @@ public class MailSender {
 				map("role", role.getDisplayName(), "dashboard", dashboard));
 	}
 
-	public void sendDashboardEnabled(Principal sender, Dashboard dashboard) {
+	public void sendDashboardEnabled(final Principal sender, final Dashboard dashboard) {
 		sendMailToDashboardInvolved(sender,
 				dashboard,
 				"Dashboard enabled",
@@ -113,57 +124,57 @@ public class MailSender {
 				map("dashboard", dashboard));
 	}
 
-	private void sendMailToAdmins(Principal sender,
-			String subject,
-			String title,
-			String templatePath,
-			Map<String, Object> model) {
+	private void sendMailToAdmins(final Principal sender,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map<String, Object> model) {
 		sendMailToUserIds(sender, adminUserIds, subject, title, templatePath, model);
 	}
 
-	private void sendMailToDashboardInvolved(Principal sender,
-			Dashboard dashboard,
-			String subject,
-			String title,
-			String templatePath,
-			Map<String, Object> model) {
-		List<String> involved = new ArrayList<>();
+	private void sendMailToDashboardInvolved(final Principal sender,
+			final Dashboard dashboard,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map<String, Object> model) {
+		final List<String> involved = new ArrayList<>();
 		involved.addAll(dashboard.getOwners());
 		involved.addAll(dashboard.getEditors());
 		model.put("dashboard", dashboard);
 		sendMailToUserIds(sender, involved, subject, title, templatePath, model);
 	}
 
-	private void sendMailToUserIds(Principal sender,
-			List<String> userIds,
-			String subject,
-			String title,
-			String templatePath,
-			Map<String, Object> model) {
+	private void sendMailToUserIds(final Principal sender,
+			final List<String> userIds,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map<String, Object> model) {
 		userIds.forEach(userId -> sendMailToUserId(sender, userId, subject, title, templatePath, model));
 	}
 
-	private void sendMailToUserId(Principal sender,
-			String userId,
-			String subject,
-			String title,
-			String templatePath,
-			Map<String, Object> model) {
-		Principal receiver = authenticator.readPrincipal(userId);
+	private void sendMailToUserId(final Principal sender,
+			final String userId,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map<String, Object> model) {
+		final Principal receiver = authenticator.readPrincipal(userId);
 		sendMail(sender, receiver.getName(), receiver.getEmail(), subject, title, templatePath, model);
 	}
 
-	private void sendMail(Principal sender,
-			String recipientName,
-			String recipientEmail,
-			String subject,
-			String title,
-			String templatePath,
-			Map<String, Object> mModel) {
+	private void sendMail(final Principal sender,
+			final String recipientName,
+			final String recipientEmail,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map<String, Object> mModel) {
 		Objects.requireNonNull(recipientName, "The recipient name must not be null");
 		Objects.requireNonNull(recipientEmail, "The recipient mail must not be null");
 
-		HashMap<String, Object> model = new HashMap<>(mModel);
+		final HashMap<String, Object> model = new HashMap<>(mModel);
 		model.put("hostname", dashboardHostname);
 		model.put("subject", subject);
 		model.put("title", title);
@@ -176,54 +187,61 @@ public class MailSender {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				sendMail_unsafe(sender, new String[] { recipientEmail }, subject, templatePath, model);
-			} catch (IOException | TemplateException e) {
+			} catch (final IOException | TemplateException e) {
 				LOGGER.error("Unable to send mail.", e);
 			}
 		});
 	}
 
-	/**DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!<br/>
-	 * This method generates the mail content and then sends the mail to the given recipients
+	/**
+	 * DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!<br/>
+	 * This method generates the mail content and then sends the mail to the given
+	 * recipients
 	 *
-	 * @param recipients all mail addresses that shall receive this current mail
-	 * @param subject the subject of the mail to send
-	 * @param templatePath the path to the template file to be used
-	 * @param model the model to be used to fill the template
-	 * @return <code>true</code> if mail sending was successful, otherwise <code>false</code>
-	 * @throws IOException if any IO error occurres - reading a file or sending a mail
+	 * @param recipients   all mail addresses that shall receive this current mail
+	 * @param subject      the subject of the mail to send
+	 * @param templateName the name to the template file to be used
+	 * @param model        the model to be used to fill the template
+	 * @return <code>true</code> if mail sending was successful, otherwise
+	 *         <code>false</code>
+	 * @throws IOException       if any IO error occurres - reading a file or
+	 *                           sending a mail
 	 * @throws TemplateException if something fails while processing the template
 	 */
-	private void sendMail_unsafe(Principal sender,
-			String[] recipients,
-			String subject,
-			String templatePath,
-			Map<String, Object> model) throws IOException, TemplateException {
-		templatePath = "mails/" + templatePath + ".ftl";
-		Template htmlTemplate = templateConfiguration.getTemplate(templatePath + ".html");
-		StringWriter html = new StringWriter();
+	private void sendMail_unsafe(final Principal sender,
+			final String[] recipients,
+			final String subject,
+			final String templateName,
+			final Map<String, Object> model) throws IOException, TemplateException {
+		final String templatePath = "mails/" + templateName + ".ftl";
+		final Template htmlTemplate = templateConfiguration.getTemplate(templatePath + ".html");
+		final StringWriter html = new StringWriter();
 		htmlTemplate.process(model, html);
 
-		Template textTemplate = templateConfiguration.getTemplate(templatePath + ".txt");
-		StringWriter text = new StringWriter();
+		final Template textTemplate = templateConfiguration.getTemplate(templatePath + ".txt");
+		final StringWriter text = new StringWriter();
 		textTemplate.process(model, text);
 
 		send_internal(sender, recipients, subject, html.toString(), text.toString());
 	}
 
-	/**DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!<br/>
-	 * This method sends a mail with the given subject and contents to the given recipients.
+	/**
+	 * DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!<br/>
+	 * This method sends a mail with the given subject and contents to the given
+	 * recipients.
 	 *
-	 * @param recipients all mail addresses that shall receive the current mail
-	 * @param subject the subject of the mail to send
+	 * @param recipients  all mail addresses that shall receive the current mail
+	 * @param subject     the subject of the mail to send
 	 * @param htmlContent the HTML content of the file to send
 	 * @param textContent the text content of the file to send
-	 * @return <code>true</code> if mail sending was successful, otherwise <code>false</code>
+	 * @return <code>true</code> if mail sending was successful, otherwise
+	 *         <code>false</code>
 	 */
-	private void send_internal(Principal sender,
-			String[] recipients,
-			String subject,
-			String htmlContent,
-			String textContent) {
+	private void send_internal(final Principal sender,
+			final String[] recipients,
+			final String subject,
+			final String htmlContent,
+			final String textContent) {
 		if (Objects.requireNonNull(recipients).length == 0) {
 			throw new RuntimeException("No recipient given");
 		}
@@ -241,21 +259,21 @@ public class MailSender {
 			return;
 		}
 
-		Session session = Session.getInstance(createProperties(), createAuthenticator());
+		final Session session = Session.getInstance(createProperties(), createAuthenticator());
 
 		try {
 			final Message message = new MimeMessage(session);
-			for (String recipient : recipients) {
+			for (final String recipient : recipients) {
 				message.addRecipient(RecipientType.TO, new InternetAddress(recipient));
 			}
 			message.setFrom(new InternetAddress(sender.getEmail(), sender.getName()));
 			message.setSubject(subject);
 			message.setSentDate(new Date());
 
-			Multipart multipart = new MimeMultipart("alternative");
-			BodyPart textBodyPart = new MimeBodyPart();
+			final Multipart multipart = new MimeMultipart("alternative");
+			final BodyPart textBodyPart = new MimeBodyPart();
 			textBodyPart.setContent(textContent, "text/plain");
-			BodyPart htmlBodyPart = new MimeBodyPart();
+			final BodyPart htmlBodyPart = new MimeBodyPart();
 			htmlBodyPart.setContent(htmlContent, "text/html");
 
 			multipart.addBodyPart(textBodyPart);
@@ -276,16 +294,15 @@ public class MailSender {
 	}
 
 	private javax.mail.Authenticator createAuthenticator() {
-		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
-			return new javax.mail.Authenticator() {
-				@Override
-				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication(username, password);
-				}
-			};
-		} else {
+		if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
 			return null;
 		}
+		return new javax.mail.Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		};
 	}
 
 	private Properties createProperties() {

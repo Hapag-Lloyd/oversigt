@@ -40,22 +40,22 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 	static final ThreadLocal<Object[]> parameters = new ThreadLocal<>();
 
 	@Override
-	public void filter(ContainerRequestContext requestContext) throws IOException {
+	public void filter(final ContainerRequestContext requestContext) throws IOException {
 		parameters.set(null);
 	}
 
 	@Override
-	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
+	public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
 			throws IOException {
-		Method method = resourceInfo.getResourceMethod();
+		final Method method = resourceInfo.getResourceMethod();
 		if (method != null) {
 			if (method.isAnnotationPresent(JwtSecured.class) && !method.isAnnotationPresent(NoChangeLog.class)) {
-				Principal principal = (Principal) requestContext.getSecurityContext().getUserPrincipal();
+				final Principal principal = (Principal) requestContext.getSecurityContext().getUserPrincipal();
 
 				if (principal != null) {
-					List<String> values = new ArrayList<>();
-					Parameter[] parameters = method.getParameters();
-					for (int i = 0; i < parameters.length; ++i) {
+					final List<String> values = new ArrayList<>();
+					final Parameter[] parameters = method.getParameters();
+					for (int i = 0; i < parameters.length; i += 1) {
 						if (!values.isEmpty() || isApiParameter(parameters[i])) {
 							values.add(
 									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.parameters.get()[i]);
@@ -72,7 +72,8 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 							method.getDeclaringClass().getSimpleName(),
 							method.getName());
 				} else {
-					throw new RuntimeException("A @" + JwtSecured.class.getSimpleName()
+					throw new RuntimeException("A @"
+							+ JwtSecured.class.getSimpleName()
 							+ " annotated class does not have a Principal in the context parameters");
 				}
 			} else {
@@ -88,7 +89,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 		parameters.set(null);
 	}
 
-	private static boolean isApiParameter(Parameter parameter) {
+	private static boolean isApiParameter(final Parameter parameter) {
 		return parameter.isAnnotationPresent(PathParam.class)//
 				|| parameter.isAnnotationPresent(QueryParam.class)//
 				|| parameter.isAnnotationPresent(HeaderParam.class)//
@@ -97,7 +98,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 				|| parameter.isAnnotationPresent(MatrixParam.class);
 	}
 
-	private static String getApiParameterName(Parameter parameter) {
+	private static String getApiParameterName(final Parameter parameter) {
 		if (parameter.isAnnotationPresent(PathParam.class)) {
 			return parameter.getAnnotation(PathParam.class).value();
 		} else if (parameter.isAnnotationPresent(QueryParam.class)) {

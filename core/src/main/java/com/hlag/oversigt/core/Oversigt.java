@@ -1,10 +1,12 @@
 package com.hlag.oversigt.core;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
@@ -24,6 +26,7 @@ import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.Storage;
 
 import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Finals;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -32,38 +35,43 @@ import ch.qos.logback.classic.LoggerContext;
  * @author noxfireone
  */
 public final class Oversigt {
-	public static final String APPLICATION_NAME = "Oversigt";
-	public static final String APPLICATION_VERSION = "0.6";
+	public static final String APPLICATION_NAME = Finals.constant("Oversigt");
+
+	public static final String APPLICATION_VERSION = Finals.constant("0.6");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);
 
-	static final String APPLICATION_CONFIG = "config.json";
+	static final String APPLICATION_CONFIG = Finals.constant("config.json");
 
 	private AtomicBoolean bootstrapped;
+
 	private Injector injector;
+
 	private Thread shutdownHook;
 
-	private Oversigt(Injector injector) {
+	private Oversigt(final Injector injector) {
 		this.injector = injector;
-		this.bootstrapped = new AtomicBoolean(false);
-		this.shutdownHook = new Thread(this::shutdown, "Oversigt-Shutdown-Hook");
+		bootstrapped = new AtomicBoolean(false);
+		shutdownHook = new Thread(this::shutdown, "Oversigt-Shutdown-Hook");
 	}
 
 	/**
-	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping already started Oversigt is not permitted
+	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping
+	 * already started Oversigt is not permitted
 	 *
 	 * @return itself
 	 */
 	public Oversigt bootstrap() {
 		if (bootstrapped.compareAndSet(false, true)) {
 			final boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
-			//			if (debug) {
-			//				((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AbstractJdbcConnector.class))
-			//						.setLevel(Level.ALL);
-			//			}
+			// if (debug) {
+			// ((ch.qos.logback.classic.Logger)
+			// LoggerFactory.getLogger(AbstractJdbcConnector.class))
+			// .setLevel(Level.ALL);
+			// }
 
 			/* bootstrap server */
-			Service application = injector.getInstance(OversigtServer.class);
+			final Service application = injector.getInstance(OversigtServer.class);
 			application.startAsync();
 
 			Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -91,8 +99,8 @@ public final class Oversigt {
 			close(Authenticator.class);
 
 			/*
-			 * shutdown method might be called by this hook. So, trying to remove hook which is currently is progress
-			 * causes error
+			 * shutdown method might be called by this hook. So, trying to remove hook which
+			 * is currently is progress causes error
 			 */
 			if (!shutdownHook.isAlive()) {
 				Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -106,10 +114,10 @@ public final class Oversigt {
 		}
 	}
 
-	private void close(Class<? extends AutoCloseable> clazz) {
+	private void close(final Class<? extends AutoCloseable> clazz) {
 		try {
 			injector.getInstance(clazz).close();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LOGGER.error("Unable to close " + clazz.getSimpleName() + " instance.", e);
 		}
 	}
@@ -123,9 +131,9 @@ public final class Oversigt {
 		return new Builder();
 	}
 
-	public static void main(String... args) throws InterruptedException, IOException {
+	public static void main(final String... args) throws InterruptedException, IOException {
 		// parse command line options
-		CommandLineOptions options = CommandLineOptions.parse(args);
+		final CommandLineOptions options = CommandLineOptions.parse(args);
 		// if command line options fail: shut down
 		if (options == null) {
 			return;
@@ -135,9 +143,19 @@ public final class Oversigt {
 		try {
 			LOGGER.info("Bootstrapping Oversigt");
 			Oversigt.builder().startOptions(options).build().bootstrap();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LOGGER.error("Oversigt cannot start", e);
 		}
+	}
+
+	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Could not dispatch event");
+		if (context.getEvent() instanceof OversigtEvent) {
+			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
+		}
+		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
+		LOGGER.error(sb.toString(), throwable);
 	}
 
 	/**
@@ -146,24 +164,24 @@ public final class Oversigt {
 	public static class Builder {
 
 		/* List of extension-modules */
-		private List<Module> modules = new LinkedList<>();
+		private final List<Module> modules = new LinkedList<>();
+
 		private CommandLineOptions options = null;
 
 		/**
 		 * Registers extension modules
 		 *
-		 * @param modules
-		 *            Array of extension modules
+		 * @param modules Array of extension modules
 		 * @return this builder
 		 */
-		public Builder registerModule(@Nullable Module... modules) {
-			if (null != modules) {
-				Collections.addAll(this.modules, modules);
+		public Builder registerModule(@Nullable final Module... modules) {
+			if (modules != null) {
+				this.modules.addAll(Arrays.asList(modules));
 			}
 			return this;
 		}
 
-		public Builder startOptions(CommandLineOptions options) {
+		public Builder startOptions(final CommandLineOptions options) {
 			this.options = options;
 			return this;
 		}
@@ -174,28 +192,13 @@ public final class Oversigt {
 		 * @return Oversigt
 		 */
 		public Oversigt build() {
-			Oversigt[] oversigt = new Oversigt[] { null };
-			Injector createdInjector = Guice//
-					.createInjector(//
-							new OversigtModule(//
-									options,
-									() -> oversigt[0].shutdown(), //
-									ImmutableList.//
-									<Module> builder()//
-											.addAll(modules)//
-											.build()));
+			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
+			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
+					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown),
+					ImmutableList.<Module>builder().addAll(modules).build()));
 
-			return oversigt[0] = new Oversigt(createdInjector);
+			oversigt.set(new Oversigt(createdInjector));
+			return oversigt.get();
 		}
-	}
-
-	static void handleEventBusException(Throwable throwable, SubscriberExceptionContext context) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Could not dispatch event");
-		if (context.getEvent() instanceof OversigtEvent) {
-			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
-		}
-		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
-		LOGGER.error(sb.toString(), throwable);
 	}
 }

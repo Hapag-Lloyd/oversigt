@@ -46,25 +46,35 @@ import io.undertow.server.session.SessionManager;
 public class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
 
-	private static void bind(Binder binder, String name, Object value) {
+	private static void bind(final Binder binder, final String name, final Object value) {
 		binder.bindConstant()
 				.annotatedWith(Names.named(name))
 				.to(Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
 	}
 
 	private boolean debug = false;
+
 	private String hostname = null;
+
 	private ApiConfiguration api = new ApiConfiguration();
+
 	private EventManagerConfiguration eventManager = new EventManagerConfiguration();
+
 	private DatabaseConfiguration database;
+
 	private SecurityConfiguration security = new SecurityConfiguration();
+
 	private MailConfiguration mail = new MailConfiguration();
+
 	private String templateNumberFormat = "0";
+
 	private List<HttpListenerConfiguration> listeners = Lists.newArrayList(new HttpListenerConfiguration());
+
 	private EventSourceConfiguration eventSources;
+
 	private JiraConfiguration jira;
 
-	void bindProperties(Binder binder, boolean debugFallback, String ldapBindPasswordFallback) {
+	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
 
 		bind(binder, "hostname", hostname);
@@ -81,8 +91,9 @@ public class OversigtConfiguration {
 		bind(binder, "databaseUsername", database.username);
 		bind(binder, "databasePassword", database.password);
 		binder.bind(SqlDialect.class).to(database.sqlDialect);
-		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {
-		}).annotatedWith(Names.named("listeners")).toInstance(listeners);
+		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {})
+				.annotatedWith(Names.named("listeners"))
+				.toInstance(listeners);
 		bind(binder, "jiraSocketTimeout", jira.socketTimeout);
 		bindNamedArray(binder, String[].class, "additionalPackages", eventSources.packages);
 		bindNamedArray(binder, Path[].class, "addonFolders", Paths::get, eventSources.addonFolders);
@@ -109,14 +120,14 @@ public class OversigtConfiguration {
 			}
 		}
 		if (!boundAuthenticator && security.users != null) {
-			binder.bind(new TypeLiteral<Map<String, String>>() {
-			}).annotatedWith(Names.named("UsernamesAndPasswords")).toInstance(security.users);
+			binder.bind(new TypeLiteral<Map<String, String>>() {})
+					.annotatedWith(Names.named("UsernamesAndPasswords"))
+					.toInstance(security.users);
 			binder.bind(Authenticator.class).to(MapAuthenticator.class);
 			boundAuthenticator = true;
 		}
-		List<String> admins = Optional.ofNullable(security.serverAdmins).orElseGet(ArrayList::new);
-		binder.bind(new TypeLiteral<List<String>>() {
-		}).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
+		final List<String> admins = Optional.ofNullable(security.serverAdmins).orElseGet(ArrayList::new);
+		binder.bind(new TypeLiteral<List<String>>() {}).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
 		if (admins.isEmpty()) {
 			LOGGER.warn("No server admins configured. Please check configuration security.serverAdmins");
 		}
@@ -124,16 +135,19 @@ public class OversigtConfiguration {
 		binder.bind(SessionConfig.class).toInstance(security.session.cookieConfig);
 	}
 
-	private static void bindNamedArray(Binder binder, Class<String[]> targetClass, String name, String[] input) {
+	private static void bindNamedArray(final Binder binder,
+			final Class<String[]> targetClass,
+			final String name,
+			final String[] input) {
 		bindNamedArray(binder, targetClass, name, Function.identity(), input);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> void bindNamedArray(Binder binder,
-			Class<T[]> targetClass,
-			String name,
-			Function<String, T> converter,
-			String[] input) {
+	private static <T> void bindNamedArray(final Binder binder,
+			final Class<T[]> targetClass,
+			final String name,
+			final Function<String, T> converter,
+			final String[] input) {
 		binder.bind(targetClass)
 				.annotatedWith(Names.named(name))
 				.toInstance((T[]) Arrays.stream(input != null ? input : new String[0])
@@ -142,8 +156,8 @@ public class OversigtConfiguration {
 						.toArray(createArray(targetClass.getComponentType(), 0)));
 	}
 
-	private SessionManager provideSessionManager(SessionConfiguration sc) {
-		InMemorySessionManager sm = new InMemorySessionManager(new SecureRandomSessionIdGenerator(),
+	private SessionManager provideSessionManager(final SessionConfiguration sc) {
+		final InMemorySessionManager sm = new InMemorySessionManager(new SecureRandomSessionIdGenerator(),
 				"SESSION_MANAGER",
 				sc.maxCount,
 				sc.expireOldestUnusedSessionOnMax,
@@ -154,7 +168,9 @@ public class OversigtConfiguration {
 
 	public static class HttpListenerConfiguration {
 		private String ip = "0.0.0.0";
+
 		private int port = 80;
+
 		private SSLConfiguration ssl = null;
 
 		public String getIp() {
@@ -176,35 +192,49 @@ public class OversigtConfiguration {
 
 	public static class ApiConfiguration {
 		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;
+
 		private String jwtSecretBase64 = null;
+
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
 	}
 
 	public static class EventManagerConfiguration {
 		private long rateLimit = 10;
+
 		private Duration discardEventsAfter = Duration.ofHours(1);
 	}
 
 	private static class DatabaseConfiguration {
 		private Class<? extends SqlDialect> sqlDialect;
+
 		private String location;
+
 		private String name;
+
 		private String username;
+
 		private String password;
 	}
 
 	private static class MailConfiguration {
 		private String hostname;
+
 		private int port;
+
 		private boolean startTls;
+
 		private String username;
+
 		private String password;
+
 		private String senderAddress;
 	}
 
 	private static class EventSourceConfiguration {
 		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };
+
 		private String[] addonFolders = new String[0];
+
 		private String[] widgetsPaths = new String[] { "statics/widgets/" };
 	}
 
@@ -214,16 +244,23 @@ public class OversigtConfiguration {
 
 	private static class SecurityConfiguration {
 		private List<String> serverAdmins;
+
 		private Map<String, String> users;
+
 		private LdapConfiguration ldap;
+
 		private SessionConfiguration session = new SessionConfiguration();
 	}
 
 	private static class SessionConfiguration {
 		private int timeout = 30;
+
 		private int maxCount = -1;
+
 		private boolean expireOldestUnusedSessionOnMax = false;
+
 		private boolean statisticsEnabled = true;
+
 		private SessionCookieConfig cookieConfig;
 	}
 }

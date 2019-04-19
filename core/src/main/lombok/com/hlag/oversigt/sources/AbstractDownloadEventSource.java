@@ -50,6 +50,7 @@ import lombok.ToString;
 
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
+
 	private static final TextProcessor textProcessor = TextProcessor.create().registerDatetimeFunctions();
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
@@ -68,13 +69,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return proxy;
 	}
 
-	public void setHttpProxy(HttpProxy proxy) {
+	public void setHttpProxy(final HttpProxy proxy) {
 		this.proxy = proxy;
 	}
 
-	private URLConnection createConnection(String urlString, String cookie, LoginData[] loginData) throws IOException {
-		URL url = new URL(urlString);
-		URLConnection con = url.openConnection(getHttpProxy().getProxy());
+	private URLConnection createConnection(final String urlString, final String cookie, final LoginData[] loginData)
+			throws IOException {
+		final URL url = new URL(urlString);
+		final URLConnection con = url.openConnection(getHttpProxy().getProxy());
 		con.setConnectTimeout(30 * 1000);
 		con.setReadTimeout(30 * 1000);
 		con.setRequestProperty("User-Agent",
@@ -86,38 +88,39 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 
 		if (con instanceof HttpURLConnection) {
-			for (HttpHeader httpHeader : getHttpHeaders()) {
+			for (final HttpHeader httpHeader : getHttpHeaders()) {
 				con.setRequestProperty(httpHeader.getName(), httpHeader.getValue());
 			}
 		}
 
 		if (cookie != null) {
 			con.setRequestProperty("Cookie", cookie);
-		} else if ((loginData == null || loginData.length == 0) && getCredentials() != null
+		} else if ((loginData == null || loginData.length == 0)
+				&& getCredentials() != null
 				&& getCredentials() != Credentials.EMPTY) {
-			String encoded = Base64.getEncoder()
-					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
-							.getBytes(StandardCharsets.UTF_8));
-			con.setRequestProperty("Authorization", "Basic " + encoded);
-		}
+					final String encoded = Base64.getEncoder()
+							.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
+									.getBytes(StandardCharsets.UTF_8));
+					con.setRequestProperty("Authorization", "Basic " + encoded);
+				}
 
 		if (con instanceof HttpURLConnection && loginData != null && loginData.length > 0) {
-			HttpURLConnection hcon = (HttpURLConnection) con;
+			final HttpURLConnection hcon = (HttpURLConnection) con;
 			hcon.setDoOutput(true);
 			hcon.setInstanceFollowRedirects(false);
 			hcon.setRequestMethod("POST");
 			hcon.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			hcon.setUseCaches(false);
 			try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(hcon.getOutputStream()))) {
-				List<String> parts = new ArrayList<>();
-				for (LoginData data : loginData) {
+				final List<String> parts = new ArrayList<>();
+				for (final LoginData data : loginData) {
 					parts.add(data.getName());
 					parts.add(data.getValue()
 							.replace("${domain}", getCredentials().getDomain())
 							.replace("${username}", getCredentials().getUsername())
 							.replace("${password}", getCredentials().getPassword()));
 				}
-				String string = createXWwwUrlEncoded(parts.toArray(new String[0]));
+				final String string = createXWwwUrlEncoded(parts.toArray(new String[0]));
 				writer.append(string);
 			}
 		}
@@ -129,21 +132,21 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return createConnection(new ArrayList<>(Arrays.asList(getUrls())));
 	}
 
-	protected URLConnection createConnection(String urlString) throws IOException {
+	protected URLConnection createConnection(final String urlString) throws IOException {
 		return createConnection(Arrays.asList(InternetAddress.fromUrl(new URL(urlString))));
 	}
 
-	protected URLConnection createConnection(URL url) throws IOException {
+	protected URLConnection createConnection(final URL url) throws IOException {
 		return createConnection(Arrays.asList(InternetAddress.fromUrl(url)));
 	}
 
-	protected URLConnection createConnection(List<InternetAddress> addresses) throws IOException {
-		List<List<String>> replacements = new ArrayList<>();
+	protected URLConnection createConnection(final List<InternetAddress> addresses) throws IOException {
+		final List<List<String>> replacements = new ArrayList<>();
 		URLConnection connection = null;
 		String cookie = null;
 
 		for (int i = 0; i < addresses.size(); ++i) {
-			InternetAddress internetAddress = addresses.get(i);
+			final InternetAddress internetAddress = addresses.get(i);
 			if (connection != null) {
 				logDebug(getLogger(), "Reading cookie from old connection");
 				final String newCookie = connection.getHeaderField("Set-Cookie");
@@ -159,16 +162,16 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 			String url = internetAddress.getUrlString();
 			logTrace(getLogger(), "Matching URL: %s", url);
-			Matcher repmat = PATTERN_URL_MATCHER_REPLACEMENT.matcher(url);
+			final Matcher repmat = PATTERN_URL_MATCHER_REPLACEMENT.matcher(url);
 			while (repmat.find()) {
-				int major = Integer.parseInt(repmat.group(1));
-				int minor = Integer.parseInt(repmat.group(2));
+				final int major = Integer.parseInt(repmat.group(1));
+				final int minor = Integer.parseInt(repmat.group(2));
 				if (replacements.size() < major || replacements.get(major - 1).size() < minor) {
 					throw new RuntimeException("Unable to find replacement ${" + major + "." + minor + "}");
 				}
 				if (replacements.get(major - 1) != null && replacements.get(major - 1).get(minor - 1) != null) {
-					String search = "${" + major + "." + minor + "}";
-					String replacement = replacements.get(major - 1).get(minor - 1);
+					final String search = "${" + major + "." + minor + "}";
+					final String replacement = replacements.get(major - 1).get(minor - 1);
 					url = url.replace(search, replacement);
 					logTrace(getLogger(), "Replacing %s with %s to %s", search, replacement, url);
 				}
@@ -177,12 +180,12 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			if (url != null) {
 				url = textProcessor.process(url);
 				connection = createConnection(url, cookie, internetAddress.loginDatas);
-				Pattern pattern = internetAddress.getPattern();
+				final Pattern pattern = internetAddress.getPattern();
 				if (pattern != null) {
-					List<String> reps = new ArrayList<>();
+					final List<String> reps = new ArrayList<>();
 					logInfo(getLogger(), "Downloading content for matcher: %s", pattern.toString());
-					String content = downloadString(connection);
-					Matcher matcher = pattern.matcher(content);
+					final String content = downloadString(connection);
+					final Matcher matcher = pattern.matcher(content);
 					if (matcher.find()) {
 						for (int j = 1; j <= matcher.groupCount(); ++j) {
 							reps.add(matcher.group(j));
@@ -203,13 +206,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return connection;
 	}
 
-	protected Tuple<byte[], String> downloadBytes(URLConnection connectionToRead) throws IOException {
+	protected Tuple<byte[], String> downloadBytes(final URLConnection connectionToRead) throws IOException {
 		return read(connectionToRead, //
 				(connection, inputStream) -> //
 				new Tuple<>(ByteStreams.toByteArray(inputStream), connection.getContentType()));
 	}
 
-	protected String downloadString(URLConnection connectionToRead) throws IOException {
+	protected String downloadString(final URLConnection connectionToRead) throws IOException {
 		return read(connectionToRead, //
 				(connection, inputStream) -> //
 				IOUtils.toString(inputStream, Objects.toString(connection.getContentEncoding(), "UTF-8")));
@@ -220,27 +223,26 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		final URLConnection connectionToRead = handleRedirects(inputConnection);
 		try (InputStream in = connectionToRead.getInputStream()) {
 			return inputStreamConsumer.apply(connectionToRead, in);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw e;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading data from connection.", e);
 		}
 	}
 
-	private URLConnection handleRedirects(URLConnection connection) throws IOException {
+	private URLConnection handleRedirects(final URLConnection connection) throws IOException {
 		if (connection instanceof HttpURLConnection) {
 			return handleRedirects((HttpURLConnection) connection);
-		} else {
-			logWarn(getLogger(),
-					"Encountered URLConnection of type [%s]. Unable to handle redirect.",
-					connection.getClass().getName());
-			return connection;
 		}
+		logWarn(getLogger(),
+				"Encountered URLConnection of type [%s]. Unable to handle redirect.",
+				connection.getClass().getName());
+		return connection;
 	}
 
 	private URLConnection handleRedirects(final HttpURLConnection connection) throws IOException {
-		final Map<String, List<String>> headerParameters = Collections
-				.unmodifiableMap(new LinkedHashMap<>(connection.getRequestProperties()));
+		final Map<String, List<String>> headerParameters
+				= Collections.unmodifiableMap(new LinkedHashMap<>(connection.getRequestProperties()));
 
 		final int status = connection.getResponseCode();
 		if (status >= 200 && status < 300) /* status == HttpURLConnection.HTTP_OK */ {
@@ -257,7 +259,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			final URI uri;
 			try {
 				uri = new URI(connection.getHeaderField("Location"));
-			} catch (URISyntaxException e) {
+			} catch (final URISyntaxException e) {
 				throw new IOException("Invalid redirect", e);
 			}
 			final URL url;
@@ -269,9 +271,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 			// set correct HTTP method
 			final String method;
-			URLConnection newConnection = url.openConnection(getHttpProxy().getProxy());
+			final URLConnection newConnection = url.openConnection(getHttpProxy().getProxy());
 			if (newConnection instanceof HttpURLConnection) {
-				HttpURLConnection httpConnection = (HttpURLConnection) newConnection;
+				final HttpURLConnection httpConnection = (HttpURLConnection) newConnection;
 				if (status == HttpURLConnection.HTTP_SEE_OTHER) {
 					httpConnection.setRequestMethod("GET");
 				} else {
@@ -306,12 +308,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		throw new IOException("Return code " + status + " from URL: " + connection.getURL());
 	}
 
-	@Property(name = "Internet Addresses", description = "The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.")
+	@Property(name = "Internet Addresses",
+			description = "The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.")
 	public InternetAddress[] getUrls() {
 		return urls;
 	}
 
-	public void setUrls(InternetAddress[] urls) {
+	public void setUrls(final InternetAddress[] urls) {
 		this.urls = urls;
 	}
 
@@ -320,7 +323,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return credentials;
 	}
 
-	public void setCredentials(Credentials credentials) {
+	public void setCredentials(final Credentials credentials) {
 		this.credentials = credentials;
 	}
 
@@ -329,41 +332,40 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return httpHeaders != null ? httpHeaders : new HttpHeader[0];
 	}
 
-	public void setHttpHeaders(HttpHeader[] httpHeaders) {
+	public void setHttpHeaders(final HttpHeader[] httpHeaders) {
 		this.httpHeaders = httpHeaders;
 	}
 
 	@ToString
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
-		static InternetAddress fromUrl(URL url) {
+		static InternetAddress fromUrl(final URL url) {
 			return new InternetAddress(url.toString(), null);
 		}
 
 		private final String address;
+
 		private final String pattern;
 
 		private LoginData[] loginDatas = null;
 
-		public InternetAddress(String urlString, String patternString) {
-			this.address = urlString;
-			this.pattern = patternString;
+		public InternetAddress(final String urlString, final String patternString) {
+			address = urlString;
+			pattern = patternString;
 		}
 
 		public String getUrlString() {
-			if (!Strings.isNullOrEmpty(address)) {
-				return address;
-			} else {
+			if (Strings.isNullOrEmpty(address)) {
 				return null;
 			}
+			return address;
 		}
 
 		public Pattern getPattern() {
-			if (!Strings.isNullOrEmpty(pattern)) {
-				return Pattern.compile(pattern, Pattern.DOTALL);
-			} else {
+			if (Strings.isNullOrEmpty(pattern)) {
 				return null;
 			}
+			return Pattern.compile(pattern, Pattern.DOTALL);
 		}
 	}
 
@@ -371,9 +373,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class LoginData {
 		private final String name;
+
 		private final String value;
 
-		public LoginData(String name, String value) {
+		public LoginData(final String name, final String value) {
 			this.name = name;
 			this.value = value;
 		}
@@ -391,9 +394,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class HttpHeader {
 		private final String name;
+
 		private final String value;
 
-		public HttpHeader(String name, String value) {
+		public HttpHeader(final String name, final String value) {
 			this.name = name;
 			this.value = value;
 		}
@@ -407,8 +411,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 	}
 
-	private static String createXWwwUrlEncoded(String... strings) throws UnsupportedEncodingException {
-		StringBuilder sb = new StringBuilder();
+	private static String createXWwwUrlEncoded(final String... strings) throws UnsupportedEncodingException {
+		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < strings.length; i += 2) {
 			if (i > 0) {
 				sb.append("&");

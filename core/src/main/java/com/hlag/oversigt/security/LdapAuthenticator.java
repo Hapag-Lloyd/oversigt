@@ -28,9 +28,13 @@ public class LdapAuthenticator implements Authenticator {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticator.class);
 
 	private final String url;
+
 	private final String bindUser;
+
 	private final String bindPassword;
+
 	private final String baseDn;
+
 	private final String identifyingAttribute;
 
 	private DirContext serviceCtx = null;
@@ -39,16 +43,19 @@ public class LdapAuthenticator implements Authenticator {
 	private RoleProvider roleProvider;
 
 	@Inject
-	public LdapAuthenticator(LdapConfiguration configuration) {
-		this(
-			configuration.url,
-			configuration.baseDn,
-			configuration.bindUser,
-			configuration.bindPassword,
-			configuration.uidAttribute);
+	public LdapAuthenticator(final LdapConfiguration configuration) {
+		this(configuration.url,
+				configuration.baseDn,
+				configuration.bindUser,
+				configuration.bindPassword,
+				configuration.uidAttribute);
 	}
 
-	private LdapAuthenticator(String url, String baseDn, String bindUser, String bindPassword, String uidAttribute) {
+	private LdapAuthenticator(final String url,
+			final String baseDn,
+			final String bindUser,
+			final String bindPassword,
+			final String uidAttribute) {
 		notNullOrEmpty(url, "The LDAP URL must not be null or empty");
 		notNullOrEmpty(baseDn, "The Base-DN must not be null or empty");
 		notNullOrEmpty(uidAttribute, "The LDAP identifying attribute must not be null or empty");
@@ -59,11 +66,11 @@ public class LdapAuthenticator implements Authenticator {
 		this.bindUser = bindUser;
 		this.bindPassword = bindPassword;
 		this.baseDn = baseDn;
-		this.identifyingAttribute = uidAttribute;
+		identifyingAttribute = uidAttribute;
 
 		try {
 			setDirContext();
-		} catch (NamingException e) {
+		} catch (final NamingException e) {
 			LOGGER.error("Unable to create Directory Context", e);
 			throw new RuntimeException("Unable to create Directory Context", e);
 		}
@@ -73,12 +80,12 @@ public class LdapAuthenticator implements Authenticator {
 		if (serviceCtx != null) {
 			try {
 				serviceCtx.close();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				LOGGER.warn("Exception while closing old Service Context", e);
 			}
 		}
 
-		Properties serviceEnv = new Properties();
+		final Properties serviceEnv = new Properties();
 		serviceEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		serviceEnv.put(Context.PROVIDER_URL, url);
 		serviceEnv.put(Context.SECURITY_AUTHENTICATION, "simple");
@@ -89,109 +96,108 @@ public class LdapAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public Principal login(String username, String password) {
+	public Principal login(final String username, final String password) {
 		Objects.requireNonNull(username, "Username must not be null");
 		Objects.requireNonNull(password, "Password must not be null");
 
 		try {
-			Optional<Principal> distinguishedName = readDistinguishedName(username);
+			final Optional<Principal> distinguishedName = readDistinguishedName(username);
 			if (distinguishedName.isPresent()) {
 				if (authorize(distinguishedName.get().getDistinguishedName(), password)) {
 					return distinguishedName.get();
 				}
 			}
-		} catch (NamingException ne) {
-			LOGGER.error("Unable to log in user", ne);
+		} catch (final NamingException e) {
+			LOGGER.error("Unable to log in user", e);
 		}
 		return null;
 	}
 
 	@Override
-	public Principal readPrincipal(String username) {
+	public Principal readPrincipal(final String username) {
 		try {
 			return readDistinguishedName(username).get();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Unable to read user information for username: " + username, e);
 		}
 	}
 
 	@Override
-	public boolean isUsernameValid(String username) {
+	public boolean isUsernameValid(final String username) {
 		if (Strings.isNullOrEmpty(username)) {
 			return false;
-		} else {
-			try {
-				return readDistinguishedName(username).isPresent();
-			} catch (NamingException e) {
-				LOGGER.error("Unable to check username validity", e);
-				return false;
-			}
+		}
+		try {
+			return readDistinguishedName(username).isPresent();
+		} catch (final NamingException e) {
+			LOGGER.error("Unable to check username validity", e);
+			return false;
 		}
 	}
 
-	private Optional<Principal> readDistinguishedName(String username) throws NamingException {
-		String[] attributeFilter = { identifyingAttribute, "distinguishedName", "sn", "givenname", "mail" };
-		SearchControls sc = new SearchControls();
+	private Optional<Principal> readDistinguishedName(final String username) throws NamingException {
+		final String[] attributeFilter = { identifyingAttribute, "distinguishedName", "sn", "givenname", "mail" };
+		final SearchControls sc = new SearchControls();
 		sc.setReturningAttributes(attributeFilter);
 		sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
 		// use a search filter to find only the user we want to authenticate
-		String searchFilter = "(" + identifyingAttribute + "=" + username + ")";
+		final String searchFilter = "(" + identifyingAttribute + "=" + username + ")";
 		NamingEnumeration<SearchResult> results;
 		try {
 			results = serviceCtx.search(baseDn, searchFilter, sc);
-		} catch (NamingException ne) {
-			if (ne.getCause() instanceof IOException && "connection closed".equals(ne.getCause().getMessage())) {
+		} catch (final NamingException e) {
+			if (e.getCause() instanceof IOException && "connection closed".equals(e.getCause().getMessage())) {
 				LOGGER.info("Connection broken. Trying to create a new connection.");
 				try {
 					setDirContext();
 					results = serviceCtx.search(baseDn, searchFilter, sc);
-				} catch (NamingException e) {
-					throw new RuntimeException("Connection was closed and now unable to create a new context", e);
+				} catch (final NamingException namingException) {
+					throw new RuntimeException("Connection was closed and now unable to create a new context",
+							namingException);
 				}
 			} else {
 				LOGGER.warn("Unknown exception type. Unable to handle it.");
-				throw ne;
+				throw e;
 			}
 		}
 
-		if (results.hasMore()) {
-			// get the users DN (distinguishedName) from the result
-			SearchResult result = results.next();
-			Attributes attributes = result.getAttributes();
-
-			return Optional.of(new Principal(result.getNameInNamespace(),
-					username,
-					attributes.get("givenname").get().toString() + " " + attributes.get("sn").get().toString(),
-					attributes.get("mail").get().toString(),
-					roleProvider.getRoles(username)));
-		} else {
+		if (!results.hasMore()) {
 			return Optional.empty();
 		}
+
+		// get the users DN (distinguishedName) from the result
+		final SearchResult result = results.next();
+		final Attributes attributes = result.getAttributes();
+
+		return Optional.of(new Principal(result.getNameInNamespace(),
+				username,
+				attributes.get("givenname").get().toString() + " " + attributes.get("sn").get().toString(),
+				attributes.get("mail").get().toString(),
+				roleProvider.getRoles(username)));
 	}
 
-	private boolean authorize(String distinguishedName, String password) {
+	private boolean authorize(final String distinguishedName, final String password) {
 		try {
 			// attempt another authentication, now with the user
-			Properties authEnv = new Properties();
+			final Properties authEnv = new Properties();
 			authEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 			authEnv.put(Context.PROVIDER_URL, url);
 			authEnv.put(Context.SECURITY_PRINCIPAL, distinguishedName);
 			authEnv.put(Context.SECURITY_CREDENTIALS, password);
 			new InitialDirContext(authEnv).close();
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			try {
 				// Sleep to slow down responses for brute force attacks
 				Thread.sleep(1000);
-			} catch (InterruptedException ignore) {
-			}
+			} catch (final InterruptedException ignore) {}
 			return false;
 		}
 	}
 
 	@Override
-	public void reloadRoles(String username) {
+	public void reloadRoles(final String username) {
 		Objects.requireNonNull(username);
 		Principal.getPrincipal(username).ifPresent(p -> p.changeRoles(roleProvider.getRoles(username)));
 	}
@@ -201,7 +207,7 @@ public class LdapAuthenticator implements Authenticator {
 		if (serviceCtx != null) {
 			try {
 				serviceCtx.close();
-			} catch (NamingException e) {
+			} catch (final NamingException e) {
 				throw new RuntimeException("Unable to close directory context", e);
 			}
 		}
@@ -209,16 +215,20 @@ public class LdapAuthenticator implements Authenticator {
 
 	public static class LdapConfiguration {
 		private String url;
+
 		private String baseDn;
+
 		private String bindUser;
+
 		private String bindPassword;
+
 		private String uidAttribute;
 
 		public boolean isBindPasswordSet() {
 			return !Strings.isNullOrEmpty(bindPassword);
 		}
 
-		public void setBindPassword(String bindPassword) {
+		public void setBindPassword(final String bindPassword) {
 			this.bindPassword = bindPassword;
 		}
 	}

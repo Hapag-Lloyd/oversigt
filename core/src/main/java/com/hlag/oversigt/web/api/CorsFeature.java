@@ -14,15 +14,16 @@ import com.google.inject.name.Named;
 @Provider
 public class CorsFeature implements Feature {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CorsFeature.class);
+
 	@Inject
 	@Named("debug")
 	private boolean debug;
 
 	@Override
-	public boolean configure(FeatureContext context) {
+	public boolean configure(final FeatureContext context) {
 		if (debug) {
 			LOGGER.warn("Debug mode: Enabling CORS to permit calls from other hosts.");
-			CorsFilter corsFilter = new CorsFilter();
+			final CorsFilter corsFilter = new CorsFilter();
 			corsFilter.getAllowedOrigins().add("*");
 			context.register(corsFilter);
 		} else {
