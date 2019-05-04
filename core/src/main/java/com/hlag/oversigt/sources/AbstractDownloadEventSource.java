@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
@@ -45,8 +46,6 @@ import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.ThrowingBiFunction;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
-
-import lombok.ToString;
 
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
@@ -98,11 +97,11 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		} else if ((loginData == null || loginData.length == 0)
 				&& getCredentials() != null
 				&& getCredentials() != Credentials.EMPTY) {
-					final String encoded = Base64.getEncoder()
-							.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
-									.getBytes(StandardCharsets.UTF_8));
-					con.setRequestProperty("Authorization", "Basic " + encoded);
-				}
+			final String encoded = Base64.getEncoder()
+					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
+							.getBytes(StandardCharsets.UTF_8));
+			con.setRequestProperty("Authorization", "Basic " + encoded);
+		}
 
 		if (con instanceof HttpURLConnection && loginData != null && loginData.length > 0) {
 			final HttpURLConnection hcon = (HttpURLConnection) con;
@@ -336,7 +335,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.httpHeaders = httpHeaders;
 	}
 
-	@ToString
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
 		static InternetAddress fromUrl(final URL url) {
@@ -367,9 +365,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 			return Pattern.compile(pattern, Pattern.DOTALL);
 		}
+
+		/** {@inheritDoc} */
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
+		}
 	}
 
-	@ToString
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class LoginData {
 		private final String name;
@@ -388,9 +391,15 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public String getValue() {
 			return value;
 		}
+
+		/** {@inheritDoc} */
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
+		}
+
 	}
 
-	@ToString
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
 	public static class HttpHeader {
 		private final String name;
@@ -409,6 +418,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public String getValue() {
 			return value;
 		}
+
+		/** {@inheritDoc} */
+		@Override
+		public String toString() {
+			return ToStringBuilder.reflectionToString(this);
+		}
+
 	}
 
 	private static String createXWwwUrlEncoded(final String... strings) throws UnsupportedEncodingException {

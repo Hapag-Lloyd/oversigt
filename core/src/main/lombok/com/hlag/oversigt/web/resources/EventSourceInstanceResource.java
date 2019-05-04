@@ -62,7 +62,6 @@ import io.swagger.annotations.Authorization;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Api(tags = { "EventSource" },
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -383,7 +382,6 @@ public class EventSourceInstanceResource {
 	}
 
 	@Getter
-	@ToString
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class EventSourceInstanceDetails {
@@ -413,15 +411,12 @@ public class EventSourceInstanceResource {
 					instance.isEnabled(),
 					instance.getFrequency(),
 					getPropertyMap(instance),
-					getDataItemMap(instance)/*
-											 * , instance.getCreatedBy(), instance.getLastChangeBy()
-											 */);
+					getDataItemMap(instance));
 		}
 	}
 
 	@Getter
 	@AllArgsConstructor
-	@ToString
 	public static class FullEventSourceInstanceInfo {
 		private EventSourceInstanceDetails instanceDetails;
 

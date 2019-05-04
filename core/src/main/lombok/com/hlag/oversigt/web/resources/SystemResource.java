@@ -68,7 +68,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import lombok.Builder;
-import lombok.Getter;
 
 @Api(tags = { "System" })
 @Path("/system")
@@ -473,15 +472,21 @@ public class SystemResource {
 		}
 	}
 
-	@Getter
 	public static class ServerInfo {
 		private final String name = Oversigt.APPLICATION_NAME;
 
 		private final String version = Oversigt.APPLICATION_VERSION;
+
+		public String getName() {
+			return name;
+		}
+
+		public String getVersion() {
+			return version;
+		}
 	}
 
 	@Builder
-	@Getter
 	@JsonInclude(content = Include.NON_NULL)
 	public static class SearchResult {
 		private final String title;
@@ -492,5 +497,21 @@ public class SystemResource {
 
 		@Nullable
 		private final String subtype;
+
+		public String getTitle() {
+			return title;
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public String getSubtype() {
+			return subtype;
+		}
 	}
 }

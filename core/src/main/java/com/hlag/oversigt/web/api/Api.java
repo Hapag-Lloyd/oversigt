@@ -35,5 +35,5 @@ import io.swagger.annotations.Tag;
 		consumes = { MediaType.APPLICATION_JSON },
 		produces = { MediaType.APPLICATION_JSON })
 public class Api {
-
+	// Empty class just for Swagger definition
 }

@@ -9,12 +9,11 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.properties.Color;
 
-import lombok.ToString;
-
-@ToString
 public class Widget implements Comparable<Widget> {
 	private static final Comparator<Widget> COMPARE_BY_NAME
 			= (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName());
@@ -231,5 +230,11 @@ public class Widget implements Comparable<Widget> {
 	@JsonIgnore
 	public String getDisplayStyle() {
 		return DashboardDesign.getDisplayStyle(this);
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
 	}
 }

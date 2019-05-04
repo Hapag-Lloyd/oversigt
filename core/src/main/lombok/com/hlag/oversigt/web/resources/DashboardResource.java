@@ -63,7 +63,6 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 
 @Api(tags = { "Dashboard" })
 @Path("/dashboards")
@@ -361,7 +360,6 @@ public class DashboardResource {
 	}
 
 	@Getter
-	@ToString
 	@Builder
 	public static class DashboardInfo {
 		public static DashboardInfo fromDashboard(final Dashboard dashboard) {

@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.ok;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,9 +44,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
 
 /**
  * @author Olaf Neumann
@@ -168,9 +166,6 @@ public class Authentication {
 		}
 	}
 
-	@Getter
-	@ToString
-	@AllArgsConstructor
 	public static class AuthData {
 		private String userId;
 
@@ -181,9 +176,27 @@ public class Authentication {
 		@NotNull
 		private Set<@NotBlank String> roles;
 
+		AuthData(String userId, String displayName, String token, Set<@NotBlank String> roles) {
+			this.userId = userId;
+			this.displayName = displayName;
+			this.token = token;
+			this.roles = new LinkedHashSet<>(roles);
+		}
+
 		AuthData(final Set<String> roles) {
-			token = null;
-			this.roles = roles;
+			this(null, null, null, roles);
+		}
+
+		public String getUserId() {
+			return userId;
+		}
+
+		public String getDisplayName() {
+			return displayName;
+		}
+
+		public String getToken() {
+			return token;
 		}
 	}
 }

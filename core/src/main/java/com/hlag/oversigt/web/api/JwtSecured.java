@@ -16,5 +16,9 @@ import javax.ws.rs.NameBinding;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface JwtSecured {
+	/**
+	 * Defines whether a call to the annotated method must be authenticated or not.
+	 * Setting this value to <code>true</code> will authentication is required.
+	 */
 	boolean mustBeAuthenticated() default true;
 }

@@ -49,7 +49,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import lombok.Builder;
-import lombok.Getter;
 
 @Api(tags = { "SerializableValue" })
 @Path("/serializable-values")
@@ -291,10 +290,17 @@ public class SerializablePropertyResource {
 	 * @author Olaf Neumann
 	 */
 	@Builder
-	@Getter
 	public static class SerializablePropertyDescription {
 		private final String name;
 
 		private final String description;
+
+		public String getName() {
+			return name;
+		}
+
+		public String getDescription() {
+			return description;
+		}
 	}
 }

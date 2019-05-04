@@ -55,7 +55,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Api(tags = { "Dashboard-Widget" })
 @Path("/dashboards/{dashboardId}/widgets")
@@ -352,7 +351,6 @@ public class DashboardWidgetResource {
 	@NoArgsConstructor
 	@Getter
 	@Setter
-	@ToString
 	public static class WidgetDetails {
 		@NotNull
 		@Positive

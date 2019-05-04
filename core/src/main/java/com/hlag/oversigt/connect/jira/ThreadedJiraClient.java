@@ -12,7 +12,7 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
-public class ThreadedJiraClient extends JiraClientFilter {
+class ThreadedJiraClient extends JiraClientFilter {
 	private static final int NUMBER_OF_THREADS = 4;
 
 	private static final int TIMEOUT = 3;
@@ -21,8 +21,7 @@ public class ThreadedJiraClient extends JiraClientFilter {
 
 	private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
-	public ThreadedJiraClient(final ServerConnection connection, final Credentials credentials)
-			throws JiraClientException {
+	ThreadedJiraClient(final ServerConnection connection, final Credentials credentials) throws JiraClientException {
 		super(connection, credentials);
 	}
 
