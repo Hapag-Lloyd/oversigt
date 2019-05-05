@@ -13,10 +13,22 @@ import com.google.common.collect.Table;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
+/**
+ * Jira client with no restrictions
+ */
 final class UnlimitedJiraClient implements JiraClient {
 
 	private static final Table<String, String, UnlimitedJiraClient> CLIENT_CACHE = HashBasedTable.create();
 
+	/**
+	 * Create a new jira client for the givon connection and credentials. Only one
+	 * client per connection and credentials will be created and then cached.
+	 *
+	 * @param connection  where to connect the jira client to
+	 * @param credentials the credentials to use for the jira connection
+	 * @return the newly create jira client
+	 * @throws JiraClientException if something fails while creating the connection
+	 */
 	static synchronized JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
 			throws JiraClientException {
 		if (!CLIENT_CACHE.contains(connection.getUrl(), credentials.getUsername())) {
@@ -64,7 +76,9 @@ final class UnlimitedJiraClient implements JiraClient {
 	private void resetJiraRestClient() {
 		try {
 			jiraClient.close();
-		} catch (final Exception ignore) {}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			// ignore exception while closing the connection
+		}
 		jiraClient = null;
 	}
 
