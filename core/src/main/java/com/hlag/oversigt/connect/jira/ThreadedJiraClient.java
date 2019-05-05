@@ -39,7 +39,7 @@ class ThreadedJiraClient extends JiraClientFilter {
 	 * @throws JiraClientException if something fails while creating the client
 	 */
 	ThreadedJiraClient(final ServerConnection connection, final Credentials credentials) throws JiraClientException {
-		super(connection, credentials);
+		super(JiraClientFactory.createUnlimitedJiraClient(connection, credentials));
 	}
 
 	/**

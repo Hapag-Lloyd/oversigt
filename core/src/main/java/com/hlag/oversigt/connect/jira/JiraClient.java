@@ -4,10 +4,27 @@ import java.util.List;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 
+/**
+ * A client enabling consumer code to retrieve information from a JIRA backend
+ * 
+ * @author Lars Knickrehm
+ * @author Olaf Neumann
+ *
+ */
 public interface JiraClient {
 
+	/**
+	 * The maximum number of issues to return from the JIRA backend
+	 */
 	int MAX_RESULTS_DEFAULT = 500;
 
+	/**
+	 * Search the JIRA backend using the given query
+	 * 
+	 * @param jql the query to execute on the JIRA backend
+	 * @return a possibly empty list of issues found in jira
+	 * @throws JiraClientException if something fails while searching for issues
+	 */
 	default List<Issue> search(final String jql) throws JiraClientException {
 		return search(jql, MAX_RESULTS_DEFAULT, 0);
 	}

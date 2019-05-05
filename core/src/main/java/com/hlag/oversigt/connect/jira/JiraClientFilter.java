@@ -1,8 +1,5 @@
 package com.hlag.oversigt.connect.jira;
 
-import com.hlag.oversigt.properties.Credentials;
-import com.hlag.oversigt.properties.ServerConnection;
-
 /**
  * Filter allowing extending the {@link JiraClient} with needing to implement
  * details.
@@ -13,11 +10,11 @@ abstract class JiraClientFilter implements JiraClient {
 
 	private final JiraClient jiraClient;
 
-	protected JiraClientFilter(final ServerConnection connection, final Credentials credentials)
-			throws JiraClientException {
-		jiraClient = UnlimitedJiraClient.getInstance(connection, credentials);
-	}
-
+	/**
+	 * Create a jira client wrapping around the given jira client
+	 *
+	 * @param jiraClient the jira client to wrap
+	 */
 	protected JiraClientFilter(final JiraClient jiraClient) {
 		this.jiraClient = jiraClient;
 	}

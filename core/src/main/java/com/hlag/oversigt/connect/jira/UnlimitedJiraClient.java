@@ -7,46 +7,31 @@ import java.util.List;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Table;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
 /**
- * Jira client with no restrictions
+ * Jira client with no restrictions. This class is not inteded to be used
+ * directly by consuming code. This class should always to an invisible
+ * implementation detail.
  */
 final class UnlimitedJiraClient implements JiraClient {
-
-	private static final Table<String, String, UnlimitedJiraClient> CLIENT_CACHE = HashBasedTable.create();
-
-	/**
-	 * Create a new jira client for the givon connection and credentials. Only one
-	 * client per connection and credentials will be created and then cached.
-	 *
-	 * @param connection  where to connect the jira client to
-	 * @param credentials the credentials to use for the jira connection
-	 * @return the newly create jira client
-	 * @throws JiraClientException if something fails while creating the connection
-	 */
-	static synchronized JiraClient getInstance(final ServerConnection connection, final Credentials credentials)
-			throws JiraClientException {
-		if (!CLIENT_CACHE.contains(connection.getUrl(), credentials.getUsername())) {
-			CLIENT_CACHE.put(connection.getUrl(),
-					credentials.getUsername(),
-					new UnlimitedJiraClient(connection, credentials));
-		}
-		return CLIENT_CACHE.get(connection.getUrl(), credentials.getUsername());
-	}
-
 	private final ServerConnection connection;
 
 	private final Credentials credentials;
 
 	private volatile JiraRestClient jiraClient;
 
-	private UnlimitedJiraClient(final ServerConnection connection, final Credentials credentials)
-			throws JiraClientException {
+	/**
+	 * Create a new jira client without limitations. This constructor should NOT be
+	 * called from outside of the package of the declaring class.
+	 *
+	 * @param connection  the server details to connect to
+	 * @param credentials the credentials to be used for the connection
+	 * @throws JiraClientException if something fails while creating the connection
+	 */
+	UnlimitedJiraClient(final ServerConnection connection, final Credentials credentials) throws JiraClientException {
 		if (connection == ServerConnection.EMPTY) {
 			throw new JiraClientException("No Jira hostname configured.");
 		}
