@@ -50,6 +50,8 @@
 
 		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
 		<compilerArgument>-parameters</compilerArgument>
+		<org.eclipse.jdt.core.compiler.annotation.missingNonNullByDefaultAnnotation>ignore</org.eclipse.jdt.core.compiler.annotation.missingNonNullByDefaultAnnotation>
+		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
 		<guice.version>4.2.1</guice.version>
 		<undertow.version>2.0.5.Final</undertow.version>
