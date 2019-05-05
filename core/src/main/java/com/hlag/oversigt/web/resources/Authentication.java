@@ -176,7 +176,7 @@ public class Authentication {
 		@NotNull
 		private Set<@NotBlank String> roles;
 
-		AuthData(String userId, String displayName, String token, Set<@NotBlank String> roles) {
+		AuthData(final String userId, final String displayName, final String token, final Set<@NotBlank String> roles) {
 			this.userId = userId;
 			this.displayName = displayName;
 			this.token = token;
@@ -197,6 +197,10 @@ public class Authentication {
 
 		public String getToken() {
 			return token;
+		}
+
+		public Set<String> getRoles() {
+			return roles;
 		}
 	}
 }

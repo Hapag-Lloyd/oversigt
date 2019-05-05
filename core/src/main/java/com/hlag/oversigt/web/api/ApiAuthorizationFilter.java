@@ -33,6 +33,7 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	@Context
 	private ResourceInfo resourceInfo;
 
+	/** {@inheritDoc} */
 	@Override
 	public void filter(final ContainerRequestContext requestContext) throws IOException {
 		final Method method = resourceInfo.getResourceMethod();

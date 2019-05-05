@@ -20,7 +20,6 @@
 package com.atlassian.jira.rest.client.internal.async;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Date;
@@ -49,6 +48,7 @@ import com.google.inject.name.Named;
  * @since v2.0
  */
 /* This class has been copied here to overwrite the socket timeout */
+@SuppressWarnings({ "unused", "javadoc" })
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
@@ -68,10 +68,10 @@ public class AsynchronousHttpClientFactory {
 							}
 
 							@Override
-							public void setThreadLocalContext(final Object context) {}
+							public void setThreadLocalContext(final Object context) {/**/}
 
 							@Override
-							public void clearThreadLocalContext() {}
+							public void clearThreadLocalContext() {/**/}
 						});
 
 		final HttpClient httpClient = defaultHttpClientFactory.create(options);
@@ -100,16 +100,16 @@ public class AsynchronousHttpClientFactory {
 
 	private static class NoOpEventPublisher implements EventPublisher {
 		@Override
-		public void publish(final Object o) {}
+		public void publish(final Object o) {/**/}
 
 		@Override
-		public void register(final Object o) {}
+		public void register(final Object o) {/**/}
 
 		@Override
-		public void unregister(final Object o) {}
+		public void unregister(final Object o) {/**/}
 
 		@Override
-		public void unregisterAll() {}
+		public void unregisterAll() {/**/}
 	}
 
 	/**
@@ -186,24 +186,14 @@ public class AsynchronousHttpClientFactory {
 
 		static String getVersion(final String groupId, final String artifactId) {
 			final Properties props = new Properties();
-			InputStream resourceAsStream = null;
-			try {
-				resourceAsStream = MavenUtils.class.getResourceAsStream(
-						String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId));
+			try (InputStream resourceAsStream = MavenUtils.class
+					.getResourceAsStream(String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId))) {
 				props.load(resourceAsStream);
 				return props.getProperty("version", UNKNOWN_VERSION);
 			} catch (final Exception e) {
 				logger.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
 				logger.debug("Got the following exception", e);
 				return UNKNOWN_VERSION;
-			} finally {
-				if (resourceAsStream != null) {
-					try {
-						resourceAsStream.close();
-					} catch (final IOException ioe) {
-						// ignore
-					}
-				}
 			}
 		}
 	}

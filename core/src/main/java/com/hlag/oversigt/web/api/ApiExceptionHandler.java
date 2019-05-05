@@ -35,6 +35,7 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 	@Context
 	private HttpServletRequest request;
 
+	/** {@inheritDoc} */
 	@Override
 	public Response toResponse(final Exception exception) {
 		final UUID uuid = UUID.randomUUID();

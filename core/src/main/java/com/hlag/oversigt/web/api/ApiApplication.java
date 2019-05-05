@@ -56,6 +56,7 @@ public class ApiApplication extends Application {
 		ModelConverters.getInstance().addConverter(new DurationConverter());
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public Set<Class<?>> getClasses() {
 		final Set<Class<?>> classes = new HashSet<>();
