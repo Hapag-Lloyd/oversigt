@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -43,6 +44,8 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import de.larssh.utils.Nullables;
 
 public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
+	private static final Pattern HANDLE_AUTHENTICATION_EXCEPTION_PATTERN = Pattern.compile("[\r\n]+");
+
 	private ServerConnection jiraConnection = ServerConnection.EMPTY;
 
 	private Credentials jiraCredentials = Credentials.EMPTY;
@@ -259,7 +262,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 						&& rce.getStatusCode().get() == 500
 						&& rce.getCause() instanceof JSONException) {
 					final JSONException je = (JSONException) rce.getCause();
-					final String[] messageParts = je.getMessage().split("[\r\n]+");
+					final String[] messageParts = HANDLE_AUTHENTICATION_EXCEPTION_PATTERN.split(je.getMessage(), 0);
 					final List<String> auths = Arrays.stream(messageParts)
 							.filter(ste -> ste.toLowerCase().contains("authenticator"))
 							.collect(Collectors.toList());
@@ -346,7 +349,8 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		}
 
 		public static boolean matches(final DisplayOption displayOption, final String attributeValue) {
-			return Nullables.orElse(attributeValue, "").matches(displayOption.getValue());
+			final Pattern pattern = Pattern.compile(displayOption.getValue());
+			return de.larssh.utils.text.Strings.matches(Nullables.orElse(attributeValue, ""), pattern);
 		}
 
 		private final Function<Issue, Collection<String>> attributeValuesProducer;

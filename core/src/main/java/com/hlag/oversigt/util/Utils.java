@@ -150,7 +150,7 @@ public final class Utils {
 		if (parameters.length % 2 != 0) {
 			throw new RuntimeException("keysAndValues length is not even");
 		}
-		final LinkedHashMap<String, Object> values = new LinkedHashMap<>();
+		final Map<String, Object> values = new LinkedHashMap<>();
 		for (int i = 0; i < parameters.length; i += 2) {
 			if (parameters[i] instanceof String) {
 				values.put((String) parameters[i], parameters[i + 1]);

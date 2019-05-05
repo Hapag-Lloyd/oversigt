@@ -3,6 +3,7 @@ package com.hlag.oversigt.web.api;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +36,10 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 	@Context
 	private HttpServletRequest request;
 
+	private static final Pattern PATTERN_COMMA = Pattern.compile(",");
+
+	private static final Pattern PATTERN_SEMICOLON = Pattern.compile(";");
+
 	@Override
 	public Response toResponse(final Exception exception) {
 		final UUID uuid = UUID.randomUUID();
@@ -52,9 +57,9 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 			return ErrorResponse.internalServerError(uuid,
 					"Internal server error. More details can be found in the server log file.");
 		}
-		final String[] accepts = request.getHeader("accept").split(",");
+		final String[] accepts = PATTERN_COMMA.split(request.getHeader("accept"), 0);
 		for (final String accept : accepts) {
-			final String[] parts = accept.split(";");
+			final String[] parts = PATTERN_SEMICOLON.split(accept, 0);
 			switch (parts[0].trim().toLowerCase()) {
 			case "application/json":
 			case "application/xml":

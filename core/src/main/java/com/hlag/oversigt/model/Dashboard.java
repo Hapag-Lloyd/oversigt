@@ -27,7 +27,7 @@ public class Dashboard implements Cloneable {
 	}
 
 	private static Set<String> newSet(final Collection<String> items) {
-		final TreeSet<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		final Set<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		set.addAll(items);
 		return Collections.synchronizedSet(set);
 	}

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,8 @@ import com.jcraft.jsch.Session;
 
 public abstract class SshConnection {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SshConnection.class);
+
+	private static final Pattern PARSE_CPU_USAGE_LINES_PATTERN = Pattern.compile("[\\r\\n]+");
 
 	static {
 		JSch.setLogger(new JSchLogger(LoggerFactory.getLogger(JSch.class)));
@@ -164,9 +167,9 @@ public abstract class SshConnection {
 			return Double.NaN;
 		}
 
-		final String[] lines = string.split("[\\r\\n]+");
+		final String[] lines = PARSE_CPU_USAGE_LINES_PATTERN.split(string, 0);
 		final int pos = lines[lines.length - 3].indexOf("%idle");
-		final int len = lines[lines.length - 2].indexOf(" ", pos);
+		final int len = lines[lines.length - 2].indexOf(' ', pos);
 		return 1.0 - Double.parseDouble(lines[lines.length - 1].substring(pos, len)) / 100.0;
 	}
 

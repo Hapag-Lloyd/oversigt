@@ -174,7 +174,7 @@ public class MailSender {
 		Objects.requireNonNull(recipientName, "The recipient name must not be null");
 		Objects.requireNonNull(recipientEmail, "The recipient mail must not be null");
 
-		final HashMap<String, Object> model = new HashMap<>(mModel);
+		final Map<String, Object> model = new HashMap<>(mModel);
 		model.put("hostname", dashboardHostname);
 		model.put("subject", subject);
 		model.put("title", title);
