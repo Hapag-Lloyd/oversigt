@@ -27,7 +27,7 @@ public abstract class DatabaseCache<T> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCache.class);
 
-	protected DatabaseCache() {}
+	private DatabaseCache() {}
 
 	private final AtomicReference<List<T>> items = new AtomicReference<>(new ArrayList<>());
 

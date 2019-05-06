@@ -23,6 +23,7 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 
 	private double minimumHeight = 0.35;
 
+	/** {@inheritDoc} */
 	@Override
 	protected HlBarChartEvent produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();

@@ -11,10 +11,18 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import com.google.inject.Inject;
 
+/**
+ * Interceptor that checks parameters of calls to public API methods. The javax
+ * annotations will be used to determine valid values for the parameters.
+ *
+ * @author Olaf Neumann
+ *
+ */
 public class ApiValidationInterceptor implements MethodInterceptor {
 	@Inject
 	private Validator validator;
 
+	/** {@inheritDoc} */
 	@Override
 	public Object invoke(final MethodInvocation invocation) throws Throwable {
 		// save parameters for logging

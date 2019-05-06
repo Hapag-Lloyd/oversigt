@@ -1,25 +1,17 @@
 package com.hlag.oversigt.core;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
@@ -35,12 +27,21 @@ import de.larssh.utils.Finals;
  * @author noxfireone
  */
 public final class Oversigt {
+	/**
+	 * The human readable application name
+	 */
 	public static final String APPLICATION_NAME = Finals.constant("Oversigt");
 
+	/**
+	 * The human readable application version
+	 */
 	public static final String APPLICATION_VERSION = Finals.constant("0.6");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);
 
+	/**
+	 * The name of the file containing the application configuration
+	 */
 	static final String APPLICATION_CONFIG = Finals.constant("config.json");
 
 	private AtomicBoolean bootstrapped;
@@ -131,7 +132,12 @@ public final class Oversigt {
 		return new Builder();
 	}
 
-	public static void main(final String... args) throws InterruptedException, IOException {
+	/**
+	 * The main Oversigt entry point
+	 *
+	 * @param args command line arguments
+	 */
+	public static void main(final String[] args) {
 		// parse command line options
 		final CommandLineOptions options = CommandLineOptions.parse(args);
 		// if command line options fail: shut down
@@ -148,6 +154,13 @@ public final class Oversigt {
 		}
 	}
 
+	/**
+	 * Called if an exception occurres when dispatching an event in the
+	 * application's event bus
+	 *
+	 * @param throwable the exception that occurred
+	 * @param context   the context in which the exception occurred
+	 */
 	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Could not dispatch event");
@@ -162,25 +175,14 @@ public final class Oversigt {
 	 * Oversigt builder
 	 */
 	public static class Builder {
-
-		/* List of extension-modules */
-		private final List<Module> modules = new LinkedList<>();
-
 		private CommandLineOptions options = null;
 
 		/**
-		 * Registers extension modules
-		 *
-		 * @param modules Array of extension modules
-		 * @return this builder
+		 * Create a builder
+		 * 
+		 * @param options the options from the user
+		 * @return the created builder
 		 */
-		public Builder registerModule(@Nullable final Module... modules) {
-			if (modules != null) {
-				this.modules.addAll(Arrays.asList(modules));
-			}
-			return this;
-		}
-
 		public Builder startOptions(final CommandLineOptions options) {
 			this.options = options;
 			return this;
@@ -194,8 +196,7 @@ public final class Oversigt {
 		public Oversigt build() {
 			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
 			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
-					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown),
-					ImmutableList.<Module>builder().addAll(modules).build()));
+					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown)));
 
 			oversigt.set(new Oversigt(createdInjector));
 			return oversigt.get();

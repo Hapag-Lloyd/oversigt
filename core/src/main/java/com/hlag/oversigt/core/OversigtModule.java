@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +44,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -95,11 +93,21 @@ class OversigtModule extends AbstractModule {
 
 	private final CommandLineOptions options;
 
-	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable, final List<Module> extensions) {
+	/**
+	 * Create a module to configure Guice for Oversigt creation
+	 *
+	 * @param options          command line options that are configured by the end
+	 *                         user
+	 * @param shutdownRunnable a runnable that will end the Oversigt application if
+	 *                         executed
+	 * @param extensions       list of modules that will additionally be loaded
+	 */
+	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	protected void configure() {
 		binder().requireExplicitBindings();
@@ -186,7 +194,7 @@ class OversigtModule extends AbstractModule {
 		try {
 			binder().bind(DatatypeFactory.class).toInstance(DatatypeFactory.newInstance());
 		} catch (final DatatypeConfigurationException e) {
-			throw new RuntimeException("Unable to create DatatypeFactory");
+			throw new RuntimeException("Unable to create DatatypeFactory", e);
 		}
 
 		// binds properties
@@ -198,6 +206,13 @@ class OversigtModule extends AbstractModule {
 		}
 	}
 
+	/**
+	 * Create and configure the event bus used to pass events within this
+	 * application
+	 * 
+	 * @param sender the sender used to send events to the clients
+	 * @return the event bus
+	 */
 	@Singleton
 	@Provides
 	@Inject
@@ -207,6 +222,13 @@ class OversigtModule extends AbstractModule {
 		return eventBus;
 	}
 
+	/**
+	 * Create the configuration for the template engine used to render HTML output
+	 * 
+	 * @param templateNumberFormat the number format to be used by the rendering
+	 *                             engine
+	 * @return the configuration
+	 */
 	@Singleton
 	@Provides
 	@Inject
@@ -220,6 +242,11 @@ class OversigtModule extends AbstractModule {
 		return configuration;
 	}
 
+	/**
+	 * Create the configuration for the used JSONPath implementation
+	 * 
+	 * @return the configuration
+	 */
 	@Singleton
 	@Provides
 	com.jayway.jsonpath.Configuration provideJsonpathConfiguration() {
@@ -247,7 +274,7 @@ class OversigtModule extends AbstractModule {
 		return jsonpathConfiguration;
 	}
 
-	OversigtConfiguration readConfiguration(final String resourceUrlString, final Gson gson) {
+	private OversigtConfiguration readConfiguration(final String resourceUrlString, final Gson gson) {
 		try {
 			final URL configUrl = Resources.getResource(resourceUrlString);
 			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);
@@ -259,11 +286,15 @@ class OversigtModule extends AbstractModule {
 		}
 	}
 
+	/**
+	 * Constraint validator to check each the API calls for valid values
+	 */
 	public class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
 
 		@Inject
 		private Injector injector;
 
+		/** {@inheritDoc} */
 		@Override
 		public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
 			/*
@@ -283,14 +314,14 @@ class OversigtModule extends AbstractModule {
 			return run(NewInstance.action(key, "ConstraintValidator"));
 		}
 
+		/** {@inheritDoc} */
 		@Override
-		public void releaseInstance(final ConstraintValidator<?, ?> instance) {
+		public void releaseInstance(@SuppressWarnings("unused") final ConstraintValidator<?, ?> instance) {
 			/* Garbage collector will do it */
 		}
 
 		private <T> T run(final PrivilegedAction<T> action) {
 			return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
 		}
-
 	}
 }

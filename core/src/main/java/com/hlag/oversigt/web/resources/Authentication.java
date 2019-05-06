@@ -197,5 +197,9 @@ public class Authentication {
 		public String getToken() {
 			return token;
 		}
+
+		public Set<String> getRoles() {
+			return roles;
+		}
 	}
 }

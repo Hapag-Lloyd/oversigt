@@ -40,6 +40,7 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 
 	private static final Pattern PATTERN_SEMICOLON = Pattern.compile(";");
 
+	/** {@inheritDoc} */
 	@Override
 	public Response toResponse(final Exception exception) {
 		final UUID uuid = UUID.randomUUID();
