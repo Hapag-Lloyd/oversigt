@@ -13,7 +13,7 @@ import com.google.inject.name.Named;
 
 /**
  * Feature to enable CORS in debug mode to enable development of web UIs
- * 
+ *
  * @see <a href=
  *      "https://stackoverflow.com/questions/36511330/resteasy-and-corsfilter-implementation">StackOverflow</a>
  */
