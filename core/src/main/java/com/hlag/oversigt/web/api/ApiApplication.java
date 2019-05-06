@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
@@ -84,7 +85,7 @@ public class ApiApplication extends Application {
 			if (!cls.equals(Color.class)) {
 				return chain.next().resolveProperty(type, context, annotations, chain);
 			}
-			final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+			final Map<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
 			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
 			map.put(PropertyBuilder.PropertyId.TYPE, "string");
 			map.put(PropertyBuilder.PropertyId.EXAMPLE, "#11223344");
@@ -113,7 +114,7 @@ public class ApiApplication extends Application {
 			if (!cls.equals(Duration.class)) {
 				return chain.next().resolveProperty(type, context, annotations, chain);
 			}
-			final HashMap<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
+			final Map<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
 			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
 			map.put(PropertyBuilder.PropertyId.TYPE, "string");
 			map.put(PropertyBuilder.PropertyId.EXAMPLE, "PT1H");

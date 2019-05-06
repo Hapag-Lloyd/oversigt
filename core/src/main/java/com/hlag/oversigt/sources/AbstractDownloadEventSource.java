@@ -9,13 +9,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +44,8 @@ import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.ThrowingBiFunction;
 import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
+
+import de.larssh.utils.text.StringConverters;
 
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
@@ -97,11 +97,11 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		} else if ((loginData == null || loginData.length == 0)
 				&& getCredentials() != null
 				&& getCredentials() != Credentials.EMPTY) {
-			final String encoded = Base64.getEncoder()
-					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
-							.getBytes(StandardCharsets.UTF_8));
-			con.setRequestProperty("Authorization", "Basic " + encoded);
-		}
+					final String encoded = Base64.getEncoder()
+							.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
+									.getBytes(StandardCharsets.UTF_8));
+					con.setRequestProperty("Authorization", "Basic " + encoded);
+				}
 
 		if (con instanceof HttpURLConnection && loginData != null && loginData.length > 0) {
 			final HttpURLConnection hcon = (HttpURLConnection) con;
@@ -127,10 +127,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return con;
 	}
 
-	protected URLConnection createConfiguredConnection() throws IOException {
-		return createConnection(new ArrayList<>(Arrays.asList(getUrls())));
-	}
-
 	protected URLConnection createConnection(final String urlString) throws IOException {
 		return createConnection(Arrays.asList(InternetAddress.fromUrl(new URL(urlString))));
 	}
@@ -144,7 +140,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		URLConnection connection = null;
 		String cookie = null;
 
-		for (int i = 0; i < addresses.size(); ++i) {
+		for (int i = 0; i < addresses.size(); i += 1) {
 			final InternetAddress internetAddress = addresses.get(i);
 			if (connection != null) {
 				logDebug(getLogger(), "Reading cookie from old connection");
@@ -186,7 +182,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 					final String content = downloadString(connection);
 					final Matcher matcher = pattern.matcher(content);
 					if (matcher.find()) {
-						for (int j = 1; j <= matcher.groupCount(); ++j) {
+						for (int j = 1; j <= matcher.groupCount(); j += 1) {
 							reps.add(matcher.group(j));
 						}
 					}
@@ -203,6 +199,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 		}
 		return connection;
+	}
+
+	protected URLConnection createConfiguredConnection() throws IOException {
+		return createConnection(new ArrayList<>(Arrays.asList(getUrls())));
 	}
 
 	protected Tuple<byte[], String> downloadBytes(final URLConnection connectionToRead) throws IOException {
@@ -335,6 +335,17 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.httpHeaders = httpHeaders;
 	}
 
+	private static String createXWwwUrlEncoded(final String... strings) {
+		final StringBuilder builder = new StringBuilder();
+		for (int index = 0; index < strings.length; index += 2) {
+			if (index > 0) {
+				builder.append("&");
+			}
+			builder.append(strings[index]).append("=").append(StringConverters.encodeUrl(strings[index + 1]));
+		}
+		return builder.toString();
+	}
+
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
 		static InternetAddress fromUrl(final URL url) {
@@ -397,7 +408,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public String toString() {
 			return ToStringBuilder.reflectionToString(this);
 		}
-
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
@@ -424,18 +434,5 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public String toString() {
 			return ToStringBuilder.reflectionToString(this);
 		}
-
 	}
-
-	private static String createXWwwUrlEncoded(final String... strings) throws UnsupportedEncodingException {
-		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < strings.length; i += 2) {
-			if (i > 0) {
-				sb.append("&");
-			}
-			sb.append(strings[i]).append("=").append(URLEncoder.encode(strings[i + 1], "UTF-8"));
-		}
-		return sb.toString();
-	}
-
 }

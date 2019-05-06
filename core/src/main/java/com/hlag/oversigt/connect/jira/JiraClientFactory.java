@@ -11,7 +11,7 @@ import com.hlag.oversigt.properties.ServerConnection;
  * @author Olaf Neumann
  *
  */
-public class JiraClientFactory {
+public final class JiraClientFactory {
 	private JiraClientFactory() {
 		throw new RuntimeException("Do not instantiate this class.");
 	}
@@ -23,7 +23,7 @@ public class JiraClientFactory {
 	 *                    connection
 	 * @param credentials the credentials to be used for authenticating the JIRA
 	 *                    requests
-	 * @return
+	 * @return created {@link JiraClient}
 	 * @throws JiraClientException in case of error while creating the client
 	 */
 	public static JiraClient createJiraClient(final ServerConnection connection, final Credentials credentials)

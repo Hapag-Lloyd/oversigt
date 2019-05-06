@@ -90,15 +90,15 @@ public class GrowingExecutor {
 	/**
 	 * mutex object to acquire the monitor for when manipulating the task list
 	 */
-	private final Object task_mutex = new Object();
+	private final Object taskMutex = new Object();
 
 	/**
 	 * mutex object to acquire the monitor for when manipulating the list of
 	 * threads<br>
 	 * <em>Attention:</em> In order to avoid deadlocks you <strong>must</strong>
-	 * acquire the monitor for {@link #task_mutex} before acquiring this monitor!
+	 * acquire the monitor for {@link #taskMutex} before acquiring this monitor!
 	 */
-	private final Object thread_mutex = new Object();
+	private final Object threadMutex = new Object();
 
 	/**
 	 * Flag indicating whether a timer has been set and is waiting for execution
@@ -131,7 +131,7 @@ public class GrowingExecutor {
 
 	/**
 	 * Create a new {@link GrowingExecutor} with the given configuration
-	 * 
+	 *
 	 * @param corePoolSize             the minimum number of threads to maintain if
 	 *                                 the executor has nothing to do
 	 * @param maximumNumberOfThreads   the maximum number of threads to create if
@@ -159,7 +159,7 @@ public class GrowingExecutor {
 	 * Execute the given task and return a {@link Future} to retrieve the calculated
 	 * result.
 	 *
-	 * @param          <T> the type return value
+	 * @param <T>      the type return value
 	 * @param callable the action to be executed
 	 * @return a value to retrieve the calculated result
 	 * @throws IllegalStateException if the {@link Callable} is submitted but
@@ -193,7 +193,7 @@ public class GrowingExecutor {
 	public void join() throws InterruptedException {
 		while (true) {
 			final Thread thread;
-			synchronized (thread_mutex) {
+			synchronized (threadMutex) {
 				if (threads.isEmpty()) {
 					return;
 				}
@@ -205,10 +205,10 @@ public class GrowingExecutor {
 
 	private void queueFutureTask(final FutureTask<?> task) {
 		if (acceptingTasks.get()) {
-			synchronized (task_mutex) {
+			synchronized (taskMutex) {
 				tasks.add(task);
 				// inform possibly sleeping threads that there is something to do
-				task_mutex.notifyAll();
+				taskMutex.notifyAll();
 
 				// start a timer to check whether new threads are needed
 				scheduleCheckIfEnoughThreadsAreAvailable();
@@ -219,8 +219,8 @@ public class GrowingExecutor {
 	}
 
 	private void scheduleCheckIfEnoughThreadsAreAvailable() {
-		synchronized (task_mutex) {
-			synchronized (thread_mutex) {
+		synchronized (taskMutex) {
+			synchronized (threadMutex) {
 				if (threads.isEmpty()) {
 					checkIfEnoughThreadsAreAvailable();
 				}
@@ -235,8 +235,8 @@ public class GrowingExecutor {
 
 	private void checkIfEnoughThreadsAreAvailable() {
 		timerSet.set(false);
-		synchronized (task_mutex) {
-			synchronized (thread_mutex) {
+		synchronized (taskMutex) {
+			synchronized (threadMutex) {
 				if (!tasks.isEmpty() && threads.size() < maximumNumberOfThreads) {
 					startNewExecutorThread();
 					scheduleCheckIfEnoughThreadsAreAvailable();
@@ -247,8 +247,8 @@ public class GrowingExecutor {
 
 	private void startNewExecutorThread() {
 		final Thread thread = threadFactory.newThread(this::executeTasks);
-		synchronized (task_mutex) {
-			synchronized (thread_mutex) {
+		synchronized (taskMutex) {
+			synchronized (threadMutex) {
 				threads.add(thread);
 			}
 		}
@@ -260,13 +260,13 @@ public class GrowingExecutor {
 		FutureTask<?> task = null;
 		while (true) {
 			// get a new task to execute
-			synchronized (task_mutex) {
+			synchronized (taskMutex) {
 				// wait one loop before shutting down the thread
 				boolean firstLoop = true;
 				while ((task = tasks.pollFirst()) == null) {
 					// check if we're the only thread... if not, we can quit
 					if (!firstLoop) {
-						synchronized (thread_mutex) {
+						synchronized (threadMutex) {
 							if (threads.size() > corePoolSize || !acceptingTasks.get()) {
 								LOGGER.info("No more tasks waiting. Shutting down thread.");
 								threads.remove(Thread.currentThread());
@@ -277,8 +277,8 @@ public class GrowingExecutor {
 
 					// wait until new stuff is available
 					try {
-						task_mutex.wait(Long.max(1, waitBeforeThreadShutdown.toMillis()));
 						// TODO as every thread is being notified we will reach the end of the wait loop
+						taskMutex.wait(Long.max(1, waitBeforeThreadShutdown.toMillis()));
 						// too early and will end the thread to early...
 						firstLoop = false;
 					} catch (final InterruptedException e) {

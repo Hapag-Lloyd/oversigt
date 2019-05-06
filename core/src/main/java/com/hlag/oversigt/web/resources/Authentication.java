@@ -118,7 +118,7 @@ public class Authentication {
 
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (final Exception e) {}
+		} catch (final Exception ignore) {}
 		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
@@ -128,9 +128,8 @@ public class Authentication {
 	@GET
 	@Path("/roles")
 	@Produces(MediaType.APPLICATION_JSON)
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "A list of roles the current user has.", response = AuthData.class), //
-	})
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "A list of roles the current user has.", response = AuthData.class) })
 	@ApiOperation(value = "Get user roles",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
@@ -167,14 +166,14 @@ public class Authentication {
 	}
 
 	public static class AuthData {
-		private String userId;
+		private final String userId;
 
-		private String displayName;
+		private final String displayName;
 
-		private String token;
+		private final String token;
 
 		@NotNull
-		private Set<@NotBlank String> roles;
+		private final Set<@NotBlank String> roles;
 
 		AuthData(final String userId, final String displayName, final String token, final Set<@NotBlank String> roles) {
 			this.userId = userId;

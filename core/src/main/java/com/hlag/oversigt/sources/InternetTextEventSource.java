@@ -182,15 +182,17 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	}
 
 	private String useStringFormat(final String json) {
+		@SuppressWarnings({ "checkstyle:IllegalInstantiation", "checkstyle:XIllegalTypeCustom" })
+		final StringBuffer builder = new StringBuffer();
+
 		final Matcher matcher = JSONPATH_EXTRACTION_PATTERN.matcher(getStringFormat());
-		final StringBuffer sb = new StringBuffer();
 		while (matcher.find()) {
 			final String pathString = matcher.group(1);
 			final JsonPath path = JsonPath.compile(pathString);
-			matcher.appendReplacement(sb, extractSingleElement(path, json));
+			matcher.appendReplacement(builder, extractSingleElement(path, json));
 		}
-		matcher.appendTail(sb);
-		return sb.toString();
+		matcher.appendTail(builder);
+		return builder.toString();
 	}
 
 	public enum MultiResultBehaviour {
