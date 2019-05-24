@@ -13,21 +13,16 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -477,16 +472,8 @@ public class OversigtServer extends AbstractIdleService {
 	private HttpHandler createAngularHandler(final String prefix) {
 		final Path basePath;
 		try {
-			final URI uri = Resources.getResource(prefix).toURI();
-
-			// Initialize file system
-			// This might be required for ZipFileSystem
-			final Map<String, String> env = new HashMap<>();
-			env.put("create", "true");
-			FileSystems.newFileSystem(uri, env);
-
-			basePath = Paths.get(uri);
-		} catch (final IOException | URISyntaxException e) {
+			basePath = FileUtils.getPath(Resources.getResource(prefix).toURI());
+		} catch (final URISyntaxException e) {
 			throw new RuntimeException(String.format("Unable to find prefix '%s' in resources", prefix), e);
 		}
 		final Path indexHtml = basePath.resolve("index.html");

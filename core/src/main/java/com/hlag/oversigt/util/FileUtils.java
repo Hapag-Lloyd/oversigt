@@ -117,12 +117,13 @@ public final class FileUtils {
 		throw new RuntimeException("Unable to handle file for resource scanning: " + classpathEntry);
 	}
 
+	@SuppressWarnings("resource")
 	private static List<Path> listResourcesFromJar(final Path zip) {
 		final String uriString = "jar:" + zip.toUri().toString();
 
+		final FileSystem fileSystem = getFileSystem(URI.create(uriString));
 		final LinkedList<Path> paths = new LinkedList<>();
-		try (FileSystem fileSystem = getFileSystem(URI.create(uriString));
-				JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
+		try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {
 			JarEntry entry = null;
 			while ((entry = jarInputStream.getNextJarEntry()) != null) {
 				paths.add(fileSystem.getPath(entry.getName()));
