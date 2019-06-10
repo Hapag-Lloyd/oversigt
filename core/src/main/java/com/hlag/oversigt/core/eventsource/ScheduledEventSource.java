@@ -109,8 +109,8 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 						numberOfFailedRuns.get(),
 						ALLOWED_NUMBER_OF_FAILED_CALLS);
 				stopAsync();
-			} else if (!(e instanceof Exception)) {
-				logError(getLogger(), "Error occurred. Stopping service.");
+			} else if (!(e instanceof Exception)) /* Throwable is some kind of Error or similar - stop immediately */ {
+				logError(getLogger(), "Error occurred. Stopping service immediately.");
 				stopAsync();
 			}
 		}
@@ -185,6 +185,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		if (success) {
 			logDebug(getLogger(), "Setting last successful run timestamp, too");
 			lastSuccessfulRun = ZonedDateTime.from(lastRun);
+			numberOfFailedRuns.set(0);
 		}
 	}
 
