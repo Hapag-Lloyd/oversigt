@@ -490,7 +490,7 @@ public class OversigtServer extends AbstractIdleService {
 		// find all files belonging to the UI
 		final List<String> otherFiles = new ArrayList<>();
 		final Path parent = indexHtml.getParent();
-		try (final Stream<Path> paths = Files.list(parent)) {
+		try (Stream<Path> paths = Files.list(parent)) {
 			otherFiles.addAll(paths.filter(path -> !path.getFileName().toString().toLowerCase().endsWith(".txt"))
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
