@@ -187,6 +187,7 @@ public class SqliteDialect implements SqlDialect {
 		return sql;
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public String alterTableDropColumn(final String tableName, final String columnName) {
 		throw new RuntimeException("DROP COLUMN is not supported by SQLite");
@@ -234,6 +235,9 @@ public class SqliteDialect implements SqlDialect {
 			return "TIMESTAMP";
 		case Boolean:
 			return "INTEGER(1)";
+		case Date:
+		case Time:
+			return "TEXT";
 		default:
 			throw new RuntimeException("Unknown column type: " + type.name());
 		}
