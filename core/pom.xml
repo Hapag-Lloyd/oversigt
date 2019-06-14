@@ -54,7 +54,7 @@
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
 		<guice.version>4.2.1</guice.version>
-		<undertow.version>2.0.5.Final</undertow.version>
+		<undertow.version>2.0.21.Final</undertow.version>
 		<freemarker.version>2.3.28</freemarker.version>
 		<wro.version>1.8.0</wro.version>
 		<resteasy.version>3.6.1.SP2</resteasy.version>
