@@ -8,6 +8,7 @@ import static com.hlag.oversigt.util.Utils.not;
 import static io.undertow.servlet.Servlets.defaultContainer;
 import static io.undertow.servlet.Servlets.listener;
 import static io.undertow.servlet.Servlets.servlet;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -20,12 +21,14 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
@@ -94,7 +97,9 @@ import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.InstanceFactory;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.util.ImmediateInstanceHandle;
+import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
 
@@ -481,6 +486,17 @@ public class OversigtServer extends AbstractIdleService {
 			throw new RuntimeException(
 					String.format("No file called 'index.html' found for angular handler in prefix '%s'", prefix));
 		}
+
+		// find all files belonging to the UI
+		final List<String> otherFiles = new ArrayList<>();
+		final Path parent = indexHtml.getParent();
+		try (final Stream<Path> paths = Files.list(parent)) {
+			otherFiles.addAll(paths.filter(path -> !path.getFileName().toString().toLowerCase().endsWith(".txt"))
+					.map(path -> path.getFileName().toString())
+					.filter(name -> !name.equals("index.html"))
+					.collect(toList()));
+		} catch (final IOException ignore) {/* ignore exception */}
+
 		return exchange -> {
 			// Find the file to serve
 			final String relativePath
@@ -490,7 +506,15 @@ public class OversigtServer extends AbstractIdleService {
 			if (Files.isRegularFile(requestedFile)) {
 				fileToServe = requestedFile;
 			} else {
+				// TODO check if it is really the HTML page that should be served...
 				fileToServe = basePath.resolve("index.html");
+			}
+
+			// if index.html has been requested -> push other files
+			if (fileToServe.getFileName().toString().equals("index.html")) {
+				for (final String filename : otherFiles) {
+					exchange.getConnection().pushResource(filename, new HttpString("GET"), new HeaderMap());
+				}
 			}
 
 			// actually serve the file
