@@ -58,16 +58,16 @@ public class SimpleExchangeClient implements Closeable {
 
 	private static final boolean FAIL_SAFE = true;
 
-	private final ExchangeService _service;
+	private final ExchangeService service;
 
 	public SimpleExchangeClient(final URI exchangeServerUri, final String username, final String password) {
-		_service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
-		_service.setCredentials(new WebCredentials(username, password));
-		_service.setUrl(exchangeServerUri);
+		service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
+		service.setCredentials(new WebCredentials(username, password));
+		service.setUrl(exchangeServerUri);
 	}
 
 	public ExchangeService getService() {
-		return _service;
+		return service;
 	}
 
 	@Override

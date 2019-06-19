@@ -184,7 +184,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		if (info == null) {
 			info = infos.stream().filter(i -> i.option == getDefaultDisplayOption()).findAny().get();
 		}
-	
+
 		info.total += 1;
 		if (!mail.isRead()) {
 			info.unread += 1;
