@@ -12,6 +12,10 @@ public class Room implements JsonBasedData, Comparable<Room> {
 
 	private String roomNumber = "123";
 
+	public Room() {
+		// leave default values
+	}
+
 	public Room(final String name, final String smtpAddress, final String roomNumber) {
 		this.name = name;
 		this.smtpAddress = smtpAddress;

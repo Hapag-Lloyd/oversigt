@@ -1,55 +1,28 @@
 package com.hlag.oversigt.sources;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.Strings;
+import com.hlag.oversigt.connect.exchange.Meeting;
+import com.hlag.oversigt.connect.exchange.Room;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
-import com.hlag.oversigt.sources.data.JsonHint;
-import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
-
-import microsoft.exchange.webservices.data.core.ExchangeService;
-import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
-import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
-import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceRequestException;
-import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceResponseException;
-import microsoft.exchange.webservices.data.core.response.AttendeeAvailability;
-import microsoft.exchange.webservices.data.core.service.folder.CalendarFolder;
-import microsoft.exchange.webservices.data.core.service.item.Appointment;
-import microsoft.exchange.webservices.data.misc.availability.AttendeeInfo;
-import microsoft.exchange.webservices.data.misc.availability.GetUserAvailabilityResults;
-import microsoft.exchange.webservices.data.misc.availability.TimeWindow;
-import microsoft.exchange.webservices.data.property.complex.FolderId;
-import microsoft.exchange.webservices.data.property.complex.Mailbox;
-import microsoft.exchange.webservices.data.property.complex.availability.CalendarEvent;
-import microsoft.exchange.webservices.data.search.CalendarView;
-import microsoft.exchange.webservices.data.search.FindItemsResults;
 
 /**
  * @author Olaf Neumann
@@ -59,16 +32,12 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 		description = "Shows the room availability from Microsoft Exchange for a configurable collection of rooms.",
 		hiddenDataItems = { "moreinfo" })
 public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource<RoomAvailabilityListEvent> {
-	private static final boolean FAIL_SAFE = true;
 
 	@Override
 	protected RoomAvailabilityListEvent produceExchangeEvent() throws Exception {
 		final ZonedDateTime now = ZonedDateTime.now(getZoneId());
 		final Map<Room, List<Meeting>> meetings
-				= getMeetings(getRooms(), createExchangeService().get(), now.toLocalDate());
-		if (meetings == null) {
-			return null;
-		}
+				= getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());
 
 		final List<RoomAvailabilityItem> unsortedItems = meetings.entrySet()
 				.stream()
@@ -109,95 +78,6 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 				formatter);
 	}
 
-	private Map<Room, List<Meeting>> getMeetings(final Room[] rooms, final ExchangeService service, final LocalDate day)
-			throws Exception {
-		if (FAIL_SAFE) {
-			return getMeetingsViaAttendeeInfo(rooms,
-					service,
-					day.atStartOfDay(getZoneId()),
-					day.plusDays(1).atStartOfDay(getZoneId()));
-		}
-		return Stream.of(rooms)
-				.collect(Collectors.toMap(Function.identity(), room -> getMeetingsViaAppointment(room, service, day)));
-	}
-
-	private List<Meeting> getMeetingsViaAppointment(final Room room,
-			final ExchangeService service,
-			final LocalDate day) {
-		try {
-			final CalendarFolder cf = CalendarFolder.bind(service,
-					new FolderId(WellKnownFolderName.Calendar, new Mailbox(room.smtpAddress)));
-			final CalendarView cv
-					= getCalendarView(day.atStartOfDay(getZoneId()), day.atStartOfDay(getZoneId()).plusDays(1));
-
-			final FindItemsResults<Appointment> apps = cf.findAppointments(cv);
-			final List<Meeting> meetings = new ArrayList<>();
-			for (final Appointment app : apps) {
-				meetings.add(new Meeting(room, app, app.getStart(), app.getEnd(), app.getSubject(), getZoneId()));
-			}
-			return meetings;
-		} catch (final Exception e) {
-			if (e instanceof ServiceRequestException && "The request failed. 40".equals(e.getMessage())) {
-				// Happens sometimes. Ignore it
-				return null;
-			} else if (e instanceof ServiceResponseException
-					&& "The specified folder could not be found in the store.".equals(e.getMessage())) {
-						getLogger().warn("Unable to get Meetings for " + room.name + ". " + e.getMessage(), e);
-						return null;
-					}
-			throw new RuntimeException("Unable to get appointments", e);
-		}
-	}
-
-	private Map<Room, List<Meeting>> getMeetingsViaAttendeeInfo(final Room[] rooms,
-			final ExchangeService service,
-			final ZonedDateTime from,
-			final ZonedDateTime to) throws Exception {
-		final Instant fromInstant = from.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
-		final Instant toInstant = to.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();
-
-		final List<AttendeeInfo> attendees
-				= Arrays.asList(rooms).stream().map(r -> new AttendeeInfo(r.smtpAddress)).collect(Collectors.toList());
-
-		final GetUserAvailabilityResults result
-				= service.getUserAvailability(attendees, getTimeWindow(from, to), AvailabilityData.FreeBusy);
-
-		int index = 0;
-		final Map<Room, List<Meeting>> meetings = new LinkedHashMap<>();
-		for (final AttendeeAvailability availability : result.getAttendeesAvailability()) {
-			final Room room = rooms[index];
-			meetings.put(room,
-					availability.getCalendarEvents()
-							.stream()
-							.filter(e -> e.getStartTime().toInstant().isBefore(toInstant))
-							.filter(e -> e.getEndTime().toInstant().isAfter(fromInstant))
-							.map(e -> new Meeting(room, e, getZoneId()))
-							.collect(Collectors.toList()));
-			index += 1;
-		}
-
-		return meetings;
-	}
-
-	private TimeWindow getTimeWindow(final ZonedDateTime fromTime, final ZonedDateTime toTime) {
-		if (!fromTime.isBefore(toTime)) {
-			throw new RuntimeException();
-		}
-
-		final LocalDate fromDate = fromTime.toLocalDate();
-		LocalDate toDate = toTime.toLocalDate();
-		if (toTime.isAfter(toDate.atStartOfDay(getZoneId())) || fromDate.isEqual(toDate)) {
-			toDate = toDate.plusDays(1);
-		}
-
-		// Following the UTC conversion at
-		// TimeWindow.writeToXmlUnscopedDatesOnly(EwsServiceXmlWriter, String)
-		final Date start = Date.from(fromDate.atStartOfDay(ZoneOffset.UTC).toInstant());
-		final Date end = Date.from(toDate.atStartOfDay(ZoneOffset.UTC).toInstant());
-
-		return new TimeWindow(start, end);
-	}
-
 	private Room[] rooms = new Room[] { new Room() };
 
 	private boolean availableRoomsToTop = false;
@@ -234,93 +114,6 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 
 	public void setDateFormatString(final String dateFormat) {
 		this.dateFormat = dateFormat;
-	}
-
-	@JsonHint(headerTemplate = "{{self.name}}", arrayStyle = ArrayStyle.TABLE)
-	public static class Room implements JsonBasedData, Comparable<Room> {
-		private String name = "RoomName";
-
-		private String smtpAddress = "roomname@exchange.com";
-
-		private String roomNumber = "123";
-
-		@Override
-		public int compareTo(final Room that) {
-			return String.CASE_INSENSITIVE_ORDER.compare(name, that.name);
-		}
-
-		@Override
-		public String toString() {
-			return String.format("Room [name=%s, smtpAddress=%s, roomNumber=%s]", name, smtpAddress, roomNumber);
-		}
-	}
-
-	public static final class Meeting {
-
-		private final Room room;
-
-		private final ZonedDateTime start;
-
-		private final ZonedDateTime end;
-
-		private final String organizer;
-
-		private final Appointment appointment;
-
-		private Meeting(final Room room, final CalendarEvent event, final ZoneId zone) {
-			this(room,
-					null,
-					event.getStartTime(),
-					event.getEndTime(),
-					event.getDetails() != null ? event.getDetails().getSubject() : "Unknown",
-					zone);
-		}
-
-		private Meeting(final Room room,
-				final Appointment appointment,
-				final Date start,
-				final Date end,
-				final String organizer,
-				final ZoneId zone) {
-			this(room, appointment, start.toInstant().atZone(zone), end.toInstant().atZone(zone), organizer);
-		}
-
-		private Meeting(final Room room,
-				final Appointment appointment,
-				final ZonedDateTime start,
-				final ZonedDateTime end,
-				final String organizer) {
-			this.room = room;
-			this.start = start;
-			this.end = end;
-			this.organizer = organizer;
-			this.appointment = appointment;
-		}
-
-		public Room getRoom() {
-			return room;
-		}
-
-		public ZonedDateTime getStart() {
-			return start;
-		}
-
-		public String getOrganizer() {
-			return organizer;
-		}
-
-		public ZonedDateTime getEnd() {
-			return end;
-		}
-
-		Appointment getAppointment() {
-			return appointment;
-		}
-
-		@Override
-		public String toString() {
-			return String.format("Meeting [%s, %s - %s, %s]", room.name, start, end, organizer);
-		}
 	}
 
 	public static final class RoomAvailabilityListEvent extends OversigtEvent {
@@ -381,8 +174,8 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 				final LocalTime until,
 				final DateTimeFormatter formatter) {
 			clazz = free ? "free" : "occupied";
-			name = room.name;
-			number = room.roomNumber;
+			name = room.getName();
+			number = room.getRoomNumber();
 			this.free = free;
 			this.until = Optional.ofNullable(until);
 			status = (free ? "Free" : "Busy") + (until == null ? " Today" : " until " + formatter.format(until)); // TODO

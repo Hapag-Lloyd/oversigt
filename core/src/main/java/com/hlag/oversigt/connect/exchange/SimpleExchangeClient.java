@@ -134,6 +134,18 @@ public class SimpleExchangeClient implements Closeable {
 		return result;
 	}
 
+	public List<Appointment> loadAppointments(final ZonedDateTime from, final ZonedDateTime until) {
+		final CalendarView calendarView = getCalendarView(from, until);
+
+		final FindItemsResults<Appointment> findResults;
+		try {
+			findResults = getService().findAppointments(WellKnownFolderName.Calendar, calendarView);
+		} catch (final Exception e) {
+			throw new RuntimeException("Unable to find appointments", e);
+		}
+		return new ArrayList<>(findResults.getItems());
+	}
+
 	public Map<Room, List<Meeting>> getMeetings(final List<Room> rooms, final LocalDate day, final ZoneId zoneId)
 			throws Exception {
 		if (FAIL_SAFE) {
