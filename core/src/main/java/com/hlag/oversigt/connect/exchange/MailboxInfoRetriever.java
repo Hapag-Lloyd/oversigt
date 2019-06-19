@@ -126,9 +126,8 @@ public class MailboxInfoRetriever {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	private MailboxFolder loadMailbox(final Key key) throws Exception {
-		final MailboxFolder mailboxFolder = new MailboxFolder(key.getMailboxName(), key.getFolderName());
+		final MailboxFolder mailboxFolder = new MailboxFolder(key.getFolderName());
 
 		final ExchangeService service = getService(key);
 		final FolderId folderId = getFolder(service, key.getFolderName());
@@ -224,20 +223,12 @@ public class MailboxInfoRetriever {
 	}
 
 	public static final class MailboxFolder {
-
-		private final String mailboxName;
-
 		private final String folderName;
 
 		private final List<Mail> mails = new ArrayList<>();
 
-		public MailboxFolder(final String mailboxName, final String folderName) {
-			this.mailboxName = mailboxName;
+		public MailboxFolder(final String folderName) {
 			this.folderName = folderName;
-		}
-
-		public String getMailboxName() {
-			return mailboxName;
 		}
 
 		public String getFolderName() {
@@ -350,17 +341,13 @@ public class MailboxInfoRetriever {
 
 	private static final class Key {
 
-		private final String mailboxName;
+		private final String mailboxName_;
 
 		private final String folderName;
 
 		Key(final String mailboxName, final String folderName) {
-			this.mailboxName = mailboxName;
+			mailboxName_ = mailboxName;
 			this.folderName = folderName;
-		}
-
-		public String getMailboxName() {
-			return mailboxName;
 		}
 
 		public String getFolderName() {
@@ -372,7 +359,7 @@ public class MailboxInfoRetriever {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + (folderName == null ? 0 : folderName.hashCode());
-			result = prime * result + (mailboxName == null ? 0 : mailboxName.hashCode());
+			result = prime * result + (mailboxName_ == null ? 0 : mailboxName_.hashCode());
 			return result;
 		}
 
@@ -395,11 +382,11 @@ public class MailboxInfoRetriever {
 			} else if (!folderName.equals(other.folderName)) {
 				return false;
 			}
-			if (mailboxName == null) {
-				if (other.mailboxName != null) {
+			if (mailboxName_ == null) {
+				if (other.mailboxName_ != null) {
 					return false;
 				}
-			} else if (!mailboxName.equals(other.mailboxName)) {
+			} else if (!mailboxName_.equals(other.mailboxName_)) {
 				return false;
 			}
 			return true;
