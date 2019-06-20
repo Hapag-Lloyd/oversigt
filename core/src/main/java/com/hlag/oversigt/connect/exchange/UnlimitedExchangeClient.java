@@ -50,6 +50,12 @@ import microsoft.exchange.webservices.data.search.FolderView;
 import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
 
+/**
+ * Exchange client that does not have restrictions.
+ *
+ * @author neumaol
+ *
+ */
 public class UnlimitedExchangeClient implements ExchangeClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UnlimitedExchangeClient.class);
 
@@ -59,6 +65,13 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 
 	private final ExchangeService service;
 
+	/**
+	 * Create an exchange client using the specified connection details
+	 *
+	 * @param exchangeServerUri the URI of the exchange server web interface
+	 * @param username          the username to be used
+	 * @param password          the password of the user
+	 */
 	UnlimitedExchangeClient(final URI exchangeServerUri, final String username, final String password) {
 		service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
 		service.setCredentials(new WebCredentials(username, password));
