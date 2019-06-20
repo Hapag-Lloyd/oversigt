@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -254,7 +255,9 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		Throwable throwable = original;
 
 		while (throwable != null && throwable != previous) {
-			if (throwable instanceof JiraClientException) {
+			if (throwable instanceof TimeoutException) {
+				failure("JIRA request timed out while waiting for a free connection.");
+			} else if (throwable instanceof JiraClientException) {
 				return failure(throwable.getMessage(), throwable.getCause());
 			} else if (throwable instanceof RestClientException) {
 				final RestClientException rce = (RestClientException) throwable;
