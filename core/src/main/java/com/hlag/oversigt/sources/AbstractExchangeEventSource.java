@@ -1,9 +1,9 @@
 package com.hlag.oversigt.sources;
 
-import java.net.URI;
 import java.time.ZoneId;
 
-import com.hlag.oversigt.connect.exchange.SimpleExchangeClient;
+import com.hlag.oversigt.connect.exchange.ExchangeClient;
+import com.hlag.oversigt.connect.exchange.ExchangeClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -31,13 +31,11 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 
 	private ZoneId zoneId = ZoneId.systemDefault();
 
-	private SimpleExchangeClient exchangeClient;
+	private ExchangeClient exchangeClient;
 
 	@Override
 	protected void startUp() throws Exception {
-		exchangeClient = new SimpleExchangeClient(new URI(getServerConnection().getUrl()),
-				getCredentials().getUsername(),
-				getCredentials().getPassword());
+		exchangeClient = ExchangeClientFactory.createExchangeClient(getServerConnection(), getCredentials());
 		super.startUp();
 	}
 
@@ -76,7 +74,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		this.zoneId = zoneId;
 	}
 
-	protected SimpleExchangeClient getExchangeClient() {
+	protected ExchangeClient getExchangeClient() {
 		return exchangeClient;
 	}
 

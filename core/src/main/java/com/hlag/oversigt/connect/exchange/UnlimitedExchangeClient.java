@@ -2,7 +2,6 @@ package com.hlag.oversigt.connect.exchange;
 
 import static java.util.stream.Collectors.toList;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
@@ -51,8 +50,8 @@ import microsoft.exchange.webservices.data.search.FolderView;
 import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
 
-public class SimpleExchangeClient implements Closeable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(SimpleExchangeClient.class);
+public class UnlimitedExchangeClient implements ExchangeClient {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UnlimitedExchangeClient.class);
 
 	private static final int NUMBER_OF_ITEMS_TO_LOAD_IN_ONE_CHUNK = 50;
 
@@ -60,16 +59,17 @@ public class SimpleExchangeClient implements Closeable {
 
 	private final ExchangeService service;
 
-	public SimpleExchangeClient(final URI exchangeServerUri, final String username, final String password) {
+	UnlimitedExchangeClient(final URI exchangeServerUri, final String username, final String password) {
 		service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
 		service.setCredentials(new WebCredentials(username, password));
 		service.setUrl(exchangeServerUri);
 	}
 
-	public ExchangeService getService() {
+	private ExchangeService getService() {
 		return service;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void close() throws IOException {
 		getService().close();
@@ -88,6 +88,8 @@ public class SimpleExchangeClient implements Closeable {
 		return folders.getFolders().get(0).getId();
 	}
 
+	/** {@inheritDoc} */
+	@Override
 	public List<Mail> loadMails(final String folderName) throws Exception {
 		return loadItems(EmailMessage.class, WellKnownFolderName.MsgFolderRoot, folderName, SortDirection.Ascending)//
 				.stream()
@@ -97,6 +99,8 @@ public class SimpleExchangeClient implements Closeable {
 				.collect(toList());
 	}
 
+	/** {@inheritDoc} */
+	@Override
 	public List<Task> loadTasks() throws Exception {
 		return loadItems(Task.class, WellKnownFolderName.Root, "Dashboard", SortDirection.Descending)//
 				.stream()
@@ -134,6 +138,8 @@ public class SimpleExchangeClient implements Closeable {
 		return result;
 	}
 
+	/** {@inheritDoc} */
+	@Override
 	public List<Appointment> loadAppointments(final ZonedDateTime from, final ZonedDateTime until) {
 		final CalendarView calendarView = getCalendarView(from, until);
 
@@ -146,6 +152,8 @@ public class SimpleExchangeClient implements Closeable {
 		return new ArrayList<>(findResults.getItems());
 	}
 
+	/** {@inheritDoc} */
+	@Override
 	public Map<Room, List<Meeting>> getMeetings(final List<Room> rooms, final LocalDate day, final ZoneId zoneId)
 			throws Exception {
 		if (FAIL_SAFE) {
