@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -20,7 +21,10 @@ public abstract class DatabaseCache<T> {
 		return new DatabaseCache<X>() {
 			@Override
 			protected Collection<X> readItems(final Connection connection) throws SQLException {
-				return readFunction.apply(connection);
+				// TODO why is ThrowingFunction @Nullable?
+				return Optional//
+						.ofNullable(readFunction.apply(connection))
+						.orElse(new ArrayList<>());
 			}
 		};
 	}
