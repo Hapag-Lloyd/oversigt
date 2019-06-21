@@ -37,7 +37,6 @@ import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
-import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -135,7 +134,7 @@ public class SerializablePropertyResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response createProperty(@Context final UriInfo uri,
 			@PathParam("type") @NotBlank final String className,
-			@NotEmpty final Map<@NotBlank String, @NotNull Object> map) throws MemberMissingException {
+			@NotEmpty final Map<@NotBlank String, @NotNull Object> map) {
 		Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);

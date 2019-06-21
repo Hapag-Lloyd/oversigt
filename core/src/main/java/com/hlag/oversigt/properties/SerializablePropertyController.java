@@ -25,7 +25,6 @@ import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.ThrowingFunction;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
-import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
 
 @Singleton
 public class SerializablePropertyController {
@@ -116,13 +115,9 @@ public class SerializablePropertyController {
 		return TypeUtils.getSerializablePropertyMembers(clazz);
 	}
 
-	public String toString(final SerializableProperty value) {
-		return value == null ? "0" : Integer.toString(value.getId());
-	}
-
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,
 			final String name,
-			final Map<String, Object> parameters) throws MemberMissingException {
+			final Map<String, Object> parameters) {
 		return createProperty(clazz,
 				name,
 				getMembers(clazz)//

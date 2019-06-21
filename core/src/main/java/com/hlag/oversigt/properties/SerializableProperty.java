@@ -5,9 +5,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * This interface marks classes that will be stored in the database in a
@@ -39,8 +42,9 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	}
 
 	@Override
-	public int compareTo(final SerializableProperty that) {
-		return String.CASE_INSENSITIVE_ORDER.compare(getName(), that.getName());
+	public int compareTo(@Nullable final SerializableProperty that) {
+		return String.CASE_INSENSITIVE_ORDER.compare(getName(),
+				Optional.ofNullable(that).map(SerializableProperty::getName).orElse(""));
 	}
 
 	@Override
@@ -49,7 +53,7 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	}
 
 	@Override
-	public final boolean equals(final Object that) {
+	public final boolean equals(@Nullable final Object that) {
 		return this == that;
 	}
 
