@@ -2,6 +2,10 @@ package com.hlag.oversigt.connect.ssh;
 
 import java.util.Comparator;
 
+import com.hlag.oversigt.util.Utils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 class SshConnectionKey implements Comparable<SshConnectionKey> {
 	protected static final Comparator<SshConnectionKey> COMPARATOR = //
 			Comparator.comparing(SshConnectionKey::getHostname)
@@ -33,22 +37,17 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 	}
 
 	@Override
-	public int compareTo(final SshConnectionKey that) {
+	public int compareTo(@Nullable final SshConnectionKey that) {
 		return COMPARATOR.compare(this, that);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (hostname == null ? 0 : hostname.hashCode());
-		result = prime * result + port;
-		result = prime * result + (username == null ? 0 : username.hashCode());
-		return result;
+		return Utils.computeHashCode(hostname, port, username);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -59,21 +58,13 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 			return false;
 		}
 		final SshConnectionKey other = (SshConnectionKey) obj;
-		if (hostname == null) {
-			if (other.hostname != null) {
-				return false;
-			}
-		} else if (!hostname.equals(other.hostname)) {
+		if (!hostname.equals(other.hostname)) {
 			return false;
 		}
 		if (port != other.port) {
 			return false;
 		}
-		if (username == null) {
-			if (other.username != null) {
-				return false;
-			}
-		} else if (!username.equals(other.username)) {
+		if (!username.equals(other.username)) {
 			return false;
 		}
 		return true;

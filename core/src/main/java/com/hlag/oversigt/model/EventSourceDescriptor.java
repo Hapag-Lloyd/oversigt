@@ -2,9 +2,11 @@ package com.hlag.oversigt.model;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -40,12 +42,12 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
 
-	private final Class<? extends Service> serviceClass;
+	private final Optional<Class<? extends Service>> serviceClass;
 
-	private final Class<? extends OversigtEvent> eventClass;
+	private final Optional<Class<? extends OversigtEvent>> eventClass;
 
 	@JsonIgnore
-	private final Class<? extends Module> moduleClass;
+	private final Optional<Class<? extends Module>> moduleClass;
 
 	private boolean standAlone = false;
 
@@ -62,16 +64,16 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 			@NotBlank final String displayName,
 			final String description,
 			@NotBlank final String view,
-			final Class<? extends Service> serviceClass,
-			final Class<? extends OversigtEvent> eventClass,
-			final Class<? extends Module> moduleClass) {
+			@Nullable final Class<? extends Service> serviceClass,
+			@Nullable final Class<? extends OversigtEvent> eventClass,
+			@Nullable final Class<? extends Module> moduleClass) {
 		this.key = key;
 		this.displayName = displayName;
 		this.description = description != null && description.trim().length() > 1 ? description : null;
 		this.view = view;
-		this.serviceClass = serviceClass;
-		this.eventClass = eventClass;
-		this.moduleClass = moduleClass;
+		this.serviceClass = Optional.ofNullable(serviceClass);
+		this.eventClass = Optional.ofNullable(eventClass);
+		this.moduleClass = Optional.ofNullable(moduleClass);
 	}
 
 	public EventSourceKey getKey() {
@@ -82,31 +84,40 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return view;
 	}
 
+	@Nullable
 	public Class<? extends Service> getServiceClass() {
-		return serviceClass;
+		return serviceClass.orElse(null);
 	}
 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
 	public String getServiceClassName() {
-		return serviceClass != null ? serviceClass.getName() : null;
+		return serviceClass.map(Class::getName).orElse(null);
 	}
 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
 	public String getEventClassName() {
-		return eventClass != null ? eventClass.getName() : null;
+		return eventClass.map(Class::getName).orElse(null);
 	}
 
 	@JsonIgnore
 	public boolean isScheduledService() {
-		return serviceClass != null && ScheduledEventSource.class.isAssignableFrom(serviceClass);
+		return serviceClass.map(ScheduledEventSource.class::isAssignableFrom).orElse(false);
 	}
 
+	public boolean isDeprecated() {
+		return serviceClass.map(clazz -> clazz.isAnnotationPresent(Deprecated.class)).orElse(false);
+	}
+
+	@Nullable
 	public Class<? extends OversigtEvent> getEventClass() {
-		return eventClass;
+		return eventClass.orElse(null);
 	}
 
+	@Nullable
 	public Class<? extends Module> getModuleClass() {
-		return moduleClass;
+		return moduleClass.orElse(null);
 	}
 
 	public String getDisplayName() {
