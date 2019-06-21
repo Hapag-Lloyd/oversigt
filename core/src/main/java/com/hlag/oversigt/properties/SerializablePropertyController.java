@@ -19,10 +19,9 @@ import com.google.inject.Singleton;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 import com.hlag.oversigt.storage.Storage;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.util.ThrowingConsumer;
-import com.hlag.oversigt.util.ThrowingFunction;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -127,7 +126,13 @@ public class SerializablePropertyController {
 				getMembers(clazz)//
 						.stream()
 						.filter(m -> !"name".equals(m.getName()))
-						.map(ThrowingFunction.sneaky(m -> m.createInstance((String) parameters.get(m.getName()))))
+						.map(m -> {
+							try {
+								return m.createInstance((String) parameters.get(m.getName()));
+							} catch (final MemberMissingException e) {
+								throw new RuntimeException("Unknown member: " + m.getName(), e);
+							}
+						})
 						.collect(Collectors.toList()));
 	}
 
@@ -142,8 +147,7 @@ public class SerializablePropertyController {
 	public void updateProperty(final SerializableProperty property) {
 		if (!properties.values().contains(property)) {
 			final SerializableProperty real = getProperty(property.getClass(), property.getId());
-			TypeUtils.getSerializablePropertyMembers(property.getClass())
-					.forEach(ThrowingConsumer.sneakc(m -> m.set(real, m.get(property))));
+			TypeUtils.getSerializablePropertyMembers(property.getClass()).forEach(m -> m.set(real, m.get(property)));
 			storage.updateProperty(real);
 		} else {
 			storage.updateProperty(property);

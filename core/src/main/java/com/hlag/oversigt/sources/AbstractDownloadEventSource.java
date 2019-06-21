@@ -42,7 +42,6 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.ThrowingBiFunction;
-import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
 
 import de.larssh.utils.text.StringConverters;
@@ -205,10 +204,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		return createConnection(new ArrayList<>(Arrays.asList(getUrls())));
 	}
 
-	protected Tuple<byte[], String> downloadBytes(final URLConnection connectionToRead) throws IOException {
+	protected DownloadData downloadBytes(final URLConnection connectionToRead) throws IOException {
 		return read(connectionToRead, //
 				(connection, inputStream) -> //
-				new Tuple<>(ByteStreams.toByteArray(inputStream), connection.getContentType()));
+				new DownloadData(ByteStreams.toByteArray(inputStream), connection.getContentType()));
 	}
 
 	protected String downloadString(final URLConnection connectionToRead) throws IOException {
@@ -433,6 +432,25 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		@Override
 		public String toString() {
 			return ToStringBuilder.reflectionToString(this);
+		}
+	}
+
+	protected static final class DownloadData {
+		private final byte[] data;
+	
+		private final String contentType;
+	
+		private DownloadData(final byte[] data, final String contentType) {
+			this.data = data;
+			this.contentType = contentType;
+		}
+	
+		public String getContentType() {
+			return contentType;
+		}
+	
+		public byte[] getData() {
+			return data;
 		}
 	}
 }

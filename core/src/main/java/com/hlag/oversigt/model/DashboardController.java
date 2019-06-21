@@ -13,6 +13,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
@@ -83,7 +84,6 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SimpleReadWriteLock;
 import com.hlag.oversigt.util.StringUtils;
-import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
@@ -490,9 +490,13 @@ public class DashboardController {
 		// Create a new object of the source to retrieve the default values
 		final Service service
 				= createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
-		instance.getDescriptor()
-				.getProperties()
-				.forEach(ThrowingConsumer.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
+		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
+			try {
+				instance.setProperty(property, property.getGetter().invoke(service));
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new RuntimeException("Unable to set property: " + property.getName(), e);
+			}
+		}
 	}
 
 	String getValueString(final EventSourceProperty property, final Object value) {
@@ -600,7 +604,13 @@ public class DashboardController {
 					.getProperties()
 					.stream()
 					.filter(instance::hasPropertyValue)
-					.forEach(ThrowingConsumer.sneakc(p -> p.getSetter().invoke(service, instance.getPropertyValue(p))));
+					.forEach(p -> {
+						try {
+							p.getSetter().invoke(service, instance.getPropertyValue(p));
+						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+							throw new RuntimeException("Unable to set property: " + p.getName(), e);
+						}
+					});
 
 			// start service
 			LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
@@ -1216,14 +1226,14 @@ public class DashboardController {
 
 	@SuppressWarnings("unchecked")
 	private static Class<? extends OversigtEvent> getEventClass(final Class<? extends Service> clazz) {
-		final Method method = TypeUtils.getMethod(clazz,
+		final Optional<Method> method = TypeUtils.getMethod(clazz,
 				Arrays.asList("produceEventFromData", "produceCachedEvent", "produceEvent"),
 				new Class<?>[0]);
-		if (method == null) {
+		if (!method.isPresent()) {
 			return OversigtEvent.class;
 		}
-		if (TypeUtils.isOfType(method.getReturnType(), OversigtEvent.class)) {
-			return (Class<? extends OversigtEvent>) method.getReturnType();
+		if (TypeUtils.isOfType(method.get().getReturnType(), OversigtEvent.class)) {
+			return (Class<? extends OversigtEvent>) method.get().getReturnType();
 		}
 		throw new RuntimeException("Event producing method does not return " + OversigtEvent.class.getName());
 	}

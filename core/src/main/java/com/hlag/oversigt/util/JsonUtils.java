@@ -18,13 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -46,7 +45,7 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 
-import de.larssh.utils.function.ThrowingFunction;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class JsonUtils {
@@ -59,9 +58,10 @@ public class JsonUtils {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void serialize(final T value, final JsonGenerator gen, final SerializerProvider provider)
-					throws IOException {
-				gen.writeString(converter.apply(value));
+			public void serialize(@Nullable final T value,
+					@Nullable final JsonGenerator gen,
+					@SuppressWarnings("unused") @Nullable final SerializerProvider provider) throws IOException {
+				Objects.requireNonNull(gen).writeString(converter.apply(value));
 			}
 		};
 	}
@@ -76,9 +76,10 @@ public class JsonUtils {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public T deserialize(final JsonParser p, final DeserializationContext ctxt)
+			public T deserialize(@Nullable final JsonParser p,
+					@SuppressWarnings("unused") @Nullable final DeserializationContext ctxt)
 					throws IOException, JsonProcessingException {
-				return converter.apply(p.getValueAsString());
+				return converter.apply(Objects.requireNonNull(p).getValueAsString());
 			}
 		};
 	}
@@ -157,7 +158,7 @@ public class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public String toJsonSchema(final Class<?> clazz, final JsonHint hint) {
+	public String toJsonSchema(final Class<?> clazz, @Nullable final JsonHint hint) {
 		final Map<String, Object> schema;
 		if (!SerializableProperty.class.isAssignableFrom(clazz)) {
 			schema = map("$schema",
@@ -194,7 +195,7 @@ public class JsonUtils {
 				ids.add(0, 0);
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
-		} catch (final NoSuchFieldException | SecurityException ignore) {}
+		} catch (@SuppressWarnings("unused") final NoSuchFieldException | SecurityException ignore) {/* do nothing */}
 		return map("type",
 				"string",
 				"uniqueItems",
@@ -208,7 +209,7 @@ public class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, final JsonHint hint) {
+	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, @Nullable final JsonHint hint) {
 		JsonHint jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
@@ -315,7 +316,7 @@ public class JsonUtils {
 		}
 	}
 
-	private static Map<String, Object> toJsonSchema_internal(final Type type, final JsonHint hint) {
+	private static Map<String, Object> toJsonSchema_internal(final Type type, @Nullable final JsonHint hint) {
 		if (type instanceof Class) {
 			JsonHint jsonHint = hint;
 			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
@@ -345,7 +346,9 @@ public class JsonUtils {
 		}
 	}
 
-	private static Map<String, Object> makeNumber(final boolean wholeNumbers, final Object min, final Object max) {
+	private static Map<String, Object> makeNumber(final boolean wholeNumbers,
+			@Nullable final Object min,
+			@Nullable final Object max) {
 		final Map<String, Object> map = map("type", "number");
 		if (min != null) {
 			map.put("minimum", min);

@@ -19,9 +19,11 @@ package com.hlag.oversigt.util;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 
 import com.google.common.io.Resources;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.UndertowMessages;
 import io.undertow.server.handlers.resource.Resource;
 import io.undertow.server.handlers.resource.ResourceChangeListener;
@@ -53,16 +55,13 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public Resource getResource(final String path) throws IOException {
-		String modPath = path;
+	public Resource getResource(@Nullable final String path) throws IOException {
+		String modPath = Objects.requireNonNull(path);
 		if (modPath.startsWith("/")) {
 			modPath = path.substring(1);
 		}
 		final String realPath = prefix + modPath;
 		final URL resourceUrl = getResourceUrl(realPath);
-		if (resourceUrl == null) {
-			return null;
-		}
 		return new URLResource(resourceUrl, path);
 	}
 
@@ -76,15 +75,17 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public void registerResourceChangeListener(final ResourceChangeListener listener) {
+	public void registerResourceChangeListener(
+			@SuppressWarnings("unused") @Nullable final ResourceChangeListener listener) {
 		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
 	}
 
 	@Override
-	public void removeResourceChangeListener(final ResourceChangeListener listener) {
+	public void removeResourceChangeListener(
+			@SuppressWarnings("unused") @Nullable final ResourceChangeListener listener) {
 		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
 	}
 
 	@Override
-	public void close() throws IOException {}
+	public void close() throws IOException {/* nothing to close here */}
 }

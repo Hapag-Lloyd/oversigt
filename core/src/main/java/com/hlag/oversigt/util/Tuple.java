@@ -6,6 +6,11 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * @deprecated Create specialized classes instead of using this class. The class
+ *             {@link Tuple} is way too generic to be really useful.
+ */
+@Deprecated
 public class Tuple<A, B> {
 	private final A a;
 

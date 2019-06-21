@@ -35,8 +35,8 @@ import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Role;
-import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -218,8 +218,15 @@ public class SerializablePropertyResource {
 			return ErrorResponse.badRequest("Cannot update serializable property", errors);
 		}
 
-		spController.getMembers(clazz)
-				.forEach(ThrowingConsumer.sneakc(m -> m.set(prop, map.get(m.getName()).toString())));
+		// TODO make change in a copy of the property and then write changes to real
+		// object
+		for (final SerializablePropertyMember member : spController.getMembers(clazz)) {
+			try {
+				member.set(prop, map.get(member.getName()).toString());
+			} catch (final MemberMissingException e) {
+				throw new RuntimeException("Cannot find member: " + member.getName(), e);
+			}
+		}
 		spController.updateProperty(prop);
 		dController.restartInstancesUsingSerializableProperty(prop);
 

@@ -25,6 +25,8 @@ import javax.net.ssl.X509TrustManager;
 
 import com.google.common.io.Resources;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public final class SSLUtils {
 	private SSLUtils() {}
 
@@ -70,14 +72,16 @@ public final class SSLUtils {
 			final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
 				@Override
 				public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-					return null;
+					return new X509Certificate[0];
 				}
 
 				@Override
-				public void checkClientTrusted(final X509Certificate[] certs, final String authType) {}
+				public void checkClientTrusted(@SuppressWarnings("unused") @Nullable final X509Certificate[] certs,
+						@SuppressWarnings("unused") @Nullable final String authType) {/* do nothing */}
 
 				@Override
-				public void checkServerTrusted(final X509Certificate[] certs, final String authType) {}
+				public void checkServerTrusted(@SuppressWarnings("unused") @Nullable final X509Certificate[] certs,
+						@SuppressWarnings("unused") @Nullable final String authType) {/* do nothing */}
 			} };
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 			return sslContext;

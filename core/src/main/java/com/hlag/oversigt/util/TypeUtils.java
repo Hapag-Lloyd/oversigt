@@ -43,6 +43,7 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Member;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class TypeUtils {
 
@@ -54,14 +55,14 @@ public final class TypeUtils {
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Class<T> assignableTo) {
-		return findClasses(packageToSearch, assignableTo, null);
+		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
 		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c) && //
-				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent)));
+				c.isAnnotationPresent(annotationToBePresent));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Predicate<Class<?>> filter) {
@@ -392,11 +393,11 @@ public final class TypeUtils {
 		}
 	}
 
-	public static Method getMethod(final Class<?> clazz,
+	public static Optional<Method> getMethod(final Class<?> clazz,
 			final List<String> methodNames,
 			final Class<?>[] parameterTypes) {
-		if (methodNames == null || methodNames.isEmpty()) {
-			return null;
+		if (methodNames.isEmpty()) {
+			return Optional.empty();
 		}
 
 		Class<?> currentClazz = clazz;
@@ -408,11 +409,11 @@ public final class TypeUtils {
 					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))//
 					.findFirst();
 			if (method.isPresent()) {
-				return method.get();
+				return method;
 			}
 			currentClazz = currentClazz.getSuperclass();
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private static int getClassDepth(final Class<?> clazz) {
@@ -452,9 +453,16 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public int compare(final Method a, final Method b) {
-			return Integer.compare(methodNames.indexOf(a.getName()), methodNames.indexOf(b.getName()));
+		public int compare(@Nullable final Method a, @Nullable final Method b) {
+			return Integer.compare(methodNames.indexOf(getName(a)), methodNames.indexOf(getName(b)));
 		}
+	}
+
+	private static String getName(@Nullable final Method method) {
+		if (method == null) {
+			return "";
+		}
+		return method.getName();
 	}
 
 	public static final class SerializablePropertyMember {
@@ -477,17 +485,22 @@ public final class TypeUtils {
 					field,
 					field.getName(),
 					Type.fromField(field),
-					field.isAnnotationPresent(Member.class) ? field.getAnnotation(Member.class) : null);
+					field.isAnnotationPresent(Member.class)
+							? Optional.of(field.getAnnotation(Member.class))
+							: Optional.empty());
 		}
 
-		private SerializablePropertyMember(final Field field, final String name, final Type type, final Member member) {
+		private SerializablePropertyMember(final Field field,
+				final String name,
+				final Type type,
+				final Optional<Member> member) {
 			this(//
 					field,
 					name,
 					type,
-					member != null ? member.icon() : "tag",
-					member != null ? member.size() : 2,
-					member != null ? member.mayBeEmpty() : false);
+					member.map(Member::icon).orElse("tag"),
+					member.map(Member::size).orElse(2),
+					member.map(Member::mayBeEmpty).orElse(false));
 		}
 
 		private SerializablePropertyMember(final Field field,
@@ -517,11 +530,12 @@ public final class TypeUtils {
 			return TypeUtils.createInstance(getClazz(), stringValue);
 		}
 
+		// TODO check if really unused
 		public void set(final SerializableProperty property, final String value) throws MemberMissingException {
 			set(property, createInstance(value));
 		}
 
-		public void set(final SerializableProperty property, final Object object) throws MemberMissingException {
+		public void set(final SerializableProperty property, final Object object) {
 			try {
 				field.set(property, object);
 			} catch (final IllegalArgumentException | IllegalAccessException e) {
@@ -568,7 +582,7 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(@Nullable final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -631,7 +645,6 @@ public final class TypeUtils {
 
 			private MemberMissingException(final String message) {
 				super(message);
-				// TODO Auto-generated constructor stub
 			}
 		}
 	}
@@ -651,7 +664,9 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public Object invoke(final Object object, final Method method, final Object[] args) throws Throwable {
+		public Object invoke(@SuppressWarnings("unused") @Nullable final Object object,
+				@Nullable final Method method,
+				@SuppressWarnings("unused") @Nullable final Object[] args) throws Throwable {
 			return returns.stream()
 					.filter(r -> r.getMethod().equals(method))
 					.map(ReturnValue::getReturnValue)

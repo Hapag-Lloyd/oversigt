@@ -44,7 +44,6 @@ import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.security.Roles;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Nullables;
@@ -82,22 +81,46 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		if (filename.toLowerCase().endsWith(".ftl.html")) {
 			filename = filename.substring(0, filename.length() - ".ftl.html".length());
 		}
-		final Tuple<String, String> info = getConfigPatternInfo(path);
+		final ConfigPatternInfo info = getConfigPatternInfo(path);
 		final Matcher m = PAGE_NUMBER_PATTERN.matcher(filename);
 		m.find();
-		return new PageInfo(m.group(1), path, info.getFirst(), info.getSecond());
+		return new PageInfo(m.group(1), path, info.getFilename(), info.getNeededRole());
 	}
 
-	private static Tuple<String, String> getConfigPatternInfo(final String filename) {
+	private static ConfigPatternInfo getConfigPatternInfo(final String filename) {
 		try {
 			final String content = readContentString(filename);
 			final Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
 			if (matcher.find()) {
-				return new Tuple<>(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
+				return new ConfigPatternInfo(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
 			}
-			return new Tuple<>(filename, null);
+			return new ConfigPatternInfo(filename);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private static final class ConfigPatternInfo {
+		private final String filename;
+
+		private final Optional<String> neededRole;
+
+		ConfigPatternInfo(final String filename) {
+			this.filename = filename;
+			neededRole = Optional.empty();
+		}
+
+		ConfigPatternInfo(final String filename, final String neededRole) {
+			this.filename = filename;
+			this.neededRole = Optional.of(neededRole);
+		}
+
+		public String getFilename() {
+			return filename;
+		}
+
+		public Optional<String> getNeededRole() {
+			return neededRole;
 		}
 	}
 
@@ -361,11 +384,11 @@ public class AbstractConfigurationHandler implements HttpHandler {
 						}
 					}
 				} else {
-					badRequest(exchange, "Action '" + action.get() + "' not found.");
+					badRequest(exchange);
 					return;
 				}
 			} else {
-				badRequest(exchange, "No action found");
+				badRequest(exchange);
 				return;
 			}
 		} catch (final Throwable e) {
@@ -383,8 +406,13 @@ public class AbstractConfigurationHandler implements HttpHandler {
 
 		private final Role neededRole;
 
-		PageInfo(final String name, final String filename, final String title, final String neededRole) {
-			this(name, filename, title, Roles.maybeFromString(neededRole).map(Roles::getRole).orElse(null));
+		PageInfo(final String name, final String filename, final String title, final Optional<String> neededRole) {
+			this(name,
+					filename,
+					title,
+					Roles.maybeFromString(neededRole.orElse(null)/* TODO remove null */)
+							.map(Roles::getRole)
+							.orElse(null));
 		}
 
 		PageInfo(final String name, final String filename, final String title, final Role neededRole) {

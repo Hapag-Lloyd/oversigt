@@ -35,9 +35,6 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 	@Override
 	protected TwoColumnListEvent<String> produceExchangeEvent() throws Exception {
 		final List<Task> tasks = getExchangeClient().loadTasks();
-		if (tasks == null) {
-			return null;
-		}
 		final TwoColumnListEvent<String> event = createEvent(tasks);
 		return event;
 	}

@@ -42,17 +42,14 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	private static EventSourceKey findKeyFromClass(final String className) {
-		EventSourceKey key = detectPackageMove(KEYS, className);
-		if (key == null) {
+		Optional<EventSourceKey> key = detectPackageMove(KEYS, className);
+		if (!key.isPresent()) {
 			key = detectSimpleRename(KEYS, className);
 		}
-		if (key == null) {
+		if (!key.isPresent()) {
 			key = detectComplexRename(KEYS, className);
 		}
-		if (key == null) {
-			throw new RuntimeException("Unable to find matching class for: " + className);
-		}
-		return key;
+		return key.orElseThrow(() -> new RuntimeException("Unable to find matching class for: " + className));
 	}
 
 	private static EventSourceKey findKeyFromWidget(final String widget) {

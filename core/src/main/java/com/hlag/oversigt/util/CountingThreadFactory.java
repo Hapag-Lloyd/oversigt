@@ -5,6 +5,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * A thread factory that is counting the number of threads created. Every thread
  * created can be uniquely identified by its number.
@@ -69,8 +71,9 @@ public class CountingThreadFactory implements ThreadFactory {
 
 	/** {@inheritDoc} */
 	@Override
-	public Thread newThread(final Runnable runnable) {
-		final Thread thread = new Thread(runnable, namePrefix + threadCounter.incrementAndGet());
+	public Thread newThread(@Nullable final Runnable runnable) {
+		final Runnable runnableToExecute = runnable != null ? runnable : () -> {/* create empty runnable */};
+		final Thread thread = new Thread(runnableToExecute, namePrefix + threadCounter.incrementAndGet());
 		threadModifier.accept(thread);
 		return thread;
 	}

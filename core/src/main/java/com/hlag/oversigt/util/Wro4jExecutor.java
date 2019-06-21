@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.hlag.oversigt.util.TypeUtils.ClassProxy;
 import com.hlag.oversigt.util.TypeUtils.ReturnValue;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import ro.isdc.wro.WroRuntimeException;
 import ro.isdc.wro.config.Context;
 import ro.isdc.wro.config.factory.PropertyWroConfigurationFactory;
@@ -130,7 +131,7 @@ public class Wro4jExecutor {
 		}
 
 		@Override
-		public void initialize(final StandaloneContext standaloneContext) {
+		public void initialize(@Nullable final StandaloneContext standaloneContext) {
 			Context.get().setConfig(initConfiguration());
 			super.initialize(standaloneContext);
 		}
@@ -163,7 +164,7 @@ public class Wro4jExecutor {
 		protected UriLocatorFactory newUriLocatorFactory() {
 			return new ConfigurableLocatorFactory() {
 				@Override
-				public UriLocator getInstance(final String uri) {
+				public UriLocator getInstance(@Nullable final String uri) {
 					final UriLocator locator = super.getInstance(uri);
 					// ensure standalone context is provided to each locator requiring it for
 					// initialization.

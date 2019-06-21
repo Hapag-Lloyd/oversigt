@@ -43,6 +43,7 @@ import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Roles;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -298,12 +299,13 @@ public class MailSender {
 	}
 
 	private javax.mail.Authenticator createAuthenticator() {
-		if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
-			return null;
-		}
 		return new javax.mail.Authenticator() {
+			@Nullable
 			@Override
 			protected PasswordAuthentication getPasswordAuthentication() {
+				if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
+					return null;
+				}
 				return new PasswordAuthentication(username, password);
 			}
 		};

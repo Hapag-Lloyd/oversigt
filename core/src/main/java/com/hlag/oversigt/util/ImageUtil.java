@@ -19,7 +19,7 @@ public final class ImageUtil {
 	private static boolean isFileAvailable(final String path) {
 		try (InputStream in = Oversigt.class.getClassLoader().getResourceAsStream(path)) {
 			return in != null;
-		} catch (final Exception ignore) {
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			return false;
 		}
 	}

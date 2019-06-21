@@ -3,6 +3,7 @@ package com.hlag.oversigt.util.text;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,14 +13,18 @@ import javax.xml.datatype.DatatypeFactory;
 import com.google.inject.Inject;
 import com.jayway.jsonpath.Configuration;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
 			= Pattern.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
 
 	@Inject
+	@Nullable
 	private static Configuration jsonPathConfiguration;
 
 	@Inject
+	@Nullable
 	private static DatatypeFactory dataTypeFactory;
 
 	public static TextProcessor create() {
@@ -36,7 +41,7 @@ public final class TextProcessor {
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
-		final DatetimeFunction datetimeFunction = new DatetimeFunction(dataTypeFactory);
+		final DatetimeFunction datetimeFunction = new DatetimeFunction(Objects.requireNonNull(dataTypeFactory));
 		registerFunction("datetime", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 		registerFunction("date", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE));
 		registerFunction("time", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_TIME));
@@ -45,7 +50,7 @@ public final class TextProcessor {
 
 	public TextProcessor registerJsonPathFunction(final String json) {
 		return registerFunction("jsonpath",
-				jsonpath -> new JsonPathFunction(jsonPathConfiguration, json).apply(jsonpath));
+				jsonpath -> new JsonPathFunction(Objects.requireNonNull(jsonPathConfiguration), json).apply(jsonpath));
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {

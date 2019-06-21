@@ -7,24 +7,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.larssh.utils.function.ThrowingFunction;
+import com.hlag.oversigt.util.ThrowingFunction;
 
 public abstract class DatabaseCache<T> {
 	public static <X> DatabaseCache<X> createCache(final ThrowingFunction<Connection, Collection<X>> readFunction) {
 		return new DatabaseCache<X>() {
 			@Override
 			protected Collection<X> readItems(final Connection connection) throws SQLException {
-				// TODO why is ThrowingFunction @Nullable?
-				return Optional//
-						.ofNullable(readFunction.apply(connection))
-						.orElse(new ArrayList<>());
+				return readFunction.apply(connection);
 			}
 		};
 	}

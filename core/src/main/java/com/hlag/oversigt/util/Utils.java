@@ -29,6 +29,7 @@ import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class Utils {
 	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
@@ -167,7 +168,7 @@ public final class Utils {
 		return values;
 	}
 
-	public static String notNullOrEmpty(final String stringToCheck, final String errorMessage) {
+	public static String notNullOrEmpty(@Nullable final String stringToCheck, final String errorMessage) {
 		if (requireNonNull(stringToCheck, errorMessage).isEmpty()) {
 			throw new IllegalArgumentException(errorMessage);
 		}
