@@ -167,11 +167,11 @@ public final class Utils {
 		return values;
 	}
 
-	public static String notNullOrEmpty(final String string, final String message) {
-		if (requireNonNull(string, message).isEmpty()) {
-			throw new IllegalArgumentException(message);
+	public static String notNullOrEmpty(final String stringToCheck, final String errorMessage) {
+		if (requireNonNull(stringToCheck, errorMessage).isEmpty()) {
+			throw new IllegalArgumentException(errorMessage);
 		}
-		return string;
+		return stringToCheck;
 	}
 
 	public static <T> Map<String, T> removePasswords(final Map<String, T> map, final T empty) {

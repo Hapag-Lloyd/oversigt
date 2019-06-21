@@ -11,8 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +23,8 @@ import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.ThrowingFunction;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class SerializablePropertyController {
@@ -113,6 +113,10 @@ public class SerializablePropertyController {
 
 	public Collection<SerializablePropertyMember> getMembers(final Class<? extends SerializableProperty> clazz) {
 		return TypeUtils.getSerializablePropertyMembers(clazz);
+	}
+
+	public String toString(@Nullable final SerializableProperty value) {
+		return value == null ? "0" : Integer.toString(value.getId());
 	}
 
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,

@@ -65,8 +65,8 @@ public class LoginHandler implements HttpHandler {
 					} else {
 						break;
 					}
-				} catch (final Exception ignore) {}
-			} catch (final IllegalArgumentException e) {
+				} catch (@SuppressWarnings("unused") final Exception ignore) { /* do nothing */ }
+			} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
 				break;
 			}
 		}
@@ -110,11 +110,11 @@ public class LoginHandler implements HttpHandler {
 			final String username = exchangeHelper.param(formData, "username");
 			final String password = exchangeHelper.param(formData, "password");
 
-			final Principal user = authenticator.login(username, password);
-			if (user != null) {
+			final Optional<Principal> principal = authenticator.login(username, password);
+			if (principal.isPresent()) {
 				final Session session = exchangeHelper.getOrCreateSession(exchange);
-				session.setAttribute("PRINCIPAL", user);
-				CHANGE_LOGGER.info("User logged in: " + user.getUsername());
+				session.setAttribute("PRINCIPAL", principal.get());
+				CHANGE_LOGGER.info("User logged in: " + principal.get().getUsername());
 				HttpUtils.redirect(exchange, exchange.getRequestURI(), true, true);
 			} else {
 				HttpUtils.redirect(exchange, "?message=failed", false, true);

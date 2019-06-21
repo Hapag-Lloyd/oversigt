@@ -30,13 +30,13 @@ public class Principal implements java.security.Principal {
 	 * @throws java.util.NoSuchElementException if the principal could not be
 	 *                                          loaded.
 	 */
-	public static Principal loadPrincipal(final Authenticator authenticator, final String username) {
+	public static Optional<Principal> loadPrincipal(final Authenticator authenticator, final String username) {
 		principals.computeIfAbsent(username, name -> {
-			final Principal principal = authenticator.readPrincipal(name);
+			final Optional<Principal> principal = authenticator.readPrincipal(name);
 			authenticator.reloadRoles(name);
-			return principal;
+			return principal.orElse(null);
 		});
-		return getPrincipal(username).get();
+		return Optional.ofNullable(getPrincipal(username).get());
 	}
 
 	private final String distinguishedName;
@@ -95,8 +95,10 @@ public class Principal implements java.security.Principal {
 	}
 
 	public synchronized boolean hasRole(final Role role) {
-		for (Role currentRole = role; currentRole != null; currentRole = currentRole.getParent()) {
-			if (roles.contains(currentRole)) {
+		for (Optional<Role> currentRole = Optional.of(role);
+				currentRole.isPresent();
+				currentRole = currentRole.get().getParent()) {
+			if (roles.contains(currentRole.get())) {
 				return true;
 			}
 		}

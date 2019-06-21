@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
 
@@ -160,8 +161,11 @@ public class MailSender {
 			final String title,
 			final String templatePath,
 			final Map<String, Object> model) {
-		final Principal receiver = authenticator.readPrincipal(userId);
-		sendMail(sender, receiver.getName(), receiver.getEmail(), subject, title, templatePath, model);
+		final Optional<Principal> receiver = authenticator.readPrincipal(userId);
+		if (!receiver.isPresent()) {
+			throw new RuntimeException("Unknown receiver principal: " + userId);
+		}
+		sendMail(sender, receiver.get().getName(), receiver.get().getEmail(), subject, title, templatePath, model);
 	}
 
 	private void sendMail(final Principal sender,

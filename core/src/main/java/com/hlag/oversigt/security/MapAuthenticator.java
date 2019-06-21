@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,20 +31,23 @@ public class MapAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public Principal login(final String username, final String password) {
+	public Optional<Principal> login(final String username, final String password) {
 		Objects.requireNonNull(username, "Username must not be null");
 		Objects.requireNonNull(password, "Password must not be null");
 
 		final String savedPassword = usernamesToPasswords.get(username);
 		if (!password.equals(savedPassword)) {
-			return null;
+			return Optional.empty();
 		}
-		return new Principal(username, roleProvider.getRoles(username));
+		return Optional.of(new Principal(username, roleProvider.getRoles(username)));
 	}
 
 	@Override
-	public Principal readPrincipal(final String username) {
-		return new Principal(username, new HashSet<>());
+	public Optional<Principal> readPrincipal(final String username) {
+		if (!usernamesToPasswords.containsKey(username)) {
+			return Optional.empty();
+		}
+		return Optional.of(new Principal(username, new HashSet<>()));
 	}
 
 	@Override
@@ -58,5 +62,5 @@ public class MapAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public void close() {}
+	public void close() {/* do nothing */}
 }

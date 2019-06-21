@@ -2,6 +2,8 @@ package com.hlag.oversigt.security;
 
 import java.util.Optional;
 
+import org.jboss.weld.exceptions.IllegalArgumentException;
+
 public enum Roles {
 	ADMIN("Server Admin", "server.admin", Role.SERVER_ADMIN),
 	DASHBOARD_OWNER("Owner", "server.dashboard.owner", Role.DASHBOARD_OWNER),
@@ -41,6 +43,6 @@ public enum Roles {
 				return roles;
 			}
 		}
-		return null;
+		throw new IllegalArgumentException(String.format("The value '%s' is not a valid role.", string));
 	}
 }

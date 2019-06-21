@@ -114,7 +114,8 @@ public class DashboardResource {
 		}
 
 		dashboard = dashboardController.createDashboard(id,
-				Principal.loadPrincipal(authenticator, ownerUserId),
+				Principal.loadPrincipal(authenticator, ownerUserId)
+						.orElseThrow(() -> new RuntimeException("Unknown principal for: " + ownerUserId)),
 				enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));
 		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId()))//
 				.entity(dashboard)
