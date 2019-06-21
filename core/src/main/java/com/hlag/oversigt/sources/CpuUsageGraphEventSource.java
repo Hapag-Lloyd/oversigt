@@ -169,7 +169,9 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 				if (path != null) {
 					try {
 						path.toFile().delete();
-					} catch (final Exception ignore) {}
+					} catch (final Exception ignore) {
+						// empty on purpose
+					}
 				}
 			}
 		}

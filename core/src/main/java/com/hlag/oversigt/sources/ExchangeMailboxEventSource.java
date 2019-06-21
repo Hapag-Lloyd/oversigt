@@ -1,16 +1,12 @@
 package com.hlag.oversigt.sources;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever;
-import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.Mail;
-import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.MailboxFolder;
-import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever.MailboxInfoLoadingProvider;
+import com.hlag.oversigt.connect.exchange.Mail;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Color;
@@ -25,40 +21,90 @@ import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFo
  * @author Constantin Pagenkopp
  */
 @EventSource(view = "HlBarChart", displayName = "Microsoft Exchange Mailbox Viewer")
-public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBarChartEvent>
-		implements MailboxInfoLoadingProvider {
+public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBarChartEvent> {
 
 	private static final String UNASSIGNED_LABEL = "NN";
 
 	private static final Color UNASSIGNED_COLOR = Color.Gray;
 
-	@Override
-	protected void shutDown() throws Exception {
-		MailboxInfoRetriever.getInstance().removeProvider(getMailboxName(), getFolderName());
-		super.shutDown();
+	private double serieMinimum = 0.35;
+
+	private String folderName = WellKnownFolderName.Inbox.name();
+
+	private boolean showEmptyCategories = false;
+
+	private DisplayOption[] displayOptions = null;
+
+	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);
+
+	@Property(name = "Folder Name", description = "The folder to be examined be this event source")
+	public String getFolderName() {
+		return folderName;
 	}
 
-	@Override
-	protected void startUp() throws Exception {
-		MailboxInfoRetriever.getInstance().registerProvider(getMailboxName(), getFolderName(), this);
-		super.startUp();
+	public void setFolderName(final String folderName) {
+		this.folderName = folderName;
+	}
+
+	// TODO this property should be a property of the Widget, not of the
+	// EventSource. The EventSource needs to differentiate the categories, but it
+	// should be up to the Widget, how the categories are displayed
+	@Property(name = "Display Options",
+			description = "Optional mapping of original display values to originated display options, such as value and color.")
+	public DisplayOption[] getDisplayOptions() {
+		if (displayOptions == null) {
+			return new DisplayOption[0];
+		}
+		return displayOptions;
+	}
+
+	public void setDisplayOptions(final DisplayOption[] displayOptions) {
+		this.displayOptions = displayOptions;
+	}
+
+	@Property(name = "Default Display Option",
+			description = "Optionally all unmapped display values can be displayed by this value and color.")
+	public DisplayOption getDefaultDisplayOption() {
+		return defaultDisplayOption;
+	}
+
+	public void setDefaultDisplayOption(final DisplayOption defaultDisplayOption) {
+		this.defaultDisplayOption = defaultDisplayOption;
+	}
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = "Show Empty Categories",
+			description = "If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.")
+	public boolean getShowEmptyCategories() {
+		return showEmptyCategories;
+	}
+
+	public void setShowEmptyCategories(final boolean showEmptyCategories) {
+		this.showEmptyCategories = showEmptyCategories;
+	}
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = "Series Minimum",
+			description = "The minimum percentage height of the series. A bar will never get below this height.")
+	public double getSerieMinimum() {
+		return serieMinimum;
+	}
+
+	public void setSerieMinimum(final double serieMinimum) {
+		this.serieMinimum = serieMinimum;
 	}
 
 	@Override
 	protected HlBarChartEvent produceExchangeEvent() throws Exception {
-		final String mailboxName = getMailboxName();
-		final String folderName = getFolderName();
-		final MailboxFolder mailboxFolder = MailboxInfoRetriever.getInstance().getMailbox(mailboxName, folderName);
-		if (mailboxFolder == null) {
-			return null;
-		}
-		return createEvent(mailboxFolder.getMails());
+		final List<Mail> mails = getExchangeClient().loadMails(getFolderName());
+		return createEvent(mails);
 	}
 
 	@Override
 	protected String getFailureMessage(final Exception e) {
 		if (e instanceof IllegalArgumentException && getClass() == ExchangeMailboxEventSource.class) {
-			return failure(String.format("Unable to read folder %s in mailbox %s", getFolderName(), getMailboxName()));
+			return failure(String
+					.format("Unable to read folder %s for user %s", getFolderName(), getCredentials().getUsername()));
 		}
 		return null;
 	}
@@ -132,7 +178,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 			try {
 				info = infos.stream().filter(i -> i.option.getValue().equals(categoryName)).findAny().get();
 			} catch (final Exception e) {
-				getLogger().warn("Unable to get display option for category: " + categoryName);
+				getLogger().warn("Unable to get display option for category: " + categoryName, e);
 			}
 		}
 		if (info == null) {
@@ -143,97 +189,6 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		if (!mail.isRead()) {
 			info.unread += 1;
 		}
-	}
-
-	private Duration reloadInterval = Duration.ofMinutes(1);
-
-	private double serieMinimum = 0.35;
-
-	private String mailboxName = "";
-
-	private String folderName = WellKnownFolderName.Inbox.name();
-
-	private boolean showEmptyCategories = false;
-
-	private DisplayOption[] displayOptions = null;
-
-	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);
-
-	@Property(name = "Mailbox Name", description = "The name of the mailbox to inspect")
-	public String getMailboxName() {
-		return mailboxName;
-	}
-
-	public void setMailboxName(final String mailboxName) {
-		this.mailboxName = mailboxName;
-	}
-
-	@Property(name = "Folder Name", description = "The folder to be examined be this event source")
-	public String getFolderName() {
-		return folderName;
-	}
-
-	public void setFolderName(final String folderName) {
-		this.folderName = folderName;
-	}
-
-	// TODO this property should be a property of the Widget, not of the
-	// EventSource. The EventSource needs to differentiate the categories, but it
-	// should be up to the Widget, how the categories are displayed
-	@Property(name = "Display Options",
-			description = "Optional mapping of original display values to originated display options, such as value and color.")
-	public DisplayOption[] getDisplayOptions() {
-		if (displayOptions == null) {
-			return new DisplayOption[0];
-		}
-		return displayOptions;
-	}
-
-	public void setDisplayOptions(final DisplayOption[] displayOptions) {
-		this.displayOptions = displayOptions;
-	}
-
-	@Property(name = "Default Display Option",
-			description = "Optionally all unmapped display values can be displayed by this value and color.")
-	public DisplayOption getDefaultDisplayOption() {
-		return defaultDisplayOption;
-	}
-
-	public void setDefaultDisplayOption(final DisplayOption defaultDisplayOption) {
-		this.defaultDisplayOption = defaultDisplayOption;
-	}
-
-	// TODO this property should be a property of the Widget, not of the EventSource
-	@Property(name = "Show Empty Categories",
-			description = "If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.")
-	public boolean getShowEmptyCategories() {
-		return showEmptyCategories;
-	}
-
-	public void setShowEmptyCategories(final boolean showEmptyCategories) {
-		this.showEmptyCategories = showEmptyCategories;
-	}
-
-	// TODO this property should be a property of the Widget, not of the EventSource
-	@Property(name = "Series Minimum",
-			description = "The minimum percentage height of the series. A bar will never get below this height.")
-	public double getSerieMinimum() {
-		return serieMinimum;
-	}
-
-	public void setSerieMinimum(final double serieMinimum) {
-		this.serieMinimum = serieMinimum;
-	}
-
-	@Override
-	@Property(name = "Reload Interval",
-			description = "How often should the event source query the server to get mailbox information?")
-	public Duration getReloadInterval() {
-		return reloadInterval;
-	}
-
-	public void setReloadInterval(final Duration reloadInterval) {
-		this.reloadInterval = reloadInterval;
 	}
 
 	private static class CategoryInfo {
