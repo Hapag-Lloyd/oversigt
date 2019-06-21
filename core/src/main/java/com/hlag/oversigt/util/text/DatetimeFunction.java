@@ -9,11 +9,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAmount;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.datatype.DatatypeFactory;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 // public modifier for Guice-Injection
 class DatetimeFunction implements Function<String, LocalDateTime> {
@@ -31,7 +34,8 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 	}
 
 	@Override
-	public LocalDateTime apply(final String input) {
+	public LocalDateTime apply(@Nullable final String input) {
+		Objects.requireNonNull(input, "Input for a date time function must be non null");
 		if (!PATTERN_DATETIME_COMPLETE.matcher(input).matches()) {
 			throw new RuntimeException("Expression '" + input + "' cannot be parsed for dates and times.");
 		}

@@ -1,10 +1,13 @@
 package com.hlag.oversigt.util.text;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Strings;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 class RegularExpressionFunction implements Function<String, String> {
 	private final String value;
@@ -14,7 +17,8 @@ class RegularExpressionFunction implements Function<String, String> {
 	}
 
 	@Override
-	public String apply(final String regex) {
+	public String apply(@Nullable final String regex) {
+		Objects.requireNonNull(regex, "Input for a Regex must be non null");
 		final Matcher matcher = Pattern.compile(regex).matcher(value); // TODO: Cache pattern statically
 
 		// Return empty string if not found
