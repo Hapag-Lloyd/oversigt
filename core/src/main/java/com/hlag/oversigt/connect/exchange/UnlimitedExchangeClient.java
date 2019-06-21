@@ -188,17 +188,17 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 			final FindItemsResults<Appointment> apps = cf.findAppointments(cv);
 			final List<Meeting> meetings = new ArrayList<>();
 			for (final Appointment app : apps) {
-				meetings.add(new Meeting(room, app, app.getStart(), app.getEnd(), app.getSubject(), zoneId));
+				meetings.add(new Meeting(room, app.getStart(), app.getEnd(), zoneId));
 			}
 			return meetings;
 		} catch (final Exception e) {
 			if (e instanceof ServiceRequestException && "The request failed. 40".equals(e.getMessage())) {
 				// Happens sometimes. Ignore it
-				return null;
+				return new ArrayList<>();
 			} else if (e instanceof ServiceResponseException
 					&& "The specified folder could not be found in the store.".equals(e.getMessage())) {
 						LOGGER.warn("Unable to get Meetings for " + room.getName() + ". " + e.getMessage(), e);
-						return null;
+						return new ArrayList<>();
 					}
 			throw new RuntimeException("Unable to get appointments", e);
 		}
@@ -224,9 +224,9 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 			meetings.put(room,
 					availability.getCalendarEvents()
 							.stream()
-							.filter(e -> e.getStartTime().toInstant().isBefore(toInstant))
-							.filter(e -> e.getEndTime().toInstant().isAfter(fromInstant))
-							.map(e -> new Meeting(room, e, zoneId))
+							.filter(event -> event.getStartTime().toInstant().isBefore(toInstant))
+							.filter(event -> event.getEndTime().toInstant().isAfter(fromInstant))
+							.map(event -> new Meeting(room, event.getStartTime(), event.getEndTime(), zoneId))
 							.collect(Collectors.toList()));
 			index += 1;
 		}

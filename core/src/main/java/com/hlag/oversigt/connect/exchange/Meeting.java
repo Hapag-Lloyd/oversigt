@@ -4,49 +4,22 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
-import microsoft.exchange.webservices.data.core.service.item.Appointment;
-import microsoft.exchange.webservices.data.property.complex.availability.CalendarEvent;
-
 public final class Meeting {
 
 	private final Room room;
 
-	private final ZonedDateTime start;
+	private final ZonedDateTime startTime;
 
-	private final ZonedDateTime end;
+	private final ZonedDateTime endTime;
 
-	private final String organizer;
-
-	private final Appointment appointment;
-
-	Meeting(final Room room, final CalendarEvent event, final ZoneId zone) {
-		this(room,
-				null,
-				event.getStartTime(),
-				event.getEndTime(),
-				event.getDetails() != null ? event.getDetails().getSubject() : "Unknown",
-				zone);
+	Meeting(final Room room, final Date startTime, final Date endTime, final ZoneId zoneId) {
+		this(room, startTime.toInstant().atZone(zoneId), endTime.toInstant().atZone(zoneId));
 	}
 
-	Meeting(final Room room,
-			final Appointment appointment,
-			final Date start,
-			final Date end,
-			final String organizer,
-			final ZoneId zone) {
-		this(room, appointment, start.toInstant().atZone(zone), end.toInstant().atZone(zone), organizer);
-	}
-
-	private Meeting(final Room room,
-			final Appointment appointment,
-			final ZonedDateTime start,
-			final ZonedDateTime end,
-			final String organizer) {
+	private Meeting(final Room room, final ZonedDateTime startTime, final ZonedDateTime endTime) {
 		this.room = room;
-		this.start = start;
-		this.end = end;
-		this.organizer = organizer;
-		this.appointment = appointment;
+		this.startTime = startTime;
+		this.endTime = endTime;
 	}
 
 	public Room getRoom() {
@@ -54,23 +27,15 @@ public final class Meeting {
 	}
 
 	public ZonedDateTime getStart() {
-		return start;
-	}
-
-	public String getOrganizer() {
-		return organizer;
+		return startTime;
 	}
 
 	public ZonedDateTime getEnd() {
-		return end;
-	}
-
-	Appointment getAppointment() {
-		return appointment;
+		return endTime;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("Meeting [%s, %s - %s, %s]", room.getName(), start, end, organizer);
+		return String.format("Meeting [%s, %s - %s, %s]", room.getName(), startTime, endTime);
 	}
 }
