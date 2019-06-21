@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -26,13 +25,9 @@ import de.jollyday.Holiday;
 import de.jollyday.HolidayCalendar;
 import de.jollyday.HolidayManager;
 import de.jollyday.ManagerParameters;
-import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.LegacyFreeBusyStatus;
-import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
 import microsoft.exchange.webservices.data.core.service.item.Appointment;
-import microsoft.exchange.webservices.data.search.CalendarView;
-import microsoft.exchange.webservices.data.search.FindItemsResults;
 
 /**
  * @author Constantin Pagenkopp
@@ -101,28 +96,13 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	}
 
 	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
-		final Optional<ExchangeService> service = createExchangeService();
-		if (service.isPresent()) {
-			/*
-			 * start search two month in the past to fetch all running all day appointments,
-			 * 5 month to handle a maternity leave for up to 2.5 months. running all day
-			 * events are also shown if they started in the past and continue to now or the
-			 * future.
-			 */
-			final CalendarView calendarView = getCalendarView(now.minusMonths(5).atStartOfDay(getZoneId()),
-					now.plus(getMaximumPointInFuture())
-							.plus(getMaximumPointInFuture())
-							.plusDays(1)
-							.atStartOfDay(getZoneId()));
-
-			final FindItemsResults<Appointment> findResults;
-			try {
-				findResults = service.get().findAppointments(WellKnownFolderName.Calendar, calendarView);
-			} catch (final Exception e) {
-				throw new RuntimeException("Unable to find appointments", e);
-			}
-			findResults.getItems().forEach(a -> addAppointment(event, a));
-		}
+		getExchangeClient()
+				.loadAppointments(now.minusMonths(5).atStartOfDay(getZoneId()),
+						now.plus(getMaximumPointInFuture())
+								.plus(getMaximumPointInFuture())
+								.plusDays(1)
+								.atStartOfDay(getZoneId()))
+				.forEach(appointment -> addAppointment(event, appointment));
 	}
 
 	private void addAppointment(final TimelineEvent event, final Appointment appointment) {

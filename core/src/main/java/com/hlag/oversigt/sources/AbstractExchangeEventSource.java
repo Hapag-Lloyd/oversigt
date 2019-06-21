@@ -1,31 +1,19 @@
 package com.hlag.oversigt.sources;
 
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.Optional;
 
-import com.hlag.oversigt.connect.exchange.MailboxInfoRetriever;
+import com.hlag.oversigt.connect.exchange.ExchangeClient;
+import com.hlag.oversigt.connect.exchange.ExchangeClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
-import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.exception.http.HttpErrorException;
 import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceRequestException;
-import microsoft.exchange.webservices.data.search.CalendarView;
 
 public abstract class AbstractExchangeEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
-	public static CalendarView getCalendarView(final ZonedDateTime start, final ZonedDateTime end) {
-		return new CalendarView(Date.from(start.toInstant()), Date.from(end.toInstant()));
-	}
-
-	private static boolean isExceptionToIgnore(final Exception e) {
-		return e instanceof ServiceRequestException //
-				&& e.getMessage().equals("The request failed. 40");
-	}
 
 	private static boolean isLoginException(final Exception e) {
 		return e instanceof ServiceRequestException //
@@ -42,6 +30,20 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	private Credentials credentials = Credentials.EMPTY;
 
 	private ZoneId zoneId = ZoneId.systemDefault();
+
+	private ExchangeClient exchangeClient;
+
+	@Override
+	protected void startUp() throws Exception {
+		exchangeClient = ExchangeClientFactory.createExchangeClient(getServerConnection(), getCredentials());
+		super.startUp();
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
+		exchangeClient.close();
+		super.shutDown();
+	}
 
 	@Property(name = "Exchange Server", description = "The exchange server to connect to.")
 	public final ServerConnection getServerConnection() {
@@ -72,16 +74,8 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		this.zoneId = zoneId;
 	}
 
-	protected Optional<ExchangeService> createExchangeService() {
-		if (getServerConnection() != null //
-				&& getServerConnection() != ServerConnection.EMPTY //
-				&& getCredentials() != null //
-				&& getCredentials() != Credentials.EMPTY) {
-			return Optional.of(MailboxInfoRetriever.createService(getServerConnection().getUrl(),
-					getCredentials().getUsername(),
-					getCredentials().getPassword()));
-		}
-		return Optional.empty();
+	protected ExchangeClient getExchangeClient() {
+		return exchangeClient;
 	}
 
 	@Override
@@ -89,9 +83,6 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		try {
 			return produceExchangeEvent();
 		} catch (final Exception e) {
-			if (isExceptionToIgnore(e)) {
-				return null;
-			}
 			if (isLoginException(e)) {
 				return failure(String.format("Unable to log in with user '%s' to %s",
 						getCredentials() != null ? getCredentials().getUsername() : "",
@@ -105,7 +96,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		}
 	}
 
-	protected String getFailureMessage(final Exception e) {
+	protected String getFailureMessage(@SuppressWarnings("unused") final Exception e) {
 		return null;
 	}
 
