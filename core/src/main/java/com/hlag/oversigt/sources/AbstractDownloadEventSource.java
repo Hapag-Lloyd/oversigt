@@ -437,18 +437,18 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	protected static final class DownloadData {
 		private final byte[] data;
-	
+
 		private final String contentType;
-	
+
 		private DownloadData(final byte[] data, final String contentType) {
 			this.data = data;
 			this.contentType = contentType;
 		}
-	
+
 		public String getContentType() {
 			return contentType;
 		}
-	
+
 		public byte[] getData() {
 			return data;
 		}

@@ -445,6 +445,13 @@ public final class TypeUtils {
 		throw new UnsupportedOperationException();
 	}
 
+	private static String getName(@Nullable final Method method) {
+		if (method == null) {
+			return "";
+		}
+		return method.getName();
+	}
+
 	private static final class IndexOfComparator implements Comparator<Method> {
 		private final List<String> methodNames;
 
@@ -456,13 +463,6 @@ public final class TypeUtils {
 		public int compare(@Nullable final Method a, @Nullable final Method b) {
 			return Integer.compare(methodNames.indexOf(getName(a)), methodNames.indexOf(getName(b)));
 		}
-	}
-
-	private static String getName(@Nullable final Method method) {
-		if (method == null) {
-			return "";
-		}
-		return method.getName();
 	}
 
 	public static final class SerializablePropertyMember {

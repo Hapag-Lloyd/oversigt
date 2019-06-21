@@ -12,7 +12,7 @@ public interface ThrowingFunction<T, R> extends Function<T, R> {
 	}
 
 	@Override
-	default R apply(final @Nullable T t) {
+	default R apply(@Nullable final T t) {
 		try {
 			return applyThrowing(t);
 		} catch (final Exception e) {

@@ -188,11 +188,11 @@ public class LdapAuthenticator implements Authenticator {
 			authEnv.put(Context.SECURITY_CREDENTIALS, password);
 			new InitialDirContext(authEnv).close();
 			return true;
-		} catch (@SuppressWarnings("unused") final Exception ignore1) {
+		} catch (@SuppressWarnings("unused") final Exception e) {
 			try {
 				// Sleep to slow down responses for brute force attacks
 				Thread.sleep(1000);
-			} catch (@SuppressWarnings("unused") final InterruptedException ignore2) {/* do nothing */}
+			} catch (@SuppressWarnings("unused") final InterruptedException ignore) {/* do nothing */}
 			return false;
 		}
 	}

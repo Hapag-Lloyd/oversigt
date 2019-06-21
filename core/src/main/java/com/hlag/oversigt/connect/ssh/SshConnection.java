@@ -103,10 +103,10 @@ public abstract class SshConnection {
 			}
 			testChannel.disconnect();
 			return true;
-		} catch (@SuppressWarnings("unused") final JSchException ignore1) {
+		} catch (@SuppressWarnings("unused") final JSchException e) {
 			try {
 				sessionReference.get().ifPresent(Session::disconnect);
-			} catch (@SuppressWarnings("unused") final Exception ignore2) {
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// ignore
 			}
 			return false;

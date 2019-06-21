@@ -493,7 +493,7 @@ public class DashboardController {
 		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
 			try {
 				instance.setProperty(property, property.getGetter().invoke(service));
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			} catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException("Unable to set property: " + property.getName(), e);
 			}
 		}
@@ -607,7 +607,9 @@ public class DashboardController {
 					.forEach(p -> {
 						try {
 							p.getSetter().invoke(service, instance.getPropertyValue(p));
-						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						} catch (final IllegalAccessException
+								| IllegalArgumentException
+								| InvocationTargetException e) {
 							throw new RuntimeException("Unable to set property: " + p.getName(), e);
 						}
 					});

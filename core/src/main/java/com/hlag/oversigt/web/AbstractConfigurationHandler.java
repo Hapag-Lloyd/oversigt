@@ -100,30 +100,6 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 	}
 
-	private static final class ConfigPatternInfo {
-		private final String filename;
-
-		private final Optional<String> neededRole;
-
-		ConfigPatternInfo(final String filename) {
-			this.filename = filename;
-			neededRole = Optional.empty();
-		}
-
-		ConfigPatternInfo(final String filename, final String neededRole) {
-			this.filename = filename;
-			this.neededRole = Optional.of(neededRole);
-		}
-
-		public String getFilename() {
-			return filename;
-		}
-
-		public Optional<String> getNeededRole() {
-			return neededRole;
-		}
-	}
-
 	/**
 	 * Checks if the given url points to a resource in the current class path and if
 	 * so loads the resource as string with UTF-8 encoding
@@ -458,6 +434,30 @@ public class AbstractConfigurationHandler implements HttpHandler {
 
 		public boolean needsPrincipal() {
 			return neededRole != null;
+		}
+	}
+
+	private static final class ConfigPatternInfo {
+		private final String filename;
+
+		private final Optional<String> neededRole;
+
+		ConfigPatternInfo(final String filename) {
+			this.filename = filename;
+			neededRole = Optional.empty();
+		}
+
+		ConfigPatternInfo(final String filename, final String neededRole) {
+			this.filename = filename;
+			this.neededRole = Optional.of(neededRole);
+		}
+
+		public String getFilename() {
+			return filename;
+		}
+
+		public Optional<String> getNeededRole() {
+			return neededRole;
 		}
 	}
 }
