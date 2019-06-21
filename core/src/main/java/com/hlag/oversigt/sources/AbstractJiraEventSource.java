@@ -74,7 +74,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		final List<Issue> issues;
 		try {
 			issues = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials()).search(getQuery());
-		} catch (final Exception e) {
+		} catch (JiraClientException | TimeoutException e) {
 			return handleException(e);
 		}
 

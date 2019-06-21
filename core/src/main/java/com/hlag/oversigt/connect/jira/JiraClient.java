@@ -1,6 +1,7 @@
 package com.hlag.oversigt.connect.jira;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 
@@ -24,7 +25,7 @@ public interface JiraClient {
 	 * @return a possibly empty list of issues found in jira
 	 * @throws JiraClientException if something fails while searching for issues
 	 */
-	default List<Issue> search(final String jql) throws JiraClientException {
+	default List<Issue> search(final String jql) throws JiraClientException, TimeoutException {
 		return search(jql, MAX_RESULTS_DEFAULT, 0);
 	}
 
@@ -37,5 +38,5 @@ public interface JiraClient {
 	 * @return the list of found issues
 	 * @throws JiraClientException if something fails
 	 */
-	List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException;
+	List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException, TimeoutException;
 }

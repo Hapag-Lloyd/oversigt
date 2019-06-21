@@ -50,11 +50,12 @@ class ThreadedJiraClient extends JiraClientFilter {
 	 *      int)
 	 */
 	@Override
-	public List<Issue> search(final String jql, final int maxResults, final int startAt) throws JiraClientException {
+	public List<Issue> search(final String jql, final int maxResults, final int startAt)
+			throws JiraClientException, TimeoutException {
 		try {
 			final Callable<List<Issue>> callable = () -> getJiraClient().search(jql, maxResults, startAt);
 			return EXECUTOR.execute(callable).get(TIMEOUT, TIMEOUT_UNIT);
-		} catch (final InterruptedException | ExecutionException | TimeoutException e) {
+		} catch (final InterruptedException | ExecutionException e) {
 			if (e.getCause() != null && e.getCause() instanceof JiraClientException) {
 				throw (JiraClientException) e.getCause();
 			}
