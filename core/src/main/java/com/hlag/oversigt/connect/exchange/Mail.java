@@ -69,13 +69,13 @@ public final class Mail {
 
 		final Map<String, String> tos = new LinkedHashMap<>();
 		for (final EmailAddress to : mail.getToRecipients()) {
-			tos.put(to.getName(), to.getAddress()); // TODO: wtf
+			tos.put(to.getAddress(), to.getName());
 		}
 		this.tos = unmodifiableMap(tos);
 
 		final Map<String, String> ccs = new LinkedHashMap<>();
 		for (final EmailAddress to : mail.getCcRecipients()) {
-			ccs.put(to.getName(), to.getAddress()); // TODO: wtf
+			ccs.put(to.getAddress(), to.getName());
 		}
 		this.ccs = unmodifiableMap(ccs);
 
