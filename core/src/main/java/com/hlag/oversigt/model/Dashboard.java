@@ -37,7 +37,7 @@ public class Dashboard implements Cloneable {
 	@NotNull
 	@NotBlank
 	@JsonPropertyDescription("The unique ID of the dashboard. It will be used to reference the dashboard.")
-	private String id = null;
+	private String id;
 
 	@NotNull
 	@NotBlank
@@ -93,8 +93,6 @@ public class Dashboard implements Cloneable {
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
-
-	Dashboard() {}
 
 	public Dashboard(final String id, final String owner, final boolean enabled) {
 		this.id = id;

@@ -90,6 +90,7 @@ import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Collectors;
 import de.larssh.utils.function.ThrowingFunction;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class DashboardController {
@@ -99,7 +100,8 @@ public class DashboardController {
 
 	private static final Collection<String> RESERVED_DATA_BINDINGS = Arrays.asList("title");
 
-	private static DashboardController instance = null;
+	@Nullable
+	private static DashboardController instance;
 
 	{
 		instance = this;
@@ -107,7 +109,11 @@ public class DashboardController {
 	}
 
 	static DashboardController getInstance() {
-		return instance;
+		final DashboardController checkedInstance = instance;
+		if (checkedInstance == null) {
+			throw new RuntimeException("Instance has not been initialized yet.");
+		}
+		return checkedInstance;
 	}
 
 	@Inject
@@ -453,9 +459,9 @@ public class DashboardController {
 
 		String id;
 		do {
-			id = (descriptor.getServiceClass() != null
-					? descriptor.getServiceClass().getSimpleName()
-					: descriptor.getView()) + "__" + UUID.randomUUID().toString().replace("-", "_");
+			id = descriptor.getServiceClass().map(c -> c.getSimpleName()).orElse(descriptor.getView())
+					+ "__"
+					+ UUID.randomUUID().toString().replace("-", "_");
 		} while (existingIds.contains(id));
 		return id;
 	}
@@ -475,7 +481,7 @@ public class DashboardController {
 				createdBy.getUsername(),
 				createdBy.getUsername());
 
-		if (descriptor.getServiceClass() != null) {
+		if (descriptor.getServiceClass().isPresent()) {
 			adoptDefaultEventSourceProperties(instance, descriptor);
 		}
 
@@ -489,7 +495,7 @@ public class DashboardController {
 			final EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
 		final Service service
-				= createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
+				= createServiceInstance(descriptor.getServiceClass().get(), descriptor.getModuleClass(), "dummy");
 		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
 			try {
 				instance.setProperty(property, property.getGetter().invoke(service));
@@ -583,7 +589,7 @@ public class DashboardController {
 			if (getService(instance) != null) {
 				throw new RuntimeException("Instance " + id + " is already started.");
 			}
-			if (instance.getDescriptor().getServiceClass() == null) {
+			if (!instance.getDescriptor().getServiceClass().isPresent()) {
 				throw new RuntimeException("Instance " + id + " does not have a service class.");
 			}
 			if (!instance.isEnabled()) {
@@ -591,7 +597,7 @@ public class DashboardController {
 			}
 
 			// create class instance
-			final Service service = createServiceInstance(instance.getDescriptor().getServiceClass(),
+			final Service service = createServiceInstance(instance.getDescriptor().getServiceClass().get(),
 					instance.getDescriptor().getModuleClass(),
 					id);
 			if (service instanceof ScheduledEventSource) {
@@ -795,7 +801,7 @@ public class DashboardController {
 
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
-			return binder -> {};
+			return binder -> {/* doing nothing */};
 		}
 		return TypeUtils.createInstance(moduleClass);
 	}

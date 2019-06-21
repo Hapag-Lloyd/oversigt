@@ -12,6 +12,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Base Event for all Oversigt events
  *
@@ -33,6 +35,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	private transient Duration lifetime = null;
 
 	/* Do not populate if you don't need dynamic title */
+	@Nullable
 	private String title;
 
 	public OversigtEvent() {
@@ -71,11 +74,12 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		return updatedAt;
 	}
 
+	@Nullable
 	public String getTitle() {
 		return title;
 	}
 
-	public void setTitle(final String title) {
+	public void setTitle(@Nullable final String title) {
 		this.title = title;
 	}
 

@@ -236,9 +236,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				"ENABLED",
 				instance.isEnabled(), //
 				"EVENT_SOURCE_CLASS",
-				instance.getDescriptor().getServiceClass() != null
-						? instance.getDescriptor().getServiceClass().getName()
-						: null, //
+				instance.getDescriptor().getServiceClass().map(c -> c.getName()).orElse(null), //
 				"FREQUENCY",
 				instance.getFrequency(), //
 				"VIEW",

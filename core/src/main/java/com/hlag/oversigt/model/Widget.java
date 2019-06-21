@@ -3,7 +3,6 @@ package com.hlag.oversigt.model;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -13,6 +12,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.properties.Color;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class Widget implements Comparable<Widget> {
 	private static final Comparator<Widget> COMPARE_BY_NAME
@@ -111,9 +112,7 @@ public class Widget implements Comparable<Widget> {
 
 	@JsonIgnore
 	public String getType() {
-		return Optional.ofNullable(eventSourceInstance.getDescriptor().getServiceClass())
-				.map(Class::getSimpleName)
-				.orElse("");
+		return eventSourceInstance.getDescriptor().getServiceClass().map(Class::getSimpleName).orElse("");
 	}
 
 	public EventSourceInstance getEventSourceInstance() {
@@ -216,7 +215,7 @@ public class Widget implements Comparable<Widget> {
 	}
 
 	@Override
-	public int compareTo(final Widget that) {
+	public int compareTo(@Nullable final Widget that) {
 		return COMPARE.compare(this, that);
 	}
 

@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 	public TwoColumnListEvent(final List<? extends ListEventItem<T>> items) {
 		super(items);
@@ -16,13 +18,17 @@ public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 	public static class ListEventItem<T> {
 		private String label;
 
+		@Nullable
 		private T value;
 
 		private String labelStyle;
 
 		private String valueStyle;
 
-		public ListEventItem(final String label, final T value, final String labelStyle, final String valueStyle) {
+		public ListEventItem(final String label,
+				@Nullable final T value,
+				final String labelStyle,
+				final String valueStyle) {
 			this.label = label;
 			this.value = value;
 			this.labelStyle = labelStyle;
@@ -41,6 +47,7 @@ public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 			return label;
 		}
 
+		@Nullable
 		public T getValue() {
 			return value;
 		}

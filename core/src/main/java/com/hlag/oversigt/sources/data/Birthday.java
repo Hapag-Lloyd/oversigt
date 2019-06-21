@@ -9,10 +9,10 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 @JsonHint(headerTemplate = "{{ self.name }}", arrayStyle = ArrayStyle.TABLE)
 public class Birthday {
 	@NotNull
-	private String name;
+	private String name = "";
 
 	@NotNull
-	private LocalDate date;
+	private LocalDate date = LocalDate.now().minusYears(20);
 
 	public String getName() {
 		return name;

@@ -3,9 +3,12 @@ package com.hlag.oversigt.sources.event;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class MapEvent extends OversigtEvent {
 	private final List<Point> points = new ArrayList<>();
@@ -21,10 +24,13 @@ public class MapEvent extends OversigtEvent {
 
 		private final double lat;
 
+		@Nullable
 		private final String fill;
 
+		@Nullable
 		private final String stroke;
 
+		@Nullable
 		private final Double size;
 
 		public Point(final String id, final double longitude, final double latitue) {
@@ -73,7 +79,7 @@ public class MapEvent extends OversigtEvent {
 		}
 
 		private static String getColorString(final Color color) {
-			return color != null ? color.getHexColor() : null;
+			return Objects.requireNonNull(color).getHexColor();
 		}
 
 		public String getId() {
@@ -88,14 +94,17 @@ public class MapEvent extends OversigtEvent {
 			return lon;
 		}
 
+		@Nullable
 		public String getFill() {
 			return fill;
 		}
 
+		@Nullable
 		public String getStroke() {
 			return stroke;
 		}
 
+		@Nullable
 		public Double getSize() {
 			return size;
 		}

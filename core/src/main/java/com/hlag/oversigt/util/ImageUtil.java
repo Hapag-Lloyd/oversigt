@@ -27,17 +27,14 @@ public final class ImageUtil {
 	public static String getPreviewImageUrl(final EventSourceDescriptor info) {
 		return IMAGE_URLS.computeIfAbsent(info,
 				i -> getPreviewImageUrl(//
-						Optional//
-								.ofNullable(info.getServiceClass())
-								.map(Class::getName)
-								.orElse(null),
+						info.getServiceClass().map(Class::getName),
 						i.getView()));
 	}
 
-	private static String getPreviewImageUrl(final String serviceClassName, final String viewName) {
-		if (serviceClassName != null) {
-			if (isFileAvailable(getResourcePathForPreview(serviceClassName))) {
-				return getUrlPathForPreview(serviceClassName);
+	private static String getPreviewImageUrl(final Optional<String> serviceClassName, final String viewName) {
+		if (serviceClassName.isPresent()) {
+			if (isFileAvailable(getResourcePathForPreview(serviceClassName.get()))) {
+				return getUrlPathForPreview(serviceClassName.get());
 			}
 		}
 		if (isFileAvailable(getResourcePathForWidget(viewName))) {

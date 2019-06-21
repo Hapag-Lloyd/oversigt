@@ -18,6 +18,7 @@ import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Finals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
@@ -82,14 +83,11 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
-		String displayName = null;
+		Optional<String> displayName = Optional.empty();
 		if (clazz.isAnnotationPresent(EventSource.class)) {
-			displayName = clazz.getAnnotation(EventSource.class).displayName();
+			displayName = Optional.ofNullable(clazz.getAnnotation(EventSource.class).displayName());
 		}
-		if (Strings.isNullOrEmpty(displayName)) {
-			displayName = clazz.getSimpleName();
-		}
-		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName));
+		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName.orElse(clazz.getSimpleName())));
 	}
 
 	static EventSourceKey createKeyFromWidget(final String widgetName, final String displayName) {
@@ -135,7 +133,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -159,7 +157,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	@Override
-	public int compareTo(final EventSourceKey that) {
+	public int compareTo(@Nullable final EventSourceKey that) {
 		return COMPARATOR_BY_KEY.compare(this, that);
 	}
 

@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -17,7 +16,10 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
 	@NotNull
@@ -27,6 +29,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@NotNull
 	private final String displayName;
 
+	@Nullable
 	private final String description;
 
 	@NotNull
@@ -47,33 +50,33 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	private final Optional<Class<? extends OversigtEvent>> eventClass;
 
 	@JsonIgnore
-	private final Optional<Class<? extends Module>> moduleClass;
+	private final Class<? extends Module> moduleClass;
 
 	private boolean standAlone = false;
 
 	EventSourceDescriptor(@NotNull final EventSourceKey key,
-			@NotBlank final String displayName,
+			@NotNull final String displayName,
 			final String description,
 			@NotBlank final String view,
 			final boolean standAlone) {
-		this(key, displayName, description, view, null, null, null);
+		this(key, displayName, description, view, null, null, NOP.class);
 		this.standAlone = standAlone;
 	}
 
 	EventSourceDescriptor(@NotNull final EventSourceKey key,
 			@NotBlank final String displayName,
-			final String description,
+			@Nullable final String description,
 			@NotBlank final String view,
 			@Nullable final Class<? extends Service> serviceClass,
 			@Nullable final Class<? extends OversigtEvent> eventClass,
-			@Nullable final Class<? extends Module> moduleClass) {
+			final Class<? extends Module> moduleClass) {
 		this.key = key;
 		this.displayName = displayName;
 		this.description = description != null && description.trim().length() > 1 ? description : null;
 		this.view = view;
 		this.serviceClass = Optional.ofNullable(serviceClass);
 		this.eventClass = Optional.ofNullable(eventClass);
-		this.moduleClass = Optional.ofNullable(moduleClass);
+		this.moduleClass = moduleClass;
 	}
 
 	public EventSourceKey getKey() {
@@ -84,9 +87,8 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return view;
 	}
 
-	@Nullable
-	public Class<? extends Service> getServiceClass() {
-		return serviceClass.orElse(null);
+	public Optional<Class<? extends Service>> getServiceClass() {
+		return serviceClass;
 	}
 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
@@ -115,15 +117,15 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return eventClass.orElse(null);
 	}
 
-	@Nullable
 	public Class<? extends Module> getModuleClass() {
-		return moduleClass.orElse(null);
+		return moduleClass;
 	}
 
 	public String getDisplayName() {
 		return displayName;
 	}
 
+	@Nullable
 	public String getDescription() {
 		return description;
 	}
@@ -166,8 +168,9 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	}
 
 	@Override
-	public int compareTo(final EventSourceDescriptor that) {
-		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(@Nullable final EventSourceDescriptor that) {
+		return getDisplayName()
+				.compareToIgnoreCase(Optional.ofNullable(that).map(EventSourceDescriptor::getDisplayName).orElse(""));
 	}
 
 	@Override

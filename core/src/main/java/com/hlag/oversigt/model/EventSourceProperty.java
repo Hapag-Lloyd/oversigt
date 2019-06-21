@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -14,14 +15,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.sources.data.JsonHint;
 
 import de.larssh.utils.Optionals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	@NotBlank
-	private String name = null;
+	private String name;
 
 	@NotBlank
 	private final String displayName;
 
+	@Nullable
 	private final String description;
 
 	@NotBlank
@@ -49,7 +52,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	EventSourceProperty(@NotBlank final String name,
 			@NotBlank final String displayName,
-			final String description,
+			@Nullable final String description,
 			final String inputType,
 			final boolean customValuesAllowed,
 			final Method getter,
@@ -84,6 +87,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		return displayName;
 	}
 
+	@Nullable
 	public String getDescription() {
 		return description;
 	}
@@ -134,8 +138,9 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	}
 
 	@Override
-	public int compareTo(final EventSourceProperty that) {
-		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(@Nullable final EventSourceProperty that) {
+		return getDisplayName()
+				.compareToIgnoreCase(Optional.ofNullable(that).map(EventSourceProperty::getDisplayName).orElse(""));
 	}
 
 	@Override

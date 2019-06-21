@@ -10,6 +10,8 @@ import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	public static final Comparator<EventSourceInstance> COMPARATOR = Comparator.comparing(EventSourceInstance::getName)
 			.thenComparing(Comparator.comparing(EventSourceInstance::getId));
@@ -127,7 +129,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	}
 
 	@Override
-	public int compareTo(final EventSourceInstance that) {
+	public int compareTo(@Nullable final EventSourceInstance that) {
 		return COMPARATOR.compare(this, that);
 	}
 
@@ -141,7 +143,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -178,9 +180,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 				+ " \""
 				+ name
 				+ "\""
-				+ (descriptor.getServiceClass() != null
-						? " (" + descriptor.getServiceClass().getSimpleName() + ")"
-						: "");
+				+ descriptor.getServiceClass().map(c -> " (" + c.getSimpleName() + ")").orElse("");
 	}
 
 	public static Predicate<EventSourceInstance> createFilter(final String filter) {

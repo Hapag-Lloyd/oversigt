@@ -149,9 +149,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 								.collect(Collectors.toMap(EventSourceInstance::getId, instance -> {
 									return Stream.of(instance.getId(),
 											instance.getName(),
-											Optional.ofNullable(instance.getDescriptor().getServiceClass())
-													.map(Class::getName)
-													.orElse(""),
+											instance.getDescriptor().getServiceClass().map(Class::getName).orElse(""),
 											instance.getDescriptor().getView(),
 											instance.getDescriptor()
 													.getProperties()

@@ -12,6 +12,8 @@ import java.util.TreeSet;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class TimelineEvent extends OversigtEvent {
 
 	private static final Comparator<Event> BY_DATE = (e1, e2) -> e1.getOriginalDate().compareTo(e2.getOriginalDate());
@@ -61,7 +63,7 @@ public class TimelineEvent extends OversigtEvent {
 			final LocalDate endDate,
 			final boolean allDay,
 			final Color background,
-			final Color fontColor) {
+			@Nullable final Color fontColor) {
 		addEvent(name,
 				startDate,
 				endDate,
@@ -75,7 +77,7 @@ public class TimelineEvent extends OversigtEvent {
 			final LocalDate endDate,
 			final boolean allDay,
 			final String background,
-			final String fontColor) {
+			@Nullable final String fontColor) {
 		final LocalDate now = LocalDate.now(zoneId);
 
 		// filter event in the past
@@ -131,6 +133,7 @@ public class TimelineEvent extends OversigtEvent {
 
 		private final String background;
 
+		@Nullable
 		private final String fontColor;
 
 		private final LocalDate originalDate;
@@ -140,7 +143,7 @@ public class TimelineEvent extends OversigtEvent {
 				final String dateLabel,
 				final LocalDate originalDate,
 				final String background,
-				final String fontColor) {
+				@Nullable final String fontColor) {
 			this.name = name;
 			this.date = date.format(DateTimeFormatter.ISO_DATE);
 			this.dateLabel = dateLabel;
@@ -165,6 +168,7 @@ public class TimelineEvent extends OversigtEvent {
 			return background;
 		}
 
+		@Nullable
 		public String getFontColor() {
 			return fontColor;
 		}
@@ -174,7 +178,7 @@ public class TimelineEvent extends OversigtEvent {
 		}
 
 		@Override
-		public int compareTo(final Event that) {
+		public int compareTo(@Nullable final Event that) {
 			return BY_DATE.thenComparing(BY_NAME).compare(this, that);
 		}
 

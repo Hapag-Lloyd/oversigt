@@ -1,6 +1,7 @@
 package com.hlag.oversigt.sources.data;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -8,16 +9,18 @@ import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @JsonHint(headerTemplate = "{{ self.displayValue }}", arrayStyle = ArrayStyle.TABS)
 public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	@NotNull
 	private Color color = Color.Grey;
 
 	@NotNull
-	private String displayValue = null;
+	private String displayValue = "";
 
 	@NotNull
-	private String value = null;
+	private String value = "";
 
 	public DisplayOption() {}
 
@@ -31,12 +34,12 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	}
 
 	@Override
-	public int compareTo(final DisplayOption o) {
-		return getDisplayValue().compareTo(o.getDisplayValue());
+	public int compareTo(@Nullable final DisplayOption o) {
+		return getDisplayValue().compareTo(Optional.ofNullable(o).map(DisplayOption::getDisplayValue).orElse(""));
 	}
 
 	@Override
-	public boolean equals(final Object o) {
+	public boolean equals(@Nullable final Object o) {
 		return o != null && o instanceof DisplayOption && compareTo((DisplayOption) o) == 0;
 	}
 
