@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -374,7 +373,7 @@ public class OversigtServer extends AbstractIdleService {
 			} else {
 				HttpUtils.notFound(exchange);
 			}
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			HttpUtils.notFound(exchange);
 		}
 	}
@@ -461,11 +460,11 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new AssetsClassPathResourceManager("statics", widgetsPaths));
 	}
 
-	private static URL getResourceUrl(final String path) {
+	private static Optional<URL> getResourceUrl(final String path) {
 		try {
-			return Resources.getResource(path);
-		} catch (final IllegalArgumentException e) {
-			return null;
+			return Optional.of(Resources.getResource(path));
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
+			return Optional.empty();
 		}
 	}
 
@@ -495,7 +494,7 @@ public class OversigtServer extends AbstractIdleService {
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
 					.collect(toList()));
-		} catch (final IOException ignore) {/* ignore exception */}
+		} catch (@SuppressWarnings("unused") final IOException ignore) {/* ignore exception */}
 
 		return exchange -> {
 			// Find the file to serve
@@ -669,7 +668,8 @@ public class OversigtServer extends AbstractIdleService {
 				return Arrays.stream(widgetsPaths)
 						.map(s -> s + end)
 						.map(OversigtServer::getResourceUrl)
-						.filter(not(Objects::isNull))
+						.filter(Optional::isPresent)
+						.map(Optional::get)
 						.findFirst()
 						.orElse(null);
 			}

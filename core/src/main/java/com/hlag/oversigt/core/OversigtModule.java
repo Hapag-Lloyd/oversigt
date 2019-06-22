@@ -76,6 +76,7 @@ import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
 
@@ -91,6 +92,7 @@ class OversigtModule extends AbstractModule {
 
 	private final Runnable shutdownRunnable;
 
+	@Nullable
 	private final CommandLineOptions options;
 
 	/**
@@ -102,7 +104,7 @@ class OversigtModule extends AbstractModule {
 	 *                         executed
 	 * @param extensions       list of modules that will additionally be loaded
 	 */
-	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable) {
+	OversigtModule(@Nullable final CommandLineOptions options, final Runnable shutdownRunnable) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
@@ -200,9 +202,12 @@ class OversigtModule extends AbstractModule {
 		// binds properties
 		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
-		configuration.bindProperties(binder(), options.isDebugFallback(), options.getLdapBindPasswordFallback());
-		if (options != null) {
-			Names.bindProperties(binder(), options.getProperties());
+		final CommandLineOptions checkedOptions = options;// null pointer check
+		if (checkedOptions != null) {
+			configuration.bindProperties(binder(),
+					checkedOptions.isDebugFallback(),
+					checkedOptions.getLdapBindPasswordFallback());
+			Names.bindProperties(binder(), checkedOptions.getProperties());
 		}
 	}
 
@@ -316,7 +321,7 @@ class OversigtModule extends AbstractModule {
 
 		/** {@inheritDoc} */
 		@Override
-		public void releaseInstance(@SuppressWarnings("unused") final ConstraintValidator<?, ?> instance) {
+		public void releaseInstance(@Nullable final ConstraintValidator<?, ?> instance) {
 			/* Garbage collector will do it */
 		}
 

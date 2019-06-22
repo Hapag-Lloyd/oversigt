@@ -19,6 +19,7 @@ import com.hlag.oversigt.storage.Storage;
 
 import ch.qos.logback.classic.LoggerContext;
 import de.larssh.utils.Finals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -57,8 +58,8 @@ public final class Oversigt {
 	}
 
 	/**
-	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping already started
-	 * Oversigt is not permitted
+	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping
+	 * already started Oversigt is not permitted
 	 *
 	 * @return itself
 	 */
@@ -100,8 +101,8 @@ public final class Oversigt {
 			close(Authenticator.class);
 
 			/*
-			 * shutdown method might be called by this hook. So, trying to remove hook which is
-			 * currently is progress causes error
+			 * shutdown method might be called by this hook. So, trying to remove hook which
+			 * is currently is progress causes error
 			 */
 			if (!shutdownHook.isAlive()) {
 				Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -155,10 +156,11 @@ public final class Oversigt {
 	}
 
 	/**
-	 * Called if an exception occurres when dispatching an event in the application's event bus
+	 * Called if an exception occurres when dispatching an event in the
+	 * application's event bus
 	 *
 	 * @param throwable the exception that occurred
-	 * @param context the context in which the exception occurred
+	 * @param context   the context in which the exception occurred
 	 */
 	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
 		final StringBuilder sb = new StringBuilder();
@@ -174,6 +176,7 @@ public final class Oversigt {
 	 * Oversigt builder
 	 */
 	public static class Builder {
+		@Nullable
 		private CommandLineOptions options = null;
 
 		/**
@@ -194,9 +197,8 @@ public final class Oversigt {
 		 */
 		public Oversigt build() {
 			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
-			final Injector createdInjector = Guice
-				.createInjector(
-					new OversigtModule(options, () -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown)));
+			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
+					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown)));
 
 			oversigt.set(new Oversigt(createdInjector));
 			return oversigt.get();

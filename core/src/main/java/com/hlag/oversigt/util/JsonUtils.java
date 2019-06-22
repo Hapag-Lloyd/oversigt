@@ -260,9 +260,7 @@ public class JsonUtils {
 				jsonHint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
 			}
 			if (jsonHint != null && jsonHint.arrayStyle() != ArrayStyle.DEFAULT) {
-				if (jsonHint.arrayStyle().value() != null) {
-					map.put("format", jsonHint.arrayStyle().value());
-				}
+				map.put("format", Objects.requireNonNull(jsonHint.arrayStyle().value()));
 			} else {
 				final Map<String, Object> items = (Map<String, Object>) map.get("items");
 				if (items.containsKey("properties") && ((Map<?, ?>) items.get("properties")).size() <= 3) {
