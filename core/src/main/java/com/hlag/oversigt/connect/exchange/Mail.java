@@ -1,8 +1,10 @@
 package com.hlag.oversigt.connect.exchange;
 
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
+
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,15 +49,15 @@ public final class Mail {
 
 	private final String fromName;
 
-	private final Map<String, String> tos = new HashMap<>();
+	private final Map<String, String> tos;
 
-	private final Map<String, String> ccs = new HashMap<>();
+	private final Map<String, String> ccs;
 
 	private final boolean isRead;
 
 	private final boolean hasAttachment;
 
-	private final List<String> categories = new ArrayList<>();
+	private final List<String> categories;
 
 	private Mail(final EmailMessage mail) throws ServiceLocalException {
 		id = mail.getId().getUniqueId();
@@ -65,25 +67,24 @@ public final class Mail {
 		fromAddress = from.getAddress();
 		fromName = from.getName();
 
-		final Iterator<EmailAddress> toIter = mail.getToRecipients().iterator();
-		while (toIter.hasNext()) {
-			final EmailAddress to = toIter.next();
-			tos.put(to.getName(), to.getAddress());
+		final Map<String, String> tos = new LinkedHashMap<>();
+		for (final EmailAddress to : mail.getToRecipients()) {
+			tos.put(to.getAddress(), to.getName());
 		}
+		this.tos = unmodifiableMap(tos);
 
-		final Iterator<EmailAddress> ccIter = mail.getCcRecipients().iterator();
-		while (ccIter.hasNext()) {
-			final EmailAddress cc = ccIter.next();
-			ccs.put(cc.getName(), cc.getAddress());
+		final Map<String, String> ccs = new LinkedHashMap<>();
+		for (final EmailAddress to : mail.getCcRecipients()) {
+			ccs.put(to.getAddress(), to.getName());
 		}
+		this.ccs = unmodifiableMap(ccs);
 
 		isRead = mail.getIsRead();
 		hasAttachment = mail.getHasAttachments();
 
-		final Iterator<String> catIter = mail.getCategories().iterator();
-		while (catIter.hasNext()) {
-			categories.add(catIter.next());
-		}
+		final List<String> categories = new ArrayList<>();
+		mail.getCategories().forEach(categories::add);
+		this.categories = unmodifiableList(categories);
 	}
 
 	/**
@@ -155,5 +156,4 @@ public final class Mail {
 	public List<String> getCategories() {
 		return categories;
 	}
-
 }
