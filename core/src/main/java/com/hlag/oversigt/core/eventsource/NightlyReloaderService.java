@@ -54,7 +54,7 @@ public class NightlyReloaderService extends AbstractScheduledService {
 		sendEvent(new ReloadEvent(dashboards));
 	}
 
-	private final void sendEvent(final OversigtEvent event) {
+	private void sendEvent(final OversigtEvent event) {
 		event.setId(getEventId());
 		eventBus.post(event);
 	}

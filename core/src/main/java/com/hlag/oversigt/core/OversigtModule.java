@@ -202,7 +202,7 @@ class OversigtModule extends AbstractModule {
 		// binds properties
 		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
-		final CommandLineOptions checkedOptions = options;// null pointer check
+		final CommandLineOptions checkedOptions = options; // null pointer check
 		if (checkedOptions != null) {
 			configuration.bindProperties(binder(),
 					checkedOptions.isDebugFallback(),
