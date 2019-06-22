@@ -70,5 +70,5 @@ public @interface EventSource {
 	 * Empty Module to provide an empty Guice configuration if the event source does
 	 * not need custom configuration
 	 */
-	interface NOP extends Module {}
+	interface NOP extends Module {/* Empty module to have a default value */}
 }

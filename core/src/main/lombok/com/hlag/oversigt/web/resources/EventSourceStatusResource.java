@@ -107,11 +107,11 @@ public class EventSourceStatusResource {
 					.createdBy(instance.getCreatedBy())
 					.lastChangedBy(instance.getLastChangeBy())
 					.running(controller.isRunning(instance))
-					.lastRun(controller.getLastRun(instance))
-					.lastSuccess(controller.getLastSuccessfulRun(instance))
-					.lastFailure(controller.getLastFailureDateTime(instance))
-					.lastReason(controller.getLastFailureDescription(instance))
-					.lastException(controller.getLastFailureException(instance))
+					.lastRun(controller.getLastRun(instance).orElse(null))
+					.lastSuccess(controller.getLastSuccessfulRun(instance).orElse(null))
+					.lastFailure(controller.getLastFailureDateTime(instance).orElse(null))
+					.lastReason(controller.getLastFailureDescription(instance).orElse(null))
+					.lastException(controller.getLastFailureException(instance).orElse(null))
 					.build();
 		}
 

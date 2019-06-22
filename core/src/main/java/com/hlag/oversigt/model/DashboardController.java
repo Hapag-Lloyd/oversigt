@@ -691,34 +691,24 @@ public class DashboardController {
 		return getService(instance) != null;
 	}
 
-	public ZonedDateTime getLastRun(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastRun)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
+		return ((ScheduledEventSource<?>) getService(instance)).getLastRun();
 	}
 
-	public ZonedDateTime getLastSuccessfulRun(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastSuccessfulRun)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastSuccessfulRun(final EventSourceInstance instance) {
+		return ((ScheduledEventSource<?>) getService(instance)).getLastSuccessfulRun();
 	}
 
-	public ZonedDateTime getLastFailureDateTime(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureDateTime)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {
+		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureDateTime();
 	}
 
-	public String getLastFailureDescription(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureDescription)
-				.orElse(null);
+	public Optional<String> getLastFailureDescription(final EventSourceInstance instance) {
+		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureDescription();
 	}
 
-	public String getLastFailureException(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureException)
-				.orElse(null);
+	public Optional<String> getLastFailureException(final EventSourceInstance instance) {
+		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureException();
 	}
 
 	public boolean hasException(final EventSourceInstance instance) {

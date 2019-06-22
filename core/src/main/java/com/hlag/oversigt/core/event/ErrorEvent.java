@@ -2,7 +2,10 @@ package com.hlag.oversigt.core.event;
 
 import com.google.common.base.Throwables;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class ErrorEvent extends OversigtEvent {
+	@Nullable
 	private final String errorMessage;
 
 	private final boolean error = true;
@@ -11,10 +14,11 @@ public class ErrorEvent extends OversigtEvent {
 		this(Throwables.getStackTraceAsString(t));
 	}
 
-	public ErrorEvent(final String errorMessage) {
+	public ErrorEvent(@Nullable final String errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
+	@Nullable
 	public String getErrorMessage() {
 		return errorMessage;
 	}

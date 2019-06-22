@@ -17,4 +17,4 @@ import com.google.inject.BindingAnnotation;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Documented
 @BindingAnnotation
-public @interface EventId {}
+public @interface EventId {/* just a marker annotation */}
