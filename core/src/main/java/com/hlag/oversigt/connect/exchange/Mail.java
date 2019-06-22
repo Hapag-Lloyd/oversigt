@@ -3,14 +3,18 @@ package com.hlag.oversigt.connect.exchange;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
 import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
@@ -35,7 +39,7 @@ public final class Mail {
 	static Optional<Mail> create(final EmailMessage emailMessage) {
 		try {
 			return Optional.of(new Mail(emailMessage));
-		} catch (final ServiceLocalException e) {
+		} catch (final ServiceLocalException | AddressException e) {
 			LOGGER.error("Unable to create mail", e);
 			return Optional.empty();
 		}
@@ -49,9 +53,9 @@ public final class Mail {
 
 	private final String fromName;
 
-	private final Map<String, String> tos;
+	private final Map<InternetAddress, String> tos;
 
-	private final Map<String, String> ccs;
+	private final Map<InternetAddress, String> ccs;
 
 	private final boolean isRead;
 
@@ -59,7 +63,7 @@ public final class Mail {
 
 	private final List<String> categories;
 
-	private Mail(final EmailMessage mail) throws ServiceLocalException {
+	private Mail(final EmailMessage mail) throws ServiceLocalException, AddressException {
 		id = mail.getId().getUniqueId();
 		subject = mail.getSubject();
 
@@ -67,24 +71,21 @@ public final class Mail {
 		fromAddress = from.getAddress();
 		fromName = from.getName();
 
-		final Map<String, String> tos = new LinkedHashMap<>();
+		final Map<InternetAddress, String> tos = new LinkedHashMap<>();
 		for (final EmailAddress to : mail.getToRecipients()) {
-			tos.put(to.getAddress(), to.getName());
+			tos.put(new InternetAddress(to.getAddress()), to.getName());
 		}
 		this.tos = unmodifiableMap(tos);
 
-		final Map<String, String> ccs = new LinkedHashMap<>();
+		final Map<InternetAddress, String> ccs = new LinkedHashMap<>();
 		for (final EmailAddress to : mail.getCcRecipients()) {
-			ccs.put(to.getAddress(), to.getName());
+			ccs.put(new InternetAddress(to.getAddress()), to.getName());
 		}
 		this.ccs = unmodifiableMap(ccs);
 
 		isRead = mail.getIsRead();
 		hasAttachment = mail.getHasAttachments();
-
-		final List<String> categories = new ArrayList<>();
-		mail.getCategories().forEach(categories::add);
-		this.categories = unmodifiableList(categories);
+		categories = unmodifiableList(Lists.newArrayList(mail.getCategories()));
 	}
 
 	/**
@@ -125,14 +126,14 @@ public final class Mail {
 	/**
 	 * @return the tos
 	 */
-	public Map<String, String> getTos() {
+	public Map<InternetAddress, String> getTos() {
 		return tos;
 	}
 
 	/**
 	 * @return the ccs
 	 */
-	public Map<String, String> getCcs() {
+	public Map<InternetAddress, String> getCcs() {
 		return ccs;
 	}
 
