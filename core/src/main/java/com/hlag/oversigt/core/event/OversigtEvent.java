@@ -22,16 +22,20 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public class OversigtEvent implements Comparable<OversigtEvent> {
 	private static final Duration DEFAULT_LIFETIME = Duration.ofHours(1);
 
-	private String applicationId;
+	@Nullable
+	private String applicationId = null;
 
-	private String id;
+	@Nullable
+	private String id = null;
 
 	private long updatedAt;
 
+	@Nullable
 	private String moreinfo = null;
 
 	private final transient LocalDateTime createdOn = now();
 
+	@Nullable
 	private transient Duration lifetime = null;
 
 	/* Do not populate if you don't need dynamic title */
@@ -42,6 +46,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		updatedAt = Instant.now().getEpochSecond();
 	}
 
+	@Nullable
 	public String getId() {
 		return id;
 	}
@@ -54,6 +59,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		this.lifetime = lifetime;
 	}
 
+	@Nullable
 	Duration getLifetime() {
 		return lifetime;
 	}
@@ -66,6 +72,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		this.applicationId = applicationId;
 	}
 
+	@Nullable
 	String getApplicationId() {
 		return applicationId;
 	}
@@ -83,6 +90,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		this.title = title;
 	}
 
+	@Nullable
 	public String getMoreinfo() {
 		return moreinfo;
 	}
@@ -102,7 +110,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	@Override
-	public boolean equals(final Object object) {
+	public boolean equals(@Nullable final Object object) {
 		if (!(object instanceof OversigtEvent)) {
 			return false;
 		}
@@ -115,16 +123,19 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	}
 
 	@Override
-	public int compareTo(final OversigtEvent that) {
+	public int compareTo(@Nullable final OversigtEvent that) {
+		if (that == null) {
+			return 1;
+		}
 		if (id == null && that.id == null) {
 			return 0;
 		}
 		if (id == null) {
 			return -1;
-		}
-		if (that.id == null) {
+		} else if (that.id == null) {
 			return 1;
+		} else {
+			return Objects.requireNonNull(id).compareTo(that.id);
 		}
-		return getId().compareTo(that.getId());
 	}
 }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
@@ -305,7 +306,8 @@ public class SystemResource {
 			return ok(events).build();
 		}
 
-		final Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
+		final Optional<OversigtEvent> event
+				= events.stream().filter(e -> Objects.requireNonNull(e.getId()).equals(filter)).findFirst();
 		if (!event.isPresent()) {
 			return ErrorResponse.notFound("The event source does not exist", filter);
 		}

@@ -4,12 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.Test;
 
 public class CommandLineOptionsTest {
 	@Test
-	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() throws Exception {
+	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() {
 		// given
 		final String[] givenCommandLine = new String[] { //
 				"--debug", //
@@ -19,7 +20,8 @@ public class CommandLineOptionsTest {
 		};
 
 		// when
-		final CommandLineOptions actualStartOptions = CommandLineOptions.parse(givenCommandLine);
+		final CommandLineOptions actualStartOptions
+				= Objects.requireNonNull(CommandLineOptions.parse(givenCommandLine));
 
 		// then
 		assertThat(actualStartOptions.isDebugFallback()).isTrue();
@@ -29,7 +31,7 @@ public class CommandLineOptionsTest {
 	}
 
 	@Test
-	public void shouldCreateFilledMap_whenParsingStringArray_givenValidCommandLine() throws Exception {
+	public void shouldCreateFilledMap_whenParsingStringArray_givenValidCommandLine() {
 		// given
 		final String[] givenCommandLine = new String[] { //
 				"--debug", //
@@ -43,7 +45,8 @@ public class CommandLineOptionsTest {
 		expectedProperties.put("startEventSources", "false");
 
 		// when
-		final CommandLineOptions actualStartOptions = CommandLineOptions.parse(givenCommandLine);
+		final CommandLineOptions actualStartOptions
+				= Objects.requireNonNull(CommandLineOptions.parse(givenCommandLine));
 		final Map<String, String> actualProperties = actualStartOptions.getProperties();
 
 		// then
