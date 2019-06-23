@@ -2,8 +2,6 @@ package com.hlag.oversigt.security;
 
 import java.util.Optional;
 
-import org.jboss.weld.exceptions.IllegalArgumentException;
-
 public enum Roles {
 	ADMIN("Server Admin", "server.admin", Role.SERVER_ADMIN),
 	DASHBOARD_OWNER("Owner", "server.dashboard.owner", Role.DASHBOARD_OWNER),
@@ -33,16 +31,12 @@ public enum Roles {
 		return role;
 	}
 
-	public static Optional<Roles> maybeFromString(final String string) {
-		return Optional.ofNullable(fromString(string));
-	}
-
-	public static Roles fromString(final String string) {
+	public static Optional<Roles> fromString(final String string) {
 		for (final Roles roles : values()) {
 			if (roles.name().equalsIgnoreCase(string) || roles.name.equalsIgnoreCase(string)) {
-				return roles;
+				return Optional.of(roles);
 			}
 		}
-		throw new IllegalArgumentException(String.format("The value '%s' is not a valid role.", string));
+		return Optional.empty();
 	}
 }

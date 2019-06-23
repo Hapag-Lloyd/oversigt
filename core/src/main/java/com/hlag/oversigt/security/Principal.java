@@ -106,7 +106,7 @@ public class Principal implements java.security.Principal {
 	}
 
 	public boolean hasRole(final String roleName) {
-		final Optional<Roles> roles = Roles.maybeFromString(roleName);
+		final Optional<Roles> roles = Roles.fromString(roleName);
 		if (roles.isPresent()) {
 			return hasRole(roles.get().getRole());
 		}

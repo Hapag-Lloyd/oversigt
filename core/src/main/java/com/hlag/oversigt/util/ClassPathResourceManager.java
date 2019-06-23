@@ -55,17 +55,27 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public Resource getResource(@Nullable final String path) throws IOException {
+	public @Nullable Resource getResource(@Nullable final String path) throws IOException {
 		String modPath = Objects.requireNonNull(path);
 		if (modPath.startsWith("/")) {
 			modPath = path.substring(1);
 		}
 		final String realPath = prefix + modPath;
-		final URL resourceUrl = getResourceUrl(realPath);
-		return new URLResource(resourceUrl, path);
+		try {
+			return new URLResource(getResourceUrl(realPath), path);
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
+			return null;
+		}
 	}
 
-	protected URL getResourceUrl(final String realPath) {
+	/**
+	 * Find the URL for a resource
+	 *
+	 * @param realPath the path to the resource for which to find the URL
+	 * @return the URL to the denoted resource
+	 * @throws IllegalArgumentException if the the resource cannot be found
+	 */
+	protected URL getResourceUrl(final String realPath) throws IllegalArgumentException {
 		return Resources.getResource(realPath);
 	}
 

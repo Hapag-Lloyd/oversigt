@@ -42,7 +42,6 @@ import com.google.inject.Singleton;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.data.JsonHint;
-import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -259,8 +258,8 @@ public class JsonUtils {
 			if (componentType instanceof Class && ((Class<?>) componentType).isAnnotationPresent(JsonHint.class)) {
 				jsonHint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
 			}
-			if (jsonHint != null && jsonHint.arrayStyle() != ArrayStyle.DEFAULT) {
-				map.put("format", Objects.requireNonNull(jsonHint.arrayStyle().value()));
+			if (jsonHint != null && jsonHint.arrayStyle().value() != null) {
+				map.put("format", jsonHint.arrayStyle().value());
 			} else {
 				final Map<String, Object> items = (Map<String, Object>) map.get("items");
 				if (items.containsKey("properties") && ((Map<?, ?>) items.get("properties")).size() <= 3) {
@@ -275,7 +274,7 @@ public class JsonUtils {
 		} else if (clazz == LocalTime.class) {
 			return map("type", "string", "format", "time");
 		} else {
-			// check for notnull
+			// TODO check for notnull ???
 			final List<Field> fields = TypeUtils.streamFields(clazz)
 					.filter(f -> !Modifier.isTransient(f.getModifiers()))//
 					.filter(f -> !Modifier.isStatic(f.getModifiers()))//

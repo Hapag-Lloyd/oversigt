@@ -661,7 +661,7 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		@Override
-		protected URL getResourceUrl(final String realPath) {
+		protected URL getResourceUrl(final String realPath) throws IllegalArgumentException {
 			if (realPath.startsWith("statics/widgets/")) {
 				final String end = realPath.substring("statics/widgets/".length());
 				return Arrays.stream(widgetsPaths)
@@ -670,7 +670,7 @@ public class OversigtServer extends AbstractIdleService {
 						.filter(Optional::isPresent)
 						.map(Optional::get)
 						.findFirst()
-						.orElse(null);
+						.orElseThrow(() -> new IllegalArgumentException("Resource " + realPath + " cannot be found."));
 			}
 			return super.getResourceUrl(realPath);
 		}

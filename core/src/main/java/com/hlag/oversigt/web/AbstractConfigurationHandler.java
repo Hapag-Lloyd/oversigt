@@ -385,7 +385,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		private final Role neededRole;
 
 		PageInfo(final String name, final String filename, final String title, final Optional<String> neededRole) {
-			this(name, filename, title, neededRole.flatMap(Roles::maybeFromString).map(Roles::getRole).orElse(null));
+			this(name, filename, title, neededRole.flatMap(Roles::fromString).map(Roles::getRole).orElse(null));
 		}
 
 		PageInfo(final String name, final String filename, final String title, final Role neededRole) {

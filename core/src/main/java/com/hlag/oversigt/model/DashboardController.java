@@ -694,29 +694,32 @@ public class DashboardController {
 		return getService(instance) != null;
 	}
 
+	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
+		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance));
+	}
+
 	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
-		return ((ScheduledEventSource<?>) getService(instance)).getLastRun();
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
 	}
 
 	public Optional<ZonedDateTime> getLastSuccessfulRun(final EventSourceInstance instance) {
-		return ((ScheduledEventSource<?>) getService(instance)).getLastSuccessfulRun();
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRun);
 	}
 
 	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {
-		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureDateTime();
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDateTime);
 	}
 
 	public Optional<String> getLastFailureDescription(final EventSourceInstance instance) {
-		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureDescription();
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDescription);
 	}
 
 	public Optional<String> getLastFailureException(final EventSourceInstance instance) {
-		return ((ScheduledEventSource<?>) getService(instance)).getLastFailureException();
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException);
 	}
 
 	public boolean hasException(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureException)
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException)
 				.map(x -> x != null)
 				.orElse(false);
 	}
