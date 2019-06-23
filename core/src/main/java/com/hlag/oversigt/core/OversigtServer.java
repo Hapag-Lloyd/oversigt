@@ -186,7 +186,6 @@ public class OversigtServer extends AbstractIdleService {
 			final DashboardController dashboardController,
 			final HttpServerExchangeHandler exchangeHandler,
 			final Application restApiApplication,
-			@Named("additionalPackages") final String[] additionalPackages,
 			@Named("addonFolders") final Path[] addonFolders,
 			@Named("widgetsPaths") final String[] widgetsPaths) {
 		this.listeners = listeners;
@@ -648,7 +647,7 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		@Override
-		public void stopping(final State from) {
+		public void stopping(@SuppressWarnings("unused") final State from) {
 			LOGGER.info("Stopping embedded Oversigt server");
 		}
 	}

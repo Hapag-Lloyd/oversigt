@@ -50,7 +50,6 @@ import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
-import com.hlag.oversigt.web.api.ApiValidationException;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
@@ -168,7 +167,7 @@ public class DashboardResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateDashboardPartially(@Context final SecurityContext securityContext,
 			@PathParam("dashboardId") @NotNull final String id,
-			final Map<String, Object> newDashboardData) throws ApiValidationException {
+			final Map<String, Object> newDashboardData) {
 		// load current dashboard from storage
 		final Dashboard dashboard = dashboardController.getDashboard(id);
 		if (dashboard == null) {
@@ -234,7 +233,7 @@ public class DashboardResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateDashboard(@Context final SecurityContext securityContext,
 			@PathParam("dashboardId") @NotNull final String id,
-			final Dashboard newDashboardData) throws ApiValidationException {
+			final Dashboard newDashboardData) {
 		// load current dashboard from storage
 		final Dashboard originalDashboard = dashboardController.getDashboard(id);
 
@@ -308,7 +307,7 @@ public class DashboardResource {
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateWidgetPositions(@PathParam("dashboardId") @NotNull final String id,
-			final List<WidgetPosition> widgetPositions) throws ApiValidationException {
+			final List<WidgetPosition> widgetPositions) {
 		// load current dashboard from storage
 		final Dashboard dashboard = dashboardController.getDashboard(id);
 

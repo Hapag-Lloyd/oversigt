@@ -150,7 +150,7 @@ public class DashboardWidgetResource {
 		Widget widget;
 		try {
 			widget = controller.createWidgetForDashboard(dashboard, eventSourceInstanceId);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 
@@ -180,7 +180,7 @@ public class DashboardWidgetResource {
 
 		try {
 			return ok(new WidgetDetails(dashboard.getWidget(widgetId), all)).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist in this dashboard");
 		}
 	}
@@ -226,7 +226,7 @@ public class DashboardWidgetResource {
 		final Widget widget;
 		try {
 			widget = dashboard.getWidget(widgetId);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist");
 		}
 
@@ -294,7 +294,7 @@ public class DashboardWidgetResource {
 		Widget widget;
 		try {
 			widget = dashboard.getWidget(widgetId);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist");
 		}
 

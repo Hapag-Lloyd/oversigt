@@ -371,21 +371,24 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_stopAllEventSources(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_stopAllEventSources(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Stop all event sources");
 		getDashboardController().stopAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_startAllEventSources(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_startAllEventSources(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Start all event sources");
 		getDashboardController().startAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_reloadDashboard(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final FormData formData) {
 		final String id = getHelper().param(formData, "dashboardId");
 		getDashboardController().reloadDashboards(getDashboardController().getDashboard(id));
 		return ok();
@@ -400,12 +403,13 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_shutdown(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_shutdown(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Shutdown");
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final Exception ignore) {}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
 			shutdown.run();
 		});
 		return ok();
@@ -422,7 +426,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 			try {
 				values.put(member,
 						member.createInstance(getHelper().param(formData, "create-" + type + "-" + member.getName())));
-			} catch (final MemberMissingException e) {
+			} catch (@SuppressWarnings("unused") final MemberMissingException e) {
 				throw new RuntimeException("The member '"
 						+ member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");
@@ -447,7 +451,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		for (final SerializablePropertyMember member : spController.getMembers(spClass)) {
 			try {
 				member.set(clone, getHelper().param(formData, "edit-" + type + "-" + member.getName()));
-			} catch (final MemberMissingException e) {
+			} catch (@SuppressWarnings("unused") final MemberMissingException e) {
 				throw new RuntimeException("The member '"
 						+ member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");

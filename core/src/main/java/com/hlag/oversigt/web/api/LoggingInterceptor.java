@@ -40,7 +40,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 	static final ThreadLocal<Object[]> parameters = new ThreadLocal<>();
 
 	@Override
-	public void filter(final ContainerRequestContext requestContext) throws IOException {
+	public void filter(@SuppressWarnings("unused") final ContainerRequestContext requestContext) throws IOException {
 		parameters.set(null);
 	}
 

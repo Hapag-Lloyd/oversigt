@@ -3,7 +3,6 @@ package com.hlag.oversigt.test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.function.BiConsumer;
 
 import org.xnio.OptionMap;
@@ -13,7 +12,6 @@ import org.xnio.conduits.ConduitStreamSourceChannel;
 import org.xnio.conduits.StreamSinkConduit;
 import org.xnio.conduits.StreamSourceConduit;
 
-import de.larssh.utils.SneakyException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ServerConnection;
 import io.undertow.server.handlers.form.FormData;
@@ -63,11 +61,7 @@ public final class UndertowHelper {
 	private static StreamConnection createStreamConnection() {
 		final StreamConnection streamConnection = mock(StreamConnection.class);
 		final ConduitStreamSinkChannel sinkChannel;
-		try {
-			sinkChannel = createSinkChannel();
-		} catch (final IOException e) {
-			throw new SneakyException(e);
-		}
+		sinkChannel = createSinkChannel();
 		when(streamConnection.getSinkChannel()).thenReturn(sinkChannel);
 		final ConduitStreamSourceChannel sourceChannel = createSourceChannel();
 		when(streamConnection.getSourceChannel()).thenReturn(sourceChannel);
@@ -76,7 +70,7 @@ public final class UndertowHelper {
 		return streamConnection;
 	}
 
-	private static ConduitStreamSinkChannel createSinkChannel() throws IOException {
+	private static ConduitStreamSinkChannel createSinkChannel() {
 		final StreamSinkConduit sinkConduit = mock(StreamSinkConduit.class);
 		// when(sinkConduit.write(any(ByteBuffer.class))).thenReturn(1);
 		final ConduitStreamSinkChannel sinkChannel = new ConduitStreamSinkChannel(null, sinkConduit);

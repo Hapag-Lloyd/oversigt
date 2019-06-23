@@ -6,7 +6,6 @@ import static com.hlag.oversigt.test.UndertowHelper.createHttpExchangeWithQueryP
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +77,7 @@ public class DashboardConfigurationHandlerTest {
 	private DashboardConfigurationHandler dashboardConfigurationHandler;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		when(authenticator.isUsernameValid(ArgumentMatchers.anyString())).thenReturn(false);
 		VALID_USERNAMES.forEach(s -> when(authenticator.isUsernameValid(s)).thenReturn(true));
 

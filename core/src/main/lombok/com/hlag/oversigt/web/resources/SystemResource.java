@@ -113,7 +113,7 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final Exception ignore) {}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();
@@ -128,7 +128,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
 	)
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
-	public Response readConfiguration() throws IOException {
+	public Response readConfiguration() {
 		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
 			final String key = s.toLowerCase();
 			return !(key.contains("password") || key.contains("secret"));

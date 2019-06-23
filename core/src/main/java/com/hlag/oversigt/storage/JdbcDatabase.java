@@ -504,13 +504,12 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				COLUMNS_WIDGET_DATA);
 
 		final List<Widget> widgets = widgetInfoList.stream()
-				.map(m -> loadWidget(dashboard, m, widgetDataMapList, instanceProvider))
+				.map(m -> loadWidget(m, widgetDataMapList, instanceProvider))
 				.collect(Collectors.toList());
 		return widgets;
 	}
 
-	private Widget loadWidget(final Dashboard dashboard,
-			final Map<String, Object> map,
+	private Widget loadWidget(final Map<String, Object> map,
 			final List<Map<String, Object>> widgetDataMapList,
 			final Function<String, EventSourceInstance> instanceProvider) {
 		final int id = (int) map.get("ID");

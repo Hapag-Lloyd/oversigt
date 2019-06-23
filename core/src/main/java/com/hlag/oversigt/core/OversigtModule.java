@@ -321,7 +321,7 @@ class OversigtModule extends AbstractModule {
 
 		/** {@inheritDoc} */
 		@Override
-		public void releaseInstance(@Nullable final ConstraintValidator<?, ?> instance) {
+		public void releaseInstance(@SuppressWarnings("unused") @Nullable final ConstraintValidator<?, ?> instance) {
 			/* Garbage collector will do it */
 		}
 

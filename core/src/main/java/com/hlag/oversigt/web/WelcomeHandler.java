@@ -22,7 +22,8 @@ public class WelcomeHandler extends AbstractConfigurationHandler {
 	}
 
 	@Override
-	protected Map<String, Object> getModel(final HttpServerExchange exchange, final String page) {
+	protected Map<String, Object> getModel(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final String page) {
 		switch (page) {
 		case "welcome":
 			return map("title",

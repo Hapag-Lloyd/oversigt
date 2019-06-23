@@ -58,7 +58,7 @@ public class EventSourceStatusResource {
 		try {
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 	}
@@ -89,7 +89,7 @@ public class EventSourceStatusResource {
 			}
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (final Exception e) {
 			return ErrorResponse.preconditionFailed("Unable to start/ stop event source", e);

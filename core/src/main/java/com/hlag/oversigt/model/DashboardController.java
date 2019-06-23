@@ -847,7 +847,7 @@ public class DashboardController {
 			if (SerializableProperty.class.isAssignableFrom(type)) {
 				try {
 					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
-				} catch (final NumberFormatException ignore) {
+				} catch (@SuppressWarnings("unused") final NumberFormatException ignore) {
 					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}

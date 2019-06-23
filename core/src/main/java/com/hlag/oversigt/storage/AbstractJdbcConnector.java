@@ -150,7 +150,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			}
 			return count;
 		} catch (final SQLException e) {
-			throw new DatabaseException("Unable to execute DELETE", sql);
+			throw new DatabaseException("Unable to execute DELETE", sql, e);
 		}
 	}
 

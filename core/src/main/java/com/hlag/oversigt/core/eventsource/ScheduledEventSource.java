@@ -205,7 +205,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 				(Supplier<Duration>) () -> frequency
 						.minus(Duration.between(lastRun.get()/* TODO check isPresent */, ZonedDateTime.now())));
 		return immediateExecution.getAndSet(false) //
-				|| lastRun == null //
+				|| !lastRun.isPresent() //
 				|| frequency.minus(Duration.between(lastRun.get()/* TODO check isPresent */, ZonedDateTime.now()))
 						.isNegative();
 	}

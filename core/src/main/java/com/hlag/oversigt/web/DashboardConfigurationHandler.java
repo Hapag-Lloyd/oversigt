@@ -51,7 +51,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	private final JsonUtils json;
 
-	private static final Type TYPE_POSITIONS_MAP = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
+	private static final Type TYPE_POSITIONS_MAP
+			= new TypeToken<Map<String, Map<String, String>>>() {/* generics detection */}.getType();
 
 	@Inject
 	public DashboardConfigurationHandler(final DashboardController dashboardController,
@@ -240,14 +241,16 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_deleteDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_deleteDashboard(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		final Dashboard dashboard = getDashboard(exchange);
 		getDashboardController().deleteDashboard(dashboard);
 		logChange(exchange, "Delete dashboard %s", dashboard.getId());
 		return redirect("/" + dashboard.getId() + "/create");
 	}
 
-	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		triggerDashboardReload(getDashboard(exchange));
 		return ok();
 	}
@@ -279,7 +282,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
-	protected ActionResponse doAction_checkUsername(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_checkUsername(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final FormData formData) {
 		return okJson(getHelper().maybeParam(formData, "username")//
 				.map(authenticator::isUsernameValid)//
 				.orElse(false));

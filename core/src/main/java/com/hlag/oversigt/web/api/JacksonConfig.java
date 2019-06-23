@@ -19,7 +19,7 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 	}
 
 	@Override
-	public ObjectMapper getContext(final Class<?> objectType) {
+	public ObjectMapper getContext(@SuppressWarnings("unused") final Class<?> objectType) {
 		return objectMapper;
 	}
 }

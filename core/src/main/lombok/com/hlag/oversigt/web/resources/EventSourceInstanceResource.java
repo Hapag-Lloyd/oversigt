@@ -145,14 +145,14 @@ public class EventSourceInstanceResource {
 		EventSourceKey key;
 		try {
 			key = EventSourceKey.getKey(keyString);
-		} catch (final InvalidKeyException e) {
+		} catch (@SuppressWarnings("unused") final InvalidKeyException e) {
 			return ErrorResponse.badRequest("The key '" + keyString + "' is invalid.");
 		}
 
 		EventSourceDescriptor descriptor;
 		try {
 			descriptor = controller.getEventSourceDescriptor(key);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("No descriptor found for key: " + keyString);
 		}
 
@@ -181,7 +181,7 @@ public class EventSourceInstanceResource {
 			// read object
 			final FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);
 			return ok(info).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -207,7 +207,7 @@ public class EventSourceInstanceResource {
 					.map(controller::getDashboard)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList())).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -230,7 +230,7 @@ public class EventSourceInstanceResource {
 		EventSourceInstance instance;
 		try {
 			instance = controller.getEventSourceInstance(instanceId);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 
@@ -307,7 +307,7 @@ public class EventSourceInstanceResource {
 				return ok().build();
 			}
 			return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 	}

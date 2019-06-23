@@ -30,7 +30,7 @@ class RegularExpressionFunction implements Function<String, String> {
 		String result;
 		try {
 			result = matcher.group("return");
-		} catch (final IllegalArgumentException e) {
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException e) {
 			result = matcher.group();
 		}
 

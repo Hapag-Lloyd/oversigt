@@ -118,7 +118,7 @@ public class Authentication {
 
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (final Exception ignore) {}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {/* not logged in */}
 		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
 		}
@@ -160,7 +160,7 @@ public class Authentication {
 		try {
 			authentication.validateToken(token);
 			return true; // ok(true).build();
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception e) {
 			return false; // ok(false).build();
 		}
 	}

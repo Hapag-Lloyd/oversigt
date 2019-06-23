@@ -152,7 +152,8 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return exchangeHelper;
 	}
 
-	protected Map<String, Object> getModel(final HttpServerExchange exchange, final String page) {
+	protected Map<String, Object> getModel(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final String page) {
 		return null;
 	}
 
@@ -233,15 +234,16 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return availablePages.iterator().next();
 	}
 
-	protected String getTemplateName(final HttpServerExchange exchange, final PageInfo pi) {
+	protected String getTemplateName(@SuppressWarnings("unused") final HttpServerExchange exchange, final PageInfo pi) {
 		return pi.filename;
 	}
 
-	protected String getContentType(final HttpServerExchange exchange, final PageInfo pi) {
+	protected String getContentType(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final PageInfo pi) {
 		return "text/html";
 	}
 
-	private void handleRequestGet(final HttpServerExchange exchange) throws Exception {
+	private void handleRequestGet(final HttpServerExchange exchange) {
 		final String page = exchangeHelper.query(exchange, "page").orElse(null);
 		if (Strings.isNullOrEmpty(page)) {
 			String url = exchange.getRequestURI();
@@ -299,7 +301,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				classes[i] = objs[i].getClass();
 			}
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {/* failed... just do nothing */}
 		return null;
 	}
 

@@ -16,9 +16,9 @@ public class SqliteDialect implements SqlDialect {
 
 	@Override
 	public String getJdbcConnectionUrl(final String location,
-			final String schemaName,
-			final String username,
-			final String password) {
+			@SuppressWarnings("unused") final String schemaName,
+			@SuppressWarnings("unused") final String username,
+			@SuppressWarnings("unused") final String password) {
 		return "jdbc:sqlite:" + location;
 	}
 
