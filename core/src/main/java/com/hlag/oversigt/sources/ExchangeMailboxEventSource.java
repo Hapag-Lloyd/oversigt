@@ -207,7 +207,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + (option.getDisplayValue() == null ? 0 : option.getDisplayValue().hashCode());
+			result = prime * result + option.getDisplayValue().hashCode();
 			return result;
 		}
 
@@ -223,11 +223,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 				return false;
 			}
 			final CategoryInfo thatOther = (CategoryInfo) that;
-			if (option.getDisplayValue() == null) {
-				if (thatOther.option.getDisplayValue() != null) {
-					return false;
-				}
-			} else if (!option.getDisplayValue().equals(thatOther.option.getDisplayValue())) {
+			if (!option.getDisplayValue().equals(thatOther.option.getDisplayValue())) {
 				return false;
 			}
 			return true;

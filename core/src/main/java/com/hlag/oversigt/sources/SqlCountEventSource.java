@@ -61,14 +61,14 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 
 		if (yesterdayPoints.isEmpty() || loadDateYesterdayPoints.isBefore(yesterday)) {
 			yesterdayPoints.clear();
-			yesterdayPoints.addAll(getRpMessagesPointsByDate(connection, yesterday, false));
+			yesterdayPoints.addAll(getRpMessagesPointsByDate(connection, yesterday));
 			loadDateYesterdayPoints = yesterday;
 		}
 
 		if (loadDateTimeTodayPoints == null
 				|| loadDateTimeTodayPoints.plusMinutes(15).isBefore(ZonedDateTime.now(ZoneId.of("UTC")))) {
 			todayPoints.clear();
-			todayPoints.addAll(getRpMessagesPointsByDate(connection, today, true));
+			todayPoints.addAll(getRpMessagesPointsByDate(connection, today));
 			loadDateTimeTodayPoints = ZonedDateTime.now(ZoneId.of("UTC"));
 		}
 
@@ -89,7 +89,7 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		return new ComplexGraphEvent(allSeries, sumTodayString);
 	}
 
-	private Collection<Point> getRpMessagesPointsByDate(final Connection con, final LocalDate date, final boolean today)
+	private Collection<Point> getRpMessagesPointsByDate(final Connection con, final LocalDate date)
 			throws SQLException {
 		return readFromDatabase(con, rs -> {
 			final int hour = rs.getInt(1);

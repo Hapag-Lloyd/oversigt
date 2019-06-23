@@ -494,8 +494,11 @@ public class DashboardController {
 	private void adoptDefaultEventSourceProperties(final EventSourceInstance instance,
 			final EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
-		final Service service
-				= createServiceInstance(descriptor.getServiceClass().get(), descriptor.getModuleClass(), "dummy");
+		final Service service = createServiceInstance(
+				descriptor.getServiceClass()
+						.orElseThrow(() -> new NullPointerException("Service class must not be null")),
+				descriptor.getModuleClass(),
+				"dummy");
 		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
 			try {
 				instance.setProperty(property, property.getGetter().invoke(service));
@@ -548,7 +551,7 @@ public class DashboardController {
 			final Map<String, String> propertyStrings = storage.getEventSourceInstanceProperties(id);
 			final Map<String, String> dataItemStrings = storage.getEventSourceInstanceDataItems(id);
 
-			if (instance.getDescriptor().getServiceClass() != null) {
+			if (instance.getDescriptor().getServiceClass().isPresent()) {
 				adoptDefaultEventSourceProperties(instance, instance.getDescriptor());
 			}
 			instance.getDescriptor()
@@ -865,8 +868,7 @@ public class DashboardController {
 			if (TemporalAmount.class == type) {
 				// This is quite difficult. Java has many classes that are temporal amount.
 				// We need to test a bit, which one can interpret the String.
-				return TypeUtils
-						.tryToCreateInstance(TemporalAmount.class, string, () -> null, Duration.class, Period.class);
+				return TypeUtils.<TemporalAmount>tryToCreateInstance(string, () -> null, Duration.class, Period.class);
 			}
 			if (type.isInterface()) {
 				final String message = "Type "

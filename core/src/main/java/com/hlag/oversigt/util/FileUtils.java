@@ -84,8 +84,7 @@ public final class FileUtils {
 	public static FileSystem getFileSystem(final URI uri) {
 		try {
 			return FileSystems.getFileSystem(uri);
-		} catch (final FileSystemNotFoundException e) {
-			LOGGER.warn("Cannot find file system", e);
+		} catch (@SuppressWarnings("unused") final FileSystemNotFoundException e) {
 			try {
 				return FileSystems.newFileSystem(uri, Collections.emptyMap());
 			} catch (final IOException ioException) {

@@ -97,8 +97,8 @@ public final class TypeUtils {
 			final Collection<String> classNames,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		final Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c) && //
-				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent));
+		final Predicate<Class<?>> predicate
+				= c -> assignableTo.isAssignableFrom(c) && c.isAnnotationPresent(annotationToBePresent);
 		@SuppressWarnings("unchecked")
 		final Stream<Class<T>> stream = classNames.stream()
 				.map(s -> loadClassInfo(classLoader, s))
@@ -255,15 +255,15 @@ public final class TypeUtils {
 				+ Arrays.toString(initArgs));
 	}
 
+	@Nullable
 	@SafeVarargs
-	public static <T> T tryToCreateInstance(final Class<T> target,
-			final String input,
+	public static <T> T tryToCreateInstance(final String input,
 			final Supplier<T> defaultValueSupplier,
 			final Class<? extends T>... classes) {
 		for (final Class<? extends T> clazz : classes) {
 			try {
 				return createInstance(clazz, input);
-			} catch (final Exception ignore) {}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
 		}
 		return defaultValueSupplier.get();
 	}
@@ -511,7 +511,7 @@ public final class TypeUtils {
 				final boolean empty) {
 			this.field = field;
 			field.setAccessible(true);
-			this.name = name;
+			this.name = Objects.requireNonNull(name);
 			displayName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
 			this.type = type;
 			this.icon = icon;
@@ -593,11 +593,7 @@ public final class TypeUtils {
 				return false;
 			}
 			final SerializablePropertyMember other = (SerializablePropertyMember) obj;
-			if (name == null) {
-				if (other.name != null) {
-					return false;
-				}
-			} else if (!name.equals(other.name)) {
+			if (!name.equals(other.name)) {
 				return false;
 			}
 			return true;

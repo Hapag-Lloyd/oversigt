@@ -193,7 +193,8 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 
 		@Override
-		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+		public Object invoke(@SuppressWarnings("unused") final Object proxy, final Method method, final Object[] args)
+				throws Throwable {
 			if (method.getDeclaringClass() == Connection.class && "createStatement".equals(method.getName())) {
 				throw new RuntimeException(
 						"Oversigt does not allow unprepared statements. Please use #prepareStatement instead.");

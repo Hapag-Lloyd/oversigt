@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAmount;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -29,9 +30,9 @@ public class TimelineEvent extends OversigtEvent {
 	private final Locale locale;
 
 	public TimelineEvent(final TemporalAmount maxAge, final ZoneId zoneId, final Locale locale) {
-		this.maxAge = maxAge;
-		this.zoneId = zoneId;
-		this.locale = locale;
+		this.maxAge = Objects.requireNonNull(maxAge);
+		this.zoneId = Objects.requireNonNull(zoneId);
+		this.locale = Objects.requireNonNull(locale);
 	}
 
 	public TemporalAmount getMaxAge() {
@@ -91,7 +92,7 @@ public class TimelineEvent extends OversigtEvent {
 			return;
 		}
 		// filter events that are too far in the future
-		if (maxAge != null && endDate.minus(maxAge).plusDays(1).isAfter(now)) {
+		if (endDate.minus(maxAge).plusDays(1).isAfter(now)) {
 			return;
 		}
 
@@ -114,7 +115,7 @@ public class TimelineEvent extends OversigtEvent {
 		if (events.size() > minCount) {
 			int count = 0;
 			for (final Event event : events) {
-				if (count > minCount && (maxAge == null || event.getOriginalDate().minus(maxAge).isAfter(now))) {
+				if (count > minCount && event.getOriginalDate().minus(maxAge).isAfter(now)) {
 					events = new TreeSet<>(events.headSet(event));
 					return;
 				}

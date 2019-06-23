@@ -2,7 +2,6 @@ package com.hlag.oversigt.sources;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -147,7 +146,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 	}
 
-	private Git createGitRepository() throws IOException, GitAPIException, URISyntaxException {
+	private Git createGitRepository() throws IOException, GitAPIException {
 		if (getLogger().isDebugEnabled()) {
 			getLogger().debug("Creating Git object for: " + getRepositoryUrl());
 		}
@@ -174,8 +173,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		return new Git(repo);
 	}
 
-	private Git createRemoteGitRepository(final String repositoryUrl)
-			throws GitAPIException, IOException, URISyntaxException {
+	private Git createRemoteGitRepository(final String repositoryUrl) throws GitAPIException, IOException {
 		getLogger().info("Creating remote repository [{}] ", repositoryUrl);
 		// Create temp-directory
 		final Path tempDir = Files.createTempDirectory("oversigt-temp-git");
@@ -226,7 +224,8 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 
 		@Override
-		public boolean get(final URIish uri, final CredentialItem... items) throws UnsupportedCredentialItem {
+		public boolean get(@SuppressWarnings("unused") final URIish uri, final CredentialItem... items)
+				throws UnsupportedCredentialItem {
 			if (isUsernamePassword(items)) {
 				for (final CredentialItem item : items) {
 					if (item instanceof Username) {

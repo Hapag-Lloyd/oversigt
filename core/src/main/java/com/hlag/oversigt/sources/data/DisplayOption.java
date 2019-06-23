@@ -30,7 +30,7 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 
 	public DisplayOption(final String displayValue, final Color color) {
 		this(displayValue);
-		this.color = color;
+		this.color = Objects.requireNonNull(color);
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	}
 
 	public void setColor(final Color color) {
-		this.color = color;
+		this.color = Objects.requireNonNull(color);
 	}
 
 	public String getDisplayValue() {
@@ -65,7 +65,7 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	}
 
 	public void setDisplayValue(final String displayValue) {
-		this.displayValue = displayValue;
+		this.displayValue = Objects.requireNonNull(displayValue);
 	}
 
 	public String getValue() {
@@ -73,6 +73,6 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	}
 
 	public void setValue(final String value) {
-		this.value = value;
+		this.value = Objects.requireNonNull(value);
 	}
 }
