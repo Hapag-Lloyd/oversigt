@@ -2,6 +2,7 @@ package com.hlag.oversigt.web.api;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import de.larssh.utils.SneakyException;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Provider
 public class ApiExceptionHandler implements ExceptionMapper<Exception> {
@@ -33,8 +35,9 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 		this.debug = debug;
 	}
 
+	@Nullable
 	@Context
-	private HttpServletRequest request;
+	private HttpServletRequest injectedRequest;
 
 	private static final Pattern PATTERN_COMMA = Pattern.compile(",");
 
@@ -42,7 +45,9 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 
 	/** {@inheritDoc} */
 	@Override
-	public Response toResponse(final Exception exception) {
+	public Response toResponse(@Nullable final Exception nullableException) {
+		final Exception exception = Objects.requireNonNull(nullableException);
+
 		final UUID uuid = UUID.randomUUID();
 		LOGGER.error("Error while calling API method - " + uuid.toString(), exception);
 		if (exception instanceof ApiValidationException) {
@@ -58,7 +63,7 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 			return ErrorResponse.internalServerError(uuid,
 					"Internal server error. More details can be found in the server log file.");
 		}
-		final String[] accepts = PATTERN_COMMA.split(request.getHeader("accept"), 0);
+		final String[] accepts = PATTERN_COMMA.split(Objects.requireNonNull(injectedRequest).getHeader("accept"), 0);
 		for (final String accept : accepts) {
 			final String[] parts = PATTERN_SEMICOLON.split(accept, 0);
 			switch (parts[0].trim().toLowerCase()) {

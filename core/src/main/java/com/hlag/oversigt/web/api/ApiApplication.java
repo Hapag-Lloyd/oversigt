@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.ws.rs.core.Application;
@@ -21,6 +22,7 @@ import com.hlag.oversigt.core.OversigtServer;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.web.resources.Authentication;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.converter.ModelConverter;
 import io.swagger.converter.ModelConverterContext;
 import io.swagger.converter.ModelConverters;
@@ -72,18 +74,19 @@ public class ApiApplication extends Application {
 	}
 
 	private static class ColorConverter implements ModelConverter {
+		@Nullable
 		@Override
-		public Property resolveProperty(final Type type,
-				final ModelConverterContext context,
-				final Annotation[] annotations,
-				final Iterator<ModelConverter> chain) {
+		public Property resolveProperty(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Annotation[] annotations,
+				@Nullable final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
 			if (jType == null) {
 				return null;
 			}
 			final Class<?> cls = jType.getRawClass();
 			if (!cls.equals(Color.class)) {
-				return chain.next().resolveProperty(type, context, annotations, chain);
+				return Objects.requireNonNull(chain).next().resolveProperty(type, context, annotations, chain);
 			}
 			final Map<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
 			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
@@ -92,27 +95,29 @@ public class ApiApplication extends Application {
 			return PropertyBuilder.build("string", "#rrggbbaa", map);
 		}
 
+		@Nullable
 		@Override
-		public Model resolve(final Type type,
-				final ModelConverterContext context,
-				final Iterator<ModelConverter> chain) {
-			return chain.next().resolve(type, context, chain);
+		public Model resolve(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Iterator<ModelConverter> chain) {
+			return Objects.requireNonNull(chain).next().resolve(type, context, chain);
 		}
 	}
 
 	private static class DurationConverter implements ModelConverter {
+		@Nullable
 		@Override
-		public Property resolveProperty(final Type type,
-				final ModelConverterContext context,
-				final Annotation[] annotations,
-				final Iterator<ModelConverter> chain) {
+		public Property resolveProperty(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Annotation[] annotations,
+				@Nullable final Iterator<ModelConverter> chain) {
 			final JavaType jType = Json.mapper().constructType(type);
 			if (jType == null) {
 				return null;
 			}
 			final Class<?> cls = jType.getRawClass();
 			if (!cls.equals(Duration.class)) {
-				return chain.next().resolveProperty(type, context, annotations, chain);
+				return Objects.requireNonNull(chain).next().resolveProperty(type, context, annotations, chain);
 			}
 			final Map<PropertyBuilder.PropertyId, Object> map = new HashMap<>();
 			// map.put(PropertyBuilder.PropertyId.FORMAT, "#rrggbbaa");
@@ -123,11 +128,12 @@ public class ApiApplication extends Application {
 			return PropertyBuilder.build("string", null, map);
 		}
 
+		@Nullable
 		@Override
-		public Model resolve(final Type type,
-				final ModelConverterContext context,
-				final Iterator<ModelConverter> chain) {
-			return chain.next().resolve(type, context, chain);
+		public Model resolve(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Iterator<ModelConverter> chain) {
+			return Objects.requireNonNull(chain).next().resolve(type, context, chain);
 		}
 	}
 }

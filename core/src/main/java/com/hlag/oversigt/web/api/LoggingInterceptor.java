@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.Priority;
@@ -29,24 +30,32 @@ import org.slf4j.LoggerFactory;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.util.Utils;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @Provider
 @Priority(Priorities.USER)
 public class LoggingInterceptor implements ContainerRequestFilter, ContainerResponseFilter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingInterceptor.class);
 
+	@Nullable
 	@Context
-	private ResourceInfo resourceInfo;
+	private ResourceInfo injectedResourceInfo = null;
 
 	static final ThreadLocal<Object[]> parameters = new ThreadLocal<>();
 
 	@Override
-	public void filter(@SuppressWarnings("unused") final ContainerRequestContext requestContext) throws IOException {
+	public void filter(@SuppressWarnings("unused") @Nullable final ContainerRequestContext requestContext)
+			throws IOException {
 		parameters.set(null);
 	}
 
 	@Override
-	public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
-			throws IOException {
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext,
+			@Nullable final ContainerResponseContext nullableResponseContext) throws IOException {
+		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);
+		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);
+		final ContainerResponseContext responseContext = Objects.requireNonNull(nullableResponseContext);
+
 		final Method method = resourceInfo.getResourceMethod();
 		if (method != null) {
 			if (method.isAnnotationPresent(JwtSecured.class) && !method.isAnnotationPresent(NoChangeLog.class)) {

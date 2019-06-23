@@ -1,6 +1,7 @@
 package com.hlag.oversigt.web.api;
 
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.hlag.oversigt.security.Principal;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jsonwebtoken.JwtException;
 
 /**
@@ -39,15 +41,20 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 
 	private static final String AUTHENTICATION_SCHEME = "Bearer";
 
+	@Nullable
 	@Inject
-	private ApiAuthenticationUtils authentication;
+	private ApiAuthenticationUtils injectedAuthentication;
 
+	@Nullable
 	@Context
-	private ResourceInfo resourceInfo;
+	private ResourceInfo injectedResourceInfo;
 
 	/** {@inheritDoc} */
 	@Override
-	public void filter(final ContainerRequestContext requestContext) {
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext) {
+		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);
+		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);
+
 		if (!authorize(requestContext)) {
 			final Method method = resourceInfo.getResourceMethod();
 			if (method.isAnnotationPresent(JwtSecured.class)
@@ -58,8 +65,14 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 	}
 
 	private boolean authorize(final ContainerRequestContext requestContext) {
+		final ApiAuthenticationUtils authentication = Objects.requireNonNull(injectedAuthentication);
+
 		// Get the Authorization header from the request
+		@Nullable
 		final String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+		if (authorizationHeader == null) {
+			return false;
+		}
 
 		// Validate the Authorization header
 		if (!isTokenBasedAuthentication(authorizationHeader)) {
@@ -89,8 +102,7 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 		// Check if the Authorization header is valid
 		// It must not be null and must be prefixed with "Bearer" plus a whitespace
 		// The authentication scheme comparison must be case-insensitive
-		return authorizationHeader != null
-				&& authorizationHeader.toLowerCase().startsWith(AUTHENTICATION_SCHEME.toLowerCase() + " ");
+		return authorizationHeader.toLowerCase().startsWith(AUTHENTICATION_SCHEME.toLowerCase() + " ");
 	}
 
 	private void abortWithUnauthorized(final ContainerRequestContext requestContext) {
@@ -117,8 +129,8 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 		}
 
 		@Override
-		public boolean isUserInRole(final String role) {
-			return principal.hasRole(role);
+		public boolean isUserInRole(@Nullable final String role) {
+			return principal.hasRole(Objects.requireNonNull(role));
 		}
 
 		@Override

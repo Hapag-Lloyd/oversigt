@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Feature to enable CORS in debug mode to enable development of web UIs
  *
@@ -27,8 +29,8 @@ public class CorsFeature implements Feature {
 
 	/** {@inheritDoc} */
 	@Override
-	public boolean configure(final FeatureContext context) {
-		if (debug) {
+	public boolean configure(@Nullable final FeatureContext context) {
+		if (debug && context != null) {
 			LOGGER.warn("Debug mode: Enabling CORS to permit calls from other hosts.");
 			final CorsFilter corsFilter = new CorsFilter();
 			corsFilter.getAllowedOrigins().add("*");
