@@ -55,7 +55,7 @@ public interface Storage extends Closeable {
 
 	List<Dashboard> loadDashboards();
 
-	Dashboard loadDashboard(String id);
+	Optional<Dashboard> loadDashboard(String id);
 
 	List<Widget> loadWidgetDatas(Dashboard dashboard, Function<String, EventSourceInstance> instanceProvider);
 

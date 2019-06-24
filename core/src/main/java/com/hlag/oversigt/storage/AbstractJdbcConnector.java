@@ -15,10 +15,12 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -26,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public abstract class AbstractJdbcConnector implements Closeable {
@@ -58,10 +62,8 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		}
 		final PreparedStatement statement
 				= getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);
-		if (values != null) {
-			for (int i = 0; i < values.length; i += 1) {
-				statement.setObject(i + 1, getDialect().convertValue(values[i]));
-			}
+		for (int i = 0; i < values.length; i += 1) {
+			statement.setObject(i + 1, getDialect().convertValue(values[i]));
 		}
 		return statement;
 	}
@@ -83,14 +85,14 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		return (T) rs.getObject(columnName);
 	}
 
-	protected <T> T insert(final String table,
-			final ThrowingFunction<ResultSet, T> getGeneratedKey,
+	protected <T> Optional<T> insert(final String table,
+			final Optional<ThrowingFunction<ResultSet, T>> getGeneratedKey,
 			final Object... parameters) {
 		return insert(table, getGeneratedKey, map(parameters));
 	}
 
-	protected <T> T insert(final String table,
-			final ThrowingFunction<ResultSet, T> getGeneratedKey,
+	protected <T> Optional<T> insert(final String table,
+			final Optional<ThrowingFunction<ResultSet, T>> getGeneratedKey,
 			final Map<String, ?> values) {
 		final String sql = getDialect().insert(table, values.keySet());
 		try {
@@ -168,20 +170,20 @@ public abstract class AbstractJdbcConnector implements Closeable {
 		}
 	}
 
-	protected <T> T executeInsert(final String sql,
-			final ThrowingFunction<ResultSet, T> getGeneratedKey,
+	protected <T> Optional<T> executeInsert(final String sql,
+			final Optional<ThrowingFunction<ResultSet, T>> getGeneratedKey,
 			final Object... values) throws SQLException {
 		try (PreparedStatement stmt = prepare(sql, true, values)) {
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("Executing INSERT");
 			}
 			stmt.executeUpdate();
-			if (getGeneratedKey == null) {
-				return null;
+			if (!getGeneratedKey.isPresent()) {
+				return Optional.empty();
 			}
 			try (ResultSet gkrs = stmt.getGeneratedKeys()) {
 				if (gkrs.next()) {
-					return getGeneratedKey.apply(gkrs);
+					return Optional.of(getGeneratedKey.get().apply(gkrs));
 				}
 				throw new DatabaseException("Unable to get generated keys. ResultSet is empty.", sql);
 			}
@@ -215,30 +217,34 @@ public abstract class AbstractJdbcConnector implements Closeable {
 
 	protected List<Map<String, Object>> loadValues(final String table,
 			final String columnToRead,
-			final String columnToCheck,
+			final Optional<String> columnToCheck,
 			final Collection<Object> values,
 			final String[] columnNames) {
-		return loadValues(table, columnToRead, columnToCheck, !values.isEmpty() ? values.toArray() : null, columnNames);
+		return loadValues(table, columnToRead, columnToCheck, values.toArray(), columnNames);
 	}
 
 	protected List<Map<String, Object>> loadValues(final String table,
 			final String columnToRead,
-			final String columnToCheck,
+			final Optional<String> columnToCheck,
 			final Object[] values,
 			final String[] columnNames) {
-		if (values != null && values.length == 1) {
+		if (values.length == 1) {
 			return load(table, columnToRead, columnToCheck, values[0], rs -> readColumnValues(rs, columnNames));
 		}
 		final String sql = getDialect()
-				.select(table, Lists.newArrayList("*"), columnToCheck, values != null ? values.length : -1);
+				.select(table, Lists.newArrayList("*"), columnToCheck, values.length == 0 ? values.length : -1);
 		return load(sql, rs -> readColumnValues(rs, columnNames), values);
+	}
+
+	protected <T> List<T> load(final String table, final String columnToRead) {
+		return load(table, columnToRead, Optional.empty(), null);
 	}
 
 	@SuppressWarnings("unchecked")
 	protected <T> List<T> load(final String table,
 			final String columnToRead,
-			final String columnToCheck,
-			final Object value) {
+			final Optional<String> columnToCheck,
+			@Nullable final Object value) {
 		return load(table, columnToRead, columnToCheck, value, rs -> (T) rs.getObject(1));
 	}
 
@@ -257,13 +263,13 @@ public abstract class AbstractJdbcConnector implements Closeable {
 
 	protected <T> List<T> load(final String table,
 			final String columnToRead,
-			final String columnToCheck,
-			final Object value,
+			final Optional<String> columnToCheck,
+			@Nullable final Object value,
 			final ThrowingFunction<ResultSet, T> converter) {
 		final String sql = getDialect().select(table,
 				Arrays.asList(columnToRead),
-				columnToCheck != null ? Arrays.asList(columnToCheck) : null);
-		return load(sql, converter, columnToCheck != null ? new Object[] { value } : new Object[0]);
+				columnToCheck.map(Arrays::asList).orElse(Collections.emptyList()));
+		return load(sql, converter, columnToCheck.isPresent() ? new Object[] { value } : new Object[0]);
 	}
 
 	protected <T> List<T> load(final String sql,

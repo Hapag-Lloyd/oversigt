@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -72,7 +73,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	private static final String TYPE_DATA = "DATA";
 
-	private static final ThrowingFunction<ResultSet, Integer> RETRIEVE_ID = rs -> rs.getInt(1);
+	private static final Optional<ThrowingFunction<ResultSet, Integer>> RETRIEVE_ID = Optional.of(rs -> rs.getInt(1));
 
 	private final SqlDialect sqlDialect;
 
@@ -176,20 +177,22 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public List<String> getEventSourceNames() {
-		return load(TABLE_EVENT_SOURCE, "NAME", null, null);
+		return load(TABLE_EVENT_SOURCE, "NAME");
 	}
 
 	@Override
 	public Collection<String> getEventSourcesIds() {
-		return load(TABLE_EVENT_SOURCE, "ID", null, null);
+		return load(TABLE_EVENT_SOURCE, "ID");
 	}
 
 	@Override
 	public EventSourceInstance loadEventSourceInstance(final String eventSourceId,
 			final BiFunction<String, String, EventSourceDescriptor> descriptorSupplier) {
-		final Map<String, Object> infos
-				= load(TABLE_EVENT_SOURCE, "*", "ID", eventSourceId, rs -> readColumnValues(rs, COLUMNS_EVENT_SOURCE))
-						.get(0);
+		final Map<String, Object> infos = load(TABLE_EVENT_SOURCE,
+				"*",
+				Optional.of("ID"),
+				eventSourceId,
+				rs -> readColumnValues(rs, COLUMNS_EVENT_SOURCE)).get(0);
 
 		final String id = (String) infos.get("ID");
 		final String view = (String) infos.get("VIEW");
@@ -253,7 +256,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				map("CREATED_ON", now(), "CREATED_BY", instance.getCreatedBy()));
 		final List<Map<String, Object>> existingProperties = load(TABLE_EVENT_SOURCE_PROPERTY,
 				"*",
-				"EVENT_SOURCE_ID",
+				Optional.of("EVENT_SOURCE_ID"),
 				instance.getId(),
 				rs -> readColumnValues(rs, COLUMNS_EVENT_SOURCE_PROPERTY));
 		createOrUpdateEventSourceProperties(instance,
@@ -298,7 +301,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 			} else {
 				// create
 				insert(TABLE_EVENT_SOURCE_PROPERTY,
-						null,
+						Optional.empty(),
 						"EVENT_SOURCE_ID",
 						instance.getId(),
 						"TYPE",
@@ -324,7 +327,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public List<String> getDashboardIds() {
-		return load(TABLE_DASHBOARD, "ID", null, null);
+		return load(TABLE_DASHBOARD, "ID");
 	}
 
 	@Override
@@ -358,21 +361,21 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public List<Dashboard> loadDashboards() {
-		return load(TABLE_DASHBOARD, "*", null, null, rs -> readColumnValues(rs, COLUMNS_DASHBOARD))//
+		return load(TABLE_DASHBOARD, "*", Optional.empty(), null, rs -> readColumnValues(rs, COLUMNS_DASHBOARD))//
 				.stream()
 				.map(this::loadDashboard)
 				.collect(Collectors.toList());
 	}
 
 	@Override
-	public Dashboard loadDashboard(final String id) {
+	public Optional<Dashboard> loadDashboard(final String id) {
 		final List<Map<String, Object>> maybeData
-				= load(TABLE_DASHBOARD, "*", "ID", id, rs -> readColumnValues(rs, COLUMNS_DASHBOARD));
+				= load(TABLE_DASHBOARD, "*", Optional.of("ID"), id, rs -> readColumnValues(rs, COLUMNS_DASHBOARD));
 
 		if (maybeData.isEmpty()) {
-			return null;
+			return Optional.empty();
 		}
-		return loadDashboard(maybeData.get(0));
+		return Optional.of(loadDashboard(maybeData.get(0)));
 	}
 
 	public Dashboard loadDashboard(final Map<String, Object> data) {
@@ -405,7 +408,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public void createWidget(final Dashboard dashboard, final Widget widget) {
-		final int id = insert(TABLE_WIDGET,
+		final Optional<Integer> id = insert(TABLE_WIDGET,
 				RETRIEVE_ID,
 				"DASHBOARD_ID",
 				dashboard.getId(), //
@@ -431,14 +434,18 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				widget.getStyle(),
 				"LAST_CHANGE",
 				now());
-		widget.setId(id);
+		if (!id.isPresent()) {
+			throw new RuntimeException(String
+					.format("In dashboard [%s]: unable to create widget: %s", dashboard.getId(), widget.toString()));
+		}
+		widget.setId(id.get());
 		createOrUpdateWidgetProperties(widget);
 	}
 
 	private void deleteWidgetDatas(final Widget widget) {
 		final String sql = getDialect().delete(TABLE_WIDGET_DATA,
 				Arrays.asList("WIDGET_ID"),
-				"NAME",
+				Optional.of("NAME"),
 				true,
 				widget.getEventSourceInstance().getDescriptor().getDataItems().size());
 		final List<Object> items = new ArrayList<>();
@@ -470,7 +477,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 		// find names of already existing values
 		deleteWidgetDatas(widget);
-		final List<String> exisitingNames = load(TABLE_WIDGET_DATA, "NAME", "WIDGET_ID", widget.getId());
+		final List<String> exisitingNames = load(TABLE_WIDGET_DATA, "NAME", Optional.of("WIDGET_ID"), widget.getId());
 		// TODO we can omit the "OrUpdate"
 		createOrUpdateWidgetProperties(widget.getId(), values, exisitingNames);
 	}
@@ -484,7 +491,14 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				updateByTwoKey(TABLE_WIDGET_DATA, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
 			} else {
 				// create
-				insert(TABLE_WIDGET_DATA, null, "WIDGET_ID", widgetId, "NAME", e.getKey(), "VALUE", e.getValue());
+				insert(TABLE_WIDGET_DATA,
+						Optional.empty(),
+						"WIDGET_ID",
+						widgetId,
+						"NAME",
+						e.getKey(),
+						"VALUE",
+						e.getValue());
 			}
 		}
 	}
@@ -494,7 +508,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 			final Function<String, EventSourceInstance> instanceProvider) {
 		final List<Map<String, Object>> widgetInfoList = load(TABLE_WIDGET,
 				"*",
-				"DASHBOARD_ID",
+				Optional.of("DASHBOARD_ID"),
 				dashboard.getId(),
 				rs -> readColumnValues(rs, COLUMNS_WIDGET));
 		final List<Map<String, Object>> widgetDataMapList = loadValues(TABLE_WIDGET_DATA,
@@ -609,7 +623,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	public <T extends SerializableProperty> Optional<T> getProperty(final Class<T> clazz, final int id) {
 		final List<Map<String, Object>> credentialsMap = load(TABLE_VALUES,
 				"*",
-				"ID",
+				Optional.of("ID"),
 				id,
 				// XXX Column CLASS should be checked, too
 				rs -> readColumnValues(rs, COLUMNS_VALUES));
@@ -622,11 +636,15 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public <T extends SerializableProperty> List<T> listProperties(final Class<T> clazz) {
-		return load(TABLE_VALUES, "*", "CLASS", clazz.getName(), rs -> readColumnValues(rs, COLUMNS_VALUES))//
-				.stream()//
-				.map(m -> mapToValue(clazz, m))//
-				.sorted()//
-				.collect(toList());
+		return load(TABLE_VALUES,
+				"*",
+				Optional.of("CLASS"),
+				clazz.getName(),
+				rs -> readColumnValues(rs, COLUMNS_VALUES))//
+						.stream()//
+						.map(m -> mapToValue(clazz, m))//
+						.sorted()//
+						.collect(toList());
 	}
 
 	@Override
@@ -645,9 +663,13 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,
 			final String name,
 			final Object... parameters) {
-		final int id = insert(TABLE_VALUES, RETRIEVE_ID, "CLASS", clazz.getName(), "NAME", name, "JSON", "{}");
+		final Optional<Integer> id
+				= insert(TABLE_VALUES, RETRIEVE_ID, "CLASS", clazz.getName(), "NAME", name, "JSON", "{}");
+		if (!id.isPresent()) {
+			throw new RuntimeException("Unable to create property: " + name);
+		}
 		final Object[] params = new Object[2 + parameters.length];
-		params[0] = id;
+		params[0] = id.get();
 		params[1] = name;
 		System.arraycopy(parameters, 0, params, 2, parameters.length);
 		final T value;
@@ -670,7 +692,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 			final T item,
 			final Function<T, I> getId,
 			final Map<String, Object> values) {
-		persist(table, idColumn, item, getId, values, null);
+		persist(table, idColumn, item, getId, values, new HashMap<>());
 	}
 
 	private <T, I> void persist(final String table,
@@ -679,13 +701,12 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 			final Function<T, I> getId,
 			final Map<String, Object> values,
 			final Map<String, Object> creationValues) {
-		final List<String> found = load(table, idColumn, idColumn, getId.apply(item), rs -> rs.getString(idColumn));
+		final List<String> found
+				= load(table, idColumn, Optional.of(idColumn), getId.apply(item), rs -> rs.getString(idColumn));
 		if (found.isEmpty()) {
 			values.put(idColumn, getId.apply(item));
-			if (creationValues != null) {
-				values.putAll(creationValues);
-			}
-			insert(table, null, values);
+			values.putAll(creationValues);
+			insert(table, Optional.empty(), values);
 		} else if (found.size() == 1) {
 			// update existing entry
 			update(table, map(idColumn, getId.apply(item)), values);
