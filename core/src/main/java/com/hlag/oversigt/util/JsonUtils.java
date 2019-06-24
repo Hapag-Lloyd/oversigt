@@ -25,6 +25,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,6 +51,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class JsonUtils {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
+
 	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
 		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
 	}
@@ -158,6 +163,7 @@ public class JsonUtils {
 
 	@SuppressWarnings("unchecked")
 	public String toJsonSchema(final Class<?> clazz, @Nullable final JsonHint hint) {
+		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
 		if (!SerializableProperty.class.isAssignableFrom(clazz)) {
 			schema = map("$schema",
