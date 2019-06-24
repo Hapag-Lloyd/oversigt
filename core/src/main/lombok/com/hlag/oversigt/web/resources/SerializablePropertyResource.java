@@ -96,7 +96,7 @@ public class SerializablePropertyResource {
 	public Response readMembers(@PathParam("name") @NotBlank final String className) {
 		try {
 			return ok(spController.getMembers(spController.getClass(className))).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property '" + className + "' does not exist.");
 		}
 	}
@@ -117,7 +117,7 @@ public class SerializablePropertyResource {
 			return ok(spController.streamProperties(spController.getClass(className))//
 					.map(SerializablePropertyResource::toMapWithoutPassword)
 					.collect(Collectors.toList())).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 	}
@@ -136,10 +136,10 @@ public class SerializablePropertyResource {
 	public Response createProperty(@Context final UriInfo uri,
 			@PathParam("type") @NotBlank final String className,
 			@NotEmpty final Map<@NotBlank String, @NotNull Object> map) throws MemberMissingException {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 
@@ -150,12 +150,12 @@ public class SerializablePropertyResource {
 
 		try {
 			final SerializableProperty prop = spController.createProperty(clazz, (String) map.get("name"), map);
-			return status(Status.CREATED)// TODO change to proper Location-header returning response
-					.entity(toMapWithoutPassword(prop))
+			// TODO change to proper Location-header returning response
+			return status(Status.CREATED).entity(toMapWithoutPassword(prop))
 					.type(MediaType.APPLICATION_JSON_TYPE)
 					.link(uri.getAbsolutePath() + "/" + prop.getId(), "self")
 					.build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property '" + className + "' does not exist.");
 		}
 	}
@@ -173,10 +173,10 @@ public class SerializablePropertyResource {
 	@NoChangeLog
 	public Response readProperty(@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 		final SerializableProperty prop = spController.getProperty(clazz, id);
@@ -202,10 +202,10 @@ public class SerializablePropertyResource {
 			@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id,
 			@NotNull final Map<@NotBlank String, @NotNull Object> map) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 		final SerializableProperty prop = spController.getProperty(clazz, id);
@@ -240,17 +240,17 @@ public class SerializablePropertyResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response deleteProperty(@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Serializable property type '" + className + "' does not exist.");
 		}
 		try {
 			spController.getProperty(clazz, id);
 			spController.deleteProperty(clazz, id);
 			return Response.ok().build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse
 					.notFound("Serializable property of type '" + className + "' with id " + id + " does not exist.");
 		}
@@ -273,10 +273,6 @@ public class SerializablePropertyResource {
 				errors.add("'" + n + "' is not a member of " + clazz.getSimpleName());
 			}
 		}
-		// // are all values strings?
-		// map.entrySet().stream().filter(e -> !(e.getValue() instanceof
-		// String)).forEach(
-		// e -> errors.add("Value of '" + e.getKey() + "' is not a String"));
 		return errors;
 	}
 
