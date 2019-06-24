@@ -32,6 +32,7 @@ import com.atlassian.jira.rest.client.internal.async.AsynchronousHttpClientFacto
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 import com.google.common.base.Charsets;
@@ -179,6 +180,7 @@ class OversigtModule extends AbstractModule {
 		objectMapper.registerModule(module);
 		// objectMapper.registerModule(new JavaTimeModule()); // instead the
 		// InstantDeserializer and ZonedDateTimeSerializer are used directly
+		objectMapper.registerModule(new Jdk8Module());
 		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		binder().bind(ObjectMapper.class).toInstance(objectMapper);
 
