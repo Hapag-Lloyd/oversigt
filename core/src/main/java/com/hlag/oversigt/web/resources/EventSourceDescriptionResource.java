@@ -24,6 +24,7 @@ import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -97,7 +98,7 @@ public class EventSourceDescriptionResource {
 			return descriptor.getDisplayName();
 		}
 
-		@NotNull
+		@Nullable
 		public String getDescription() {
 			return descriptor.getDescription();
 		}

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,7 @@ import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 import com.hlag.oversigt.web.resources.EventSourceInstanceResource.FullEventSourceInstanceInfo;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -66,8 +68,13 @@ public class DashboardWidgetResource {
 	@Inject
 	private EventSourceInstanceResource eventSourceInstanceResource;
 
+	@Nullable
 	@Context
-	private UriInfo uri;
+	private UriInfo injectedUriInfo;
+
+	private UriInfo getUriInfo() {
+		return Objects.requireNonNull(injectedUriInfo);
+	}
 
 	@GET
 	@Path("/")
@@ -154,7 +161,7 @@ public class DashboardWidgetResource {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 
-		return created(URI.create(uri.getAbsolutePath() + "/" + widget.getId()))//
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + widget.getId()))//
 				.entity(new WidgetDetails(widget, false))
 				.build();
 	}

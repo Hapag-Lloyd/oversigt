@@ -212,7 +212,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			final String columnToCheck,
 			final Object value,
 			final String[] columnNames) {
-		return loadValues(table, columnToRead, columnToCheck, new Object[] { value }, columnNames);
+		return loadValues(table, columnToRead, Optional.of(columnToCheck), new Object[] { value }, columnNames);
 	}
 
 	protected List<Map<String, Object>> loadValues(final String table,

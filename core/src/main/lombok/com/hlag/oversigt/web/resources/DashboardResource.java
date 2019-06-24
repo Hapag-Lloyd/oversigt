@@ -12,6 +12,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -73,8 +75,13 @@ public class DashboardResource {
 	@Inject
 	private Authenticator authenticator;
 
+	@Nullable
 	@Context
-	private UriInfo uri;
+	private UriInfo injectedUriInfo;
+
+	private UriInfo getUriInfo() {
+		return Objects.requireNonNull(injectedUriInfo);
+	}
 
 	@GET
 	@ApiResponses({
@@ -109,14 +116,14 @@ public class DashboardResource {
 			@QueryParam("enabled") @ApiParam(defaultValue = "false") final boolean enabled) {
 		Dashboard dashboard = dashboardController.getDashboard(id);
 		if (dashboard != null) {
-			return Response.seeOther(URI.create(uri.getAbsolutePath() + "/" + id)).build();
+			return Response.seeOther(URI.create(getUriInfo().getAbsolutePath() + "/" + id)).build();
 		}
 
 		dashboard = dashboardController.createDashboard(id,
 				Principal.loadPrincipal(authenticator, ownerUserId)
 						.orElseThrow(() -> new RuntimeException("Unknown principal for: " + ownerUserId)),
 				enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));
-		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId()))//
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + dashboard.getId()))//
 				.entity(dashboard)
 				.type(MediaType.APPLICATION_JSON_TYPE)
 				.build();

@@ -12,13 +12,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -53,6 +53,7 @@ import com.hlag.oversigt.web.api.NoChangeLog;
 import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
 import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -73,15 +74,25 @@ public class EventSourceInstanceResource {
 	@Inject
 	private DashboardController controller;
 
+	@Nullable
 	@Context
-	private UriInfo uri;
+	private UriInfo injectedUriInfo;
 
+	@Nullable
 	@Context
-	private SecurityContext securityContext;
+	private SecurityContext injectedSecurityContext;
 
 	@Inject
 	public EventSourceInstanceResource(final JsonUtils jsonUtils) {
 		json = jsonUtils;
+	}
+
+	private SecurityContext getSecurityContext() {
+		return Objects.requireNonNull(injectedSecurityContext);
+	}
+
+	private UriInfo getUriInfo() {
+		return Objects.requireNonNull(injectedUriInfo);
 	}
 
 	@GET
@@ -157,8 +168,8 @@ public class EventSourceInstanceResource {
 		}
 
 		final EventSourceInstance instance
-				= controller.createEventSourceInstance(descriptor, (Principal) securityContext.getUserPrincipal());
-		return created(URI.create(uri.getAbsolutePath() + "/" + instance.getId()))
+				= controller.createEventSourceInstance(descriptor, (Principal) getSecurityContext().getUserPrincipal());
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + instance.getId()))
 				.entity(new EventSourceInstanceDetails(instance))
 				.build();
 	}
@@ -261,7 +272,7 @@ public class EventSourceInstanceResource {
 					details.isEnabled(),
 					details.getFrequency(),
 					instance.getCreatedBy(),
-					((Principal) securityContext.getUserPrincipal()).getUsername());
+					((Principal) getSecurityContext().getUserPrincipal()).getUsername());
 			// TODO how to handle passwords?
 			newInstance.setEnabled(details.isEnabled());
 			newInstance.setName(details.getName());
