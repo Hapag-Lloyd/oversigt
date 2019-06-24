@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.SSLConfiguration;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.undertow.server.session.InMemorySessionManager;
 import io.undertow.server.session.SecureRandomSessionIdGenerator;
@@ -54,12 +56,15 @@ public class OversigtConfiguration {
 
 	private boolean debug = false;
 
+	// TODO remove all nullables
+	@Nullable
 	private String hostname = null;
 
 	private ApiConfiguration api = new ApiConfiguration();
 
 	private EventManagerConfiguration eventManager = new EventManagerConfiguration();
 
+	@Nullable
 	private DatabaseConfiguration database;
 
 	private SecurityConfiguration security = new SecurityConfiguration();
@@ -70,50 +75,64 @@ public class OversigtConfiguration {
 
 	private List<HttpListenerConfiguration> listeners = Lists.newArrayList(new HttpListenerConfiguration());
 
+	@Nullable
 	private EventSourceConfiguration eventSources;
 
+	@Nullable
 	private JiraConfiguration jira;
 
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
 
-		bind(binder, "hostname", hostname);
+		bind(binder, "hostname", Objects.requireNonNull(hostname, "hostname"));
 		binder.bind(SignatureAlgorithm.class).toInstance(api.jwtAlgorithm);
-		bind(binder, "api.secret.base64", api.jwtSecretBase64);
+		bind(binder, "api.secret.base64", Objects.requireNonNull(api.jwtSecretBase64, "api.jwtSecretBase64"));
 		bind(binder, "api.ttl", api.jwtTimeToLive);
 		bind(binder, "rateLimit", eventManager.rateLimit);
 		binder.bind(Duration.class)
 				.annotatedWith(Names.named("discardEventsAfter"))
 				.toInstance(eventManager.discardEventsAfter);
 		bind(binder, "templateNumberFormat", templateNumberFormat);
-		bind(binder, "databaseLocation", database.location);
-		bind(binder, "databaseName", database.name);
-		bind(binder, "databaseUsername", database.username);
-		bind(binder, "databasePassword", database.password);
+		final DatabaseConfiguration database = Objects.requireNonNull(this.database);
+		bind(binder, "databaseLocation", Objects.requireNonNull(database.location, "database.location"));
+		bind(binder, "databaseName", Objects.requireNonNull(database.name, "database.name"));
+		bind(binder, "databaseUsername", Objects.requireNonNull(database.username, "database.username"));
+		bind(binder, "databasePassword", Objects.requireNonNull(database.password, "database.password"));
 		binder.bind(SqlDialect.class).to(database.sqlDialect);
 		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {/* just type literal for generics detection */})
 				.annotatedWith(Names.named("listeners"))
 				.toInstance(listeners);
-		bind(binder, "jiraSocketTimeout", jira.socketTimeout);
-		bindNamedArray(binder, String[].class, "additionalPackages", eventSources.packages);
-		bindNamedArray(binder, Path[].class, "addonFolders", Paths::get, eventSources.addonFolders);
-		bindNamedArray(binder, String[].class, "widgetsPaths", eventSources.widgetsPaths);
+		bind(binder, "jiraSocketTimeout", Objects.requireNonNull(jira, "").socketTimeout);
+		bindNamedArray(binder,
+				String[].class,
+				"additionalPackages",
+				Arrays.asList(Objects.requireNonNull(eventSources, "").packages));
+		bindNamedArray(binder,
+				Path[].class,
+				"addonFolders",
+				Paths::get,
+				Arrays.asList(Objects.requireNonNull(eventSources, "").addonFolders));
+		bindNamedArray(binder,
+				String[].class,
+				"widgetsPaths",
+				Arrays.asList(Objects.requireNonNull(eventSources, "").widgetsPaths));
 
 		// Mail Settings
-		bind(binder, "mailSenderHost", mail.hostname);
+		bind(binder, "mailSenderHost", Objects.requireNonNull(mail.hostname, "mail.hostname"));
 		bind(binder, "mailSenderPort", mail.port);
 		bind(binder, "mailSenderStartTls", mail.startTls);
-		bind(binder, "mailSenderUsername", mail.username);
-		bind(binder, "mailSenderPassword", mail.password);
-		bind(binder, "mailSenderAddress", mail.senderAddress);
+		bind(binder, "mailSenderUsername", Objects.requireNonNull(mail.username, "mail.username"));
+		bind(binder, "mailSenderPassword", Objects.requireNonNull(mail.password, "mail.password"));
+		bind(binder, "mailSenderAddress", Objects.requireNonNull(mail.senderAddress, "mail.senderAddress"));
 
 		// Security
 		boolean boundAuthenticator = false;
-		if (security.ldap != null) {
-			if (!security.ldap.isBindPasswordSet()) {
-				security.ldap.setBindPassword(ldapBindPasswordFallback);
+		final LdapConfiguration ldap = security.ldap;
+		if (ldap != null) {
+			if (!ldap.isBindPasswordSet()) {
+				ldap.setBindPassword(ldapBindPasswordFallback);
 			}
-			if (security.ldap.isBindPasswordSet()) {
+			if (ldap.isBindPasswordSet()) {
 				binder.bind(LdapConfiguration.class).toInstance(security.ldap);
 				binder.bind(Authenticator.class).to(LdapAuthenticator.class);
 				boundAuthenticator = true;
@@ -140,8 +159,8 @@ public class OversigtConfiguration {
 	private static void bindNamedArray(final Binder binder,
 			final Class<String[]> targetClass,
 			final String name,
-			final String[] input) {
-		bindNamedArray(binder, targetClass, name, Function.identity(), input);
+			final Collection<String> inputs) {
+		bindNamedArray(binder, targetClass, name, Function.identity(), inputs);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -149,10 +168,10 @@ public class OversigtConfiguration {
 			final Class<T[]> targetClass,
 			final String name,
 			final Function<String, T> converter,
-			final String[] input) {
+			final Collection<String> inputs) {
 		binder.bind(targetClass)
 				.annotatedWith(Names.named(name))
-				.toInstance((T[]) Arrays.stream(input != null ? input : new String[0])
+				.toInstance((T[]) inputs.stream()
 						.map(converter)
 						.collect(Collectors.toList())
 						.toArray(createArray(targetClass.getComponentType(), 0)));
@@ -173,16 +192,18 @@ public class OversigtConfiguration {
 
 		private int port = 80;
 
+		@Nullable
 		private SSLConfiguration ssl = null;
 
 		public String getIp() {
-			return ip != null ? ip : "0.0.0.0";
+			return ip;
 		}
 
 		public int getPort() {
 			return port;
 		}
 
+		@Nullable
 		public SSLConfiguration getSSLConfiguration() {
 			return ssl;
 		}
@@ -195,6 +216,7 @@ public class OversigtConfiguration {
 	public static class ApiConfiguration {
 		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;
 
+		@Nullable
 		private String jwtSecretBase64 = null;
 
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
@@ -207,28 +229,37 @@ public class OversigtConfiguration {
 	}
 
 	private static class DatabaseConfiguration {
+		@Nullable
 		private Class<? extends SqlDialect> sqlDialect;
 
+		@Nullable
 		private String location;
 
+		@Nullable
 		private String name;
 
+		@Nullable
 		private String username;
 
+		@Nullable
 		private String password;
 	}
 
 	private static class MailConfiguration {
+		@Nullable
 		private String hostname;
 
 		private int port;
 
 		private boolean startTls;
 
+		@Nullable
 		private String username;
 
+		@Nullable
 		private String password;
 
+		@Nullable
 		private String senderAddress;
 	}
 
@@ -245,10 +276,13 @@ public class OversigtConfiguration {
 	}
 
 	private static class SecurityConfiguration {
+		@Nullable
 		private List<String> serverAdmins;
 
+		@Nullable
 		private Map<String, String> users;
 
+		@Nullable
 		private LdapConfiguration ldap;
 
 		private SessionConfiguration session = new SessionConfiguration();
@@ -263,6 +297,7 @@ public class OversigtConfiguration {
 
 		private boolean statisticsEnabled = true;
 
+		@Nullable
 		private SessionCookieConfig cookieConfig;
 	}
 }

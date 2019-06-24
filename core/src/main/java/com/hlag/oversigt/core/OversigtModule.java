@@ -303,7 +303,7 @@ class OversigtModule extends AbstractModule {
 
 		/** {@inheritDoc} */
 		@Override
-		public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
+		public <T extends ConstraintValidator<?, ?>> T getInstance(@Nullable final Class<T> key) {
 			/*
 			 * By default, all beans are in prototype scope, so new instance will be
 			 * obtained each time. Validator implementer may declare it as singleton and
@@ -314,7 +314,7 @@ class OversigtModule extends AbstractModule {
 					.keySet()
 					.stream()
 					.map(k -> k.getTypeLiteral().getRawType())
-					.anyMatch(k -> key.equals(k));
+					.anyMatch(k -> key != null && key.equals(k));
 			if (bound) {
 				return injector.getInstance(key);
 			}

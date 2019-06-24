@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -71,6 +72,7 @@ import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import io.undertow.Handlers;
@@ -121,8 +123,10 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final EventBus eventBus;
 
+	@Nullable
 	private ServerSentEventHandler sseHandler;
 
+	@Nullable
 	private Undertow server;
 
 	private EventSender sender;
@@ -176,7 +180,6 @@ public class OversigtServer extends AbstractIdleService {
 	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners,
 			final EventBus eventBus,
 			final EventSender sender,
-
 			final Configuration templateConfiguration,
 			final WelcomeHandler welcomeHandler,
 			final LoginHandler loginHandler,
@@ -235,7 +238,14 @@ public class OversigtServer extends AbstractIdleService {
 		eventBus.register(new Consumer<OversigtEvent>() {
 			@Subscribe
 			@Override
-			public void accept(final OversigtEvent event) {
+			public void accept(@Nullable final OversigtEvent event) {
+				if (event == null) {
+					return;
+				}
+				final ServerSentEventHandler sseHandler = OversigtServer.this.sseHandler;
+				if (sseHandler == null) {
+					return;
+				}
 				sseHandler.getConnections()
 						.stream()
 						.forEach(connection -> sender.sendEventToConnection(event, connection));
@@ -307,9 +317,10 @@ public class OversigtServer extends AbstractIdleService {
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
 		listeners.stream()//
 				.filter(HttpListenerConfiguration::isSsl)
-				.forEach(c -> builder
-						.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
-		server = builder.setHandler(accessHandler).build();
+				.forEach(c -> builder.addHttpsListener(c.getPort(),
+						c.getIp(),
+						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
+		final Undertow server = this.server = builder.setHandler(accessHandler).build();
 
 		LOGGER.info("Starting web server");
 		try {
@@ -616,11 +627,17 @@ public class OversigtServer extends AbstractIdleService {
 
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");
-		sseHandler.getConnections().forEach(ServerSentEventConnection::shutdown);
+		final ServerSentEventHandler sseHandler = this.sseHandler;
+		if (sseHandler != null) {
+			sseHandler.getConnections().forEach(ServerSentEventConnection::shutdown);
+		}
 
 		/* stop the server */
 		LOGGER.info("Stopping web server");
-		server.stop();
+		final Undertow server = this.server;
+		if (server != null) {
+			server.stop();
+		}
 	}
 
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
@@ -633,21 +650,24 @@ public class OversigtServer extends AbstractIdleService {
 
 		@Override
 		public void running() {
-			LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
-					server.getListenerInfo()
-							.stream()
-							.map(li -> (InetSocketAddress) li.getAddress())
-							.mapToInt(InetSocketAddress::getPort)
-							.toArray());
+			final Undertow server = OversigtServer.this.server;
+			if (server != null) {
+				LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
+						server.getListenerInfo()
+								.stream()
+								.map(li -> (InetSocketAddress) li.getAddress())
+								.mapToInt(InetSocketAddress::getPort)
+								.toArray());
+			}
 		}
 
 		@Override
-		public void failed(final State from, final Throwable failure) {
+		public void failed(@Nullable final State from, @Nullable final Throwable failure) {
 			LOGGER.error("Embedded Oversigt server failed from: " + from, failure);
 		}
 
 		@Override
-		public void stopping(@SuppressWarnings("unused") final State from) {
+		public void stopping(@SuppressWarnings("unused") @Nullable final State from) {
 			LOGGER.info("Stopping embedded Oversigt server");
 		}
 	}
