@@ -12,7 +12,6 @@ import com.atlassian.jira.rest.client.api.domain.Issue;
  * @author Olaf Neumann
  */
 public interface JiraClient {
-
 	/**
 	 * The maximum number of issues to return from the JIRA backend
 	 */
@@ -24,6 +23,7 @@ public interface JiraClient {
 	 * @param jql the query to execute on the JIRA backend
 	 * @return a possibly empty list of issues found in jira
 	 * @throws JiraClientException if something fails while searching for issues
+	 * @throws TimeoutException    if the query while waiting before its execution
 	 */
 	default List<Issue> search(final String jql) throws JiraClientException, TimeoutException {
 		return search(jql, MAX_RESULTS_DEFAULT, 0);
@@ -37,6 +37,7 @@ public interface JiraClient {
 	 * @param startAt    <em>don't know</em>
 	 * @return the list of found issues
 	 * @throws JiraClientException if something fails
+	 * @throws TimeoutException    if the query while waiting before its execution
 	 */
 	List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException, TimeoutException;
 }
