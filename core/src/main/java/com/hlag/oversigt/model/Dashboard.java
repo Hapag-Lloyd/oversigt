@@ -21,7 +21,7 @@ import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;
 
-public class Dashboard implements Cloneable {
+public class Dashboard {
 	private static Set<String> newSet(final String... items) {
 		return newSet(Arrays.asList(items));
 	}
@@ -276,8 +276,7 @@ public class Dashboard implements Cloneable {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 
-	@Override
-	public Dashboard clone() {
+	public Dashboard copy() {
 		final Dashboard dashboard = new Dashboard(getId(),
 				getTitle(),
 				isEnabled(),
