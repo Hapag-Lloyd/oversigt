@@ -47,8 +47,6 @@ import com.google.inject.name.Named;
  *
  * @since v2.0
  */
-/* This class has been copied here to overwrite the socket timeout */
-@SuppressWarnings({ "unused" })
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
