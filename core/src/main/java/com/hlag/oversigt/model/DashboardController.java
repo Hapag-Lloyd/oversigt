@@ -868,7 +868,7 @@ public class DashboardController {
 				throw new RuntimeException(message);
 			}
 			return TypeUtils.createInstance(type, string);
-		} catch (final Throwable e) {
+		} catch (final Exception e) {
 			LOGGER.error("Unable to set property value of type " + type + " from string '" + string + "'", e);
 			return null;
 		}
