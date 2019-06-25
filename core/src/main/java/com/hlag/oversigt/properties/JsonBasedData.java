@@ -6,4 +6,6 @@ package com.hlag.oversigt.properties;
  * @author neumaol
  *
  */
-public interface JsonBasedData {}
+public interface JsonBasedData {
+	// empty by design
+}

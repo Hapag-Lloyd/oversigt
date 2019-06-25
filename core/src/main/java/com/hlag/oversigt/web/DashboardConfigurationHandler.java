@@ -51,7 +51,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	private final JsonUtils json;
 
-	private static final Type TYPE_POSITIONS_MAP = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
+	private static final Type TYPE_POSITIONS_MAP
+			= new TypeToken<Map<String, Map<String, String>>>() { /* empty by design */ }.getType();
 
 	@Inject
 	public DashboardConfigurationHandler(final DashboardController dashboardController,

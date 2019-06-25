@@ -783,7 +783,7 @@ public class DashboardController {
 
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
-			return binder -> {};
+			return binder -> { /* empty by design */ };
 		}
 		return TypeUtils.createInstance(moduleClass);
 	}

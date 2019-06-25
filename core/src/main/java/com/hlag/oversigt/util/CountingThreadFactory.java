@@ -48,7 +48,7 @@ public class CountingThreadFactory implements ThreadFactory {
 	 * @throws NullPointerException if one of the parameter is <code>null</code>
 	 */
 	public CountingThreadFactory(final String namePrefix) {
-		this(namePrefix, t -> {/* do nothing */});
+		this(namePrefix, t -> { /* do nothing */ });
 	}
 
 	/**

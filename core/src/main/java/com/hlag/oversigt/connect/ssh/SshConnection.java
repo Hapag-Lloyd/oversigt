@@ -101,7 +101,9 @@ public abstract class SshConnection {
 		} catch (final JSchException e) {
 			try {
 				session.disconnect();
-			} catch (final Exception ignore) {}
+			} catch (final Exception ignore) {
+				// empty by design
+			}
 			return false;
 		}
 	}
@@ -152,14 +154,12 @@ public abstract class SshConnection {
 
 	public String getTopas() {
 		final String filename = "hl_topas_" + UUID.randomUUID().toString() + ".tmp";
-		final String[] commands = new String[] { //
-				"cd /tmp", //
-				"(sleep 3; echo q)|topas > " + filename, //
-				"cat " + filename, //
+		final String[] commands = new String[] {
+				"cd /tmp",
+				"(sleep 3; echo q)|topas > " + filename,
+				"cat " + filename,
 				"rm " + filename };
-		// String string = runSshCommand(session, "(sleep 3; echo q)|topas");
-		final String string = runShellCommands(commands);
-		return string;
+		return runShellCommands(commands);
 	}
 
 	private static double parseCpuUsage(final String string) {
@@ -202,7 +202,9 @@ public abstract class SshConnection {
 					}
 					try {
 						Thread.sleep(100);
-					} catch (final Exception ignore) {}
+					} catch (final InterruptedException ignore) {
+						// empty by design
+					}
 				}
 				channel.disconnect();
 
@@ -256,7 +258,9 @@ public abstract class SshConnection {
 					}
 					try {
 						Thread.sleep(100);
-					} catch (final Exception ignore) {}
+					} catch (final InterruptedException ignore) {
+						// empty by design
+					}
 				}
 				channel.disconnect();
 

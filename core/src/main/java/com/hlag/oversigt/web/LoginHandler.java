@@ -65,7 +65,9 @@ public class LoginHandler implements HttpHandler {
 					} else {
 						break;
 					}
-				} catch (final Exception ignore) {}
+				} catch (final Exception ignore) {
+					// empty by design
+				}
 			} catch (final IllegalArgumentException e) {
 				break;
 			}

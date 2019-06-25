@@ -112,7 +112,9 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final Exception ignore) {}
+			} catch (final InterruptedException ignore) {
+				// empty by design
+			}
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();

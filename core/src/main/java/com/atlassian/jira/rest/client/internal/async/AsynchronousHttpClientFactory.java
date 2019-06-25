@@ -66,10 +66,14 @@ public class AsynchronousHttpClientFactory {
 							}
 
 							@Override
-							public void setThreadLocalContext(final Object context) {/**/}
+							public void setThreadLocalContext(final Object context) {
+								// empty by design
+							}
 
 							@Override
-							public void clearThreadLocalContext() {/**/}
+							public void clearThreadLocalContext() {
+								// empty by design
+							}
 						});
 
 		final HttpClient httpClient = defaultHttpClientFactory.create(options);
@@ -91,23 +95,31 @@ public class AsynchronousHttpClientFactory {
 				// for AtlassianHttpClient which is extended by a destroy method.
 				// Destroy method should never be called for AtlassianHttpClient coming from
 				// a client! Imagine you create a RestClient, pass your own HttpClient there
-				// and it gets destroy.
+				// and it gets destroyed.
 			}
 		};
 	}
 
 	private static class NoOpEventPublisher implements EventPublisher {
 		@Override
-		public void publish(final Object o) {/**/}
+		public void publish(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void register(final Object o) {/**/}
+		public void register(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void unregister(final Object o) {/**/}
+		public void unregister(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void unregisterAll() {/**/}
+		public void unregisterAll() {
+			// empty by design
+		}
 	}
 
 	/**

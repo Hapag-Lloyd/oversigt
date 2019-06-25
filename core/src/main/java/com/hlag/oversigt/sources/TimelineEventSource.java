@@ -153,7 +153,9 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 					appointment.getEnd().toInstant().atZone(getZoneId()).toLocalDate(),
 					appointment.getIsAllDayEvent(),
 					color);
-		} catch (final ServiceLocalException ignore) {}
+		} catch (final ServiceLocalException ignore) {
+			// empty by design
+		}
 	}
 
 	private void addBirthdays(final TimelineEvent event, final LocalDate now) {

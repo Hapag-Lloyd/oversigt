@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionXpathFilter Experimental Configuration 1.2//EN" "https://checkstyle.org/dtds/suppressions_1_2_xpath_experimental.dtd">
 <suppressions>
-	<suppress files="^.*$" checks="^.*(ExecutableStatementCount|Indentation|JavadocMethod|JavadocStyleCheck|JavadocType|JavadocVariable|MagicNumber|MethodName|MissingCtor|MultipleStringLiterals|ParameterNumber|TodoComment|UncommentedMain|WhitespaceAround).*$" />
+	<suppress files="^.*$" checks="^.*(ExecutableStatementCount|Indentation|JavadocMethod|JavadocStyleCheck|JavadocType|JavadocVariable|MagicNumber|MethodName|MissingCtor|MultipleStringLiterals|ParameterNumber|TodoComment|UncommentedMain).*$" />
 	<suppress files="^.*$" checks="IllegalCatch" message="^Catching &apos;Exception&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="IllegalToken" message="^Using &apos;(break|continue)&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="SuppressWarnings" message="^The warning &apos;resource&apos; cannot be suppressed at this location\.$" />

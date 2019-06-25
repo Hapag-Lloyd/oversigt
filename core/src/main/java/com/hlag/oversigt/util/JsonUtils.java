@@ -194,7 +194,9 @@ public class JsonUtils {
 				ids.add(0, 0);
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
-		} catch (final NoSuchFieldException | SecurityException ignore) {}
+		} catch (final NoSuchFieldException | SecurityException ignore) {
+			// empty by design
+		}
 		return map("type",
 				"string",
 				"uniqueItems",

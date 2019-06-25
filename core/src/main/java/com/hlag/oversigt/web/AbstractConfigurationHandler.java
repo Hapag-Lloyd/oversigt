@@ -300,7 +300,9 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				classes[i] = objs[i].getClass();
 			}
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {}
+		} catch (final Exception ignore) {
+			// empty by design
+		}
 		return null;
 	}
 
