@@ -48,7 +48,7 @@ import com.google.inject.name.Named;
  * @since v2.0
  */
 /* This class has been copied here to overwrite the socket timeout */
-@SuppressWarnings({ "unused", "javadoc" })
+@SuppressWarnings({ "unused" })
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
@@ -180,7 +180,7 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	private static final class MavenUtils {
-		private static final Logger logger = LoggerFactory.getLogger(MavenUtils.class);
+		private static final Logger LOGGER = LoggerFactory.getLogger(MavenUtils.class);
 
 		private static final String UNKNOWN_VERSION = "unknown";
 
@@ -191,8 +191,8 @@ public class AsynchronousHttpClientFactory {
 				props.load(resourceAsStream);
 				return props.getProperty("version", UNKNOWN_VERSION);
 			} catch (final Exception e) {
-				logger.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
-				logger.debug("Got the following exception", e);
+				LOGGER.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
+				LOGGER.debug("Got the following exception", e);
 				return UNKNOWN_VERSION;
 			}
 		}

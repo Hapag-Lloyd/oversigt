@@ -28,8 +28,8 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 			"WHERE condition = 1";
 
 	private TypeMapping[] typeMappings = new TypeMapping[] {
-			new TypeMapping("TYPE", "type-a", Color.parse("#e75200"), Color.White, 6.0),
-			new TypeMapping("TYPE", "type-b", Color.parse("#0dc92c"), Color.White, 5.0) };
+			new TypeMapping("TYPE", "type-a", Color.parse("#e75200"), Color.WHITE, 6.0),
+			new TypeMapping("TYPE", "type-b", Color.parse("#0dc92c"), Color.WHITE, 5.0) };
 
 	@Override
 	protected DatabaseCache<Point> createCache() {

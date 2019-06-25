@@ -95,10 +95,10 @@ public final class SSLUtils {
 		}
 	}
 
-	private static final Map<String, SSLContext> sslContexts = Collections.synchronizedMap(new HashMap<>());
+	private static final Map<String, SSLContext> SSL_CONTEXTS = Collections.synchronizedMap(new HashMap<>());
 
 	private static SSLContext getSslContext(final String id) {
-		return sslContexts.computeIfAbsent(id, x -> createSslContext());
+		return SSL_CONTEXTS.computeIfAbsent(id, x -> createSslContext());
 	}
 
 	public static SSLSocketFactory getNonCheckingSSLSocketFactory(final String id) {

@@ -26,7 +26,7 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(final MethodInvocation invocation) throws Throwable {
 		// save parameters for logging
-		LoggingInterceptor.parameters.set(invocation.getArguments());
+		LoggingInterceptor.PAREMETERS.set(invocation.getArguments());
 
 		// Validate call
 		final Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();

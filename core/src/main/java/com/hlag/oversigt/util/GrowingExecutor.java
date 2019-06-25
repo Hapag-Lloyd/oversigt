@@ -42,12 +42,12 @@ public class GrowingExecutor {
 	/**
 	 * a counter for the number of instances of the {@link GrowingExecutor} class
 	 */
-	private static final AtomicInteger instanceCounter = new AtomicInteger(0);
+	private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger(0);
 
 	/**
 	 * Executor for scheduling tasks that need to be done after certain time
 	 */
-	private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(1,
+	private static final ScheduledExecutorService TIMES = Executors.newScheduledThreadPool(1,
 			CountingThreadFactory.createDaemonThreadFactory("GrowingExecutor-TimerThread-"));
 
 	/**
@@ -126,7 +126,7 @@ public class GrowingExecutor {
 				DEFAULT_TIME_BEFORE_ADDING_NEW_THREADS,
 				DEFAULT_TIME_BEFORE_SHUTTING_DOWN_THREADS,
 				CountingThreadFactory.createDaemonThreadFactory(
-						GrowingExecutor.class.getSimpleName() + "-" + instanceCounter.incrementAndGet() + "-thread-"));
+						GrowingExecutor.class.getSimpleName() + "-" + INSTANCE_COUNTER.incrementAndGet() + "-thread-"));
 	}
 
 	/**
@@ -227,7 +227,7 @@ public class GrowingExecutor {
 			}
 		}
 		if (timerSet.compareAndSet(false, true)) {
-			timer.schedule(this::checkIfEnoughThreadsAreAvailable,
+			TIMES.schedule(this::checkIfEnoughThreadsAreAvailable,
 					waitBeforeAddingThreads.toMillis(),
 					TimeUnit.MILLISECONDS);
 		}

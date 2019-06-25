@@ -32,7 +32,7 @@ public abstract class SshConnection {
 
 	private static void shutdown() {
 		LOGGER.info("Disconnecting SSH sessions...");
-		for (final SshConnection connection : connections.values()) {
+		for (final SshConnection connection : CONNECTIONS.values()) {
 			try {
 				connection.disconnect();
 			} catch (final Exception e) {
@@ -44,7 +44,7 @@ public abstract class SshConnection {
 
 	private static final JSch JSCH = new JSch();
 
-	private static final Map<SshConnectionKey, SshConnection> connections
+	private static final Map<SshConnectionKey, SshConnection> CONNECTIONS
 			= Collections.synchronizedMap(new HashMap<>());
 
 	public static SshConnection getConnection(final String hostname,
@@ -57,8 +57,8 @@ public abstract class SshConnection {
 
 	private static SshConnection getConnection(final SshConnectionKey key,
 			final Supplier<SshConnection> connectionSupplier) {
-		synchronized (connections) {
-			return connections.computeIfAbsent(key, x -> connectionSupplier.get());
+		synchronized (CONNECTIONS) {
+			return CONNECTIONS.computeIfAbsent(key, x -> connectionSupplier.get());
 		}
 	}
 

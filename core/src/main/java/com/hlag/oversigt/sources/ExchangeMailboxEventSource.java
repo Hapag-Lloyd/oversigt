@@ -25,7 +25,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	private static final String UNASSIGNED_LABEL = "NN";
 
-	private static final Color UNASSIGNED_COLOR = Color.Gray;
+	private static final Color UNASSIGNED_COLOR = Color.GRAY;
 
 	private double serieMinimum = 0.35;
 
