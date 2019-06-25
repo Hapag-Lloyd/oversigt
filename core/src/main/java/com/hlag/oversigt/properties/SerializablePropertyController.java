@@ -92,6 +92,7 @@ public class SerializablePropertyController {
 	}
 
 	/**
+	 * @return map of property names to list of classes
 	 * @deprecated Must no longer be used outside the oversigt internals.
 	 */
 	@Deprecated
@@ -108,6 +109,7 @@ public class SerializablePropertyController {
 	}
 
 	/**
+	 * @return map of member names to collection of members
 	 * @deprecated Must no longer be used outside the oversigt internals.
 	 */
 	@Deprecated
