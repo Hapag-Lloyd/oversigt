@@ -91,6 +91,9 @@ public class SerializablePropertyController {
 				.orElse("");
 	}
 
+	/**
+	 * @deprecated
+	 */
 	@Deprecated
 	public Map<String, List<? extends SerializableProperty>> getProperties() {
 		// TODO remove this method
@@ -104,6 +107,9 @@ public class SerializablePropertyController {
 						e -> streamProperties(e.getValue()).collect(Collectors.toList())));
 	}
 
+	/**
+	 * @deprecated
+	 */
 	@Deprecated
 	public Map<String, Collection<SerializablePropertyMember>> getAllMembers() {
 		// TODO remove this method

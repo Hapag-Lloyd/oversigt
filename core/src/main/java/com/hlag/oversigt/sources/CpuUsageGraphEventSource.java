@@ -1,11 +1,5 @@
 package com.hlag.oversigt.sources;
 
-import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -103,78 +97,6 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 			percent = 100;
 		}
 		return percent;
-	}
-
-	@SuppressWarnings("unused")
-	@Deprecated
-	private int getWindowsCpuUsage(final Server server) {
-		Path temp = null;
-		Path batch = null;
-		Path stdout = null;
-		Path stderr = null;
-
-		try {
-			temp = Files.createTempDirectory("cpuUsage").toAbsolutePath();
-			batch = temp.resolve("cpuUsage.bat");
-			stdout = temp.resolve("stdout.txt");
-			stderr = temp.resolve("stderr.txt");
-
-			// Write batch file
-			try (Writer writer = new FileWriter(batch.toFile())) {
-				writer.append(String.format(
-						"%s -accepteula -nobanner \"%s\" -u \"%s\" -p \"%s\" wmic cpu get LoadPercentage 1>\"%s\" 2>\"%s\"\r\nexit",
-						"", // PSEXEC_PATH,
-						server.hostname,
-						server.username,
-						server.password,
-						stdout.toString(),
-						stderr.toString()));
-			}
-
-			// Execute PsExec
-			final int exitCode
-					= new ProcessBuilder("cmd", "/C", "start", "/MIN", "/WAIT", batch.toString()).start().waitFor();
-			if (exitCode != 0) {
-				getLogger().error("Failed executing PsExec. Exit code: " + exitCode);
-				return 0;
-			}
-
-			// Read stdout
-			try (BufferedReader reader = Files.newBufferedReader(stdout)) {
-				final List<String> lines
-						= reader.lines().map(String::trim).filter(l -> !l.isEmpty()).collect(Collectors.toList());
-
-				if (lines.size() < 2) {
-					getLogger().error("Expected at least 2 filled lines in stdout of PsExec, got: " + lines.size());
-					return 0;
-				}
-				if (!lines.get(0).equals("LoadPercentage")) {
-					getLogger().error("Expected \"LoadPercentage\" in first filled line of stdout of PsExec, got: "
-							+ lines.get(0));
-					return 0;
-				}
-
-				// Supporting multiple processors
-				int percentage = 0;
-				for (int i = lines.size() - 1; i > 0; i -= 1) {
-					percentage += Integer.parseInt(lines.get(i));
-				}
-				return percentage / (lines.size() - 1);
-			}
-		} catch (final InterruptedException | IOException e) {
-			getLogger().error("Exception while getting CPU usage.", e);
-			return 0;
-		} finally {
-			for (final Path path : new Path[] { stderr, stdout, batch, temp }) {
-				if (path != null) {
-					try {
-						path.toFile().delete();
-					} catch (final Exception ignore) {
-						// empty on purpose
-					}
-				}
-			}
-		}
 	}
 
 	@Property(name = "Servers", description = "The servers to check.")

@@ -26,6 +26,9 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 
+/**
+ * @deprecated
+ */
 @EventSource(displayName = "Internet Text",
 		description = "Shows a text from a JSON",
 		view = "Text",
