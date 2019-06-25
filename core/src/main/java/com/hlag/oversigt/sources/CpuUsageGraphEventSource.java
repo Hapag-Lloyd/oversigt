@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 	public CpuUsageGraphEventSource() {}
 
 	@Override
-	protected ComplexGraphEvent produceEvent() {
+	protected Optional<ComplexGraphEvent> produceEvent() {
 		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
 		// get usages from hosts
@@ -69,7 +70,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 			series.put(server.hostname, new Series(server.getDisplayName(), points));
 		}
 
-		return new ComplexGraphEvent(new ArrayList<>(series.values()));
+		return Optional.of(new ComplexGraphEvent(new ArrayList<>(series.values())));
 	}
 
 	private int getCpuUsage(final Server server) {

@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -73,7 +74,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			new HolidayNameCorrection("Tag der Wiedervereinigung", "Tag der Deutschen Einheit") };
 
 	@Override
-	protected TimelineEvent produceExchangeEvent() throws Exception {
+	protected Optional<TimelineEvent> produceExchangeEvent() throws Exception {
 		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
 		final LocalDate now = LocalDate.now(getZoneId());
 
@@ -86,7 +87,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			event.addEvent(TODAY, now, now, false, colorToday);
 		}
 
-		return event;
+		return Optional.of(event);
 	}
 
 	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {

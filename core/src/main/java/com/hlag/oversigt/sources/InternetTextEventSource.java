@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +53,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	private Gson gson;
 
 	@Override
-	protected TextEvent produceEvent() {
+	protected Optional<TextEvent> produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
 
 		final String body;
@@ -81,7 +82,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 			output = getMultiResultBehaviour().extractElement(elements).toString();
 		}
 
-		return new TextEvent(output);
+		return Optional.of(new TextEvent(output));
 	}
 
 	private List<?> extractElements(final String json) {

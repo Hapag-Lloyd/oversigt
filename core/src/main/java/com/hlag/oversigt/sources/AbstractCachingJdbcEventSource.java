@@ -2,6 +2,7 @@ package com.hlag.oversigt.sources;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.hlag.oversigt.connect.db.DatabaseCache;
@@ -13,17 +14,17 @@ import com.hlag.oversigt.core.eventsource.Property;
  *
  */
 public abstract class AbstractCachingJdbcEventSource<X, T extends OversigtEvent> extends AbstractJdbcEventSource<T> {
-	private DatabaseCache<X> cache = null;
+	private Optional<DatabaseCache<X>> cache = Optional.empty();
 
 	private long limit = 5;
 
 	protected AbstractCachingJdbcEventSource() {}
 
 	protected synchronized DatabaseCache<X> getCache() {
-		if (cache == null) {
-			cache = createCache();
+		if (!cache.isPresent()) {
+			cache = Optional.of(createCache());
 		}
-		return cache;
+		return cache.get();
 	}
 
 	protected abstract DatabaseCache<X> createCache();

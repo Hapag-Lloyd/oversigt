@@ -17,9 +17,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
@@ -46,8 +43,10 @@ import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.LazyInitializedReference;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public abstract class AbstractGitEventSource<E extends OversigtEvent> extends AbstractSslAwareEventSource<E> {
-	private String repositoryUrl;
+	private String repositoryUrl = "";
 
 	private Credentials credentials = Credentials.EMPTY;
 
@@ -90,11 +89,10 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		super.shutDown();
 	}
 
-	private Instant getEarliestPointToTakeIntoAccount() {
+	private Optional<Instant> getEarliestPointToTakeIntoAccount() {
 		return Optional.ofNullable(getLookBack())
 				.map(ta -> ZonedDateTime.now(ZoneId.of("UTC")).minus(ta))
-				.map(ChronoZonedDateTime::toInstant)
-				.orElse(null);
+				.map(ChronoZonedDateTime::toInstant);
 	}
 
 	protected Git getGit() {
@@ -117,19 +115,24 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		return function.apply(streamLog());
 	}
 
-	protected Predicate<RevCommit> isCommitAfter(final Instant from) {
-		if (from == null) {
-			return x -> true;
-		}
-		return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from, null);
+	protected Predicate<RevCommit> isCommitAfter(final Optional<Instant> from) {
+		return from//
+				.map(instant -> this
+						.<RevCommit>between(r -> Instant.ofEpochSecond(r.getCommitTime()), instant, Optional.empty()))
+				.orElse(x -> true);
+		// if (from == null) {
+		// return x -> true;
+		// }
+		// return between(r -> Instant.ofEpochSecond(r.getCommitTime()), from,
+		// Optional.empty());
 	}
 
-	protected <T> Predicate<T> between(@Nonnull final Function<T, Instant> getTimeFunction,
-			@Nonnull final Instant from,
-			@Nullable final Instant to) {
+	protected <T> Predicate<T> between(final Function<T, Instant> getTimeFunction,
+			final Instant from,
+			final Optional<Instant> to) {
 		return r -> {
 			final Instant time = getTimeFunction.apply(r);
-			return (null == to || time.isBefore(to)) && time.isAfter(from);
+			return to.map(time::isBefore).orElse(true) && time.isAfter(from);
 		};
 	}
 
@@ -214,7 +217,10 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 
 		@Override
-		public boolean supports(final CredentialItem... items) {
+		public boolean supports(@Nullable final CredentialItem... items) {
+			if (items == null) {
+				return false;
+			}
 			return isUsernamePassword(items) || isSkipSslTrust(items);
 		}
 
@@ -224,8 +230,11 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 
 		@Override
-		public boolean get(@SuppressWarnings("unused") final URIish uri, final CredentialItem... items)
-				throws UnsupportedCredentialItem {
+		public boolean get(@SuppressWarnings("unused") @Nullable final URIish uri,
+				@Nullable final CredentialItem... items) throws UnsupportedCredentialItem {
+			if (items == null) {
+				return false;
+			}
 			if (isUsernamePassword(items)) {
 				for (final CredentialItem item : items) {
 					if (item instanceof Username) {

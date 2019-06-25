@@ -1,6 +1,7 @@
 package com.hlag.oversigt.sources;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.event.StyleEvent;
@@ -12,10 +13,10 @@ import com.hlag.oversigt.sources.event.StyleEvent;
 		hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
 	@Override
-	protected StyleEvent produceEvent() {
+	protected Optional<StyleEvent> produceEvent() {
 		try {
 			final DownloadData image = downloadBytes(createConfiguredConnection());
-			return StyleEvent.backgroundImage(image.getContentType(), image.getData());
+			return Optional.of(StyleEvent.backgroundImage(image.getContentType(), image.getData()));
 		} catch (final IOException e) {
 			return failure("Unable to download image: " + e.getMessage(), e);
 		}

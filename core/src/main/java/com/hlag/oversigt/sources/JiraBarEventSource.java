@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
@@ -25,10 +26,10 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 
 	/** {@inheritDoc} */
 	@Override
-	protected HlBarChartEvent produceEvent() {
+	protected Optional<HlBarChartEvent> produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
 		if (issues == null) {
-			return null;
+			return Optional.empty();
 		}
 
 		final int maxMailsPerCategory
@@ -46,7 +47,7 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 					Arrays.asList(serie)));
 		}
 
-		return new HlBarChartEvent(categories, Long.toString(sumMails));
+		return Optional.of(new HlBarChartEvent(categories, Long.toString(sumMails)));
 	}
 
 	private Serie getSerie(final Color color, final int value, final int maximum) {

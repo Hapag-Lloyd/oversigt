@@ -24,6 +24,8 @@ import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * @author Olaf Neumann
  */
@@ -34,7 +36,7 @@ import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailab
 public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource<RoomAvailabilityListEvent> {
 
 	@Override
-	protected RoomAvailabilityListEvent produceExchangeEvent() throws Exception {
+	protected Optional<RoomAvailabilityListEvent> produceExchangeEvent() throws Exception {
 		final ZonedDateTime now = ZonedDateTime.now(getZoneId());
 		final Map<Room, List<Meeting>> meetings
 				= getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());
@@ -60,7 +62,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			sortedItems = unsortedItems;
 		}
 
-		return new RoomAvailabilityListEvent(sortedItems);
+		return Optional.of(new RoomAvailabilityListEvent(sortedItems));
 	}
 
 	private RoomAvailabilityItem checkRoomAvailability(final ZonedDateTime when,
@@ -133,7 +135,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(@Nullable final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -193,7 +195,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(@Nullable final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -335,8 +337,8 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		private ZonedDateTime end;
 
 		TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
-			this.start = Objects.requireNonNull(start);
-			this.end = Objects.requireNonNull(end);
+			this.start = start;
+			this.end = end;
 		}
 
 		boolean containsCompletely(final TimeSlice that) {
@@ -363,21 +365,21 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 
 		@Override
-		public int compareTo(final TimeSlice that) {
-			return start.compareTo(that.start);
+		public int compareTo(@Nullable final TimeSlice that) {
+			return start.compareTo(Optional.ofNullable(that).map(ts -> ts.start).orElse(null));
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + (end == null ? 0 : end.hashCode());
-			result = prime * result + (start == null ? 0 : start.hashCode());
+			result = prime * result + end.hashCode();
+			result = prime * result + start.hashCode();
 			return result;
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(@Nullable final Object obj) {
 			if (this == obj) {
 				return true;
 			}

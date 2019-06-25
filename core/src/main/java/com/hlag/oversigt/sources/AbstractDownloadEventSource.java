@@ -18,11 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +34,6 @@ import javax.net.ssl.HttpsURLConnection;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -71,8 +72,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.proxy = proxy;
 	}
 
-	private URLConnection createConnection(final String urlString, final String cookie, final LoginData[] loginData)
-			throws IOException {
+	private URLConnection createConnection(final String urlString,
+			final Optional<String> cookie,
+			final Collection<LoginData> loginData) throws IOException {
 		final URL url = new URL(urlString);
 		final URLConnection con = url.openConnection(getHttpProxy().getProxy());
 		con.setConnectTimeout(30 * 1000);
@@ -91,18 +93,16 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 		}
 
-		if (cookie != null) {
-			con.setRequestProperty("Cookie", cookie);
-		} else if ((loginData == null || loginData.length == 0)
-				&& getCredentials() != null
-				&& getCredentials() != Credentials.EMPTY) {
-					final String encoded = Base64.getEncoder()
-							.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
-									.getBytes(StandardCharsets.UTF_8));
-					con.setRequestProperty("Authorization", "Basic " + encoded);
-				}
+		if (cookie.isPresent()) {
+			con.setRequestProperty("Cookie", cookie.get());
+		} else if (loginData.isEmpty() && getCredentials() != null && getCredentials() != Credentials.EMPTY) {
+			final String encoded = Base64.getEncoder()
+					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
+							.getBytes(StandardCharsets.UTF_8));
+			con.setRequestProperty("Authorization", "Basic " + encoded);
+		}
 
-		if (con instanceof HttpURLConnection && loginData != null && loginData.length > 0) {
+		if (con instanceof HttpURLConnection && !loginData.isEmpty()) {
 			final HttpURLConnection hcon = (HttpURLConnection) con;
 			hcon.setDoOutput(true);
 			hcon.setInstanceFollowRedirects(false);
@@ -136,22 +136,22 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	protected URLConnection createConnection(final List<InternetAddress> addresses) throws IOException {
 		final List<List<String>> replacements = new ArrayList<>();
-		URLConnection connection = null;
-		String cookie = null;
+		Optional<URLConnection> connection = Optional.empty();
+		Optional<String> cookie = Optional.empty();
 
 		for (int i = 0; i < addresses.size(); i += 1) {
 			final InternetAddress internetAddress = addresses.get(i);
-			if (connection != null) {
+			if (connection.isPresent()) {
 				logDebug(getLogger(), "Reading cookie from old connection");
-				final String newCookie = connection.getHeaderField("Set-Cookie");
+				final String newCookie = connection.get().getHeaderField("Set-Cookie");
 				logTrace(getLogger(), "New Cookie: %s", cookie);
 				if (newCookie != null) {
-					cookie = newCookie;
+					cookie = Optional.ofNullable(newCookie);
 				}
 
 				logDebug(getLogger(), "Closing connection");
-				connection.getInputStream().close();
-				connection = null;
+				connection.get().getInputStream().close();
+				connection = Optional.empty();
 			}
 
 			String url = internetAddress.getUrlString();
@@ -173,13 +173,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			logInfo(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
 				url = textProcessor.process(url);
-				connection = createConnection(url, cookie, internetAddress.loginDatas);
-				final Pattern pattern = internetAddress.getPattern();
-				if (pattern != null) {
+				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.loginDatas)));
+				final Optional<Pattern> pattern = internetAddress.getPattern();
+				if (pattern.isPresent()) {
 					final List<String> reps = new ArrayList<>();
 					logInfo(getLogger(), "Downloading content for matcher: %s", pattern.toString());
-					final String content = downloadString(connection);
-					final Matcher matcher = pattern.matcher(content);
+					final String content = downloadString(connection.get());
+					final Matcher matcher = pattern.get().matcher(content);
 					if (matcher.find()) {
 						for (int j = 1; j <= matcher.groupCount(); j += 1) {
 							reps.add(matcher.group(j));
@@ -192,12 +192,12 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 						if (reps.isEmpty()) {
 							throw new RuntimeException("Pattern did not match. Unable to call next URL.");
 						}
-						addresses.add(new InternetAddress(reps.get(0), null));
+						addresses.add(new InternetAddress(reps.get(0)));
 					}
 				}
 			}
 		}
-		return connection;
+		return connection.orElseThrow(() -> new RuntimeException("Unable to create URLConnection"));
 	}
 
 	protected URLConnection createConfiguredConnection() throws IOException {
@@ -348,32 +348,31 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
 		static InternetAddress fromUrl(final URL url) {
-			return new InternetAddress(url.toString(), null);
+			return new InternetAddress(url.toString());
 		}
 
 		private final String address;
 
-		private final String pattern;
+		private final Optional<String> pattern;
 
-		private LoginData[] loginDatas = null;
+		private LoginData[] loginDatas = new LoginData[0];
+
+		public InternetAddress(final String urlString) {
+			address = urlString;
+			pattern = Optional.empty();
+		}
 
 		public InternetAddress(final String urlString, final String patternString) {
 			address = urlString;
-			pattern = patternString;
+			pattern = Optional.of(patternString);
 		}
 
 		public String getUrlString() {
-			if (Strings.isNullOrEmpty(address)) {
-				return null;
-			}
 			return address;
 		}
 
-		public Pattern getPattern() {
-			if (Strings.isNullOrEmpty(pattern)) {
-				return null;
-			}
-			return Pattern.compile(pattern, Pattern.DOTALL);
+		public Optional<Pattern> getPattern() {
+			return pattern.map(p -> Pattern.compile(p, Pattern.DOTALL));
 		}
 
 		/** {@inheritDoc} */

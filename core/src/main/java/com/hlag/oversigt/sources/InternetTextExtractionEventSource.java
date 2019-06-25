@@ -32,7 +32,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	private String defaultValue = "";
 
 	@Override
-	protected TwoColumnListEvent<String> produceEvent() {
+	protected Optional<TwoColumnListEvent<String>> produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
 
 		final String body = downloadText();
@@ -46,7 +46,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 				.stream()
 				.map(l -> new ListEventItem<>(l, ""))
 				.collect(Collectors.toList());
-		return new TwoColumnListEvent<>(items);
+		return Optional.of(new TwoColumnListEvent<>(items));
 	}
 
 	private String downloadText() {

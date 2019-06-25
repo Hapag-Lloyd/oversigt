@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -15,7 +16,7 @@ import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 @EventSource(displayName = "GIT Committers", view = "List", hiddenDataItems = { "moreinfo", "updated-at-message" })
 public class GitCommittersEventSource extends AbstractGitCommitEventSource<OversigtEvent> {
 	@Override
-	protected OversigtEvent produceEvent() throws Exception {
+	protected Optional<OversigtEvent> produceEvent() throws Exception {
 		// Count commits per user
 		final Map<String, Integer> committers = streamLogWithoutFilteredUsers(s -> s//
 				.map(r -> r.getCommitterIdent().getName())
@@ -31,6 +32,6 @@ public class GitCommittersEventSource extends AbstractGitCommitEventSource<Overs
 				.collect(toList());
 
 		// create event
-		return new TwoColumnListEvent<>(list);
+		return Optional.of(new TwoColumnListEvent<>(list));
 	}
 }

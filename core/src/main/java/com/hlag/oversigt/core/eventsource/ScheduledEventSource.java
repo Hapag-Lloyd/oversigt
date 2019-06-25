@@ -93,15 +93,22 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 		try {
 			logTrace(getLogger(), "Starting to produce event");
-			if (sendEvent(produceEvent())) {
+			Optional<T> event;
+			try {
+				event = produceEvent();
+			} catch (@SuppressWarnings("unused") final EventSourceException e) {
+				// TODO Use this exception more...
+				event = Optional.empty();
+			}
+			if (sendEvent(event)) {
 				resetFailure();
 			} else {
-				sendEvent(new ErrorEvent(getLastFailureDescription().orElse(null)));
+				sendEvent(Optional.of(new ErrorEvent(getLastFailureDescription().orElse(null))));
 			}
 			logTrace(getLogger(), "Done producing event");
 			setLastRunNow(true);
 		} catch (final Throwable e) {
-			sendEvent(new ErrorEvent(e));
+			sendEvent(Optional.of(new ErrorEvent(e)));
 			logError(getLogger(), "Cannot produce event with id %s. Deleting last event.", eventId);
 			failure("Event source threw an exception", e);
 			setLastRunNow(false);
@@ -119,11 +126,11 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		}
 	}
 
-	protected final boolean sendEvent(@Nullable final OversigtEvent event) {
-		if (event != null) {
-			event.setId(eventId);
+	protected final boolean sendEvent(final Optional<? extends OversigtEvent> event) {
+		if (event.isPresent()) {
+			event.get().setId(eventId);
 			try {
-				event.setLifetime(getEventLifetime());
+				event.get().setLifetime(getEventLifetime());
 			} catch (final Exception e) {
 				logWarn(getLogger(), "Unable to compute event life time", e);
 			}
@@ -147,8 +154,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return getClass().getSimpleName() + "[eventID=" + eventId + "]";
 	}
 
-	@Nullable // TODO remove nullable
-	protected abstract T produceEvent() throws Exception;
+	protected abstract Optional<T> produceEvent() throws Exception;
 
 	protected final Logger getLogger() {
 		return LOGGERS.computeIfAbsent(getClass().getName(), LoggerFactory::getLogger);
@@ -224,18 +230,16 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		this.lastFailureException = Optional.empty();
 	}
 
-	@Nullable
 	protected synchronized <X> X failure(final String message) {
 		return failure(message, null);
 	}
 
-	@Nullable
 	protected synchronized <X> X failure(final String message, @Nullable final Throwable exception) {
 		getLogger().error(message, exception);
 		this.lastFailureDateTime = Optional.of(ZonedDateTime.now());
 		this.lastFailureDescription = Optional.of(message);
 		this.lastFailureException = Optional.of(exception);
-		return null;
+		throw new EventSourceException(message, exception);
 	}
 
 	public synchronized Optional<ZonedDateTime> getLastFailureDateTime() {
@@ -248,5 +252,13 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	public synchronized Optional<String> getLastFailureException() {
 		return lastFailureException.map(Throwables::getStackTraceAsString);
+	}
+
+	private static final class EventSourceException extends RuntimeException {
+		private static final long serialVersionUID = -3175800380445076693L;
+
+		public EventSourceException(final String message, @Nullable final Throwable cause) {
+			super(message, cause);
+		}
 	}
 }

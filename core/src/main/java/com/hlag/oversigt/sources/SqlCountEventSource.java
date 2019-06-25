@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -25,9 +26,9 @@ import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 @Deprecated
 @EventSource(displayName = "SQL Count", view = "Rickshawgraph", hiddenDataItems = { "moreinfo", "points" })
 public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEvent> {
-	private LocalDate loadDateYesterdayPoints = null;
+	private Optional<LocalDate> loadDateYesterdayPoints = Optional.empty();
 
-	private ZonedDateTime loadDateTimeTodayPoints = null;
+	private Optional<ZonedDateTime> loadDateTimeTodayPoints = Optional.empty();
 
 	private final List<ComplexGraphEvent.Point> yesterdayPoints = new ArrayList<>();
 
@@ -59,24 +60,24 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		final LocalDate today = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();
 		final LocalDate yesterday = today.minusDays(1);
 
-		if (yesterdayPoints.isEmpty() || loadDateYesterdayPoints.isBefore(yesterday)) {
+		if (yesterdayPoints.isEmpty() || loadDateYesterdayPoints.get().isBefore(yesterday)) {
 			yesterdayPoints.clear();
 			yesterdayPoints.addAll(getRpMessagesPointsByDate(connection, yesterday));
-			loadDateYesterdayPoints = yesterday;
+			loadDateYesterdayPoints = Optional.of(yesterday);
 		}
 
-		if (loadDateTimeTodayPoints == null
-				|| loadDateTimeTodayPoints.plusMinutes(15).isBefore(ZonedDateTime.now(ZoneId.of("UTC")))) {
+		if (!loadDateTimeTodayPoints.isPresent()
+				|| loadDateTimeTodayPoints.get().plusMinutes(15).isBefore(ZonedDateTime.now(ZoneId.of("UTC")))) {
 			todayPoints.clear();
 			todayPoints.addAll(getRpMessagesPointsByDate(connection, today));
-			loadDateTimeTodayPoints = ZonedDateTime.now(ZoneId.of("UTC"));
+			loadDateTimeTodayPoints = Optional.of(ZonedDateTime.now(ZoneId.of("UTC")));
 		}
 
 		sumToday = todayPoints.stream().mapToLong(Point::getY).sum();
 	}
 
 	@Override
-	protected ComplexGraphEvent produceEventFromData() {
+	protected Optional<ComplexGraphEvent> produceEventFromData() {
 		final ComplexGraphEvent.Series yesterdaySeries = new ComplexGraphEvent.Series("Yesterday", yesterdayPoints);
 		final ComplexGraphEvent.Series todaySeries = new ComplexGraphEvent.Series("Today", todayPoints);
 
@@ -86,7 +87,7 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 
 		final String sumTodayString = NumberFormat.getNumberInstance(Locale.GERMANY).format(sumToday);
 
-		return new ComplexGraphEvent(allSeries, sumTodayString);
+		return Optional.of(new ComplexGraphEvent(allSeries, sumTodayString));
 	}
 
 	private Collection<Point> getRpMessagesPointsByDate(final Connection con, final LocalDate date)

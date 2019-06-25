@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import com.hlag.oversigt.connect.exchange.Mail;
@@ -15,6 +16,7 @@ import com.hlag.oversigt.sources.event.HlBarChartEvent;
 import com.hlag.oversigt.sources.event.HlBarChartEvent.Category;
 import com.hlag.oversigt.sources.event.HlBarChartEvent.Serie;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 
 /**
@@ -33,7 +35,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	private boolean showEmptyCategories = false;
 
-	private DisplayOption[] displayOptions = null;
+	private DisplayOption[] displayOptions = new DisplayOption[0];
 
 	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);
 
@@ -52,9 +54,6 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	@Property(name = "Display Options",
 			description = "Optional mapping of original display values to originated display options, such as value and color.")
 	public DisplayOption[] getDisplayOptions() {
-		if (displayOptions == null) {
-			return new DisplayOption[0];
-		}
 		return displayOptions;
 	}
 
@@ -95,27 +94,27 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	}
 
 	@Override
-	protected HlBarChartEvent produceExchangeEvent() throws Exception {
+	protected Optional<HlBarChartEvent> produceExchangeEvent() throws Exception {
 		final List<Mail> mails = getExchangeClient().loadMails(getFolderName());
-		return createEvent(mails);
+		return Optional.of(createEvent(mails));
 	}
 
 	@Override
-	protected String getFailureMessage(final Exception e) {
+	protected Optional<String> getFailureMessage(final Exception e) {
 		if (e instanceof IllegalArgumentException && getClass() == ExchangeMailboxEventSource.class) {
-			return failure(String
+			return Optional.of(String
 					.format("Unable to read folder %s for user %s", getFolderName(), getCredentials().getUsername()));
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private HlBarChartEvent createEvent(final List<Mail> mails) {
 		final Set<CategoryInfo> categoryInfos = createCategoryInfos();
 		for (final Mail mail : mails) {
 			final List<String> categories = mail.getCategories();
-			categories.forEach(category -> increaseNumbers(mail, categoryInfos, category));
+			categories.forEach(category -> increaseNumbers(mail, categoryInfos, Optional.of(category)));
 			if (categories.isEmpty()) {
-				increaseNumbers(mail, categoryInfos, null);
+				increaseNumbers(mail, categoryInfos, Optional.empty());
 			}
 		}
 		return createEvent(categoryInfos, mails.size());
@@ -127,7 +126,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		for (final CategoryInfo info : categoryInfos) {
 			if (info.total > 0 || getShowEmptyCategories()) {
 				final List<Serie> series = new ArrayList<>();
-				final Color baseColor = info.option != null ? info.option.getColor() : UNASSIGNED_COLOR;
+				final Color baseColor = info.option.getColor();
 				final Color totalColor = getTotalColor(baseColor);
 				series.add(createStrechedSerie(totalColor, info.total, maxNumberOfMails));
 				series.add(createStrechedSerie(baseColor, info.total - info.unread, maxNumberOfMails));
@@ -172,11 +171,11 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		return max;
 	}
 
-	private void increaseNumbers(final Mail mail, final Set<CategoryInfo> infos, final String categoryName) {
+	private void increaseNumbers(final Mail mail, final Set<CategoryInfo> infos, final Optional<String> categoryName) {
 		CategoryInfo info = null;
-		if (categoryName != null) {
+		if (categoryName.isPresent()) {
 			try {
-				info = infos.stream().filter(i -> i.option.getValue().equals(categoryName)).findAny().get();
+				info = infos.stream().filter(i -> i.option.getValue().equals(categoryName.get())).findAny().get();
 			} catch (final Exception e) {
 				getLogger().warn("Unable to get display option for category: " + categoryName, e);
 			}
@@ -212,7 +211,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		}
 
 		@Override
-		public boolean equals(final Object that) {
+		public boolean equals(@Nullable final Object that) {
 			if (this == that) {
 				return true;
 			}

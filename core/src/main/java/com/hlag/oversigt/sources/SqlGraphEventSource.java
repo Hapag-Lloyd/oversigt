@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -41,7 +42,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	private final SortedMap<ZonedDateTime, List<Long>> values = new TreeMap<>();
 
 	@Override
-	protected ComplexGraphEvent produceEventFromData() {
+	protected Optional<ComplexGraphEvent> produceEventFromData() {
 		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
 		// Remove too old history
@@ -74,7 +75,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		if (!values.isEmpty()) {
 			displayValues.addAll(values.get(values.lastKey()));
 		}
-		return new ComplexGraphEvent(series, String.format(labelFormat, displayValues.toArray()));
+		return Optional.of(new ComplexGraphEvent(series, String.format(labelFormat, displayValues.toArray())));
 	}
 
 	@Override

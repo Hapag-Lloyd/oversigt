@@ -12,6 +12,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,8 @@ import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.DatabaseConnection;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * @author Olaf Neumann
@@ -97,36 +101,28 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 	}
 
 	@SuppressWarnings("resource")
-	private boolean withConnection(final DBConnectionConsumer function) throws SQLException {
-		Connection connection = null;
+	private void withConnection(final DBConnectionConsumer consumer) throws SQLException {
+		final Connection connection = getConnection();
 		try {
-			connection = getConnection();
-			if (connection != null) {
-				function.apply(connection);
-				return true;
-			}
+			consumer.apply(connection);
 		} finally {
-			if (connection != null) {
-				try {
-					connection.rollback();
-					connection.close();
-				} catch (final SQLException e) {
-					getLogger().warn("Unable to rollback and close DB connection", e);
-				}
+			try {
+				connection.rollback();
+				connection.close();
+			} catch (final SQLException e) {
+				getLogger().warn("Unable to rollback and close DB connection", e);
 			}
 		}
-		return false;
 	}
 
-	private LocalDateTime lastDbAccessDateTime = null;
+	private Optional<LocalDateTime> lastDbAccessDateTime = Optional.empty();
 
 	@Override
-	protected final T produceEvent() {
-		if (lastDbAccessDateTime == null
-				|| LocalDateTime.now().minus(getDatabaseQueryInterval()).isAfter(lastDbAccessDateTime)) {
+	protected final Optional<T> produceEvent() {
+		if (lastDbAccessDateTime.map(LocalDateTime.now().minus(getDatabaseQueryInterval())::isAfter).orElse(false)) {
 			try {
 				withConnection(this::gatherDatabaseInfo);
-				lastDbAccessDateTime = LocalDateTime.now();
+				lastDbAccessDateTime = Optional.of(LocalDateTime.now());
 			} catch (final SQLException e) {
 				return failure("Unable to gather database info", e);
 			}
@@ -136,7 +132,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	protected abstract void gatherDatabaseInfo(Connection connection) throws SQLException;
 
-	protected abstract T produceEventFromData();
+	protected abstract Optional<T> produceEventFromData();
 
 	public static <T> List<T> readFromDatabase(final Connection connection,
 			final ResultSetFunction<T> readOneLine,
@@ -193,9 +189,11 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 
 		@Override
-		public Object invoke(@SuppressWarnings("unused") final Object proxy, final Method method, final Object[] args)
-				throws Throwable {
-			if (method.getDeclaringClass() == Connection.class && "createStatement".equals(method.getName())) {
+		public Object invoke(@SuppressWarnings("unused") @Nullable final Object proxy,
+				@Nullable final Method method,
+				@Nullable final Object[] args) throws Throwable {
+			if (Objects.requireNonNull(method).getDeclaringClass() == Connection.class
+					&& "createStatement".equals(method.getName())) {
 				throw new RuntimeException(
 						"Oversigt does not allow unprepared statements. Please use #prepareStatement instead.");
 			}

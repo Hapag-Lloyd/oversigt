@@ -1,5 +1,7 @@
 package com.hlag.oversigt.sources;
 
+import java.util.Optional;
+
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.sources.event.NumberEvent;
@@ -9,10 +11,10 @@ public class GitCommitCountEventSource extends AbstractGitCommitEventSource<Over
 	private long lastCommitCount = 0;
 
 	@Override
-	protected OversigtEvent produceEvent() throws Exception {
+	protected Optional<OversigtEvent> produceEvent() throws Exception {
 		final long commitCount = streamLog(s -> s.count());
 		final NumberEvent event = new NumberEvent((int) commitCount, (int) lastCommitCount);
 		lastCommitCount = commitCount;
-		return event;
+		return Optional.of(event);
 	}
 }
