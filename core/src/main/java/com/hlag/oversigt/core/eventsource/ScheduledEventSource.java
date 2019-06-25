@@ -257,7 +257,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	private static final class EventSourceException extends RuntimeException {
 		private static final long serialVersionUID = -3175800380445076693L;
 
-		public EventSourceException(final String message, @Nullable final Throwable cause) {
+		private EventSourceException(final String message, @Nullable final Throwable cause) {
 			super(message, cause);
 		}
 	}

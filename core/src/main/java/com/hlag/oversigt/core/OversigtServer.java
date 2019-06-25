@@ -320,7 +320,8 @@ public class OversigtServer extends AbstractIdleService {
 				.forEach(c -> builder.addHttpsListener(c.getPort(),
 						c.getIp(),
 						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
-		final Undertow server = this.server = builder.setHandler(accessHandler).build();
+		final Undertow server = builder.setHandler(accessHandler).build();
+		this.server = server;
 
 		LOGGER.info("Starting web server");
 		try {

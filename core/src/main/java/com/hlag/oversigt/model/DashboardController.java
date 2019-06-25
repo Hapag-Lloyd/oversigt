@@ -613,13 +613,15 @@ public class DashboardController {
 					.getProperties()
 					.stream()
 					.filter(instance::hasPropertyValue)
-					.forEach(p -> {
+					.forEach(property -> {
 						try {
-							p.getSetter().invoke(service, instance.getPropertyValue(p));
+							final Object value = Objects.requireNonNull(instance.getPropertyValue(property),
+									"Cannot assign null value to event source property");
+							property.getSetter().invoke(service, value);
 						} catch (final IllegalAccessException
 								| IllegalArgumentException
 								| InvocationTargetException e) {
-							throw new RuntimeException("Unable to set property: " + p.getName(), e);
+							throw new RuntimeException("Unable to set property: " + property.getName(), e);
 						}
 					});
 

@@ -95,7 +95,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		if (cookie.isPresent()) {
 			con.setRequestProperty("Cookie", cookie.get());
-		} else if (loginData.isEmpty() && getCredentials() != null && getCredentials() != Credentials.EMPTY) {
+		} else if (loginData.isEmpty() && getCredentials() != Credentials.EMPTY) {
 			final String encoded = Base64.getEncoder()
 					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
 							.getBytes(StandardCharsets.UTF_8));

@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -408,7 +409,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public void createWidget(final Dashboard dashboard, final Widget widget) {
-		final Optional<Integer> id = insert(TABLE_WIDGET,
+		final OptionalInt id = insert(TABLE_WIDGET,
 				RETRIEVE_ID,
 				"DASHBOARD_ID",
 				dashboard.getId(), //
@@ -433,12 +434,12 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				"STYLE",
 				widget.getStyle(),
 				"LAST_CHANGE",
-				now());
+				now()).map(OptionalInt::of).orElse(OptionalInt.empty());
 		if (!id.isPresent()) {
 			throw new RuntimeException(String
 					.format("In dashboard [%s]: unable to create widget: %s", dashboard.getId(), widget.toString()));
 		}
-		widget.setId(id.get());
+		widget.setId(id.getAsInt());
 		createOrUpdateWidgetProperties(widget);
 	}
 
@@ -663,13 +664,14 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,
 			final String name,
 			final Object... parameters) {
-		final Optional<Integer> id
-				= insert(TABLE_VALUES, RETRIEVE_ID, "CLASS", clazz.getName(), "NAME", name, "JSON", "{}");
+		final OptionalInt id = insert(TABLE_VALUES, RETRIEVE_ID, "CLASS", clazz.getName(), "NAME", name, "JSON", "{}")
+				.map(OptionalInt::of)
+				.orElse(OptionalInt.empty());
 		if (!id.isPresent()) {
 			throw new RuntimeException("Unable to create property: " + name);
 		}
 		final Object[] params = new Object[2 + parameters.length];
-		params[0] = id.get();
+		params[0] = id.getAsInt();
 		params[1] = name;
 		System.arraycopy(parameters, 0, params, 2, parameters.length);
 		final T value;
