@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -1237,10 +1240,39 @@ public class DashboardController {
 		if (!method.isPresent()) {
 			return OversigtEvent.class;
 		}
-		if (TypeUtils.isOfType(method.get().getReturnType(), OversigtEvent.class)) {
-			return (Class<? extends OversigtEvent>) method.get().getReturnType();
+
+		final Class<?> rawTypeOfOptional;
+		if (method.get().getReturnType() == Optional.class) {
+			final ParameterizedType parameterizedType = (ParameterizedType) method.get().getGenericReturnType();
+			final Type typeOfOptional = parameterizedType.getActualTypeArguments()[0];
+			if (typeOfOptional instanceof TypeVariable<?>) {
+				final TypeVariable<?> typeVariable = (TypeVariable<?>) typeOfOptional;
+				final Type boundary = typeVariable.getBounds()[0];
+				if (boundary instanceof Class<?>) {
+					rawTypeOfOptional = (Class<?>) boundary;
+				} else {
+					throw new RuntimeException(String.format(
+							"Unable to inspect optional return value of method [%s]. Type in question: %s",
+							method.toString(),
+							parameterizedType));
+				}
+			} else if (typeOfOptional instanceof Class<?>) {
+				rawTypeOfOptional = (Class<?>) typeOfOptional;
+			} else if (typeOfOptional instanceof ParameterizedType) {
+				rawTypeOfOptional = (Class<?>) ((ParameterizedType) typeOfOptional).getRawType();
+			} else {
+				throw new RuntimeException("Unknown type: " + typeOfOptional.getClass().getName());
+			}
+		} else {
+			rawTypeOfOptional = method.get().getReturnType();
 		}
-		throw new RuntimeException("Event producing method does not return " + OversigtEvent.class.getName());
+
+		if (TypeUtils.isOfType(rawTypeOfOptional, OversigtEvent.class)) {
+			return (Class<? extends OversigtEvent>) rawTypeOfOptional;
+		}
+		throw new RuntimeException(String.format("Event producing method [%s] does not return event of type %s",
+				method.toString(),
+				OversigtEvent.class.getName()));
 	}
 
 	private static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {

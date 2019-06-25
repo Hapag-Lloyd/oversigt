@@ -36,7 +36,7 @@ public class Principal implements java.security.Principal {
 			authenticator.reloadRoles(name);
 			return principal.orElse(null);
 		});
-		return Optional.ofNullable(getPrincipal(username).get());
+		return getPrincipal(username);
 	}
 
 	private final String distinguishedName;

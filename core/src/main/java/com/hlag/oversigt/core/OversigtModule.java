@@ -80,6 +80,7 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
+import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 
 /**
  * Main application configuration module. Configures server and all necessary
@@ -156,6 +157,7 @@ class OversigtModule extends AbstractModule {
 
 		// GSON
 		final Gson gson = new GsonBuilder()//
+				.registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory())
 				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))

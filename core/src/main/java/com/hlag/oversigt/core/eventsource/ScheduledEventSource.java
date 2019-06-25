@@ -134,7 +134,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			} catch (final Exception e) {
 				logWarn(getLogger(), "Unable to compute event life time", e);
 			}
-			this.eventBus.post(event);
+			this.eventBus.post(event.get());
 			return true;
 		}
 		return false;
