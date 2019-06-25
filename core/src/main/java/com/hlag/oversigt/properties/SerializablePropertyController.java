@@ -92,7 +92,7 @@ public class SerializablePropertyController {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated Must no longer be used outside the oversigt internals.
 	 */
 	@Deprecated
 	public Map<String, List<? extends SerializableProperty>> getProperties() {
@@ -108,7 +108,7 @@ public class SerializablePropertyController {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated Must no longer be used outside the oversigt internals.
 	 */
 	@Deprecated
 	public Map<String, Collection<SerializablePropertyMember>> getAllMembers() {
