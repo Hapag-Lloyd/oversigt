@@ -182,7 +182,7 @@ public class SystemResource {
 			return notFound("The log file '" + filename + "' does not exist.");
 		}
 
-		Collection<String> lines;
+		final Collection<String> lines;
 		try (Stream<String> lineStream = Files.lines(logfile)) {
 			if (lineCount == 0) {
 				lines = lineStream.collect(Collectors.toList());

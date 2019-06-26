@@ -62,5 +62,7 @@ public class MapAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public void close() {/* do nothing */}
+	public void close() {
+		// empty by design
+	}
 }

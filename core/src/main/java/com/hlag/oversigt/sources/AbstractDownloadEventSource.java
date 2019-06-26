@@ -50,7 +50,7 @@ import de.larssh.utils.text.StringConverters;
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
 
-	private static final TextProcessor textProcessor = TextProcessor.create().registerDatetimeFunctions();
+	private static final TextProcessor TEXT_PROCESSOR = TextProcessor.create().registerDatetimeFunctions();
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
 
@@ -172,7 +172,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 			logInfo(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
-				url = textProcessor.process(url);
+				url = TEXT_PROCESSOR.process(url);
 				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.loginDatas)));
 				final Optional<Pattern> pattern = internetAddress.getPattern();
 				if (pattern.isPresent()) {

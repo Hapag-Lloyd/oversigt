@@ -139,7 +139,9 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 				if (Long.parseLong(result) > 0L) {
 					return true;
 				}
-			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
+				// empty by design
+			}
 			return false;
 		}
 

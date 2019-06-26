@@ -12,10 +12,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class Principal implements java.security.Principal {
-	private static final Map<String, Principal> principals = Collections.synchronizedMap(new WeakHashMap<>());
+	private static final Map<String, Principal> PRINCIPALS = Collections.synchronizedMap(new WeakHashMap<>());
 
 	static Optional<Principal> getPrincipal(final String username) {
-		return Optional.ofNullable(principals.get(username));
+		return Optional.ofNullable(PRINCIPALS.get(username));
 	}
 
 	/**
@@ -31,7 +31,7 @@ public class Principal implements java.security.Principal {
 	 *                                          loaded.
 	 */
 	public static Optional<Principal> loadPrincipal(final Authenticator authenticator, final String username) {
-		principals.computeIfAbsent(username, name -> {
+		PRINCIPALS.computeIfAbsent(username, name -> {
 			final Optional<Principal> principal = authenticator.readPrincipal(name);
 			authenticator.reloadRoles(name);
 			return principal.orElse(null);
@@ -65,7 +65,7 @@ public class Principal implements java.security.Principal {
 		this.email = email;
 		this.roles.addAll(roles);
 
-		principals.put(username, this);
+		PRINCIPALS.put(username, this);
 	}
 
 	synchronized void changeRoles(final Collection<Role> newRoles) {

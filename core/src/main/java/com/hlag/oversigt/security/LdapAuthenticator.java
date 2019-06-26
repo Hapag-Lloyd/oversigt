@@ -192,7 +192,9 @@ public class LdapAuthenticator implements Authenticator {
 			try {
 				// Sleep to slow down responses for brute force attacks
 				Thread.sleep(1000);
-			} catch (@SuppressWarnings("unused") final InterruptedException ignore) {/* do nothing */}
+			} catch (@SuppressWarnings("unused") final InterruptedException ignore) {
+				// empty by design
+			}
 			return false;
 		}
 	}

@@ -305,6 +305,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		return null;
 	}
 
+	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected void handleRequestPost(final HttpServerExchange exchange) throws IOException {
 		final FormData formData = exchangeHelper.getFormData(exchange);
 		final Optional<String> action = Optional.ofNullable(formData.getFirst("action")).map(FormValue::getValue);

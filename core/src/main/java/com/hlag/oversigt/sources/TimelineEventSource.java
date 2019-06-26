@@ -48,17 +48,17 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private int minimumEventCount = 0;
 
-	private Color colorToday = Color.Green;
+	private Color colorToday = Color.GREEN;
 
-	private Color colorAppointment = Color.Blue;
+	private Color colorAppointment = Color.BLUE;
 
-	private Color colorBirthday = Color.Yellow;
+	private Color colorBirthday = Color.YELLOW;
 
-	private Color colorHoliday = Color.Grey;
+	private Color colorHoliday = Color.GRAY;
 
-	private Color colorOutOfOffice = Color.Blue;
+	private Color colorOutOfOffice = Color.BLUE;
 
-	private Color colorMailbox = Color.Blue;
+	private Color colorMailbox = Color.BLUE;
 
 	private HolidayCalendar holidayCalendar = HolidayCalendar.GERMANY;
 
@@ -177,7 +177,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	}
 
 	private void addHolidays(final TimelineEvent event, final LocalDate now) {
-		final Color fontColor = Color.LightGrey;
+		final Color fontColor = Color.LIGHT_GRAY;
 
 		final HolidayManager m = HolidayManager.getInstance(ManagerParameters.create(getHolidayCalendar()));
 		final String area = Strings.emptyToNull(getHolidayArea());

@@ -33,7 +33,7 @@ public abstract class SshConnection {
 
 	private static void shutdown() {
 		LOGGER.info("Disconnecting SSH sessions...");
-		for (final SshConnection connection : connections.values()) {
+		for (final SshConnection connection : CONNECTIONS.values()) {
 			try {
 				connection.disconnect();
 			} catch (final Exception e) {
@@ -45,7 +45,7 @@ public abstract class SshConnection {
 
 	private static final JSch JSCH = new JSch();
 
-	private static final Map<SshConnectionKey, SshConnection> connections
+	private static final Map<SshConnectionKey, SshConnection> CONNECTIONS
 			= Collections.synchronizedMap(new HashMap<>());
 
 	public static SshConnection getConnection(final String hostname,
@@ -58,8 +58,8 @@ public abstract class SshConnection {
 
 	private static SshConnection getConnection(final SshConnectionKey key,
 			final Supplier<SshConnection> connectionSupplier) {
-		synchronized (connections) {
-			return connections.computeIfAbsent(key, x -> connectionSupplier.get());
+		synchronized (CONNECTIONS) {
+			return CONNECTIONS.computeIfAbsent(key, x -> connectionSupplier.get());
 		}
 	}
 
@@ -107,7 +107,7 @@ public abstract class SshConnection {
 			try {
 				sessionReference.get().ifPresent(Session::disconnect);
 			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				// ignore
+				// empty by design
 			}
 			return false;
 		}
@@ -148,14 +148,12 @@ public abstract class SshConnection {
 
 	public Optional<String> getTopas() {
 		final String filename = "hl_topas_" + UUID.randomUUID().toString() + ".tmp";
-		final String[] commands = new String[] { //
-				"cd /tmp", //
-				"(sleep 3; echo q)|topas > " + filename, //
-				"cat " + filename, //
+		final String[] commands = new String[] {
+				"cd /tmp",
+				"(sleep 3; echo q)|topas > " + filename,
+				"cat " + filename,
 				"rm " + filename };
-		// String string = runSshCommand(session, "(sleep 3; echo q)|topas");
-		final Optional<String> string = runShellCommands(commands);
-		return string;
+		return runShellCommands(commands);
 	}
 
 	private static double parseCpuUsage(final String string) {
@@ -209,7 +207,7 @@ public abstract class SshConnection {
 					try {
 						Thread.sleep(100);
 					} catch (@SuppressWarnings("unused") final Exception ignore) {
-						// ignore
+						// empty by design
 					}
 				}
 				channel.disconnect();
@@ -260,7 +258,7 @@ public abstract class SshConnection {
 					try {
 						Thread.sleep(100);
 					} catch (@SuppressWarnings("unused") final Exception ignore) {
-						// ignore
+						// empty by design
 					}
 				}
 				channel.disconnect();

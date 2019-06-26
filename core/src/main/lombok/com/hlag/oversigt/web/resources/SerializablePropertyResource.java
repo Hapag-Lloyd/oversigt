@@ -149,8 +149,8 @@ public class SerializablePropertyResource {
 
 		try {
 			final SerializableProperty prop = spController.createProperty(clazz, (String) map.get("name"), map);
-			return status(Status.CREATED)// TODO change to proper Location-header returning response
-					.entity(toMapWithoutPassword(prop))
+			// TODO change to proper Location-header returning response
+			return status(Status.CREATED).entity(toMapWithoutPassword(prop))
 					.type(MediaType.APPLICATION_JSON_TYPE)
 					.link(uri.getAbsolutePath() + "/" + prop.getId(), "self")
 					.build();
@@ -172,7 +172,7 @@ public class SerializablePropertyResource {
 	@NoChangeLog
 	public Response readProperty(@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -201,7 +201,7 @@ public class SerializablePropertyResource {
 			@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id,
 			@NotNull final Map<@NotBlank String, @NotNull Object> map) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -246,7 +246,7 @@ public class SerializablePropertyResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response deleteProperty(@PathParam("type") @NotBlank final String className,
 			@PathParam("id") @Positive final int id) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -279,10 +279,6 @@ public class SerializablePropertyResource {
 				errors.add("'" + n + "' is not a member of " + clazz.getSimpleName());
 			}
 		}
-		// // are all values strings?
-		// map.entrySet().stream().filter(e -> !(e.getValue() instanceof
-		// String)).forEach(
-		// e -> errors.add("Value of '" + e.getKey() + "' is not a String"));
 		return errors;
 	}
 

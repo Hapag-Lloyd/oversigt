@@ -505,7 +505,9 @@ public class OversigtServer extends AbstractIdleService {
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
 					.collect(toList()));
-		} catch (@SuppressWarnings("unused") final IOException ignore) {/* ignore exception */}
+		} catch (@SuppressWarnings("unused") final IOException ignore) {
+			// empty by design
+		}
 
 		return exchange -> {
 			// Find the file to serve
@@ -647,7 +649,9 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private final class OversigtServerListener extends Listener {
-		private OversigtServerListener() {}
+		private OversigtServerListener() {
+			// empty by design
+		}
 
 		@Override
 		public void running() {

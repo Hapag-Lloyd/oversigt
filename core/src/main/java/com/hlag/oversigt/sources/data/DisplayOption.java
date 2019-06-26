@@ -14,7 +14,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 @JsonHint(headerTemplate = "{{ self.displayValue }}", arrayStyle = ArrayStyle.TABS)
 public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	@NotNull
-	private Color color = Color.Grey;
+	private Color color = Color.GRAY;
 
 	@NotNull
 	private String displayValue = "";

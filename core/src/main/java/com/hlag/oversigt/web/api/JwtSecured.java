@@ -19,6 +19,9 @@ public @interface JwtSecured {
 	/**
 	 * Defines whether a call to the annotated method must be authenticated or not.
 	 * Setting this value to <code>true</code> will authentication is required.
+	 *
+	 * @return <code>true</code> if authentication is required, else
+	 *         <code>false</code>
 	 */
 	boolean mustBeAuthenticated() default true;
 }

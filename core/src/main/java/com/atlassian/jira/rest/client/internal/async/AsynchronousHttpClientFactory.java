@@ -68,10 +68,14 @@ public class AsynchronousHttpClientFactory {
 							}
 
 							@Override
-							public void setThreadLocalContext(final Object context) {/**/}
+							public void setThreadLocalContext(final Object context) {
+								// empty by design
+							}
 
 							@Override
-							public void clearThreadLocalContext() {/**/}
+							public void clearThreadLocalContext() {
+								// empty by design
+							}
 						});
 
 		final HttpClient httpClient = defaultHttpClientFactory.create(options);
@@ -93,23 +97,31 @@ public class AsynchronousHttpClientFactory {
 				// for AtlassianHttpClient which is extended by a destroy method.
 				// Destroy method should never be called for AtlassianHttpClient coming from
 				// a client! Imagine you create a RestClient, pass your own HttpClient there
-				// and it gets destroy.
+				// and it gets destroyed.
 			}
 		};
 	}
 
 	private static class NoOpEventPublisher implements EventPublisher {
 		@Override
-		public void publish(final Object o) {/**/}
+		public void publish(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void register(final Object o) {/**/}
+		public void register(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void unregister(final Object o) {/**/}
+		public void unregister(final Object o) {
+			// empty by design
+		}
 
 		@Override
-		public void unregisterAll() {/**/}
+		public void unregisterAll() {
+			// empty by design
+		}
 	}
 
 	/**
@@ -180,7 +192,7 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	private static final class MavenUtils {
-		private static final Logger logger = LoggerFactory.getLogger(MavenUtils.class);
+		private static final Logger LOGGER = LoggerFactory.getLogger(MavenUtils.class);
 
 		private static final String UNKNOWN_VERSION = "unknown";
 
@@ -191,8 +203,8 @@ public class AsynchronousHttpClientFactory {
 				props.load(resourceAsStream);
 				return props.getProperty("version", UNKNOWN_VERSION);
 			} catch (final Exception e) {
-				logger.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
-				logger.debug("Got the following exception", e);
+				LOGGER.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
+				LOGGER.debug("Got the following exception", e);
 				return UNKNOWN_VERSION;
 			}
 		}

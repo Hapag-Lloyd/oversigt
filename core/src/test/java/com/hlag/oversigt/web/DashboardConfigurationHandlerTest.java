@@ -47,10 +47,10 @@ public class DashboardConfigurationHandlerTest {
 				1920,
 				1080,
 				15,
-				Color.Black,
+				Color.BLACK,
 				DashboardColorScheme.COLORED,
-				Color.White,
-				Color.LightGray,
+				Color.WHITE,
+				Color.LIGHT_GRAY,
 				Arrays.asList("USER1"),
 				Collections.emptyList());
 	}

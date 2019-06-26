@@ -182,7 +182,7 @@ public class DashboardResource {
 		}
 
 		// clone it to work on it
-		final Dashboard newDashboard = dashboard.clone();
+		final Dashboard newDashboard = dashboard.copy();
 
 		// check dashboard id
 		if (newDashboardData.containsKey("id")

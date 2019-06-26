@@ -802,7 +802,7 @@ public class DashboardController {
 
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
-			return binder -> {/* doing nothing */};
+			return binder -> { /* empty by design */ };
 		}
 		return TypeUtils.createInstance(moduleClass);
 	}
@@ -886,7 +886,7 @@ public class DashboardController {
 				throw new RuntimeException(message);
 			}
 			return TypeUtils.createInstance(type, string);
-		} catch (final Throwable e) {
+		} catch (final Exception e) {
 			LOGGER.error("Unable to set property value of type " + type + " from string '" + string + "'", e);
 			return null;
 		}

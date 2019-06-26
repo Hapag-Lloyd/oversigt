@@ -41,12 +41,12 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 	@Context
 	private ResourceInfo injectedResourceInfo = null;
 
-	static final ThreadLocal<Object[]> parameters = new ThreadLocal<>();
+	static final ThreadLocal<Object[]> PARAMETERS = new ThreadLocal<>();
 
 	@Override
 	public void filter(@SuppressWarnings("unused") @Nullable final ContainerRequestContext requestContext)
 			throws IOException {
-		parameters.set(null);
+		PARAMETERS.set(null);
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 					for (int i = 0; i < parameters.length; i += 1) {
 						if (!values.isEmpty() || isApiParameter(parameters[i])) {
 							values.add(
-									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.parameters.get()[i]);
+									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.PARAMETERS.get()[i]);
 						}
 					}
 					Utils.logChange(principal,
@@ -95,7 +95,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 					requestContext.getUriInfo().getAbsolutePath());
 		}
 
-		parameters.set(null);
+		PARAMETERS.set(null);
 	}
 
 	private static boolean isApiParameter(final Parameter parameter) {

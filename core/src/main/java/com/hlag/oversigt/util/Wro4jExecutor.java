@@ -67,6 +67,7 @@ public class Wro4jExecutor {
 
 	private final ConfigurableWroManagerFactory managerFactory;
 
+	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	public Wro4jExecutor(final String viewName, final boolean minimize) {
 		try {
 			Context.set(Context.standaloneContext());

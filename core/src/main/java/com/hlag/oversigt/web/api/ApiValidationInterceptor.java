@@ -31,7 +31,7 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 		final MethodInvocation invocation = Objects.requireNonNull(nullableInvocation);
 
 		// save parameters for logging
-		LoggingInterceptor.parameters.set(invocation.getArguments());
+		LoggingInterceptor.PARAMETERS.set(invocation.getArguments());
 
 		// Validate call
 		final Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();

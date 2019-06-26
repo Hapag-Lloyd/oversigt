@@ -22,6 +22,7 @@ import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 
 /**
  * @author kayma
+ * @deprecated Do not use this event source any longer!
  */
 @Deprecated
 @EventSource(displayName = "SQL Count", view = "Rickshawgraph", hiddenDataItems = { "moreinfo", "points" })

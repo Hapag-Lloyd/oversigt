@@ -89,6 +89,10 @@ public class SerializablePropertyController {
 				.orElse("");
 	}
 
+	/**
+	 * @return map of property names to list of classes
+	 * @deprecated Must no longer be used outside the oversigt internals.
+	 */
 	@Deprecated
 	public Map<String, List<? extends SerializableProperty>> getProperties() {
 		// TODO remove this method
@@ -102,6 +106,10 @@ public class SerializablePropertyController {
 						e -> streamProperties(e.getValue()).collect(Collectors.toList())));
 	}
 
+	/**
+	 * @return map of member names to collection of members
+	 * @deprecated Must no longer be used outside the oversigt internals.
+	 */
 	@Deprecated
 	public Map<String, Collection<SerializablePropertyMember>> getAllMembers() {
 		// TODO remove this method

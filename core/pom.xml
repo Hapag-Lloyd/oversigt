@@ -48,6 +48,7 @@
 
 	<properties>
 		<spotbugs.skip>true</spotbugs.skip>
+		<pmd.skip>true</pmd.skip>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
 
 		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
