@@ -112,7 +112,9 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final Exception ignore) {}
+			} catch (final InterruptedException ignore) {
+				// empty by design
+			}
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();
@@ -181,7 +183,7 @@ public class SystemResource {
 			return notFound("The log file '" + filename + "' does not exist.");
 		}
 
-		Collection<String> lines;
+		final Collection<String> lines;
 		try (Stream<String> lineStream = Files.lines(logfile)) {
 			if (lineCount == 0) {
 				lines = lineStream.collect(Collectors.toList());

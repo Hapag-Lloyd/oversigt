@@ -11,7 +11,7 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 @JsonHint(headerTemplate = "{{ self.displayValue }}", arrayStyle = ArrayStyle.TABS)
 public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 	@NotNull
-	private Color color = Color.Grey;
+	private Color color = Color.GRAY;
 
 	@NotNull
 	private String displayValue = null;

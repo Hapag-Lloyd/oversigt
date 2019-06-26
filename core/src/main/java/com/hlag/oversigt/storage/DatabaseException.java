@@ -5,16 +5,6 @@ public class DatabaseException extends RuntimeException {
 
 	private final String sql;
 
-	@Deprecated
-	DatabaseException(final String message, final Throwable cause) {
-		this(message, (String) null, cause);
-	}
-
-	@Deprecated
-	DatabaseException(final String message) {
-		this(message, (String) null);
-	}
-
 	DatabaseException(final String message, final String sql, final Throwable cause) {
 		super(message, cause);
 		this.sql = sql;

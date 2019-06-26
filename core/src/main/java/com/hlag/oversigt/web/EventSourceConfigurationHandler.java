@@ -407,7 +407,9 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final Exception ignore) {}
+			} catch (final InterruptedException ignore) {
+				// empty by design
+			}
 			shutdown.run();
 		});
 		return ok();

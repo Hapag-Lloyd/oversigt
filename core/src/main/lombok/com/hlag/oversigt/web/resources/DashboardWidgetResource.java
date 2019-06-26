@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -96,7 +97,7 @@ public class DashboardWidgetResource {
 			filterName = w -> true;
 		} else {
 			final String lower = containing.trim().toLowerCase();
-			filterName = w -> w.getName().toLowerCase().contains(lower) //
+			filterName = w -> w.getName().toLowerCase().contains(lower)
 					|| w.getTitle().toLowerCase().contains(lower)
 					|| w.getBackgroundColor().getHexColor().toLowerCase().contains(lower)
 					|| w.getStyle().toLowerCase().contains(lower)
@@ -109,7 +110,7 @@ public class DashboardWidgetResource {
 							.filter(w::hasWidgetData)
 							.map(w::getWidgetData)
 							.map(String::toLowerCase)
-							.anyMatch(s -> s.contains(lower));;
+							.anyMatch(s -> s.contains(lower));
 		}
 
 		final Predicate<Widget> filterSecu;
@@ -147,7 +148,7 @@ public class DashboardWidgetResource {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
-		Widget widget;
+		final Widget widget;
 		try {
 			widget = controller.createWidgetForDashboard(dashboard, eventSourceInstanceId);
 		} catch (final NoSuchElementException e) {
@@ -236,7 +237,7 @@ public class DashboardWidgetResource {
 		if (!widget.getEventSourceInstance().getId().equals(details.getEventSourceInstanceId())) {
 			return ErrorResponse.badRequest("The event source instance id does not match");
 		}
-		final HashSet<String> unnessaccaryDataItems = new HashSet<>(details.getData().keySet());
+		final Set<String> unnessaccaryDataItems = new HashSet<>(details.getData().keySet());
 		unnessaccaryDataItems.removeAll(widget.getEventSourceInstance()
 				.getDescriptor()
 				.getDataItems()
@@ -247,7 +248,7 @@ public class DashboardWidgetResource {
 			return ErrorResponse.badRequest("Some data items are unknown", unnessaccaryDataItems);
 		}
 
-		Widget newWidget;
+		final Widget newWidget;
 		try {
 			newWidget = new Widget(details.getId(),
 					widget.getEventSourceInstance(),
@@ -291,7 +292,7 @@ public class DashboardWidgetResource {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
-		Widget widget;
+		final Widget widget;
 		try {
 			widget = dashboard.getWidget(widgetId);
 		} catch (final NoSuchElementException e) {

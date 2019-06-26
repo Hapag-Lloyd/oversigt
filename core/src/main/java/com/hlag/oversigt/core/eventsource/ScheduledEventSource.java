@@ -79,6 +79,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	 * event to event bus
 	 */
 	@Override
+	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected final void runOneIteration() {
 		logTrace(getLogger(), "Run one iteration");
 		// if the last iteration (if any) is too short in the past, return immediately

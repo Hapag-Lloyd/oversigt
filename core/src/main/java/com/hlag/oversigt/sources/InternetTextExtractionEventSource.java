@@ -130,16 +130,16 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 					.registerRegularExpressionFunction(downloadedContent)
 					.process(condition)
 					.trim();
-			try {
-				if (Boolean.parseBoolean(result)) {
-					return true;
-				}
-			} catch (final Exception ignore) {}
+			if (Boolean.parseBoolean(result)) {
+				return true;
+			}
 			try {
 				if (Long.parseLong(result) > 0L) {
 					return true;
 				}
-			} catch (final Exception ignore) {}
+			} catch (final NumberFormatException ignore) {
+				// empty by design
+			}
 			return false;
 		}
 

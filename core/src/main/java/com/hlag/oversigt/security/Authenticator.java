@@ -26,9 +26,13 @@ public interface Authenticator extends AutoCloseable {
 		}
 
 		@Override
-		public void reloadRoles(final String username) {}
+		public void reloadRoles(final String username) {
+			// empty by design
+		}
 
 		@Override
-		public void close() {}
+		public void close() {
+			// empty by design
+		}
 	}
 }

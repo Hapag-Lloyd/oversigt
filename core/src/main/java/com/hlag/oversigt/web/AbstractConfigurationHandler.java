@@ -300,10 +300,13 @@ public class AbstractConfigurationHandler implements HttpHandler {
 				classes[i] = objs[i].getClass();
 			}
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {}
+		} catch (final Exception ignore) {
+			// empty by design
+		}
 		return null;
 	}
 
+	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected void handleRequestPost(final HttpServerExchange exchange) throws IOException {
 		final FormData formData = exchangeHelper.getFormData(exchange);
 		final Optional<String> action = Optional.ofNullable(formData.getFirst("action")).map(FormValue::getValue);

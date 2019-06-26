@@ -74,10 +74,14 @@ public final class SSLUtils {
 				}
 
 				@Override
-				public void checkClientTrusted(final X509Certificate[] certs, final String authType) {}
+				public void checkClientTrusted(final X509Certificate[] certs, final String authType) {
+					// empty by design
+				}
 
 				@Override
-				public void checkServerTrusted(final X509Certificate[] certs, final String authType) {}
+				public void checkServerTrusted(final X509Certificate[] certs, final String authType) {
+					// empty by design
+				}
 			} };
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 			return sslContext;
@@ -95,10 +99,10 @@ public final class SSLUtils {
 		}
 	}
 
-	private static final Map<String, SSLContext> sslContexts = Collections.synchronizedMap(new HashMap<>());
+	private static final Map<String, SSLContext> SSL_CONTEXTS = Collections.synchronizedMap(new HashMap<>());
 
 	private static SSLContext getSslContext(final String id) {
-		return sslContexts.computeIfAbsent(id, x -> createSslContext());
+		return SSL_CONTEXTS.computeIfAbsent(id, x -> createSslContext());
 	}
 
 	public static SSLSocketFactory getNonCheckingSSLSocketFactory(final String id) {

@@ -142,14 +142,14 @@ public class EventSourceInstanceResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response createInstance(@QueryParam("key") @ApiParam(
 			value = "The key of the event source descriptor to be used") @NotBlank final String keyString) {
-		EventSourceKey key;
+		final EventSourceKey key;
 		try {
 			key = EventSourceKey.getKey(keyString);
 		} catch (final InvalidKeyException e) {
 			return ErrorResponse.badRequest("The key '" + keyString + "' is invalid.");
 		}
 
-		EventSourceDescriptor descriptor;
+		final EventSourceDescriptor descriptor;
 		try {
 			descriptor = controller.getEventSourceDescriptor(key);
 		} catch (final NoSuchElementException e) {
@@ -227,7 +227,7 @@ public class EventSourceInstanceResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response updateInstance(@PathParam("id") @NotBlank final String instanceId,
 			final EventSourceInstanceDetails details) {
-		EventSourceInstance instance;
+		final EventSourceInstance instance;
 		try {
 			instance = controller.getEventSourceInstance(instanceId);
 		} catch (final NoSuchElementException e) {
@@ -243,7 +243,7 @@ public class EventSourceInstanceResource {
 		if (!instance.getDescriptor().isScheduledService() && details.frequency != null) {
 			return ErrorResponse.badRequest("The event source does not take a frequency");
 		}
-		final HashSet<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
+		final Set<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
 		unnessaccaryDataItems.removeAll(instance.getDescriptor()//
 				.getDataItems()
 				.stream()
@@ -253,7 +253,7 @@ public class EventSourceInstanceResource {
 			return ErrorResponse.badRequest("Some data items are unknown", unnessaccaryDataItems);
 		}
 
-		EventSourceInstance newInstance;
+		final EventSourceInstance newInstance;
 		try {
 			newInstance = new EventSourceInstance(instance.getDescriptor(),
 					instance.getId(),
