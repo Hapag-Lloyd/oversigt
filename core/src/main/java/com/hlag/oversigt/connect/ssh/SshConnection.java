@@ -235,7 +235,8 @@ public abstract class SshConnection {
 			out.print("exit");
 			out.flush();
 
-			try (InputStream in = channel.getInputStream(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+			try (InputStream in = channel.getInputStream(); //
+					ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 				final byte[] buffer = new byte[1024];
 				while (true) {
 					while (in.available() > 0) {

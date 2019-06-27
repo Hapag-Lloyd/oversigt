@@ -29,9 +29,13 @@ public interface Authenticator extends AutoCloseable {
 		}
 
 		@Override
-		public void reloadRoles(@SuppressWarnings("unused") final String username) {/* do nothing */}
+		public void reloadRoles(@SuppressWarnings("unused") final String username) {
+			/* do nothing */
+		}
 
 		@Override
-		public void close() {/* do nothing */}
+		public void close() {
+			/* do nothing */
+		}
 	}
 }

@@ -263,7 +263,9 @@ public final class TypeUtils {
 		for (final Class<? extends T> clazz : classes) {
 			try {
 				return createInstance(clazz, input);
-			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
+				/* ignore */
+			}
 		}
 		return defaultValueSupplier.get();
 	}

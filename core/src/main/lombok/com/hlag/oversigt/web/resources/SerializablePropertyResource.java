@@ -135,7 +135,7 @@ public class SerializablePropertyResource {
 	public Response createProperty(@Context final UriInfo uri,
 			@PathParam("type") @NotBlank final String className,
 			@NotEmpty final Map<@NotBlank String, @NotNull Object> map) {
-		Class<? extends SerializableProperty> clazz;
+		final Class<? extends SerializableProperty> clazz;
 		try {
 			clazz = spController.getClass(className);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {

@@ -126,7 +126,9 @@ public class Authentication {
 
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (@SuppressWarnings("unused") final Exception ignore) {/* not logged in */}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			/* not logged in */
+		}
 		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
 		}

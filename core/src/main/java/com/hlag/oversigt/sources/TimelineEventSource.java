@@ -109,7 +109,9 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
 		try {
 			addAppointment_unsafe(event, appointment);
-		} catch (@SuppressWarnings("unused") final ServiceLocalException ignore) {/* ignore */}
+		} catch (@SuppressWarnings("unused") final ServiceLocalException ignore) {
+			/* ignore */
+		}
 	}
 
 	private void addAppointment_unsafe(final TimelineEvent event, final Appointment appointment)

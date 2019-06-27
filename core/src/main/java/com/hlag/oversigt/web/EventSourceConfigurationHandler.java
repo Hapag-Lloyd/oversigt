@@ -409,7 +409,9 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
+				/* ignore */
+			}
 			shutdown.run();
 		});
 		return ok();

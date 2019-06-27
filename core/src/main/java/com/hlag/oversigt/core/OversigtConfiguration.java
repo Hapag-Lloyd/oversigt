@@ -99,9 +99,9 @@ public class OversigtConfiguration {
 		bind(binder, "databaseUsername", Objects.requireNonNull(database.username, "database.username"));
 		bind(binder, "databasePassword", Objects.requireNonNull(database.password, "database.password"));
 		binder.bind(SqlDialect.class).to(database.sqlDialect);
-		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {/* just type literal for generics detection */})
-				.annotatedWith(Names.named("listeners"))
-				.toInstance(listeners);
+		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {
+			/* just type literal for generics detection */
+		}).annotatedWith(Names.named("listeners")).toInstance(listeners);
 		bind(binder, "jiraSocketTimeout", Objects.requireNonNull(jira, "").socketTimeout);
 		bindNamedArray(binder,
 				String[].class,
@@ -139,16 +139,16 @@ public class OversigtConfiguration {
 			}
 		}
 		if (!boundAuthenticator && security.users != null) {
-			binder.bind(new TypeLiteral<Map<String, String>>() {/* just type literal for generics detection */})
-					.annotatedWith(Names.named("UsernamesAndPasswords"))
-					.toInstance(security.users);
+			binder.bind(new TypeLiteral<Map<String, String>>() { /* just type literal for generics detection */
+
+			}).annotatedWith(Names.named("UsernamesAndPasswords")).toInstance(security.users);
 			binder.bind(Authenticator.class).to(MapAuthenticator.class);
 			boundAuthenticator = true;
 		}
 		final List<String> admins = Optional.ofNullable(security.serverAdmins).orElseGet(ArrayList::new);
-		binder.bind(new TypeLiteral<List<String>>() {/* just type literal for generics detection */})
-				.annotatedWith(Names.named("serverAdmins"))
-				.toInstance(admins);
+		binder.bind(new TypeLiteral<List<String>>() {
+			/* just type literal for generics detection */
+		}).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
 		if (admins.isEmpty()) {
 			LOGGER.warn("No server admins configured. Please check configuration security.serverAdmins");
 		}

@@ -97,5 +97,7 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public void close() throws IOException {/* nothing to close here */}
+	public void close() throws IOException {
+		/* nothing to close here */
+	}
 }

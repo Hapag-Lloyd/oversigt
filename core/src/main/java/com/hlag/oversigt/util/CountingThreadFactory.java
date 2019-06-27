@@ -72,7 +72,9 @@ public class CountingThreadFactory implements ThreadFactory {
 	/** {@inheritDoc} */
 	@Override
 	public Thread newThread(@Nullable final Runnable runnable) {
-		final Runnable runnableToExecute = runnable != null ? runnable : () -> {/* create empty runnable */};
+		final Runnable runnableToExecute = runnable != null ? runnable : () -> {
+			/* create empty runnable */
+		};
 		final Thread thread = new Thread(runnableToExecute, namePrefix + threadCounter.incrementAndGet());
 		threadModifier.accept(thread);
 		return thread;

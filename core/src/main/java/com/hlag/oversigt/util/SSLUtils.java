@@ -77,11 +77,15 @@ public final class SSLUtils {
 
 				@Override
 				public void checkClientTrusted(@SuppressWarnings("unused") @Nullable final X509Certificate[] certs,
-						@SuppressWarnings("unused") @Nullable final String authType) {/* do nothing */}
+						@SuppressWarnings("unused") @Nullable final String authType) {
+					/* do nothing */
+				}
 
 				@Override
 				public void checkServerTrusted(@SuppressWarnings("unused") @Nullable final X509Certificate[] certs,
-						@SuppressWarnings("unused") @Nullable final String authType) {/* do nothing */}
+						@SuppressWarnings("unused") @Nullable final String authType) {
+					/* do nothing */
+				}
 			} };
 			sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 			return sslContext;

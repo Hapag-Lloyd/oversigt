@@ -113,7 +113,9 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (@SuppressWarnings("unused") final Exception ignore) {/* ignore */}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
+				/* ignore */
+			}
 			shutdownRunnable.run();
 		});
 		return Response.status(Status.ACCEPTED).build();
