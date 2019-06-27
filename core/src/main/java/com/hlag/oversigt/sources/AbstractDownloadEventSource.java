@@ -327,7 +327,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	@Property(name = "HTTP Headers", description = "Possible HTTP headers to be sent to the server")
 	public HttpHeader[] getHttpHeaders() {
-		return httpHeaders != null ? httpHeaders : new HttpHeader[0];
+		return httpHeaders;
 	}
 
 	public void setHttpHeaders(final HttpHeader[] httpHeaders) {

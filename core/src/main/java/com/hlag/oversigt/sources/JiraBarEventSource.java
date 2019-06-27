@@ -28,10 +28,6 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 	@Override
 	protected Optional<HlBarChartEvent> produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
-		if (issues == null) {
-			return Optional.empty();
-		}
-
 		final int maxMailsPerCategory
 				= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));
 		final long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();

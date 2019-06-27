@@ -26,6 +26,7 @@ import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Nullables;
+import de.larssh.utils.text.Strings;
 
 @EventSource(view = "Rickshawgraph", displayName = "CPU Usage")
 public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphEvent> {
@@ -138,7 +139,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		private OperatingSystem operatingSystem = OperatingSystem.Aix;
 
 		private String getDisplayName() {
-			return name != null ? name : hostname + ":" + port;
+			return Strings.isBlank(name) ? hostname + ":" + port : name;
 		}
 
 		@Override

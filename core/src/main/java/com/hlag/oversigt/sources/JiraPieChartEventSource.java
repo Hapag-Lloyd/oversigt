@@ -15,10 +15,6 @@ public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEve
 	@Override
 	protected Optional<PieChartEvent> produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
-		if (issues == null) {
-			return Optional.empty();
-		}
-
 		final long sumMails = issues.values().stream().flatMap(Set::stream).count();
 
 		final PieChartEvent event = new PieChartEvent();
