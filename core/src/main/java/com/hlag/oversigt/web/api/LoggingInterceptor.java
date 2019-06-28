@@ -70,7 +70,8 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 							method.getDeclaringClass().getSimpleName(),
 							method.getName(),
 							values.stream().collect(Collectors.joining(", ")));
-				} else if (responseContext.getStatus() == 401 /* UNAUTHORIZED */ ) {
+				} else if (responseContext.getStatus() == 401) {
+					// 401 means UNAUTHORIZED
 					Utils.logChange("somebody",
 							"Failed calling %s.%s()",
 							method.getDeclaringClass().getSimpleName(),
