@@ -298,7 +298,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		}
 		try {
 			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (NoSuchMethodException | SecurityException ignore) {
+		} catch (final NoSuchMethodException | SecurityException ignore) {
 			return null;
 		}
 	}
