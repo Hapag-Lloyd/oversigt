@@ -13,7 +13,7 @@ public class DoughnutChartEvent extends OversigtEvent {
 	private List<Dataset> datasets = Arrays.asList(new Dataset());
 
 	public DoughnutChartEvent() {
-		super();
+		// no fields to be initialized
 	}
 
 	public void add(final String name, final double value, final String color) {
@@ -31,7 +31,7 @@ public class DoughnutChartEvent extends OversigtEvent {
 		private final Collection<String> hoverBackgroundColor = new ArrayList<>();
 
 		private Dataset() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 }

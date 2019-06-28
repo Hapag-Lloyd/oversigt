@@ -42,7 +42,7 @@ public class EventSourceStatusResource {
 	private DashboardController controller;
 
 	public EventSourceStatusResource() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@GET

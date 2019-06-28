@@ -55,7 +55,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	private Gson gson;
 
 	public InternetTextEventSource() {
-		super();
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@Override

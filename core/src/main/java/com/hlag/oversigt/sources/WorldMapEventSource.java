@@ -32,7 +32,7 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 			new TypeMapping("TYPE", "type-b", Color.parse("#0dc92c"), Color.WHITE, 5.0) };
 
 	public WorldMapEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

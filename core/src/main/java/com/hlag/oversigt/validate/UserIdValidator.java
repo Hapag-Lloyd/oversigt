@@ -13,7 +13,7 @@ public class UserIdValidator implements ConstraintValidator<UserId, String> {
 	private Authenticator authenticator;
 
 	public UserIdValidator() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@Override

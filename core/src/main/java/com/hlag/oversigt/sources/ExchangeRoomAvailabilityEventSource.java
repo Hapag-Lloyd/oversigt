@@ -33,7 +33,7 @@ import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailab
 		hiddenDataItems = { "moreinfo" })
 public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource<RoomAvailabilityListEvent> {
 	public ExchangeRoomAvailabilityEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override
@@ -248,7 +248,7 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		private SortedSet<TimeSlice> slices = new TreeSet<>();
 
 		private BusyState() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		synchronized boolean isBusy(final ZonedDateTime dt) {

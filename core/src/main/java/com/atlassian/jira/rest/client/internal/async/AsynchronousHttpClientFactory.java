@@ -53,7 +53,7 @@ public class AsynchronousHttpClientFactory {
 	private static int socketTimeout = 60;
 
 	public AsynchronousHttpClientFactory() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {

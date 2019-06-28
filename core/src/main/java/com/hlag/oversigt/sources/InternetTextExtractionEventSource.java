@@ -32,7 +32,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	private String defaultValue = "";
 
 	public InternetTextExtractionEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override
@@ -113,7 +113,6 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		private final String format;
 
 		public ValueExtraction(final String condition, final String format) {
-			super();
 			this.condition = condition;
 			this.format = format;
 		}
@@ -142,14 +141,13 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 					return true;
 				}
 			} catch (final NumberFormatException ignore) {
-				// empty by design
+				// ignore invalid user input
 			}
 			return false;
 		}
 
 		String process(final String downloadedContent) {
-			return TextProcessor//
-					.create()
+			return TextProcessor.create()
 					.registerDatetimeFunctions()
 					.registerJsonPathFunction(downloadedContent)
 					.registerRegularExpressionFunction(downloadedContent)

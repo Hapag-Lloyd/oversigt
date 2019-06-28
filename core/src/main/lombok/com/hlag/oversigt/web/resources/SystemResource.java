@@ -113,7 +113,7 @@ public class SystemResource {
 			try {
 				Thread.sleep(1000);
 			} catch (final InterruptedException ignore) {
-				// empty by design
+				// on interruption continue
 			}
 			shutdownRunnable.run();
 		});
@@ -480,7 +480,7 @@ public class SystemResource {
 		private final String version = Oversigt.APPLICATION_VERSION;
 
 		public ServerInfo() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		public String getName() {

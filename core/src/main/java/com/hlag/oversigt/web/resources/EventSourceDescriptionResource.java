@@ -36,7 +36,7 @@ import io.swagger.annotations.Authorization;
 @Singleton
 public class EventSourceDescriptionResource {
 	public EventSourceDescriptionResource() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	@Inject

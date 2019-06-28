@@ -23,7 +23,7 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 	private boolean showDateColumn = true;
 
 	public ExchangeTasksEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Property(name = "Show Date Column",

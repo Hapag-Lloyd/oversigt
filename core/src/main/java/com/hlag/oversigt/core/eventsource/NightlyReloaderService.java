@@ -41,7 +41,7 @@ public class NightlyReloaderService extends AbstractScheduledService {
 	private DashboardController dashboardController;
 
 	public NightlyReloaderService() {
-		super();
+		// no fields to be initialized manually, some will be injected
 	}
 
 	/**

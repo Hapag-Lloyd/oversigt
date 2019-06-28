@@ -73,7 +73,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			new HolidayNameCorrection("Tag der Wiedervereinigung", "Tag der Deutschen Einheit") };
 
 	public TimelineEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

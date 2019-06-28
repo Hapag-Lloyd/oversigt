@@ -72,7 +72,7 @@ public class ApiApplication extends Application {
 
 	private static final class ColorConverter implements ModelConverter {
 		private ColorConverter() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		@Override
@@ -105,7 +105,7 @@ public class ApiApplication extends Application {
 
 	private static final class DurationConverter implements ModelConverter {
 		private DurationConverter() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		@Override

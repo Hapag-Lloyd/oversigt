@@ -78,7 +78,7 @@ public class DashboardResource {
 	private UriInfo uri;
 
 	public DashboardResource() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@GET
@@ -383,7 +383,7 @@ public class DashboardResource {
 
 	public static class WidgetPosition {
 		public WidgetPosition() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		@NotNull

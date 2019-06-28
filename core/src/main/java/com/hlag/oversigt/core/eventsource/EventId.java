@@ -18,5 +18,5 @@ import com.google.inject.BindingAnnotation;
 @Documented
 @BindingAnnotation
 public @interface EventId {
-	// empty by design
+	// no annotation type elements needed
 }

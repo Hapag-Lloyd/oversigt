@@ -41,7 +41,7 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	private final SortedMap<ZonedDateTime, List<Long>> values = new TreeMap<>();
 
 	public SqlGraphEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

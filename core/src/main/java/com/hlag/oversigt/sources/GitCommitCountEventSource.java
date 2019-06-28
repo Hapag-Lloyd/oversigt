@@ -9,7 +9,7 @@ public class GitCommitCountEventSource extends AbstractGitCommitEventSource<Over
 	private long lastCommitCount = 0;
 
 	public GitCommitCountEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

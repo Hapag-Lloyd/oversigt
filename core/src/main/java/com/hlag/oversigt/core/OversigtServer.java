@@ -634,7 +634,7 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final class OversigtServerListener extends Listener {
 		private OversigtServerListener() {
-			// empty by design
+			// no fileds to be initialized
 		}
 
 		@Override

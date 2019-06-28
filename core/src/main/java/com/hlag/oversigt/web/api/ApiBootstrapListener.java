@@ -44,7 +44,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 	private static final Pattern CHECK_METHOD_WITH_PATH_PATTERN = Pattern.compile("\\{[^\\}]*?\\}");
 
 	public ApiBootstrapListener() {
-		super();
+		// no fields to be initialized
 	}
 
 	/** {@inheritDoc} */
@@ -218,7 +218,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 
 	private static final class ApiModule extends AbstractModule {
 		private ApiModule() {
-			super();
+			// no fields to be initialized
 		}
 
 		@Override

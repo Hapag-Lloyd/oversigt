@@ -72,7 +72,7 @@ public class Authentication {
 	private SecurityContext securityContext;
 
 	public Authentication() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@POST

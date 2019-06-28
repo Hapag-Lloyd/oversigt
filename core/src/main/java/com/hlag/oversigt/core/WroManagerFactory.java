@@ -32,7 +32,7 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 	private static final String COFFEE_FILENAME = ".coffee";
 
 	WroManagerFactory() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override
@@ -75,5 +75,4 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 		return properties;
 	}
-
 }

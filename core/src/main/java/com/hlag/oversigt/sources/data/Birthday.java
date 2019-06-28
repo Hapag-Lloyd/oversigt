@@ -15,7 +15,7 @@ public class Birthday {
 	private LocalDate date;
 
 	public Birthday() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	public String getName() {

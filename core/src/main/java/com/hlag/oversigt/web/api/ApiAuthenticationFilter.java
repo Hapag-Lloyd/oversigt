@@ -46,7 +46,7 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 	private ResourceInfo resourceInfo;
 
 	public ApiAuthenticationFilter() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	/** {@inheritDoc} */

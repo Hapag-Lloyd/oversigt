@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 public class SqliteDialect implements SqlDialect {
 	public SqliteDialect() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	@Override

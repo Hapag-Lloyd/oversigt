@@ -617,7 +617,6 @@ public class Color {
 	}
 
 	public Color(final int red, final int green, final int blue, final double alpha) {
-		super();
 		this.red = red;
 		this.green = green;
 		this.blue = blue;

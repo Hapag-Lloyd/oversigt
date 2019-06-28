@@ -71,7 +71,7 @@ public class DashboardWidgetResource {
 	private UriInfo uri;
 
 	public DashboardWidgetResource() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@GET

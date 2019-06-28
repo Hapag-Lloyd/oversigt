@@ -27,7 +27,7 @@ public class RoleProvider {
 	private DashboardController controller;
 
 	public RoleProvider() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	public Set<Role> getRoles(final String userid) {

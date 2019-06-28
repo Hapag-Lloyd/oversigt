@@ -63,7 +63,7 @@ class SshConnectionWithPassword extends SshConnection {
 
 		@Override
 		public void showMessage(final String arg0) {
-			// empty by design
+			// there is no message
 		}
 	}
 }

@@ -61,7 +61,7 @@ public class SerializablePropertyResource {
 	private SerializablePropertyController spController;
 
 	public SerializablePropertyResource() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@GET

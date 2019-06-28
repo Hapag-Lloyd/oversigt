@@ -75,7 +75,7 @@ public class OversigtConfiguration {
 	private JiraConfiguration jira;
 
 	public OversigtConfiguration() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
@@ -180,7 +180,7 @@ public class OversigtConfiguration {
 		private SSLConfiguration ssl = null;
 
 		public HttpListenerConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		public String getIp() {
@@ -208,7 +208,7 @@ public class OversigtConfiguration {
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
 
 		private ApiConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -218,7 +218,7 @@ public class OversigtConfiguration {
 		private Duration discardEventsAfter = Duration.ofHours(1);
 
 		private EventManagerConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -234,7 +234,7 @@ public class OversigtConfiguration {
 		private String password;
 
 		private DatabaseConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -252,7 +252,7 @@ public class OversigtConfiguration {
 		private String senderAddress;
 
 		private MailConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -264,7 +264,7 @@ public class OversigtConfiguration {
 		private String[] widgetsPaths = new String[] { "statics/widgets/" };
 
 		private EventSourceConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -272,7 +272,7 @@ public class OversigtConfiguration {
 		private int socketTimeout = 120;
 
 		private JiraConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -286,7 +286,7 @@ public class OversigtConfiguration {
 		private SessionConfiguration session = new SessionConfiguration();
 
 		private SecurityConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 
@@ -302,7 +302,7 @@ public class OversigtConfiguration {
 		private SessionCookieConfig cookieConfig;
 
 		private SessionConfiguration() {
-			// empty by design
+			// no fields to be initialized
 		}
 	}
 }

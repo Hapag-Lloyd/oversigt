@@ -15,7 +15,7 @@ import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 @EventSource(displayName = "GIT Committers", view = "List", hiddenDataItems = { "moreinfo", "updated-at-message" })
 public class GitCommittersEventSource extends AbstractGitCommitEventSource<OversigtEvent> {
 	public GitCommittersEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

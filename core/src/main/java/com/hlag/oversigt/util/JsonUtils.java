@@ -90,7 +90,7 @@ public class JsonUtils {
 	private Storage storage;
 
 	public JsonUtils() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	public String toJson(final Object object) {

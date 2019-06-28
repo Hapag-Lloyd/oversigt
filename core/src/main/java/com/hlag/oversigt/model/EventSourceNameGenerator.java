@@ -14,7 +14,7 @@ public class EventSourceNameGenerator {
 	private Storage storage;
 
 	public EventSourceNameGenerator() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	public String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {

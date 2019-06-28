@@ -39,7 +39,7 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 	private String sqlStatement = "";
 
 	public SqlCountEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Property(name = "SQL",

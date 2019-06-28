@@ -408,7 +408,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 			try {
 				Thread.sleep(1000);
 			} catch (final InterruptedException ignore) {
-				// empty by design
+				// on interruption continue
 			}
 			shutdown.run();
 		});

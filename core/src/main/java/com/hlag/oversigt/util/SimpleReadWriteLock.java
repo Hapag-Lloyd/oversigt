@@ -8,7 +8,7 @@ public class SimpleReadWriteLock {
 	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	public SimpleReadWriteLock() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	public <T> T read(final Supplier<T> supplier) {

@@ -23,7 +23,7 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 	private Validator validator;
 
 	public ApiValidationInterceptor() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	/** {@inheritDoc} */

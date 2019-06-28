@@ -89,7 +89,7 @@ public class MailSender {
 	private String senderAddress;
 
 	public MailSender() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	public void sendNewDashboard(final Principal sender, final Dashboard dashboard) {

@@ -35,7 +35,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 	private int historyLength = 10;
 
 	public CpuUsageGraphEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		private OperatingSystem operatingSystem = OperatingSystem.Aix;
 
 		private Server() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		private String getDisplayName() {

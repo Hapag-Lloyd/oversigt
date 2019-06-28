@@ -42,7 +42,7 @@ public class DashboardConfigurationHandlerTest {
 	private static final Set<String> VALID_USERNAMES = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
 	public DashboardConfigurationHandlerTest() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	private static Dashboard createValidDashboard() {

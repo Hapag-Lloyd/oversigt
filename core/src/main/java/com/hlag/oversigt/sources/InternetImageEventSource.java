@@ -13,7 +13,7 @@ import com.hlag.oversigt.util.Tuple;
 		hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
 	public InternetImageEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

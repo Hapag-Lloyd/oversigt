@@ -295,7 +295,7 @@ class OversigtModule extends AbstractModule {
 		private Injector injector;
 
 		GuiceConstraintValidatorFactory() {
-			// empty by design
+			// no fields to be initialized manually, some will be injected
 		}
 
 		/** {@inheritDoc} */

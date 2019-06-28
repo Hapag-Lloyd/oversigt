@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class CommandLineOptionsTest {
 	public CommandLineOptionsTest() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	@Test

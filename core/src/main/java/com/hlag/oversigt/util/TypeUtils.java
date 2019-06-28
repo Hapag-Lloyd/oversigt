@@ -263,7 +263,7 @@ public final class TypeUtils {
 			try {
 				return createInstance(clazz, input);
 			} catch (final Exception ignore) {
-				// empty by design
+				// ignore any problem when creating an instance
 			}
 		}
 		return defaultValueSupplier.get();

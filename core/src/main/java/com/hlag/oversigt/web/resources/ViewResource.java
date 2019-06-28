@@ -36,7 +36,7 @@ import ro.isdc.wro.model.resource.ResourceType;
 @Singleton
 public class ViewResource {
 	public ViewResource() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	@GET

@@ -178,7 +178,7 @@ public final class Oversigt {
 		private CommandLineOptions options = null;
 
 		public Builder() {
-			// empty by design
+			// no fields to be initialized
 		}
 
 		/**

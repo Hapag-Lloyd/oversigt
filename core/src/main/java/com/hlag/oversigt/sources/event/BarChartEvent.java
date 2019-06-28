@@ -12,7 +12,7 @@ public class BarChartEvent extends OversigtEvent {
 	private List<Dataset> datasets = new ArrayList<>();
 
 	public BarChartEvent() {
-		super();
+		// no fields to be initialized
 	}
 
 	public void addDataset(final String name, final String color, final int borderWidth) {

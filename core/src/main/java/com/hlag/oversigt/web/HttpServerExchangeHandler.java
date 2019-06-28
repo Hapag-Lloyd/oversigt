@@ -20,7 +20,7 @@ import io.undertow.server.session.SessionManager;
 
 public class HttpServerExchangeHandler {
 	public HttpServerExchangeHandler() {
-		// empty by design
+		// no fields to be initialized
 	}
 
 	void doNonBlocking(final HttpHandler handler, final HttpServerExchange exchange) throws Exception {

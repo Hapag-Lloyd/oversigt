@@ -26,7 +26,7 @@ public class CorsFeature implements Feature {
 	private boolean debug;
 
 	public CorsFeature() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	/** {@inheritDoc} */

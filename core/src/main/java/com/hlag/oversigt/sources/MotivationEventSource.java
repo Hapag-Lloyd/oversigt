@@ -28,7 +28,7 @@ public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
 	private static final LocalTime STOP_ZEIT = LocalTime.of(17, 15);
 
 	public MotivationEventSource() {
-		super();
+		// no fields to be initialized
 	}
 
 	@Override

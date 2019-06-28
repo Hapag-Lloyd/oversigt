@@ -40,7 +40,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 	static final ThreadLocal<Object[]> PAREMETERS = new ThreadLocal<>();
 
 	public LoggingInterceptor() {
-		// empty by design
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@Override
