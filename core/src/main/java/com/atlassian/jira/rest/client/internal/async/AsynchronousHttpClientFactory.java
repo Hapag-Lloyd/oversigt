@@ -142,6 +142,7 @@ public class AsynchronousHttpClientFactory {
 			baseUrl = jiraURI.getPath();
 		}
 
+		@Deprecated
 		@Override
 		public String getBaseUrl() {
 			return baseUrl;
@@ -191,6 +192,7 @@ public class AsynchronousHttpClientFactory {
 			return new File(".");
 		}
 
+		@Deprecated
 		@Override
 		public String getPropertyValue(final String s) {
 			throw new UnsupportedOperationException("Not implemented");
