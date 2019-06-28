@@ -199,7 +199,7 @@ public class JsonUtils {
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
 		} catch (final NoSuchFieldException | SecurityException ignore) {
-			// empty by design
+			// continue if EMPTY is not found
 		}
 		return map("type",
 				"string",

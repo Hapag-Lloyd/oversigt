@@ -123,7 +123,7 @@ public class Authentication {
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
 		} catch (final Exception ignore) {
-			// empty by design
+			// take any exception of the token check as login failure
 		}
 		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();

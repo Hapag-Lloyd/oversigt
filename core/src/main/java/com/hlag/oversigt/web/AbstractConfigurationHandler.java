@@ -293,17 +293,16 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	private Method getMethod(final String name, final Object... objects) {
-		try {
-			final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
-			final Class<?>[] classes = new Class<?>[objs.length];
-			for (int i = 0; i < objs.length; i += 1) {
-				classes[i] = objs[i].getClass();
-			}
-			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {
-			// empty by design
+		final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
+		final Class<?>[] classes = new Class<?>[objs.length];
+		for (int i = 0; i < objs.length; i += 1) {
+			classes[i] = objs[i].getClass();
 		}
-		return null;
+		try {
+			return getClass().getDeclaredMethod("doAction_" + name, classes);
+		} catch (NoSuchMethodException | SecurityException ignore) {
+			return null;
+		}
 	}
 
 	@SuppressWarnings("checkstyle:XIllegalCatchDefault")

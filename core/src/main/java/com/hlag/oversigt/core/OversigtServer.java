@@ -474,7 +474,7 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
 
-	private HttpHandler createAngularHandler(final String prefix) {
+	private HttpHandler createAngularHandler(final String prefix) throws IOException {
 		final Path basePath;
 		try {
 			basePath = FileUtils.getPath(Resources.getResource(prefix).toURI());
@@ -495,8 +495,6 @@ public class OversigtServer extends AbstractIdleService {
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
 					.collect(toList()));
-		} catch (final IOException ignore) {
-			// empty by design
 		}
 
 		return exchange -> {
