@@ -284,8 +284,8 @@ public class JsonUtils {
 		} else {
 			// check for notnull
 			final List<Field> fields = TypeUtils.streamFields(clazz)
-					.filter(f -> !Modifier.isTransient(f.getModifiers()))//
-					.filter(f -> !Modifier.isStatic(f.getModifiers()))//
+					.filter(f -> !Modifier.isTransient(f.getModifiers()))
+					.filter(f -> !Modifier.isStatic(f.getModifiers()))
 					.collect(Collectors.toList());
 			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
 			for (final Field field : fields) {
@@ -299,7 +299,7 @@ public class JsonUtils {
 				fieldsMap.put(field.getName(), map);
 			}
 			final Map<String, Object> map = map("type",
-					"object", //
+					"object",
 					"title",
 					makeFirstCharacterCapital(clazz.getSimpleName()),
 					"properties",

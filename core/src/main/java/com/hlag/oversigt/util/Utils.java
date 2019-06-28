@@ -91,8 +91,7 @@ public final class Utils {
 	}
 
 	private static Set<String> findPattern(final Pattern pattern, final Stream<String> lines) {
-		return lines//
-				.flatMap(s -> find(pattern, s, "name"))//
+		return lines.flatMap(s -> find(pattern, s, "name"))
 				.map(s -> CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, s))
 				.collect(Collectors.toSet());
 	}

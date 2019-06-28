@@ -70,9 +70,8 @@ public class NightlyReloaderService extends AbstractScheduledService {
 		final LocalDateTime tomorrowMidnight
 				= LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).plusDays(1);
 		final Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();
-		return Scheduler.newFixedDelaySchedule(//
-				durationUntilMidnight.getSeconds(), //
-				Duration.ofDays(1).getSeconds(), //
+		return Scheduler.newFixedDelaySchedule(durationUntilMidnight.getSeconds(),
+				Duration.ofDays(1).getSeconds(),
 				TimeUnit.SECONDS);
 	}
 

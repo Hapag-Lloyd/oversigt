@@ -16,10 +16,10 @@ import microsoft.exchange.webservices.data.core.exception.service.remote.Service
 public abstract class AbstractExchangeEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 
 	private static boolean isLoginException(final Exception e) {
-		return e instanceof ServiceRequestException //
-				&& e.getCause() != null //
-				&& e.getCause() instanceof ServiceRequestException//
-				&& e.getCause().getCause() != null//
+		return e instanceof ServiceRequestException
+				&& e.getCause() != null
+				&& e.getCause() instanceof ServiceRequestException
+				&& e.getCause().getCause() != null
 				&& e.getCause().getCause() instanceof HttpErrorException
 				&& "The remote server returned an error: (401)Unauthorized"
 						.equals(e.getCause().getCause().getMessage());

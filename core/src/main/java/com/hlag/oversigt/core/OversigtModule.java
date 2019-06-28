@@ -152,8 +152,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Service.class).annotatedWith(Names.named("NightlyReloader")).to(NightlyReloaderService.class);
 
 		// GSON
-		final Gson gson = new GsonBuilder()//
-				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
+		final Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
 				.registerTypeAdapter(Color.class, deserializer(Color::parse))
@@ -307,7 +306,7 @@ class OversigtModule extends AbstractModule {
 			 * manually maintain internal state (to re-use validators and simplify life for
 			 * GC)
 			 */
-			final boolean bound = injector.getBindings()//
+			final boolean bound = injector.getBindings()
 					.keySet()
 					.stream()
 					.map(k -> k.getTypeLiteral().getRawType())

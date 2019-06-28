@@ -39,10 +39,7 @@ public class HttpServerExchangeHandler {
 	}
 
 	Optional<String> query(final HttpServerExchange exchange, final String name) {
-		return Optional//
-				.ofNullable(exchange.getQueryParameters())//
-				.map(qp -> qp.get(name))//
-				.map(l -> l.peek());
+		return Optional.ofNullable(exchange.getQueryParameters()).map(qp -> qp.get(name)).map(l -> l.peek());
 	}
 
 	/**

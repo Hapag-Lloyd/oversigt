@@ -43,9 +43,8 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
 		// get usages from hosts
-		final Map<Server, Integer> usages = Arrays//
-				.stream(getServers())//
-				.parallel()//
+		final Map<Server, Integer> usages = Arrays.stream(getServers())
+				.parallel()
 				.collect(Collectors.toMap(Function.identity(), this::getCpuUsage));
 		values.put(now, usages);
 
@@ -56,8 +55,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
 		final Map<String, Series> series = new TreeMap<>(String.CASE_INSENSITIVE_ORDER.reversed());
 		for (final Server server : getServers()) {
-			final List<Point> points = values//
-					.entrySet()
+			final List<Point> points = values.entrySet()
 					.stream()
 					.map(e -> new Point(e.getKey().toEpochSecond() - secondsOffset,
 							e.getValue().get(server).longValue()))

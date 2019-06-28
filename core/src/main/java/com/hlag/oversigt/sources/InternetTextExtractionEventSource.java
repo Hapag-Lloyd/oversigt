@@ -126,8 +126,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		}
 
 		boolean filter(final String downloadedContent) {
-			final String result = TextProcessor//
-					.create()
+			final String result = TextProcessor.create()
 					.registerDatetimeFunctions()
 					.registerJsonPathFunction(downloadedContent)
 					.registerRegularExpressionFunction(downloadedContent)

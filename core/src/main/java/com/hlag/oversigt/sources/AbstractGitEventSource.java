@@ -104,12 +104,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 
 	private synchronized Stream<RevCommit> streamLog() throws GitAPIException, IOException {
 		fetch();
-		return StreamSupport//
-				.stream(getGit()//
-						.log()
-						.all()
-						.call()
-						.spliterator(), true)
+		return StreamSupport.stream(getGit().log().all().call().spliterator(), true)
 				.filter(isCommitAfter(getEarliestPointToTakeIntoAccount()));
 	}
 
@@ -241,8 +236,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 				final String message
 						= MessageFormat.format(JGitText.get().sslTrustForRepo, gitPath.toAbsolutePath().toString());
 				for (final CredentialItem item : items) {
-					if (item instanceof YesNoType //
-							&& item.getPromptText().equals(message)) {
+					if (item instanceof YesNoType && item.getPromptText().equals(message)) {
 						((YesNoType) item).setValue(true);
 					}
 				}
@@ -252,20 +246,18 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 
 		private boolean isSkipSslTrust(final CredentialItem[] items) {
-			return items.length == 4 //
-					&& items[0] instanceof InformationalMessage //
-					&& items[1] instanceof YesNoType //
-					&& items[2] instanceof YesNoType //
-					&& items[3] instanceof YesNoType //
+			return items.length == 4
+					&& items[0] instanceof InformationalMessage
+					&& items[1] instanceof YesNoType
+					&& items[2] instanceof YesNoType
+					&& items[3] instanceof YesNoType
 					&& items[0].getPromptText().endsWith(JGitText.get().sslFailureTrustExplanation);
 		}
 
 		private boolean isUsernamePassword(final CredentialItem[] items) {
-			return items.length == 2//
-					&& (items[0] instanceof Username//
-							&& items[1] instanceof Password//
-							|| items[0] instanceof Password//
-									&& items[1] instanceof Username);
+			return items.length == 2
+					&& (items[0] instanceof Username && items[1] instanceof Password
+							|| items[0] instanceof Password && items[1] instanceof Username);
 		}
 	}
 }

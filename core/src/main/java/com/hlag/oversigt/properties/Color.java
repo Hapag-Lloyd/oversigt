@@ -169,12 +169,7 @@ public class Color {
 	}
 
 	public static Color random() {
-		return CSS_COLORS//
-				.values()//
-				.stream()//
-				.skip((long) (Math.random() * CSS_COLORS.size()))//
-				.findAny()//
-				.get();
+		return CSS_COLORS.values().stream().skip((long) (Math.random() * CSS_COLORS.size())).findAny().get();
 	}
 
 	public static Color parse(final String string) {

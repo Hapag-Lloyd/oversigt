@@ -309,9 +309,7 @@ public class GrowingExecutor {
 	 */
 	public static void main(final String[] args) throws Exception {
 		final GrowingExecutor executor = new GrowingExecutor();
-		IntStream.range(1, 21)//
-				.mapToObj(GrowingExecutor::createCallable)
-				.forEach(executor::execute);
+		IntStream.range(1, 21).mapToObj(GrowingExecutor::createCallable).forEach(executor::execute);
 		System.out.println(Thread.currentThread().getName() + ": " + "Scheduled");
 		Thread.sleep(2000);
 		executor.shutdown();

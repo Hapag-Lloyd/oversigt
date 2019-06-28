@@ -67,7 +67,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private Birthday[] birthdays = new Birthday[0];
 
-	private HolidayNameCorrection[] corrections = new HolidayNameCorrection[] { //
+	private HolidayNameCorrection[] corrections = new HolidayNameCorrection[] {
 			new HolidayNameCorrection("Weihnachten", "1. Weihnachtstag"),
 			new HolidayNameCorrection("Stephanstag", "2. Weihnachtstag"),
 			new HolidayNameCorrection("Tag der Wiedervereinigung", "Tag der Deutschen Einheit") };

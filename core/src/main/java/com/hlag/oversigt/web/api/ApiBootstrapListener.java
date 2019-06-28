@@ -64,13 +64,8 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 			checkMethodWithPath(clazz.getAnnotation(Path.class).value(), "Class " + clazz.getName() + " ");
 		}
 		for (final Method method : clazz.getDeclaredMethods()) {
-			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(method), //
-					GET.class,
-					PUT.class,
-					POST.class,
-					DELETE.class,
-					HEAD.class,
-					OPTIONS.class)) {
+			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(
+					method), GET.class, PUT.class, POST.class, DELETE.class, HEAD.class, OPTIONS.class)) {
 				checkMethod(method);
 			}
 			if (method.isAnnotationPresent(Path.class)) {
@@ -143,11 +138,10 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		final String message = "or its declaring class must declare exactly one authorization in @ApiOperation: "
 				+ ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION;
 		Authorization[] authorizations = operation.authorizations();
-		final Authorization[] classAuthorizations = Optional.ofNullable(method//
-				.getDeclaringClass()//
-				.getAnnotation(io.swagger.annotations.Api.class))//
-				.map(io.swagger.annotations.Api::authorizations)
-				.orElse(null);
+		final Authorization[] classAuthorizations
+				= Optional.ofNullable(method.getDeclaringClass().getAnnotation(io.swagger.annotations.Api.class))
+						.map(io.swagger.annotations.Api::authorizations)
+						.orElse(null);
 		if (authorizations == null || Strings.isNullOrEmpty(authorizations[0].value())) {
 			authorizations = classAuthorizations;
 		} else if (classAuthorizations != null

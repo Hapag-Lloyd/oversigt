@@ -199,8 +199,8 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 				(Supplier<ZonedDateTime>) ZonedDateTime::now,
 				(Supplier<Duration>) () -> Duration.between(lastRun, ZonedDateTime.now()),
 				(Supplier<Duration>) () -> frequency.minus(Duration.between(lastRun, ZonedDateTime.now())));
-		return immediateExecution.getAndSet(false) //
-				|| lastRun == null //
+		return immediateExecution.getAndSet(false)
+				|| lastRun == null
 				|| frequency.minus(Duration.between(lastRun, ZonedDateTime.now())).isNegative();
 		// || Duration.between(lastRun, LocalDateTime.now()).compareTo(frequency) > 1;
 	}
