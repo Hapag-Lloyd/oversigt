@@ -60,6 +60,10 @@ public class SerializablePropertyResource {
 	@Inject
 	private SerializablePropertyController spController;
 
+	public SerializablePropertyResource() {
+		// empty by design
+	}
+
 	@GET
 	@Path("/type")
 	@ApiResponses({

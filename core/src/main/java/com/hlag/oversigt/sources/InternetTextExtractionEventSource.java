@@ -31,6 +31,10 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 
 	private String defaultValue = "";
 
+	public InternetTextExtractionEventSource() {
+		super();
+	}
+
 	@Override
 	protected TwoColumnListEvent<String> produceEvent() {
 		logTrace(getLogger(), "Starting event creation");

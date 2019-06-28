@@ -141,6 +141,10 @@ public class DashboardController {
 
 	private volatile Map<EventSourceInstance, Service> eventSourceInstancesInternal = new HashMap<>();
 
+	public DashboardController() {
+		// empty by design
+	}
+
 	public Collection<String> getDashboardIds() {
 		return dashboards.keySet();
 	}

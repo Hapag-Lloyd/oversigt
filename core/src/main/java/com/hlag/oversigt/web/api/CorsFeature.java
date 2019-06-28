@@ -25,6 +25,10 @@ public class CorsFeature implements Feature {
 	@Named("debug")
 	private boolean debug;
 
+	public CorsFeature() {
+		// empty by design
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public boolean configure(final FeatureContext context) {

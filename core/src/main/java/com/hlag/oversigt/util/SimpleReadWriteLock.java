@@ -7,6 +7,10 @@ import java.util.function.Supplier;
 public class SimpleReadWriteLock {
 	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
+	public SimpleReadWriteLock() {
+		// empty by design
+	}
+
 	public <T> T read(final Supplier<T> supplier) {
 		lock.readLock().lock();
 		try {

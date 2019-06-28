@@ -89,6 +89,10 @@ public class JsonUtils {
 	@Inject
 	private Storage storage;
 
+	public JsonUtils() {
+		// empty by design
+	}
+
 	public String toJson(final Object object) {
 		return gson.toJson(object);
 	}

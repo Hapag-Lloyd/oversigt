@@ -45,6 +45,10 @@ public class ApiAuthenticationFilter implements ContainerRequestFilter {
 	@Context
 	private ResourceInfo resourceInfo;
 
+	public ApiAuthenticationFilter() {
+		// empty by design
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public void filter(final ContainerRequestContext requestContext) {

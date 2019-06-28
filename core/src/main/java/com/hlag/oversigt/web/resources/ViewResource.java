@@ -35,6 +35,10 @@ import ro.isdc.wro.model.resource.ResourceType;
 @Path("/views/{viewId}")
 @Singleton
 public class ViewResource {
+	public ViewResource() {
+		// empty by design
+	}
+
 	@GET
 	@Path("/html")
 	@ApiResponses({

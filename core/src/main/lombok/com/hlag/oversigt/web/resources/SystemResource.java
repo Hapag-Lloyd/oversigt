@@ -479,6 +479,10 @@ public class SystemResource {
 
 		private final String version = Oversigt.APPLICATION_VERSION;
 
+		public ServerInfo() {
+			// empty by design
+		}
+
 		public String getName() {
 			return name;
 		}

@@ -31,6 +31,10 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	private static final String COFFEE_FILENAME = ".coffee";
 
+	WroManagerFactory() {
+		super();
+	}
+
 	@Override
 	protected ProcessorsFactory newProcessorsFactory() {
 		final SimpleProcessorsFactory factory = new SimpleProcessorsFactory();

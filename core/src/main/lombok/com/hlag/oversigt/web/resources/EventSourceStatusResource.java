@@ -41,6 +41,10 @@ public class EventSourceStatusResource {
 	@Inject
 	private DashboardController controller;
 
+	public EventSourceStatusResource() {
+		// empty by design
+	}
+
 	@GET
 	@Path("/{id}")
 	@ApiResponses({

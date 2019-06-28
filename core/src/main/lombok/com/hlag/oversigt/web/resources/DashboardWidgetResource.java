@@ -70,6 +70,10 @@ public class DashboardWidgetResource {
 	@Context
 	private UriInfo uri;
 
+	public DashboardWidgetResource() {
+		// empty by design
+	}
+
 	@GET
 	@Path("/")
 	@ApiResponses({

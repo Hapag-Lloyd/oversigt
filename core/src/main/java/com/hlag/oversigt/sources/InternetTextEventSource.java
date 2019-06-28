@@ -54,6 +54,10 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	@Inject
 	private Gson gson;
 
+	public InternetTextEventSource() {
+		super();
+	}
+
 	@Override
 	protected TextEvent produceEvent() {
 		logTrace(getLogger(), "Starting event creation");

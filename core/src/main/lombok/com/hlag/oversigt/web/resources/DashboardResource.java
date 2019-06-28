@@ -77,6 +77,10 @@ public class DashboardResource {
 	@Context
 	private UriInfo uri;
 
+	public DashboardResource() {
+		// empty by design
+	}
+
 	@GET
 	@ApiResponses({
 			@ApiResponse(code = 200,
@@ -378,6 +382,10 @@ public class DashboardResource {
 	}
 
 	public static class WidgetPosition {
+		public WidgetPosition() {
+			// empty by design
+		}
+
 		@NotNull
 		@Min(1)
 		@Positive

@@ -27,6 +27,10 @@ public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
 
 	private static final LocalTime STOP_ZEIT = LocalTime.of(17, 15);
 
+	public MotivationEventSource() {
+		super();
+	}
+
 	@Override
 	protected MeterEvent produceEvent() {
 		final ZonedDateTime now = ZonedDateTime.now(HERE);

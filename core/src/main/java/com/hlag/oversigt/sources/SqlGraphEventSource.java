@@ -40,6 +40,10 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 
 	private final SortedMap<ZonedDateTime, List<Long>> values = new TreeMap<>();
 
+	public SqlGraphEventSource() {
+		super();
+	}
+
 	@Override
 	protected ComplexGraphEvent produceEventFromData() {
 		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);

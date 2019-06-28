@@ -74,6 +74,10 @@ public class OversigtConfiguration {
 
 	private JiraConfiguration jira;
 
+	public OversigtConfiguration() {
+		// empty by design
+	}
+
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
 
@@ -175,6 +179,10 @@ public class OversigtConfiguration {
 
 		private SSLConfiguration ssl = null;
 
+		public HttpListenerConfiguration() {
+			// empty by design
+		}
+
 		public String getIp() {
 			return ip != null ? ip : "0.0.0.0";
 		}
@@ -192,21 +200,29 @@ public class OversigtConfiguration {
 		}
 	}
 
-	public static class ApiConfiguration {
+	private static final class ApiConfiguration {
 		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;
 
 		private String jwtSecretBase64 = null;
 
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
+
+		private ApiConfiguration() {
+			// empty by design
+		}
 	}
 
-	public static class EventManagerConfiguration {
+	private static final class EventManagerConfiguration {
 		private long rateLimit = 10;
 
 		private Duration discardEventsAfter = Duration.ofHours(1);
+
+		private EventManagerConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class DatabaseConfiguration {
+	private static final class DatabaseConfiguration {
 		private Class<? extends SqlDialect> sqlDialect;
 
 		private String location;
@@ -216,9 +232,13 @@ public class OversigtConfiguration {
 		private String username;
 
 		private String password;
+
+		private DatabaseConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class MailConfiguration {
+	private static final class MailConfiguration {
 		private String hostname;
 
 		private int port;
@@ -230,21 +250,33 @@ public class OversigtConfiguration {
 		private String password;
 
 		private String senderAddress;
+
+		private MailConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class EventSourceConfiguration {
+	private static final class EventSourceConfiguration {
 		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };
 
 		private String[] addonFolders = new String[0];
 
 		private String[] widgetsPaths = new String[] { "statics/widgets/" };
+
+		private EventSourceConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class JiraConfiguration {
+	private static final class JiraConfiguration {
 		private int socketTimeout = 120;
+
+		private JiraConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class SecurityConfiguration {
+	private static final class SecurityConfiguration {
 		private List<String> serverAdmins;
 
 		private Map<String, String> users;
@@ -252,9 +284,13 @@ public class OversigtConfiguration {
 		private LdapConfiguration ldap;
 
 		private SessionConfiguration session = new SessionConfiguration();
+
+		private SecurityConfiguration() {
+			// empty by design
+		}
 	}
 
-	private static class SessionConfiguration {
+	private static final class SessionConfiguration {
 		private int timeout = 30;
 
 		private int maxCount = -1;
@@ -264,5 +300,9 @@ public class OversigtConfiguration {
 		private boolean statisticsEnabled = true;
 
 		private SessionCookieConfig cookieConfig;
+
+		private SessionConfiguration() {
+			// empty by design
+		}
 	}
 }

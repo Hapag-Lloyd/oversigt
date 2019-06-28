@@ -26,6 +26,10 @@ public class RoleProvider {
 	@Inject
 	private DashboardController controller;
 
+	public RoleProvider() {
+		// empty by design
+	}
+
 	public Set<Role> getRoles(final String userid) {
 		final Set<Role> roles = new HashSet<>();
 

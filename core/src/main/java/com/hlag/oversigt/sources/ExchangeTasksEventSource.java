@@ -22,6 +22,10 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 
 	private boolean showDateColumn = true;
 
+	public ExchangeTasksEventSource() {
+		super();
+	}
+
 	@Property(name = "Show Date Column",
 			description = "Determines whether the widget should show the date column or not")
 	public boolean isShowDateColumn() {

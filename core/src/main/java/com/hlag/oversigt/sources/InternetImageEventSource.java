@@ -12,6 +12,10 @@ import com.hlag.oversigt.util.Tuple;
 		dataItems = { "width" },
 		hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
+	public InternetImageEventSource() {
+		super();
+	}
+
 	@Override
 	protected StyleEvent produceEvent() {
 		try {

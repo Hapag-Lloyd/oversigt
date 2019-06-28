@@ -31,6 +31,10 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 			new TypeMapping("TYPE", "type-a", Color.parse("#e75200"), Color.WHITE, 6.0),
 			new TypeMapping("TYPE", "type-b", Color.parse("#0dc92c"), Color.WHITE, 5.0) };
 
+	public WorldMapEventSource() {
+		super();
+	}
+
 	@Override
 	protected DatabaseCache<Point> createCache() {
 		return DatabaseCache.createCache(this::readShipPositions);

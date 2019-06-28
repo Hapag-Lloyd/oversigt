@@ -22,6 +22,10 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 	@Inject
 	private Validator validator;
 
+	public ApiValidationInterceptor() {
+		// empty by design
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public Object invoke(final MethodInvocation invocation) throws Throwable {

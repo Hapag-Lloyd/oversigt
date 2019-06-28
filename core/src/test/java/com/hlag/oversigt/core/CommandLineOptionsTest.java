@@ -8,6 +8,10 @@ import java.util.Map;
 import org.junit.Test;
 
 public class CommandLineOptionsTest {
+	public CommandLineOptionsTest() {
+		// empty by design
+	}
+
 	@Test
 	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() throws Exception {
 		// given

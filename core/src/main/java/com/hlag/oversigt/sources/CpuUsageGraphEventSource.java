@@ -34,7 +34,9 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	private int historyLength = 10;
 
-	public CpuUsageGraphEventSource() {}
+	public CpuUsageGraphEventSource() {
+		super();
+	}
 
 	@Override
 	protected ComplexGraphEvent produceEvent() {
@@ -118,7 +120,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 	}
 
 	@JsonHint(headerTemplate = "{{ self.name }}", arrayStyle = ArrayStyle.TABS)
-	private static class Server implements JsonBasedData {
+	private static final class Server implements JsonBasedData {
 		private String name = "DisplayName";
 
 		@NotNull
@@ -135,6 +137,10 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 		@NotNull
 		private OperatingSystem operatingSystem = OperatingSystem.Aix;
+
+		private Server() {
+			// empty by design
+		}
 
 		private String getDisplayName() {
 			return name != null ? name : hostname + ":" + port;

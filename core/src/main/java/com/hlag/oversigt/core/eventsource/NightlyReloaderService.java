@@ -27,6 +27,10 @@ import com.hlag.oversigt.sources.event.ReloadEvent;
 public class NightlyReloaderService extends AbstractScheduledService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(NightlyReloaderService.class);
 
+	public static String getEventId() {
+		return "reload";
+	}
+
 	/**
 	 * EventBus to send events
 	 */
@@ -36,8 +40,8 @@ public class NightlyReloaderService extends AbstractScheduledService {
 	@Inject
 	private DashboardController dashboardController;
 
-	public static String getEventId() {
-		return "reload";
+	public NightlyReloaderService() {
+		super();
 	}
 
 	/**

@@ -13,6 +13,10 @@ public class EventSourceNameGenerator {
 	@Inject
 	private Storage storage;
 
+	public EventSourceNameGenerator() {
+		// empty by design
+	}
+
 	public String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
 		// create base name
 		String basename = descriptor.getView();

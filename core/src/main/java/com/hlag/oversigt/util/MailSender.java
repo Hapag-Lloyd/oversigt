@@ -88,6 +88,10 @@ public class MailSender {
 	@Named("mailSenderAddress")
 	private String senderAddress;
 
+	public MailSender() {
+		// empty by design
+	}
+
 	public void sendNewDashboard(final Principal sender, final Dashboard dashboard) {
 		sendMailToAdmins(sender,
 				"New dashboard requested",

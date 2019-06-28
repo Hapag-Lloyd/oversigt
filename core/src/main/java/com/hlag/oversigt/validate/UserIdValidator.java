@@ -12,6 +12,10 @@ public class UserIdValidator implements ConstraintValidator<UserId, String> {
 	@Inject
 	private Authenticator authenticator;
 
+	public UserIdValidator() {
+		// empty by design
+	}
+
 	@Override
 	public boolean isValid(final String value, final ConstraintValidatorContext context) {
 		try {

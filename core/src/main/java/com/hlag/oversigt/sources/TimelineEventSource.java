@@ -72,6 +72,10 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			new HolidayNameCorrection("Stephanstag", "2. Weihnachtstag"),
 			new HolidayNameCorrection("Tag der Wiedervereinigung", "Tag der Deutschen Einheit") };
 
+	public TimelineEventSource() {
+		super();
+	}
+
 	@Override
 	protected TimelineEvent produceExchangeEvent() throws Exception {
 		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());

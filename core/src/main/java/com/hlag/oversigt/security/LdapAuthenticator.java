@@ -226,6 +226,10 @@ public class LdapAuthenticator implements Authenticator {
 
 		private String uidAttribute;
 
+		public LdapConfiguration() {
+			// empty by design
+		}
+
 		public boolean isBindPasswordSet() {
 			return !Strings.isNullOrEmpty(bindPassword);
 		}

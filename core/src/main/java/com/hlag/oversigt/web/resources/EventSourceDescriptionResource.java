@@ -35,6 +35,10 @@ import io.swagger.annotations.Authorization;
 @Path("/event-source/descriptions")
 @Singleton
 public class EventSourceDescriptionResource {
+	public EventSourceDescriptionResource() {
+		// empty by design
+	}
+
 	@Inject
 	private DashboardController dashboardController;
 

@@ -43,6 +43,10 @@ import io.swagger.annotations.Authorization;
 public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextListener {
 	private static final Pattern CHECK_METHOD_WITH_PATH_PATTERN = Pattern.compile("\\{[^\\}]*?\\}");
 
+	public ApiBootstrapListener() {
+		super();
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	protected List<? extends Module> getModules(final ServletContext context) {
@@ -149,8 +153,8 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		} else if (classAuthorizations != null
 				&& classAuthorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(classAuthorizations[0].value())) {
-			error(method, "contains the same authorization like its declaring class. Remove one.", true);
-		}
+					error(method, "contains the same authorization like its declaring class. Remove one.", true);
+				}
 		Objects.requireNonNull(authorizations, message(method, message, true));
 		verify(authorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(authorizations[0].value()),
@@ -204,15 +208,19 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
-	private static class ApiBootstrapException extends RuntimeException {
+	private static final class ApiBootstrapException extends RuntimeException {
 		private static final long serialVersionUID = 7618319300693716653L;
 
-		ApiBootstrapException(final String message) {
+		private ApiBootstrapException(final String message) {
 			super(message);
 		}
 	}
 
-	private static class ApiModule extends AbstractModule {
+	private static final class ApiModule extends AbstractModule {
+		private ApiModule() {
+			super();
+		}
+
 		@Override
 		protected void configure() {
 			final List<Class<? extends Annotation>> annotations

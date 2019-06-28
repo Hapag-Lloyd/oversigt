@@ -12,6 +12,10 @@ public class DoughnutChartEvent extends OversigtEvent {
 
 	private List<Dataset> datasets = Arrays.asList(new Dataset());
 
+	public DoughnutChartEvent() {
+		super();
+	}
+
 	public void add(final String name, final double value, final String color) {
 		labels.add(name);
 		datasets.get(0).data.add(value);
@@ -25,5 +29,9 @@ public class DoughnutChartEvent extends OversigtEvent {
 		private final Collection<String> backgroundColor = new ArrayList<>();
 
 		private final Collection<String> hoverBackgroundColor = new ArrayList<>();
+
+		private Dataset() {
+			// empty by design
+		}
 	}
 }

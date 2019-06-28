@@ -56,6 +56,12 @@ import io.swagger.annotations.Authorization;
 public class Authentication {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Authentication.class);
 
+	private static Map<String, String> createTokenMap(final String token) {
+		final Map<String, String> map = new HashMap<>();
+		map.put("token", token);
+		return map;
+	}
+
 	@Inject
 	private ApiAuthenticationUtils authentication;
 
@@ -65,10 +71,8 @@ public class Authentication {
 	@Context
 	private SecurityContext securityContext;
 
-	private static Map<String, String> createTokenMap(final String token) {
-		final Map<String, String> map = new HashMap<>();
-		map.put("token", token);
-		return map;
+	public Authentication() {
+		// empty by design
 	}
 
 	@POST

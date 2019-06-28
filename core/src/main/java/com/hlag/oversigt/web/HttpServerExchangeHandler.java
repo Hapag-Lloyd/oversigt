@@ -19,6 +19,10 @@ import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionManager;
 
 public class HttpServerExchangeHandler {
+	public HttpServerExchangeHandler() {
+		// empty by design
+	}
+
 	void doNonBlocking(final HttpHandler handler, final HttpServerExchange exchange) throws Exception {
 		if (exchange.isInIoThread()) {
 			exchange.dispatch(handler);

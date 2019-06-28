@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SqliteDialect implements SqlDialect {
+	public SqliteDialect() {
+		// empty by design
+	}
 
 	@Override
 	public String getDriverClassName() {

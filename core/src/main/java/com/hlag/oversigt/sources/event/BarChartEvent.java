@@ -11,6 +11,10 @@ public class BarChartEvent extends OversigtEvent {
 
 	private List<Dataset> datasets = new ArrayList<>();
 
+	public BarChartEvent() {
+		super();
+	}
+
 	public void addDataset(final String name, final String color, final int borderWidth) {
 		addDataset(name, color, color, borderWidth);
 	}

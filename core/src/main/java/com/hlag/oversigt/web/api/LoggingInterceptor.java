@@ -39,6 +39,10 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 
 	static final ThreadLocal<Object[]> PAREMETERS = new ThreadLocal<>();
 
+	public LoggingInterceptor() {
+		// empty by design
+	}
+
 	@Override
 	public void filter(final ContainerRequestContext requestContext) throws IOException {
 		PAREMETERS.set(null);
