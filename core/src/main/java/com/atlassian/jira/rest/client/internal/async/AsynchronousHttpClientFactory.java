@@ -142,6 +142,13 @@ public class AsynchronousHttpClientFactory {
 			baseUrl = jiraURI.getPath();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated since 2.10. This implementation is application-specific, and
+		 *             unreliable for a cross product plugin. Use
+		 *             {@link #getBaseUrl(UrlMode)} instead.
+		 */
 		@Deprecated
 		@Override
 		public String getBaseUrl() {
@@ -192,6 +199,11 @@ public class AsynchronousHttpClientFactory {
 			return new File(".");
 		}
 
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated As of SAL 2.7.
+		 */
 		@Deprecated
 		@Override
 		public String getPropertyValue(final String s) {
