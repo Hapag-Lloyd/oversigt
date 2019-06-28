@@ -637,7 +637,10 @@ public class DashboardController {
 						final Object value = Objects.requireNonNull(instance.getPropertyValue(property),
 								"Cannot assign null value to event source property.");
 						property.getSetter().invoke(service, value);
-					} catch (final IllegalAccessException | InvocationTargetException | RuntimeException e) {
+					} catch (final IllegalAccessException
+							| InvocationTargetException
+							| IllegalArgumentException
+							| NullPointerException e) {
 						throw new RuntimeException("Unable to set property: " + property.getName(), e);
 					}
 				});

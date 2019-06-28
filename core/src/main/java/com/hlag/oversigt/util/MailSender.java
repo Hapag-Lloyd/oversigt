@@ -126,6 +126,10 @@ public class MailSender {
 				map("dashboard", dashboard));
 	}
 
+	public void sendRawMail(final Principal sender, final String recipient, final String content) {
+		send_internal(sender, new String[] { recipient }, "Oversigt test mail", "<p>" + content + "</p>", content);
+	}
+
 	private void sendMailToAdmins(final Principal sender,
 			final String subject,
 			final String title,
