@@ -18,7 +18,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 import com.hlag.oversigt.storage.Storage;
-import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
 import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
@@ -36,9 +35,6 @@ public class SerializablePropertyController {
 	private final Storage storage;
 
 	private final Map<Integer, SerializableProperty> properties = new HashMap<>();
-
-	@Inject
-	private JsonUtils json;
 
 	@Inject
 	public SerializablePropertyController(final Storage storage) {
@@ -185,9 +181,5 @@ public class SerializablePropertyController {
 		}
 		throw new RuntimeException(
 				"Type " + clazz.getName() + " is not a " + SerializableProperty.class.getSimpleName());
-	}
-
-	public <T> T clone(final T original) {
-		return json.fromJson(json.toJson(original), original.getClass());
 	}
 }

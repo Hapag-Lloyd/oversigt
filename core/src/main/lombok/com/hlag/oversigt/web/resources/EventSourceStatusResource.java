@@ -14,6 +14,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
@@ -38,6 +41,8 @@ import lombok.Getter;
 @Path("/event-source/state")
 @Singleton
 public class EventSourceStatusResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceStatusResource.class);
+
 	@Inject
 	private DashboardController controller;
 
@@ -92,6 +97,7 @@ public class EventSourceStatusResource {
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (final Exception e) {
+			LOGGER.error("Unable to set event source status", e);
 			return ErrorResponse.preconditionFailed("Unable to start/ stop event source", e);
 		}
 	}

@@ -602,39 +602,47 @@ public class DashboardController {
 				throw new RuntimeException("Instance " + id + " is not enabled.");
 			}
 
-			// create class instance
-			final Service service = createServiceInstance(instance.getDescriptor().getServiceClass().get(),
-					instance.getDescriptor().getModuleClass(),
-					id);
-			if (service instanceof ScheduledEventSource) {
-				((ScheduledEventSource<?>) service).setFrequency(instance.getFrequency());
+			final Optional<Service> service = createAndConfigureServiceInstance(instance);
+
+			if (service.isPresent()) {
+				// start service
+				LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
+				setService(instance, service.get());
+				service.get().startAsync();
+				service.get().awaitRunning();
+				LOGGER.info("Started event source: " + id + " (" + instance.getName() + ")");
+			} else {
+				throw new RuntimeException("Service could not be started."); // TODO
 			}
-
-			// set property values
-			instance//
-					.getDescriptor()
-					.getProperties()
-					.stream()
-					.filter(instance::hasPropertyValue)
-					.forEach(property -> {
-						try {
-							final Object value = Objects.requireNonNull(instance.getPropertyValue(property),
-									"Cannot assign null value to event source property");
-							property.getSetter().invoke(service, value);
-						} catch (final IllegalAccessException
-								| IllegalArgumentException
-								| InvocationTargetException e) {
-							throw new RuntimeException("Unable to set property: " + property.getName(), e);
-						}
-					});
-
-			// start service
-			LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
-			setService(instance, service);
-			service.startAsync();
-			service.awaitRunning();
-			LOGGER.info("Started event source: " + id + " (" + instance.getName() + ")");
 		}
+	}
+
+	private Optional<Service> createAndConfigureServiceInstance(final EventSourceInstance instance) {
+		// create class instance
+		final Service service = createServiceInstance(instance.getDescriptor().getServiceClass().get(),
+				instance.getDescriptor().getModuleClass(),
+				instance.getId());
+		if (service instanceof ScheduledEventSource) {
+			((ScheduledEventSource<?>) service).setFrequency(instance.getFrequency());
+		}
+
+		// set property values
+		instance//
+				.getDescriptor()
+				.getProperties()
+				.stream()
+				.filter(instance::hasPropertyValue)
+				.forEach(property -> {
+					try {
+						final Object value = Objects.requireNonNull(instance.getPropertyValue(property),
+								"Cannot assign null value to event source property.");
+						property.getSetter().invoke(service, value);
+					} catch (final IllegalAccessException | InvocationTargetException | RuntimeException e) {
+						throw new RuntimeException("Unable to set property: " + property.getName(), e);
+					}
+				});
+
+		return Optional.of(service);
 	}
 
 	public void stopAllInstances() {
@@ -865,7 +873,10 @@ public class DashboardController {
 			}
 			if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				final Object value = json.fromJson(string, type);
-				return value;
+				if (value != null) {
+					return value;
+				}
+				return TypeUtils.createInstance(type);
 			}
 			if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);

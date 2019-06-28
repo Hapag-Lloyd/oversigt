@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -632,7 +633,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	}
 
 	private <T extends SerializableProperty> T mapToValue(final Class<T> clazz, final Map<String, Object> map) {
-		return json.fromJson((String) map.get("JSON"), clazz);
+		return Objects.requireNonNull(json.fromJson((String) map.get("JSON"), clazz), "Unable to create object");
 	}
 
 	@Override

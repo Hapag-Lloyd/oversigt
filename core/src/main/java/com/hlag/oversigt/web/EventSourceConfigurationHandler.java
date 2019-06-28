@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
@@ -448,7 +449,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		final Class<? extends SerializableProperty> spClass = spController.getClass(type);
 		final SerializableProperty property = spController.getProperty(spClass, id);
-		final SerializableProperty clone = spController.clone(property);
+		final SerializableProperty clone = copy(property);
 
 		for (final SerializablePropertyMember member : spController.getMembers(spClass)) {
 			try {
@@ -467,6 +468,11 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		logChange(exchange, "Edit property: %s", property);
 		return ok();
+	}
+
+	private <T> T copy(final T original) {
+		return Objects.requireNonNull(json.fromJson(json.toJson(original), original.getClass()),
+				"Unable to copy object");
 	}
 
 	@NeedsRole(role = Roles.ADMIN)

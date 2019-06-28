@@ -98,7 +98,9 @@ public class JsonUtils {
 		return gson.toJson(object);
 	}
 
+	@Nullable
 	public <T> T fromJson(final String json, final Type type) {
+		// fromJson can return null!!
 		return gson.fromJson(json, type);
 	}
 
