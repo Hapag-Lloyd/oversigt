@@ -95,6 +95,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	}
 
 	void setProperty(final EventSourceProperty property, final Object value) {
+		Objects.requireNonNull(value, "The value of a property must not be null");
 		if (property.getClazz() == null
 				&& !property.isCustomValuesAllowed()
 				&& !property.getAllowedValues().isEmpty()

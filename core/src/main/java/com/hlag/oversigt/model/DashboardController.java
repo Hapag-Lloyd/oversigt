@@ -494,6 +494,7 @@ public class DashboardController {
 		return instance;
 	}
 
+	@SuppressWarnings("CheckStyle:XIllegalCatchCustom")
 	private void adoptDefaultEventSourceProperties(final EventSourceInstance instance,
 			final EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
@@ -504,8 +505,13 @@ public class DashboardController {
 				"dummy");
 		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
 			try {
-				instance.setProperty(property, property.getGetter().invoke(service));
-			} catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				final Object defaultValue = Objects.requireNonNull(property.getGetter().invoke(service),
+						"The default value of a property must not be null.");
+				instance.setProperty(property, defaultValue);
+			} catch (final IllegalAccessException
+					| IllegalArgumentException
+					| InvocationTargetException
+					| NullPointerException e) {
 				throw new RuntimeException("Unable to set property: " + property.getName(), e);
 			}
 		}
@@ -634,13 +640,8 @@ public class DashboardController {
 				.filter(instance::hasPropertyValue)
 				.forEach(property -> {
 					try {
-						final Object value = Objects.requireNonNull(instance.getPropertyValue(property),
-								"Cannot assign null value to event source property.");
-						property.getSetter().invoke(service, value);
-					} catch (final IllegalAccessException
-							| InvocationTargetException
-							| IllegalArgumentException
-							| NullPointerException e) {
+						property.getSetter().invoke(service, instance.getPropertyValue(property));
+					} catch (final IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 						throw new RuntimeException("Unable to set property: " + property.getName(), e);
 					}
 				});
