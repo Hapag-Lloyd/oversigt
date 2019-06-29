@@ -77,6 +77,10 @@ public class DashboardWidgetResource {
 		return Objects.requireNonNull(injectedUriInfo);
 	}
 
+	public DashboardWidgetResource() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@GET
 	@Path("/")
 	@ApiResponses({
@@ -86,7 +90,7 @@ public class DashboardWidgetResource {
 					responseContainer = "List"),
 			@ApiResponse(code = 404, message = "The dashboard does not exist") })
 	@JwtSecured(mustBeAuthenticated = false)
-	@ApiOperation(value = "List widgets of a dashboard", //
+	@ApiOperation(value = "List widgets of a dashboard",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@PermitAll
 	@NoChangeLog
@@ -127,13 +131,12 @@ public class DashboardWidgetResource {
 			filterSecu = Widget::isEnabled;
 		}
 
-		return ok(dashboard.getWidgets()//
-				.stream()//
-				.filter(filterName)//
-				.filter(filterSecu)//
-				.map(WidgetShortInfo::fromWidget)//
-				.toArray())//
-						.build();
+		return ok(dashboard.getWidgets()
+				.stream()
+				.filter(filterName)
+				.filter(filterSecu)
+				.map(WidgetShortInfo::fromWidget)
+				.toArray()).build();
 	}
 
 	@POST
@@ -145,7 +148,7 @@ public class DashboardWidgetResource {
 					response = ErrorResponse.class),
 			@ApiResponse(code = 404, message = "Required data does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Create widget", //
+	@ApiOperation(value = "Create widget",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response createWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
@@ -162,18 +165,18 @@ public class DashboardWidgetResource {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 
-		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + widget.getId()))//
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + widget.getId()))
 				.entity(new WidgetDetails(widget, false))
 				.build();
 	}
 
 	@GET
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200, message = "Returning a list of all widgets", response = WidgetDetails.class),
 			@ApiResponse(code = 404, message = "The data does not exist", response = ErrorResponse.class) })
 	@JwtSecured(mustBeAuthenticated = false)
-	@ApiOperation(value = "Read widget", //
+	@ApiOperation(value = "Read widget",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@PermitAll
 	@NoChangeLog
@@ -195,13 +198,13 @@ public class DashboardWidgetResource {
 
 	@GET
 	@Path("/{id}/event-source-instance")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "The event source instance information for the specified widget",
 					response = FullEventSourceInstanceInfo.class),
 			@ApiResponse(code = 404, message = "Data does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read event source instance for widget", //
+	@ApiOperation(value = "Read event source instance for widget",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response readEventSourceInstanceForWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
@@ -215,11 +218,11 @@ public class DashboardWidgetResource {
 
 	@PUT
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200, message = "Widget has been updated", response = WidgetDetails.class),
 			@ApiResponse(code = 404, message = "Data does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Update widget", //
+	@ApiOperation(value = "Update widget",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
@@ -285,11 +288,11 @@ public class DashboardWidgetResource {
 
 	@DELETE
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200, message = "The widget has been deleted"),
 			@ApiResponse(code = 404, message = "The widget does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Delete widget", //
+	@ApiOperation(value = "Delete widget",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response deleteWidget(@PathParam("dashboardId") @NotNull final String dashboardId,

@@ -150,6 +150,10 @@ public class DashboardController {
 
 	private volatile Map<EventSourceInstance, Service> eventSourceInstancesInternal = new HashMap<>();
 
+	public DashboardController() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	public Collection<String> getDashboardIds() {
 		return dashboards.keySet();
 	}
@@ -161,22 +165,17 @@ public class DashboardController {
 	Dashboard getDashboard(final Widget widget) {
 		return dashboards.values()
 				.stream()
-				.filter(d -> d.getWidgets()//
-						.stream()
-						.mapToInt(Widget::getId)
-						.anyMatch(i -> i == widget.getId()))
+				.filter(d -> d.getWidgets().stream().mapToInt(Widget::getId).anyMatch(i -> i == widget.getId()))
 				.findAny()
 				.get();
 	}
 
 	public void loadDashboards() {
 		dashboards.clear();
-		dashboards.putAll(storage//
-				.loadDashboards()
+		dashboards.putAll(storage.loadDashboards()
 				.stream()
 				.peek(db -> LOGGER.info("Loading dashboard: {} ({})", db.getId(), db.getTitle()))
-				.peek(db -> db.getModifiableWidgets()//
-						.addAll(storage.loadWidgetDatas(db, this::getEventSourceInstance)))
+				.peek(db -> db.getModifiableWidgets().addAll(storage.loadWidgetDatas(db, this::getEventSourceInstance)))
 				.collect(toMap(Dashboard::getId, Function.identity())));
 	}
 
@@ -233,18 +232,13 @@ public class DashboardController {
 	public Stream<Dashboard> getDashboardsWhereEventSourceIsUsed(final EventSourceInstance instance) {
 		return dashboards.values()
 				.stream()
-				.filter(d -> d.getWidgets()//
-						.stream()
-						.anyMatch(w -> w.getEventSourceInstance() == instance));
+				.filter(d -> d.getWidgets().stream().anyMatch(w -> w.getEventSourceInstance() == instance));
 	}
 
 	private void reloadDashboardsWithEventSourceInstance(final EventSourceInstance instance) {
-		reloadDashboards(dashboards.values()//
+		reloadDashboards(dashboards.values()
 				.stream()
-				.filter(d -> d.getWidgets()//
-						.stream()
-						.map(Widget::getEventSourceInstance)
-						.anyMatch(i -> i == instance))
+				.filter(d -> d.getWidgets().stream().map(Widget::getEventSourceInstance).anyMatch(i -> i == instance))
 				.toArray(Dashboard[]::new));
 	}
 
@@ -289,9 +283,7 @@ public class DashboardController {
 
 	private static Collection<Path> findAddonJarFiles(final Path folder) {
 		try (Stream<Path> files = Files.walk(folder)) {
-			return files//
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".jar"))
-					.collect(toSet());
+			return files.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".jar")).collect(toSet());
 		} catch (final IOException e) {
 			throw new RuntimeException("Unable to scan path: " + folder.toAbsolutePath().toString(), e);
 		}
@@ -303,11 +295,10 @@ public class DashboardController {
 		// load event sources from classes
 		LOGGER.info("Scanning packages for EventSources: {} ",
 				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
-		final List<EventSourceDescriptor> descriptorsFromClasses = //
-				packagesToScan.stream()//
-						.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
-						.map(this::loadEventSourceFromClass)
-						.collect(toList());
+		final List<EventSourceDescriptor> descriptorsFromClasses = packagesToScan.stream()
+				.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
+				.map(this::loadEventSourceFromClass)
+				.collect(toList());
 		LOGGER.info("Loaded {} EventSources", descriptorsFromClasses.size());
 
 		LOGGER.info("Scanning addon folders for EventSources: {}",
@@ -455,10 +446,8 @@ public class DashboardController {
 	}
 
 	private String createUniqueId(final EventSourceDescriptor descriptor) {
-		final Set<String> existingIds = Collections.unmodifiableSet(getEventSourceInstances()//
-				.stream()
-				.map(EventSourceInstance::getId)
-				.collect(toSet()));
+		final Set<String> existingIds = Collections
+				.unmodifiableSet(getEventSourceInstances().stream().map(EventSourceInstance::getId).collect(toSet()));
 
 		String id;
 		do {
@@ -494,7 +483,7 @@ public class DashboardController {
 		return instance;
 	}
 
-	@SuppressWarnings("CheckStyle:XIllegalCatchCustom")
+	@SuppressWarnings("checkstyle:XIllegalCatchCustom")
 	private void adoptDefaultEventSourceProperties(final EventSourceInstance instance,
 			final EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
@@ -581,8 +570,7 @@ public class DashboardController {
 	}
 
 	public void startAllInstances() {
-		getEventSourceInstances()//
-				.stream()
+		getEventSourceInstances().stream()
 				.filter(i -> i.getDescriptor().getServiceClass() != null)
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
@@ -650,8 +638,7 @@ public class DashboardController {
 	}
 
 	public void stopAllInstances() {
-		getEventSourceInstances()//
-				.stream()
+		getEventSourceInstances().stream()
 				.filter(i -> i.getDescriptor().getServiceClass() != null)
 				.filter(this::isRunning)
 				.map(EventSourceInstance::getId)
@@ -695,10 +682,9 @@ public class DashboardController {
 	}
 
 	public void restartInstancesUsingSerializableProperty(final SerializableProperty prop) {
-		getEventSourceInstances()//
-				.stream()
+		getEventSourceInstances().stream()
 				.filter(this::isRunning)
-				.filter(i -> i.getDescriptor()//
+				.filter(i -> i.getDescriptor()
 						.getProperties()
 						.stream()
 						.anyMatch(p -> p.getClazz() == prop.getClass()
@@ -921,8 +907,7 @@ public class DashboardController {
 				= new EventSourceDescriptor(key, displayName, description, view, serviceClass, eventClass, moduleClass);
 
 		// Find fields of the event
-		final Set<String> eventFields = TypeUtils//
-				.getMembers(eventClass)//
+		final Set<String> eventFields = TypeUtils.getMembers(eventClass)
 				.map(s -> CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, s))
 				.collect(toSet());
 
@@ -934,7 +919,7 @@ public class DashboardController {
 				.forEach(descriptor::addDataItem);
 
 		// list data items to be hidden from view
-		Stream.of(eventSourceAnnotation.hiddenDataItems())//
+		Stream.of(eventSourceAnnotation.hiddenDataItems())
 				.filter(not(Strings::isNullOrEmpty))
 				.forEach(descriptor::addDataItemToHide);
 
@@ -945,21 +930,21 @@ public class DashboardController {
 		} catch (final IntrospectionException e) {
 			throw new RuntimeException(String.format("Unable to examine class %s", serviceClass), e);
 		}
-		Stream.of(Objects.requireNonNull(beanInfo.getPropertyDescriptors()))//
+		Stream.of(Objects.requireNonNull(beanInfo.getPropertyDescriptors()))
 				// we need both getters and setters
-				.filter(p -> Objects.nonNull(p.getReadMethod()))//
-				.filter(p -> Objects.nonNull(p.getWriteMethod()))//
+				.filter(p -> Objects.nonNull(p.getReadMethod()))
+				.filter(p -> Objects.nonNull(p.getWriteMethod()))
 				// getters should not return anything
-				.filter(p -> p.getReadMethod().getParameterCount() == 0)//
+				.filter(p -> p.getReadMethod().getParameterCount() == 0)
 				// setters should accept exactly one parameter
-				.filter(p -> p.getWriteMethod().getParameterCount() == 1)//
+				.filter(p -> p.getWriteMethod().getParameterCount() == 1)
 				// getters and setters from base classes are not relevant
-				.filter(p -> !p.getReadMethod().getDeclaringClass().getPackage().equals(CORE_EVENT_SOURCE_PACKAGE))//
+				.filter(p -> !p.getReadMethod().getDeclaringClass().getPackage().equals(CORE_EVENT_SOURCE_PACKAGE))
 				// getters and setters without annotation are not relevant
 				.filter(p -> p.getReadMethod().isAnnotationPresent(Property.class)
 						|| p.getWriteMethod().isAnnotationPresent(Property.class))
 				// convert into our own structure
-				.map(this::createEventSourceProperty)//
+				.map(this::createEventSourceProperty)
 				.forEach(descriptor::addProperty);
 
 		return descriptor;
@@ -1065,12 +1050,12 @@ public class DashboardController {
 
 	private Map<String, String> collectAllowedValues(final Class<?> clazz) {
 		if (clazz.isEnum()) {
-			return Stream.of(clazz.getEnumConstants())//
+			return Stream.of(clazz.getEnumConstants())
 					.map(e -> (Enum<?>) e)
 					.collect(Collectors.toLinkedHashMap(Enum::name, Enum::toString));
 		}
 		if (clazz == ZoneId.class) {
-			return ZoneId.getAvailableZoneIds()//
+			return ZoneId.getAvailableZoneIds()
 					.stream()
 					.sorted(String::compareToIgnoreCase)
 					.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));
@@ -1136,8 +1121,7 @@ public class DashboardController {
 		final Predicate<Path> allowedPathsFilter = path -> {
 			final String filename = path.getFileName().toString();
 			final String fullpath = path.toString();
-			return filename.toLowerCase().endsWith(".html") //
-					&& allowedPaths.stream().anyMatch(fullpath::contains);
+			return filename.toLowerCase().endsWith(".html") && allowedPaths.stream().anyMatch(fullpath::contains);
 		};
 
 		return FileUtils.streamResourcesFromClasspath()
@@ -1211,9 +1195,7 @@ public class DashboardController {
 			dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
 		}
 
-		dataItems.stream()//
-				.map(d -> createEventSourceProperty(d, properties))
-				.forEach(descriptor::addDataItem);
+		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(descriptor::addDataItem);
 
 		return descriptor;
 	}

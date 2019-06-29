@@ -16,7 +16,7 @@ public class Birthday {
 	private LocalDate date = LocalDate.now().minusYears(20);
 
 	public Birthday() {
-		// leave default values
+		// no fields to be initialized
 	}
 
 	public Birthday(@NotNull final String name, @NotNull final LocalDate date) {

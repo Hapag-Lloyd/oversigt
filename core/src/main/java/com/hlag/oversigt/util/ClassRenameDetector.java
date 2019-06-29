@@ -53,7 +53,7 @@ public final class ClassRenameDetector {
 	public static Optional<EventSourceKey> detectPackageMove(final Map<String, EventSourceKey> keys,
 			final String className) {
 		final String simpleClassNameWithDot = "." + getSimpleName(className);
-		final Set<Entry<String, EventSourceKey>> candidates = keys.entrySet()//
+		final Set<Entry<String, EventSourceKey>> candidates = keys.entrySet()
 				.stream()
 				.filter(s -> s.getKey().startsWith("class:"))
 				.filter(s -> s.getKey().endsWith(simpleClassNameWithDot))

@@ -104,7 +104,7 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 	/** {@inheritDoc} */
 	@Override
 	public List<Mail> loadMails(final String folderName) throws Exception {
-		return loadItems(EmailMessage.class, WellKnownFolderName.MsgFolderRoot, folderName, SortDirection.Ascending)//
+		return loadItems(EmailMessage.class, WellKnownFolderName.MsgFolderRoot, folderName, SortDirection.Ascending)
 				.stream()
 				.map(Mail::create)
 				.filter(Optional::isPresent)
@@ -115,8 +115,7 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 	/** {@inheritDoc} */
 	@Override
 	public List<Task> loadTasks() throws Exception {
-		return loadItems(Task.class, WellKnownFolderName.Root, "Dashboard", SortDirection.Descending)//
-				.stream()
+		return loadItems(Task.class, WellKnownFolderName.Root, "Dashboard", SortDirection.Descending).stream()
 				.filter(t -> {
 					try {
 						return !t.getIsComplete();
@@ -139,8 +138,7 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 		do {
 			final FolderId folderId = getFolderId(searchRoot, folderName);
 			findResults = getService().findItems(folderId, view);
-			result.addAll(findResults//
-					.getItems()
+			result.addAll(findResults.getItems()
 					.stream()
 					.filter(item -> item != null && clazz.isAssignableFrom(item.getClass()))
 					.map(clazz::cast)

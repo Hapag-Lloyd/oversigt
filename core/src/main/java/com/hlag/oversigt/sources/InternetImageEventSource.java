@@ -12,6 +12,10 @@ import com.hlag.oversigt.sources.event.StyleEvent;
 		dataItems = { "width" },
 		hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
+	public InternetImageEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
 	protected Optional<StyleEvent> produceEvent() {
 		try {

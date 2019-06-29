@@ -24,13 +24,15 @@ import de.larssh.utils.Nullables;
 @EventSource(displayName = "World Map", view = "Worldmap", hiddenDataItems = { "updated-at-message" })
 public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, MapEvent> {
 
-	private String query = "SELECT ID_NUMBER, LATITUDE, LONGITUDE, TYPE\r\n" + //
-			"FROM table\r\n" + //
-			"WHERE condition = 1";
+	private String query = "SELECT ID_NUMBER, LATITUDE, LONGITUDE, TYPE\r\n" + "FROM table\r\n" + "WHERE condition = 1";
 
 	private TypeMapping[] typeMappings = new TypeMapping[] {
 			new TypeMapping("TYPE", "type-a", Color.parse("#e75200"), Color.WHITE, 6.0),
 			new TypeMapping("TYPE", "type-b", Color.parse("#0dc92c"), Color.WHITE, 5.0) };
+
+	public WorldMapEventSource() {
+		// no fields to be initialized
+	}
 
 	@Override
 	protected DatabaseCache<Point> createCache() {

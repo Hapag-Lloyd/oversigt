@@ -229,23 +229,22 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				id,
 				"TYPE",
 				type,
-				rs -> readColumnValues(rs, new String[] { "NAME", "VALUE" }))//
-						.stream()
+				rs -> readColumnValues(rs, new String[] { "NAME", "VALUE" })).stream()
 						.collect(Collectors.toMap(m -> (String) m.get("NAME"), m -> (String) m.get("VALUE")));
 	}
 
 	@Override
 	public void persistEventSourceInstance(final EventSourceInstance instance) {
 		final Map<String, Object> values = map("NAME",
-				instance.getName(), //
+				instance.getName(),
 				"ENABLED",
-				instance.isEnabled(), //
+				instance.isEnabled(),
 				"EVENT_SOURCE_CLASS",
 				instance.getDescriptor().getServiceClass().map(c -> c.getName()).orElse(null), //
 				"FREQUENCY",
-				instance.getFrequency(), //
+				instance.getFrequency(),
 				"VIEW",
-				instance.getDescriptor().getView(), //
+				instance.getDescriptor().getView(),
 				"LAST_CHANGE",
 				now(),
 				"LAST_CHANGE_BY",
@@ -335,15 +334,15 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	@Override
 	public void persistDashboard(final Dashboard dashboard) {
 		final Map<String, Object> values = map("TITLE",
-				dashboard.getTitle(), //
+				dashboard.getTitle(),
 				"WIDTH",
-				dashboard.getScreenWidth(), //
+				dashboard.getScreenWidth(),
 				"HEIGHT",
-				dashboard.getScreenHeight(), //
+				dashboard.getScreenHeight(),
 				"COLUMNS",
-				dashboard.getColumns(), //
+				dashboard.getColumns(),
 				"BACKGROUND_COLOR",
-				dashboard.getBackgroundColor().getHexColor(), //
+				dashboard.getBackgroundColor().getHexColor(),
 				"COLOR_SCHEME",
 				dashboard.getColorScheme().name(),
 				"FOREGROUND_COLOR_START",
@@ -413,13 +412,13 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 		final OptionalInt id = insert(TABLE_WIDGET,
 				RETRIEVE_ID,
 				"DASHBOARD_ID",
-				dashboard.getId(), //
+				dashboard.getId(),
 				"EVENT_SOURCE_ID",
-				widget.getEventSourceInstance().getId(), //
+				widget.getEventSourceInstance().getId(),
 				"TITLE",
-				widget.getTitle(), //
+				widget.getTitle(),
 				"NAME",
-				widget.getName(), //
+				widget.getName(),
 				"POS_X",
 				widget.getPosX(),
 				"POS_Y",
@@ -468,8 +467,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	private void createOrUpdateWidgetProperties(final Widget widget) {
 		// determine values to persist
-		final Map<String, String> values = widget//
-				.getEventSourceInstance()
+		final Map<String, String> values = widget.getEventSourceInstance()
 				.getDescriptor()
 				.getDataItems()
 				.stream()
@@ -543,11 +541,11 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 		final Widget widget
 				= new Widget(id, eventSource, title, name, enabled, posX, posY, sizeX, sizeY, backgroundColor, style);
 
-		final Map<String, String> datas = widgetDataMapList.stream()//
-				.filter(d -> (int) d.get("WIDGET_ID") == widget.getId())//
+		final Map<String, String> datas = widgetDataMapList.stream()
+				.filter(d -> (int) d.get("WIDGET_ID") == widget.getId())
 				.collect(Collectors.toMap(d -> (String) d.get("NAME"), d -> (String) d.get("VALUE")));
 
-		eventSource.getDescriptor()//
+		eventSource.getDescriptor()
 				.getDataItems()
 				.stream()
 				.filter(p -> datas.containsKey(p.getName()))
@@ -587,26 +585,25 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	public void updateWidget(final Widget widget) {
 		updateByOneKey(TABLE_WIDGET,
 				"ID",
-				widget.getId(), //
+				widget.getId(),
 				"TITLE",
-				widget.getTitle(), //
+				widget.getTitle(),
 				"NAME",
-				widget.getName(), //
+				widget.getName(),
 				"ENABLED",
-				widget.isEnabled(), //
+				widget.isEnabled(),
 				"POS_X",
-				widget.getPosX(), //
+				widget.getPosX(),
 				"POS_Y",
-				widget.getPosY(), //
+				widget.getPosY(),
 				"SIZE_X",
-				widget.getSizeX(), //
+				widget.getSizeX(),
 				"SIZE_Y",
-				widget.getSizeY(), //
+				widget.getSizeY(),
 				"BACKGROUND_COLOR",
-				widget.getBackgroundColor().getHexColor(), //
+				widget.getBackgroundColor().getHexColor(),
 				"STYLE",
-				widget.getStyle()//
-		);
+				widget.getStyle());
 
 		createOrUpdateWidgetProperties(widget);
 	}

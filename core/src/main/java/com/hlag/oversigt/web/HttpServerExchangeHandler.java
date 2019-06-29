@@ -19,6 +19,10 @@ import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionManager;
 
 public class HttpServerExchangeHandler {
+	public HttpServerExchangeHandler() {
+		// no fields to be initialized
+	}
+
 	void doNonBlocking(final HttpHandler handler, final HttpServerExchange exchange) throws Exception {
 		if (exchange.isInIoThread()) {
 			exchange.dispatch(handler);
@@ -35,10 +39,7 @@ public class HttpServerExchangeHandler {
 	}
 
 	Optional<String> query(final HttpServerExchange exchange, final String name) {
-		return Optional//
-				.ofNullable(exchange.getQueryParameters())//
-				.map(qp -> qp.get(name))//
-				.map(l -> l.peek());
+		return Optional.ofNullable(exchange.getQueryParameters()).map(qp -> qp.get(name)).map(l -> l.peek());
 	}
 
 	/**

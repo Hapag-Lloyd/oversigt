@@ -81,6 +81,10 @@ public class OversigtConfiguration {
 	@Nullable
 	private JiraConfiguration jira;
 
+	public OversigtConfiguration() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
 
@@ -195,6 +199,10 @@ public class OversigtConfiguration {
 		@Nullable
 		private SSLConfiguration ssl = null;
 
+		public HttpListenerConfiguration() {
+			// no fields to be initialized
+		}
+
 		public String getIp() {
 			return ip;
 		}
@@ -213,22 +221,30 @@ public class OversigtConfiguration {
 		}
 	}
 
-	public static class ApiConfiguration {
+	private static final class ApiConfiguration {
 		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;
 
 		@Nullable
 		private String jwtSecretBase64 = null;
 
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
+
+		private ApiConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	public static class EventManagerConfiguration {
+	private static final class EventManagerConfiguration {
 		private long rateLimit = 10;
 
 		private Duration discardEventsAfter = Duration.ofHours(1);
+
+		private EventManagerConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class DatabaseConfiguration {
+	private static final class DatabaseConfiguration {
 		@Nullable
 		private Class<? extends SqlDialect> sqlDialect;
 
@@ -243,9 +259,13 @@ public class OversigtConfiguration {
 
 		@Nullable
 		private String password;
+
+		private DatabaseConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class MailConfiguration {
+	private static final class MailConfiguration {
 		@Nullable
 		private String hostname;
 
@@ -261,21 +281,33 @@ public class OversigtConfiguration {
 
 		@Nullable
 		private String senderAddress;
+
+		private MailConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class EventSourceConfiguration {
+	private static final class EventSourceConfiguration {
 		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };
 
 		private String[] addonFolders = new String[0];
 
 		private String[] widgetsPaths = new String[] { "statics/widgets/" };
+
+		private EventSourceConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class JiraConfiguration {
+	private static final class JiraConfiguration {
 		private int socketTimeout = 120;
+
+		private JiraConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class SecurityConfiguration {
+	private static final class SecurityConfiguration {
 		@Nullable
 		private List<String> serverAdmins;
 
@@ -286,9 +318,13 @@ public class OversigtConfiguration {
 		private LdapConfiguration ldap;
 
 		private SessionConfiguration session = new SessionConfiguration();
+
+		private SecurityConfiguration() {
+			// no fields to be initialized
+		}
 	}
 
-	private static class SessionConfiguration {
+	private static final class SessionConfiguration {
 		private int timeout = 30;
 
 		private int maxCount = -1;
@@ -299,5 +335,9 @@ public class OversigtConfiguration {
 
 		@Nullable
 		private SessionCookieConfig cookieConfig;
+
+		private SessionConfiguration() {
+			// no fields to be initialized
+		}
 	}
 }

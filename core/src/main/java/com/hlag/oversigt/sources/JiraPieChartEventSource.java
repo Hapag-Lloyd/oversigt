@@ -12,6 +12,10 @@ import com.hlag.oversigt.sources.event.PieChartEvent;
 
 @EventSource(view = "PieChart", displayName = "Jira Tickets (as Pie Chart)")
 public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEvent> {
+	public JiraPieChartEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
 	protected Optional<PieChartEvent> produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();

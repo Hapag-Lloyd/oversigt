@@ -29,7 +29,7 @@ public class WelcomeHandler extends AbstractConfigurationHandler {
 			return map("title",
 					"Welcome",
 					"dashboards",
-					getDashboardController().getDashboardIds()//
+					getDashboardController().getDashboardIds()
 							.stream()
 							.map(getDashboardController()::getDashboard)
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))

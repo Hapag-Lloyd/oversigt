@@ -34,7 +34,6 @@ import io.swagger.util.Json;
 
 @Singleton
 public class ApiApplication extends Application {
-
 	@Inject
 	public ApiApplication(@Named("hostname") final String hostname) {
 		// Initialize Swagger settings
@@ -73,7 +72,11 @@ public class ApiApplication extends Application {
 		return classes;
 	}
 
-	private static class ColorConverter implements ModelConverter {
+	private static final class ColorConverter implements ModelConverter {
+		private ColorConverter() {
+			// no fields to be initialized
+		}
+
 		@Nullable
 		@Override
 		public Property resolveProperty(@Nullable final Type type,
@@ -104,7 +107,11 @@ public class ApiApplication extends Application {
 		}
 	}
 
-	private static class DurationConverter implements ModelConverter {
+	private static final class DurationConverter implements ModelConverter {
+		private DurationConverter() {
+			// no fields to be initialized
+		}
+
 		@Nullable
 		@Override
 		public Property resolveProperty(@Nullable final Type type,

@@ -36,7 +36,7 @@ import io.swagger.annotations.Authorization;
 import lombok.Builder;
 import lombok.Getter;
 
-@Api(tags = { "EventSource" }, //
+@Api(tags = { "EventSource" },
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/state")
 @Singleton
@@ -45,6 +45,10 @@ public class EventSourceStatusResource {
 
 	@Inject
 	private DashboardController controller;
+
+	public EventSourceStatusResource() {
+		// no fields to be initialized manually, some will be injected
+	}
 
 	@GET
 	@Path("/{id}")
@@ -70,7 +74,7 @@ public class EventSourceStatusResource {
 
 	@POST
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "Returns a current event source instance state after changing the state",
 					response = EventSourceInstanceState.class),

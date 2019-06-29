@@ -12,6 +12,10 @@ public class PieChartEvent extends OversigtEvent {
 
 	private final List<Dataset> datasets = Arrays.asList(new Dataset());
 
+	public PieChartEvent() {
+		// no fields to be initialized
+	}
+
 	public void addData(final String label, final double value, final String color) {
 		addData(label, value, color, color);
 	}
@@ -35,7 +39,9 @@ public class PieChartEvent extends OversigtEvent {
 
 		private final Collection<String> hoverBackgroundColor = new ArrayList<>();
 
-		private Dataset() {}
+		private Dataset() {
+			// no fields to be initialized
+		}
 
 		private void add(final double value, final String backgroundColor, final String hoverBackgroundColor) {
 			data.add(value);

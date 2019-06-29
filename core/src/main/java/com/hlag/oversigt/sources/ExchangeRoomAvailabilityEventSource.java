@@ -34,6 +34,9 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 		description = "Shows the room availability from Microsoft Exchange for a configurable collection of rooms.",
 		hiddenDataItems = { "moreinfo" })
 public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource<RoomAvailabilityListEvent> {
+	public ExchangeRoomAvailabilityEventSource() {
+		// no fields to be initialized
+	}
 
 	@Override
 	protected Optional<RoomAvailabilityListEvent> produceExchangeEvent() throws Exception {
@@ -225,8 +228,12 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 	}
 
-	private static class BusyState {
+	private static final class BusyState {
 		private SortedSet<TimeSlice> slices = new TreeSet<>();
+
+		private BusyState() {
+			// no fields to be initialized
+		}
 
 		synchronized boolean isBusy(final ZonedDateTime dt) {
 			return slices.stream().anyMatch(s -> s.contains(dt));
@@ -313,12 +320,12 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 		}
 	}
 
-	private static class TimeSlice implements Comparable<TimeSlice> {
+	private static final class TimeSlice implements Comparable<TimeSlice> {
 		private ZonedDateTime start;
 
 		private ZonedDateTime end;
 
-		TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
+		private TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {
 			this.start = start;
 			this.end = end;
 		}

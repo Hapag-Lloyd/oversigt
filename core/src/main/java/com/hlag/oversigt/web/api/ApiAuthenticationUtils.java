@@ -64,8 +64,7 @@ public class ApiAuthenticationUtils {
 		final Date now = new Date(nowMillis);
 		final String id = nowMillis + "-" + UUID.randomUUID().toString();
 
-		final JwtBuilder builder = Jwts//
-				.builder()
+		final JwtBuilder builder = Jwts.builder()
 				.setId(id)
 				.setIssuedAt(now)
 				.setSubject("oversigt-api")
@@ -88,8 +87,7 @@ public class ApiAuthenticationUtils {
 		// Throw an Exception if the token is invalid
 
 		// This line will throw an exception if it is not a signed JWS (as expected)
-		final Claims claims = Jwts//
-				.parser()
+		final Claims claims = Jwts.parser()
 				.setSigningKey(apiSecret)
 				.requireSubject("oversigt-api")
 				.requireIssuer(issuer)

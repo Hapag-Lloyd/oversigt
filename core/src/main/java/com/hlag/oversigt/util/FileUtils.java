@@ -40,9 +40,7 @@ public final class FileUtils {
 
 	public static Stream<Path> closedPathStream(final Stream<Path> stream) {
 		try (Stream<Path> paths = stream) {
-			return paths//
-					.collect(Collectors.toList())
-					.stream();
+			return paths.collect(Collectors.toList()).stream();
 		}
 	}
 
@@ -53,7 +51,7 @@ public final class FileUtils {
 	public static void deleteFolder(final Path root) {
 		try {
 			LOGGER.info("Deleting folder [{}]", root.toAbsolutePath().toString());
-			Files.walk(root)//
+			Files.walk(root)
 					.sorted(Comparator.reverseOrder())
 					.forEach(ThrowingConsumer.throwing(Files::deleteIfExists));
 		} catch (final IOException e) {
@@ -94,10 +92,7 @@ public final class FileUtils {
 	}
 
 	public static Stream<Path> streamResourcesFromClasspath() {
-		return getClasspathEntries()//
-				.stream()
-				.map(Paths::get)
-				.flatMap(FileUtils::streamResources);
+		return getClasspathEntries().stream().map(Paths::get).flatMap(FileUtils::streamResources);
 	}
 
 	private static Stream<Path> streamResources(final Path classpathEntry) {
@@ -139,10 +134,7 @@ public final class FileUtils {
 					.map(attributes -> attributes.getValue("Class-Path"))
 					// ... split it on whitespaces. Then you have a list of new relative class path
 					// entries.
-					.map(classpath -> Splitter//
-							.on(CharMatcher.whitespace())
-							.omitEmptyStrings()
-							.splitToList(classpath))
+					.map(classpath -> Splitter.on(CharMatcher.whitespace()).omitEmptyStrings().splitToList(classpath))
 					// take them, resolve the corresponding files and recursivly call this method
 					.map(jarClasspathEntries -> jarClasspathEntries.stream()
 							.map(zip.toAbsolutePath().getParent()::resolve)

@@ -59,6 +59,10 @@ public class SerializablePropertyResource {
 	@Inject
 	private SerializablePropertyController spController;
 
+	public SerializablePropertyResource() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@GET
 	@Path("/type")
 	@ApiResponses({
@@ -89,7 +93,7 @@ public class SerializablePropertyResource {
 					message = "The requested serializable property type does not exist",
 					response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property details", //
+	@ApiOperation(value = "Read serializable property details",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response readMembers(@PathParam("name") @NotBlank final String className) {
@@ -108,12 +112,12 @@ public class SerializablePropertyResource {
 					response = Map.class,
 					responseContainer = "List") })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property values", //
+	@ApiOperation(value = "Read serializable property values",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response listProperties(@PathParam("type") @NotBlank final String className) {
 		try {
-			return ok(spController.streamProperties(spController.getClass(className))//
+			return ok(spController.streamProperties(spController.getClass(className))
 					.map(SerializablePropertyResource::toMapWithoutPassword)
 					.collect(Collectors.toList())).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -123,13 +127,13 @@ public class SerializablePropertyResource {
 
 	@POST
 	@Path("/value/{type}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 201, message = "Serializable property has been created", response = Map.class),
 			@ApiResponse(code = 404,
 					message = "Serializable property type does not exist",
 					response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Create serializable property values", //
+	@ApiOperation(value = "Create serializable property values",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response createProperty(@Context final UriInfo uri,
@@ -167,7 +171,7 @@ public class SerializablePropertyResource {
 					response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read serializable property values", //
+	@ApiOperation(value = "Read serializable property values",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	public Response readProperty(@PathParam("type") @NotBlank final String className,
@@ -194,7 +198,7 @@ public class SerializablePropertyResource {
 					response = Map.class),
 			@ApiResponse(code = 404, message = "Property does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Update serializable property values", //
+	@ApiOperation(value = "Update serializable property values",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response updateProperty(@Context final UriInfo uri,
@@ -235,13 +239,13 @@ public class SerializablePropertyResource {
 
 	@DELETE
 	@Path("/value/{type}/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200, message = "Serializable property has been deleted"),
 			@ApiResponse(code = 404,
 					message = "Serializable property does not exist",
 					response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Delete serializable property values", //
+	@ApiOperation(value = "Delete serializable property values",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response deleteProperty(@PathParam("type") @NotBlank final String className,

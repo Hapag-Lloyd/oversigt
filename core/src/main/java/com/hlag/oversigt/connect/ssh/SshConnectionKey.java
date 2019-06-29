@@ -7,10 +7,9 @@ import com.hlag.oversigt.util.Utils;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 class SshConnectionKey implements Comparable<SshConnectionKey> {
-	protected static final Comparator<SshConnectionKey> COMPARATOR = //
-			Comparator.comparing(SshConnectionKey::getHostname)
-					.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
-					.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
+	protected static final Comparator<SshConnectionKey> COMPARATOR = Comparator.comparing(SshConnectionKey::getHostname)
+			.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
+			.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
 
 	private final String hostname;
 

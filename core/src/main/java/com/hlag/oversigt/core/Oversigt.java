@@ -179,6 +179,10 @@ public final class Oversigt {
 		@Nullable
 		private CommandLineOptions options = null;
 
+		public Builder() {
+			// no fields to be initialized
+		}
+
 		/**
 		 * Create a builder
 		 *

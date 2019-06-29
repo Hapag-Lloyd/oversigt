@@ -50,15 +50,16 @@ import ro.isdc.wro.model.resource.locator.factory.UriLocatorFactory;
 public class Wro4jExecutor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Wro4jExecutor.class);
 
-	private static final String XML_TEMPLATE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + //
-			"<groups xmlns=\"http://www.isdc.ro/wro\">\n" + //
-			"    <group name=\"{{groupName}}\">\n" + //
-			"        <js>classpath:statics/widgets/{{viewName}}/**.js</js>\n" + //
-			"        <js>classpath:statics/widgets/{{viewName}}/**.coffee</js>\n" + //
-			"        <css>classpath:statics/widgets/{{viewName}}/**.scss</css>\n" + //
-			// " <css>classpath:statics/widgets/{{viewName}}/**.css</css>\n" + //
-			"    </group>\n" + //
-			"</groups>\n";
+	private static final String XML_TEMPLATE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+			+ "<groups xmlns=\"http://www.isdc.ro/wro\">\n"
+			+ "    <group name=\"{{groupName}}\">\n"
+			+ "        <js>classpath:statics/widgets/{{viewName}}/**.js</js>\n"
+			+ "        <js>classpath:statics/widgets/{{viewName}}/**.coffee</js>\n"
+			+ "        <css>classpath:statics/widgets/{{viewName}}/**.scss</css>\n"
+			+
+			// " <css>classpath:statics/widgets/{{viewName}}/**.css</css>\n" +
+			"    </group>\n"
+			+ "</groups>\n";
 
 	private static final String WRO_PROPERTIES
 			= "preProcessors=cssUrlRewriting,coffeeScript\r\npostProcessors=rubySassCss";

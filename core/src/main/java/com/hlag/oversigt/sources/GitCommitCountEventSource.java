@@ -10,6 +10,10 @@ import com.hlag.oversigt.sources.event.NumberEvent;
 public class GitCommitCountEventSource extends AbstractGitCommitEventSource<OversigtEvent> {
 	private long lastCommitCount = 0;
 
+	public GitCommitCountEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
 	protected Optional<OversigtEvent> produceEvent() throws Exception {
 		final long commitCount = streamLog(s -> s.count());

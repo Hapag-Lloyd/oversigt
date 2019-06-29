@@ -56,9 +56,13 @@ public class AsynchronousHttpClientFactory {
 	@Named("jiraSocketTimeout")
 	private static int socketTimeout = 60;
 
+	public AsynchronousHttpClientFactory() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
 		final HttpClientOptions options = new HttpClientOptions();
-		options.setSocketTimeout(socketTimeout, TimeUnit.SECONDS); // XXX
+		options.setSocketTimeout(socketTimeout, TimeUnit.SECONDS);
 
 		final DefaultHttpClientFactory<?> defaultHttpClientFactory
 				= new DefaultHttpClientFactory<>(new NoOpEventPublisher(),
@@ -108,7 +112,11 @@ public class AsynchronousHttpClientFactory {
 		};
 	}
 
-	private static class NoOpEventPublisher implements EventPublisher {
+	private static final class NoOpEventPublisher implements EventPublisher {
+		private NoOpEventPublisher() {
+			// empty by design
+		}
+
 		@Override
 		public void publish(@SuppressWarnings("unused") @Nullable final Object o) {
 			// empty by design
@@ -142,6 +150,14 @@ public class AsynchronousHttpClientFactory {
 			baseUrl = jiraURI.getPath();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated since 2.10. This implementation is application-specific, and
+		 *             unreliable for a cross product plugin. Use
+		 *             {@link #getBaseUrl(UrlMode)} instead.
+		 */
+		@Deprecated
 		@Override
 		public String getBaseUrl() {
 			return baseUrl;
@@ -191,6 +207,12 @@ public class AsynchronousHttpClientFactory {
 			return new File(".");
 		}
 
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated As of SAL 2.7.
+		 */
+		@Deprecated
 		@Override
 		public String getPropertyValue(@SuppressWarnings("unused") @Nullable final String s) {
 			throw new UnsupportedOperationException("Not implemented");
@@ -201,6 +223,10 @@ public class AsynchronousHttpClientFactory {
 		private static final Logger LOGGER = LoggerFactory.getLogger(MavenUtils.class);
 
 		private static final String UNKNOWN_VERSION = "unknown";
+
+		private MavenUtils() {
+			throw new RuntimeException();
+		}
 
 		static String getVersion(final String groupId, final String artifactId) {
 			final Properties props = new Properties();

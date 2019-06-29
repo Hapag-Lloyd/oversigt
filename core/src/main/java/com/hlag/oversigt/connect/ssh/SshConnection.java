@@ -107,7 +107,7 @@ public abstract class SshConnection {
 			try {
 				sessionReference.get().ifPresent(Session::disconnect);
 			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				// empty by design
+				// do not throw inside catch
 			}
 			return false;
 		}
@@ -207,7 +207,7 @@ public abstract class SshConnection {
 					try {
 						Thread.sleep(100);
 					} catch (@SuppressWarnings("unused") final Exception ignore) {
-						// empty by design
+						// on interruption continue
 					}
 				}
 				channel.disconnect();
@@ -259,7 +259,7 @@ public abstract class SshConnection {
 					try {
 						Thread.sleep(100);
 					} catch (@SuppressWarnings("unused") final Exception ignore) {
-						// empty by design
+						// on interruption continue
 					}
 				}
 				channel.disconnect();

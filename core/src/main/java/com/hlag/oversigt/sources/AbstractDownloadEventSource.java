@@ -211,9 +211,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	}
 
 	protected String downloadString(final URLConnection connectionToRead) throws IOException {
-		return read(connectionToRead, //
-				(connection, inputStream) -> //
-				IOUtils.toString(inputStream, Objects.toString(connection.getContentEncoding(), "UTF-8")));
+		return read(connectionToRead,
+				(connection, inputStream) -> IOUtils.toString(inputStream,
+						Objects.toString(connection.getContentEncoding(), "UTF-8")));
 	}
 
 	private <R> R read(final URLConnection inputConnection,
@@ -247,9 +247,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			return connection;
 		}
 
-		if (status == HttpURLConnection.HTTP_MOVED_PERM //
-				|| status == HttpURLConnection.HTTP_MOVED_TEMP //
-				|| status == HttpURLConnection.HTTP_SEE_OTHER//
+		if (status == HttpURLConnection.HTTP_MOVED_PERM
+				|| status == HttpURLConnection.HTTP_MOVED_TEMP
+				|| status == HttpURLConnection.HTTP_SEE_OTHER
 				|| status == 307 // temporary redirect
 				|| status == 308 // permanent redirect // TODO safe new URL
 		) {
@@ -295,9 +295,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 					.stream()
 					.filter(e -> !Arrays.asList("Host", "Connection").contains(e.getKey()))
 					.filter(e -> method == null || !e.getKey().startsWith(method + " "))
-					.forEach(e -> e //
-							.getValue()
-							.forEach(v -> newConnection.addRequestProperty(e.getKey(), v)));
+					.forEach(e -> e.getValue().forEach(v -> newConnection.addRequestProperty(e.getKey(), v)));
 
 			// done
 			return handleRedirects(newConnection);

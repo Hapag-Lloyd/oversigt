@@ -96,14 +96,17 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 				if (issuesPerCategory.containsKey(displayOption) && !Strings.isNullOrEmpty(displayOption.getValue())) {
 					issuesPerCategory.get(displayOption).add(issue);
 					containedKnownDislayOption = true;
-				} else if (getShowUnknownCategories() == ShowUnknownCategories.ALL
-						|| getShowUnknownCategories() == ShowUnknownCategories.UNKNOWN_ONLY
-								&& !containedKnownDislayOption) {
-									if (!issuesUnknown.containsKey(displayOption)) {
-										issuesUnknown.put(displayOption, new HashSet<>());
-									}
-									issuesUnknown.get(displayOption).add(issue);
-								}
+				} else {
+					final boolean addUnknownIssue = getShowUnknownCategories() == ShowUnknownCategories.ALL
+							|| getShowUnknownCategories() == ShowUnknownCategories.UNKNOWN_ONLY
+									&& !containedKnownDislayOption;
+					if (addUnknownIssue) {
+						if (!issuesUnknown.containsKey(displayOption)) {
+							issuesUnknown.put(displayOption, new HashSet<>());
+						}
+						issuesUnknown.get(displayOption).add(issue);
+					}
+				}
 			}
 		}
 

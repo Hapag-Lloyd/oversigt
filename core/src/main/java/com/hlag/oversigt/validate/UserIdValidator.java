@@ -14,6 +14,10 @@ public class UserIdValidator implements ConstraintValidator<UserId, String> {
 	@Inject
 	private Authenticator authenticator;
 
+	public UserIdValidator() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@Override
 	public boolean isValid(@Nullable final String value,
 			@SuppressWarnings("unused") @Nullable final ConstraintValidatorContext context) {

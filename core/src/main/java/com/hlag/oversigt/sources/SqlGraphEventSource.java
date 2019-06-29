@@ -41,6 +41,10 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 
 	private final SortedMap<ZonedDateTime, List<Long>> values = new TreeMap<>();
 
+	public SqlGraphEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
 	protected Optional<ComplexGraphEvent> produceEventFromData() {
 		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
@@ -90,10 +94,10 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 			values.put(ZonedDateTime.now(ZoneOffset.UTC), data.get(0));
 			columnCount = data.get(0).size();
 			Utils.logInfo(getSpecialLogger(),
-					"%s", //
-					(Supplier<String>) () -> IntStream.range(0, columnCount) //
+					"%s",
+					(Supplier<String>) () -> IntStream.range(0, columnCount)
 							.mapToObj((final int column) -> String
-									.format("%s: %d", titles[column], data.get(0).get(column))) //
+									.format("%s: %d", titles[column], data.get(0).get(column)))
 							.collect(Collectors.joining(", ")));
 		} else {
 			getLogger().error("Failed with empty result set.");

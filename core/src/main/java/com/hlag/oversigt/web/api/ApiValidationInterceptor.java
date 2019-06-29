@@ -25,6 +25,10 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 	@Inject
 	private Validator validator;
 
+	public ApiValidationInterceptor() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public Object invoke(@Nullable final MethodInvocation nullableInvocation) throws Throwable {

@@ -68,10 +68,14 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private Birthday[] birthdays = new Birthday[0];
 
-	private HolidayNameCorrection[] corrections = new HolidayNameCorrection[] { //
+	private HolidayNameCorrection[] corrections = new HolidayNameCorrection[] {
 			new HolidayNameCorrection("Weihnachten", "1. Weihnachtstag"),
 			new HolidayNameCorrection("Stephanstag", "2. Weihnachtstag"),
 			new HolidayNameCorrection("Tag der Wiedervereinigung", "Tag der Deutschen Einheit") };
+
+	public TimelineEventSource() {
+		// no fields to be initialized
+	}
 
 	@Override
 	protected Optional<TimelineEvent> produceExchangeEvent() throws Exception {
@@ -90,27 +94,28 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return Optional.of(event);
 	}
 
-	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {
+	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) throws ServiceLocalException {
 		addBirthdays(event, now);
 		addHolidays(event, now);
 		addExchangeCalendar(event, now);
 	}
 
-	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
-		getExchangeClient()
-				.loadAppointments(now.minusMonths(5).atStartOfDay(getZoneId()),
-						now.plus(getMaximumPointInFuture())
-								.plus(getMaximumPointInFuture())
-								.plusDays(1)
-								.atStartOfDay(getZoneId()))
-				.forEach(appointment -> addAppointment(event, appointment));
+	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) throws ServiceLocalException {
+		final ZonedDateTime from = now.minusMonths(5).atStartOfDay(getZoneId());
+		final ZonedDateTime until = now.plus(getMaximumPointInFuture())
+				.plus(getMaximumPointInFuture())
+				.plusDays(1)
+				.atStartOfDay(getZoneId());
+		for (final Appointment appointment : getExchangeClient().loadAppointments(from, until)) {
+			addAppointment(event, appointment);
+		}
 	}
 
 	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
 		try {
 			addAppointment_unsafe(event, appointment);
 		} catch (@SuppressWarnings("unused") final ServiceLocalException ignore) {
-			/* ignore */
+			/* in case of exception ignore event */
 		}
 	}
 

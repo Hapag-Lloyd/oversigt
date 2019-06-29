@@ -36,6 +36,10 @@ import io.swagger.annotations.Authorization;
 @Path("/event-source/descriptions")
 @Singleton
 public class EventSourceDescriptionResource {
+	public EventSourceDescriptionResource() {
+		// no fields to be initialized
+	}
+
 	@Inject
 	private DashboardController dashboardController;
 
@@ -50,13 +54,11 @@ public class EventSourceDescriptionResource {
 	@ApiOperation(value = "List available event sources")
 	@NoChangeLog
 	public Response listAvailableEventSources() {
-		return ok(dashboardController//
-				.getEventSourceKeys()
+		return ok(dashboardController.getEventSourceKeys()
 				.stream()
 				.map(dashboardController::getEventSourceDescriptor)
 				.map(EventSourceInfo::new)
-				.collect(Collectors.toList()))//
-						.build();
+				.collect(Collectors.toList())).build();
 	}
 
 	@GET

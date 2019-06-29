@@ -90,6 +90,10 @@ public class MailSender {
 	@Named("mailSenderAddress")
 	private String senderAddress;
 
+	public MailSender() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	public void sendNewDashboard(final Principal sender, final Dashboard dashboard) {
 		sendMailToAdmins(sender,
 				"New dashboard requested",

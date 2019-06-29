@@ -169,12 +169,7 @@ public class Color {
 	}
 
 	public static Color random() {
-		return CSS_COLORS//
-				.values()//
-				.stream()//
-				.skip((long) (Math.random() * CSS_COLORS.size()))//
-				.findAny()//
-				.get();
+		return CSS_COLORS.values().stream().skip((long) (Math.random() * CSS_COLORS.size())).findAny().get();
 	}
 
 	public static Color parse(final String string) {
@@ -617,7 +612,6 @@ public class Color {
 	}
 
 	public Color(final int red, final int green, final int blue, final double alpha) {
-		super();
 		this.red = red;
 		this.green = green;
 		this.blue = blue;

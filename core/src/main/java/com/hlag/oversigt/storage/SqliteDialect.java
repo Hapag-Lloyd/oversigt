@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SqliteDialect implements SqlDialect {
+	public SqliteDialect() {
+		// no fields to be initialized
+	}
 
 	@Override
 	public String getDriverClassName() {
@@ -123,10 +126,7 @@ public class SqliteDialect implements SqlDialect {
 	@Override
 	public String delete(final String tableName, final Collection<String> whereNames) {
 		String sql = "DELETE FROM " + tableName + " WHERE ";
-		sql += whereNames//
-				.stream()//
-				.map(k -> k + " = ? ")//
-				.collect(Collectors.joining(" AND "));
+		sql += whereNames.stream().map(k -> k + " = ? ").collect(Collectors.joining(" AND "));
 		return sql;
 	}
 
@@ -144,26 +144,21 @@ public class SqliteDialect implements SqlDialect {
 		String sql = "CREATE TABLE " + name + " (";
 		final long pkColumnCount = Stream.of(columns).filter(c -> c.isPrimaryKey()).count();
 		final boolean hasUnique = Stream.of(columns).filter(c -> c.isUnique()).findAny().isPresent();
-		sql += Stream//
-				.of(columns)//
-				.map(c -> getColumnDefinition(c, pkColumnCount == 1))//
-				.collect(Collectors.joining(","));
+		sql += Stream.of(columns).map(c -> getColumnDefinition(c, pkColumnCount == 1)).collect(Collectors.joining(","));
 		if (pkColumnCount > 1) {
 			sql += ", PRIMARY KEY ("
-					+ Stream//
-							.of(columns)//
-							.filter(c -> c.isPrimaryKey())//
-							.map(c -> c.getName())//
-							.collect(Collectors.joining(",")) //
+					+ Stream.of(columns)
+							.filter(c -> c.isPrimaryKey())
+							.map(c -> c.getName())
+							.collect(Collectors.joining(","))
 					+ ")";
 		}
 		if (hasUnique) {
 			sql += ", UNIQUE ("
-					+ Stream//
-							.of(columns)//
-							.filter(c -> c.isUnique())//
-							.map(c -> c.getName())//
-							.collect(Collectors.joining(",")) //
+					+ Stream.of(columns)
+							.filter(c -> c.isUnique())
+							.map(c -> c.getName())
+							.collect(Collectors.joining(","))
 					+ ")";
 		}
 		sql += ")";

@@ -77,8 +77,7 @@ public final class CommandLineOptions {
 
 	Map<String, String> getProperties() {
 		try {
-			return Stream//
-					.of(Introspector.getBeanInfo(getClass(), Object.class).getPropertyDescriptors())//
+			return Stream.of(Introspector.getBeanInfo(getClass(), Object.class).getPropertyDescriptors())
 					.collect(Collectors.toMap(PropertyDescriptor::getName, pd -> get(pd.getReadMethod())));
 		} catch (final Exception e) {
 			throw new RuntimeException(e);

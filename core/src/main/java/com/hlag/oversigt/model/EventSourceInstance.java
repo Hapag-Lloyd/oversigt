@@ -186,25 +186,17 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 
 	public static Predicate<EventSourceInstance> createFilter(final String filter) {
 		return i -> i.getName().toLowerCase().contains(filter)
-				|| i.getId().toLowerCase().contains(filter) //
-				|| Optional.ofNullable(i.getFrequency())//
-						.map(Object::toString)
-						.orElse("")
-						.toLowerCase()
-						.contains(filter)
-				|| i.getDescriptor()//
+				|| i.getId().toLowerCase().contains(filter)
+				|| Optional.ofNullable(i.getFrequency()).map(Object::toString).orElse("").toLowerCase().contains(filter)
+				|| i.getDescriptor()
 						.getProperties()
 						.stream()
 						.filter(i::hasPropertyValue)
-						.anyMatch(p -> i.getPropertyValueString(p)//
-								.toLowerCase()
-								.contains(filter))
-				|| i.getDescriptor()//
+						.anyMatch(p -> i.getPropertyValueString(p).toLowerCase().contains(filter))
+				|| i.getDescriptor()
 						.getDataItems()
 						.stream()
 						.filter(i::hasPropertyValue)
-						.anyMatch(p -> i.getPropertyValueString(p)//
-								.toLowerCase()
-								.contains(filter));
+						.anyMatch(p -> i.getPropertyValueString(p).toLowerCase().contains(filter));
 	}
 }

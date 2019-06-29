@@ -39,6 +39,10 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);
 
+	public ExchangeMailboxEventSource() {
+		// no fields to be initialized
+	}
+
 	@Property(name = "Folder Name", description = "The folder to be examined be this event source")
 	public String getFolderName() {
 		return folderName;

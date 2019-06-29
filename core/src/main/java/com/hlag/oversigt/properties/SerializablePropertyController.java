@@ -44,11 +44,9 @@ public class SerializablePropertyController {
 				.collect(Collectors.toMap(Class::getSimpleName, Function.identity()));
 		LOGGER.info("Loaded serializable property classes: {}", namesToClasses.keySet().toString());
 
-		properties.putAll(namesToClasses//
-				.values()
+		properties.putAll(namesToClasses.values()
 				.stream()
-				.flatMap(c -> storage.listProperties(c)//
-						.stream())
+				.flatMap(c -> storage.listProperties(c).stream())
 				.collect(Collectors.toMap(SerializableProperty::getId, Function.identity())));
 	}
 
@@ -92,11 +90,11 @@ public class SerializablePropertyController {
 	@Deprecated
 	public Map<String, List<? extends SerializableProperty>> getProperties() {
 		// TODO remove this method
-		// return namesToClasses.entrySet()//
+		// return namesToClasses.entrySet()
 		// .stream()
 		// .collect(Collectors.toMap(e -> e.getKey(), e ->
 		// storage.listProperties(e.getValue())));
-		return namesToClasses.entrySet()//
+		return namesToClasses.entrySet()
 				.stream()
 				.collect(Collectors.toMap(e -> e.getKey(),
 						e -> streamProperties(e.getValue()).collect(Collectors.toList())));
@@ -109,7 +107,7 @@ public class SerializablePropertyController {
 	@Deprecated
 	public Map<String, Collection<SerializablePropertyMember>> getAllMembers() {
 		// TODO remove this method
-		return namesToClasses.entrySet()//
+		return namesToClasses.entrySet()
 				.stream()
 				.collect(Collectors.toMap(Entry::getKey, c -> getMembers(c.getValue())));
 	}
@@ -127,8 +125,7 @@ public class SerializablePropertyController {
 			final Map<String, Object> parameters) {
 		return createProperty(clazz,
 				name,
-				getMembers(clazz)//
-						.stream()
+				getMembers(clazz).stream()
 						.filter(m -> !"name".equals(m.getName()))
 						.map(m -> {
 							try {

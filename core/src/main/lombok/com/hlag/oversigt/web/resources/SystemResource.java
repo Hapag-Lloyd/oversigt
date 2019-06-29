@@ -115,8 +115,8 @@ public class SystemResource {
 			@ApiResponse(code = 202, message = "Server shutdown initiated."),
 			@ApiResponse(code = 401, message = "If the user is not authorized.") })
 	@JwtSecured
-	@ApiOperation(value = "Shut down the server", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) }, //
+	@ApiOperation(value = "Shut down the server",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) },
 			notes = "Shuts down the dashboard server. Once the request has been accepted the shut down will be initiated after two seconds.")
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response shutdown() {
@@ -124,7 +124,7 @@ public class SystemResource {
 			try {
 				Thread.sleep(1000);
 			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				/* ignore */
+				// on interruption continue
 			}
 			shutdownRunnable.run();
 		});
@@ -136,9 +136,8 @@ public class SystemResource {
 	@ApiResponses({
 			@ApiResponse(code = 200, message = "Server configuration.", response = OversigtConfiguration.class) })
 	@JwtSecured
-	@ApiOperation(value = "Read the current server configuration", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Read the current server configuration",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response readConfiguration() {
 		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
@@ -157,13 +156,12 @@ public class SystemResource {
 					response = String.class,
 					responseContainer = "list") })
 	@JwtSecured
-	@ApiOperation(value = "List available log files", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "List available log files",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public List<String> listLogFiles() throws IOException {
-		return FileUtils.closedPathStream(Files.list(Paths.get("log")))//
+		return FileUtils.closedPathStream(Files.list(Paths.get("log")))
 				.map(java.nio.file.Path::getFileName)
 				.map(Object::toString)
 				.collect(Collectors.toList());
@@ -171,15 +169,14 @@ public class SystemResource {
 
 	@GET
 	@Path("/logfiles/{filename}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "The requested lines of the log file will be transferred",
 					response = String.class,
 					responseContainer = "list") })
 	@JwtSecured
-	@ApiOperation(value = "Retreive log file content", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Retreive log file content",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response getLogFileContent(@PathParam("filename") @NotBlank final String filename,
@@ -209,15 +206,14 @@ public class SystemResource {
 
 	@GET
 	@Path("/loggers")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A list of the current loggers",
 					response = LoggerInfo.class,
 					responseContainer = "list") })
 	@JwtSecured
-	@ApiOperation(value = "Get a list of the server's loggers", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Get a list of the server's loggers",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<LoggerInfo> getLoggers(@QueryParam("configuredLevelsOnly") @ApiParam(required = false,
@@ -227,10 +223,7 @@ public class SystemResource {
 		if (onlyConfigured) {
 			filter = l -> l.level != null;
 		}
-		return getLoggerStream()//
-				.map(LoggerInfo::new)
-				.filter(filter)
-				.collect(Collectors.toList());
+		return getLoggerStream().map(LoggerInfo::new).filter(filter).collect(Collectors.toList());
 	}
 
 	private Stream<Logger> getLoggerStream() {
@@ -240,12 +233,10 @@ public class SystemResource {
 
 	@PUT
 	@Path("/loggers/{logger}")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "Changed the logger's level") })
+	@ApiResponses({ @ApiResponse(code = 200, message = "Changed the logger's level") })
 	@JwtSecured
-	@ApiOperation(value = "Change the log level", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Change the log level",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response setLogLevel(@PathParam("logger") @NotBlank final String loggerName,
 			@QueryParam("level") @ApiParam(required = true) @NotBlank final String levelName) {
@@ -261,7 +252,7 @@ public class SystemResource {
 
 	@GET
 	@Path("/log-levels")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A list of the avaiblable log levels",
 					response = String.class,
@@ -275,15 +266,14 @@ public class SystemResource {
 
 	@GET
 	@Path("/threads")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A list of the current threads",
 					response = ThreadInfo.class,
 					responseContainer = "list") })
 	@JwtSecured
-	@ApiOperation(value = "Get a list the server's threads", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Get a list the server's threads",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public List<ThreadInfo> getThreads() {
 		return Thread.getAllStackTraces()
@@ -296,7 +286,7 @@ public class SystemResource {
 
 	@GET
 	@Path("/cached-events")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A list of the cached events",
 					response = OversigtEvent.class,
@@ -305,9 +295,8 @@ public class SystemResource {
 					message = "The filtered event source does not exist",
 					response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Retrieve the cached events", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Retrieve the cached events",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public Response getCachedEvents(
@@ -331,14 +320,13 @@ public class SystemResource {
 
 	@GET
 	@Path("/users/{userId}/validity")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A boolean indicating whether or not the user id is valid",
 					response = boolean.class) })
 	@JwtSecured
-	@ApiOperation(value = "Check a userid's validity", //
-			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) } //
-	)
+	@ApiOperation(value = "Check a userid's validity",
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	@NoChangeLog
 	public boolean isUserValid(@PathParam("userId") @ApiParam(value = "The ID of the user to check",
@@ -410,8 +398,7 @@ public class SystemResource {
 		spController.getClasses()
 				.stream()
 				.flatMap(spController::streamProperties)
-				.filter(p -> SerializablePropertyResource//
-						.toMapWithoutPassword(p)
+				.filter(p -> SerializablePropertyResource.toMapWithoutPassword(p)
 						.values()
 						.stream()
 						.filter(v -> v != null)
@@ -427,8 +414,7 @@ public class SystemResource {
 				.collect(Collectors.toList());
 
 		// search for loggers
-		results.addAll(getLoggerStream()//
-				.map(Logger::getName)
+		results.addAll(getLoggerStream().map(Logger::getName)
 				.map(String::toLowerCase)
 				.filter(name -> name.contains(searchString))
 				.map(name -> SearchResult.builder().title(name).id(name).type("logger").build())
@@ -507,6 +493,10 @@ public class SystemResource {
 		private final String name = Oversigt.APPLICATION_NAME;
 
 		private final String version = Oversigt.APPLICATION_VERSION;
+
+		public ServerInfo() {
+			// no fields to be initialized
+		}
 
 		public String getName() {
 			return name;

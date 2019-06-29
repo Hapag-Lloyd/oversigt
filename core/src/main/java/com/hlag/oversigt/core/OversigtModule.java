@@ -298,10 +298,14 @@ class OversigtModule extends AbstractModule {
 	/**
 	 * Constraint validator to check each the API calls for valid values
 	 */
-	public class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
+	class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
 
 		@Inject
 		private Injector injector;
+
+		GuiceConstraintValidatorFactory() {
+			// no fields to be initialized manually, some will be injected
+		}
 
 		/** {@inheritDoc} */
 		@Override

@@ -193,7 +193,7 @@ public class LdapAuthenticator implements Authenticator {
 				// Sleep to slow down responses for brute force attacks
 				Thread.sleep(1000);
 			} catch (@SuppressWarnings("unused") final InterruptedException ignore) {
-				// empty by design
+				// on interruption continue
 			}
 			return false;
 		}
@@ -231,6 +231,10 @@ public class LdapAuthenticator implements Authenticator {
 
 		@Nullable
 		private String uidAttribute;
+
+		public LdapConfiguration() {
+			// no fields to be initialized manually, some will be injected
+		}
 
 		public boolean isBindPasswordSet() {
 			return !Strings.isNullOrEmpty(bindPassword);

@@ -124,15 +124,14 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		switch (page) {
 		case "dashboards":
 			return map("dashboards",
-					getDashboardController().getDashboardIds()//
+					getDashboardController().getDashboardIds()
 							.stream()
 							.map(getDashboardController()::getDashboard)
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 							.collect(Collectors.toList()));
 		case "createEventSource":
 			return map("availableEventSourceKeys",
-					getDashboardController()//
-							.getEventSourceKeys()
+					getDashboardController().getEventSourceKeys()
 							.stream()
 							.sorted(EventSourceKey.COMPARATOR)
 							.collect(toList()),
@@ -144,9 +143,8 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		case "configureEventSource":
 			if (getHelper().query(exchange, "action").map("search"::equals).orElse(false)) {
 				return map("json",
-						json.toJson(getDashboardController()//
-								.getEventSourceInstances()//
-								.stream()//
+						json.toJson(getDashboardController().getEventSourceInstances()
+								.stream()
 								.collect(Collectors.toMap(EventSourceInstance::getId, instance -> {
 									return Stream.of(instance.getId(),
 											instance.getName(),
@@ -264,9 +262,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		final String eventSourceId = getHelper().param(data, "id");
 		final String name = getHelper().param(data, "name");
-		final Duration frequency = getHelper().maybeParam(data, "frequency")//
-				.map(Duration::parse)//
-				.orElse(null);
+		final Duration frequency = getHelper().maybeParam(data, "frequency").map(Duration::parse).orElse(null);
 
 		final EventSourceInstance originalInstance = getDashboardController().getEventSourceInstance(eventSourceId);
 		final EventSourceDescriptor descriptor = originalInstance.getDescriptor();
@@ -289,8 +285,8 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		}
 		// read DataItems
 		for (final EventSourceProperty p : descriptor.getDataItems()) {
-			final boolean enabled = getHelper().maybeParam(data, "enable." + eventSourceId + ".data." + p.getName())//
-					.map(Boolean::parseBoolean)//
+			final boolean enabled = getHelper().maybeParam(data, "enable." + eventSourceId + ".data." + p.getName())
+					.map(Boolean::parseBoolean)
 					.orElse(false);
 			if (enabled) {
 				final String value = getHelper().maybeParam(data, eventSourceId + ".data." + p.getName()).get();
@@ -411,7 +407,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 			try {
 				Thread.sleep(1000);
 			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				/* ignore */
+				// on interruption continue
 			}
 			shutdown.run();
 		});

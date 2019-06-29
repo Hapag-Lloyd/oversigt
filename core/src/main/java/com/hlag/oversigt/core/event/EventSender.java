@@ -141,8 +141,7 @@ public class EventSender {
 		// special handling for error events
 		if (event instanceof ErrorEvent) {
 			final OversigtEvent cachedEvent = cachedEvents.get(event.getId());
-			return cachedEvent == null //
-					|| cachedEvent instanceof ErrorEvent;
+			return cachedEvent == null || cachedEvent instanceof ErrorEvent;
 		}
 
 		return true;
@@ -179,13 +178,12 @@ public class EventSender {
 		final Map<String, LocalDateTime> timestampsForConnection
 				= sentEventTimestamps.computeIfAbsent(connection, c -> Collections.synchronizedMap(new HashMap<>()));
 		final LocalDateTime lastEventTimestamp = timestampsForConnection.get(event.getId());
-		if (isErrorEvent //
-				|| lastEventTimestamp == null //
-				|| lastEventTimestamp.isEqual(event.getCreatedOn()) //
+		if (isErrorEvent
+				|| lastEventTimestamp == null
+				|| lastEventTimestamp.isEqual(event.getCreatedOn())
 				|| lastEventTimestamp.isBefore(event.getCreatedOn())) {
 			// wait if there is rate limiter
-			Optional.ofNullable(connection.getAttachment(RATE_LIMITER_KEY))//
-					.ifPresent(RateLimiter::acquire);
+			Optional.ofNullable(connection.getAttachment(RATE_LIMITER_KEY)).ifPresent(RateLimiter::acquire);
 
 			// put application ID into event
 			event.setApplicationId(applicationId);
@@ -234,8 +232,7 @@ public class EventSender {
 	}
 
 	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {
-		return dashboard//
-				.getWidgets()
+		return dashboard.getWidgets()
 				.stream()
 				.map(Widget::getEventSourceInstance)
 				.map(EventSourceInstance::getId)
