@@ -80,7 +80,8 @@ import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
 
 /**
- * Main application configuration module. Configures server and all necessary stuff
+ * Main application configuration module. Configures server and all necessary
+ * stuff
  *
  * @author avarabyeu
  * @author noxfireone
@@ -95,9 +96,11 @@ class OversigtModule extends AbstractModule {
 	/**
 	 * Create a module to configure Guice for Oversigt creation
 	 *
-	 * @param options command line options that are configured by the end user
-	 * @param shutdownRunnable a runnable that will end the Oversigt application if executed
-	 * @param extensions list of modules that will additionally be loaded
+	 * @param options          command line options that are configured by the end
+	 *                         user
+	 * @param shutdownRunnable a runnable that will end the Oversigt application if
+	 *                         executed
+	 * @param extensions       list of modules that will additionally be loaded
 	 */
 	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable) {
 		this.shutdownRunnable = shutdownRunnable;
@@ -110,7 +113,9 @@ class OversigtModule extends AbstractModule {
 		binder().requireExplicitBindings();
 
 		// some interesting values
-		binder().bind(String.class).annotatedWith(Names.named("application-id")).toInstance(UUID.randomUUID().toString());
+		binder().bind(String.class)
+				.annotatedWith(Names.named("application-id"))
+				.toInstance(UUID.randomUUID().toString());
 
 		// Jira
 		binder().requestStaticInjection(AsynchronousHttpClientFactory.class);
@@ -147,16 +152,16 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Service.class).annotatedWith(Names.named("NightlyReloader")).to(NightlyReloaderService.class);
 
 		// GSON
-		final Gson gson = new GsonBuilder()//
-			.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
-			.registerTypeAdapter(Class.class, deserializer(Class::forName))
-			.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
-			.registerTypeAdapter(Color.class, deserializer(Color::parse))
-			.registerTypeAdapter(Duration.class, serializer(Duration::toString))
-			.registerTypeAdapter(Duration.class, deserializer(Duration::parse))
-			.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
-			.registerTypeAdapter(LocalDate.class, deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
-			.create();
+		final Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, serializer(Class<?>::getName))
+				.registerTypeAdapter(Class.class, deserializer(Class::forName))
+				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
+				.registerTypeAdapter(Color.class, deserializer(Color::parse))
+				.registerTypeAdapter(Duration.class, serializer(Duration::toString))
+				.registerTypeAdapter(Duration.class, deserializer(Duration::parse))
+				.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
+				.registerTypeAdapter(LocalDate.class,
+						deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
+				.create();
 		binder().bind(Gson.class).toInstance(gson);
 
 		// Jackson for our API
@@ -178,11 +183,10 @@ class OversigtModule extends AbstractModule {
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
 		final GuiceConstraintValidatorFactory constraintValidatorFactory = new GuiceConstraintValidatorFactory();
 		requestInjection(constraintValidatorFactory);
-		final Validator validator = Validation
-			.buildDefaultValidatorFactory()
-			.usingContext()
-			.constraintValidatorFactory(constraintValidatorFactory)
-			.getValidator();
+		final Validator validator = Validation.buildDefaultValidatorFactory()
+				.usingContext()
+				.constraintValidatorFactory(constraintValidatorFactory)
+				.getValidator();
 		binder().bind(Validator.class).toInstance(validator);
 
 		// XML
@@ -202,7 +206,8 @@ class OversigtModule extends AbstractModule {
 	}
 
 	/**
-	 * Create and configure the event bus used to pass events within this application
+	 * Create and configure the event bus used to pass events within this
+	 * application
 	 *
 	 * @param sender the sender used to send events to the clients
 	 * @return the event bus
@@ -219,7 +224,8 @@ class OversigtModule extends AbstractModule {
 	/**
 	 * Create the configuration for the template engine used to render HTML output
 	 *
-	 * @param templateNumberFormat the number format to be used by the rendering engine
+	 * @param templateNumberFormat the number format to be used by the rendering
+	 *                             engine
 	 * @return the configuration
 	 */
 	@Singleton
@@ -227,8 +233,8 @@ class OversigtModule extends AbstractModule {
 	@Inject
 	freemarker.template.Configuration provideTemplateConfiguration(
 			@Named("templateNumberFormat") final String templateNumberFormat) {
-		final freemarker.template.Configuration configuration = new freemarker.template.Configuration(
-			freemarker.template.Configuration.VERSION_2_3_23);
+		final freemarker.template.Configuration configuration
+				= new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_23);
 		configuration.setTemplateLoader(new ClassTemplateLoader(Oversigt.class, "/"));
 		configuration.setNumberFormat(templateNumberFormat);
 		configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
@@ -246,10 +252,8 @@ class OversigtModule extends AbstractModule {
 		final JsonProvider jsonProvider = new JacksonJsonProvider();
 		final MappingProvider mappingProvider = new JacksonMappingProvider();
 
-		final com.jayway.jsonpath.Configuration jsonpathConfiguration = com.jayway.jsonpath.Configuration
-			.builder()
-			.options(Option.DEFAULT_PATH_LEAF_TO_NULL)
-			.build();
+		final com.jayway.jsonpath.Configuration jsonpathConfiguration
+				= com.jayway.jsonpath.Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build();
 		com.jayway.jsonpath.Configuration.setDefaults(new com.jayway.jsonpath.Configuration.Defaults() {
 			@Override
 			public Set<Option> options() {
@@ -284,25 +288,29 @@ class OversigtModule extends AbstractModule {
 	/**
 	 * Constraint validator to check each the API calls for valid values
 	 */
-	public class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
+	class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
 
 		@Inject
 		private Injector injector;
+
+		GuiceConstraintValidatorFactory() {
+			// no fields to be initialized manually, some will be injected
+		}
 
 		/** {@inheritDoc} */
 		@Override
 		public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
 			/*
-			 * By default, all beans are in prototype scope, so new instance will be obtained each
-			 * time. Validator implementer may declare it as singleton and manually maintain
-			 * internal state (to re-use validators and simplify life for GC)
+			 * By default, all beans are in prototype scope, so new instance will be
+			 * obtained each time. Validator implementer may declare it as singleton and
+			 * manually maintain internal state (to re-use validators and simplify life for
+			 * GC)
 			 */
-			final boolean bound = injector
-				.getBindings()//
-				.keySet()
-				.stream()
-				.map(k -> k.getTypeLiteral().getRawType())
-				.anyMatch(k -> key.equals(k));
+			final boolean bound = injector.getBindings()
+					.keySet()
+					.stream()
+					.map(k -> k.getTypeLiteral().getRawType())
+					.anyMatch(k -> key.equals(k));
 			if (bound) {
 				return injector.getInstance(key);
 			}

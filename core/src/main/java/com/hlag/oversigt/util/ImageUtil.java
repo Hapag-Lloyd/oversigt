@@ -26,11 +26,7 @@ public final class ImageUtil {
 
 	public static String getPreviewImageUrl(final EventSourceDescriptor info) {
 		return IMAGE_URLS.computeIfAbsent(info,
-				i -> getPreviewImageUrl(//
-						Optional//
-								.ofNullable(info.getServiceClass())
-								.map(Class::getName)
-								.orElse(null),
+				i -> getPreviewImageUrl(Optional.ofNullable(info.getServiceClass()).map(Class::getName).orElse(null),
 						i.getView()));
 	}
 

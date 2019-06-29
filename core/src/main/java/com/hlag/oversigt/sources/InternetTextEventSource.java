@@ -54,6 +54,10 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	@Inject
 	private Gson gson;
 
+	public InternetTextEventSource() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@Override
 	protected TextEvent produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
@@ -75,11 +79,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		if (elements.isEmpty()) {
 			output = getDefaultValue();
 		} else if (hasStringFormat()) {
-			output = elements//
-					.stream()
-					.map(gson::toJson)
-					.map(this::useStringFormat)
-					.collect(Collectors.joining("\n"));
+			output = elements.stream().map(gson::toJson).map(this::useStringFormat).collect(Collectors.joining("\n"));
 		} else {
 			output = getMultiResultBehaviour().extractElement(elements).toString();
 		}
@@ -88,8 +88,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	}
 
 	private List<?> extractElements(final String json) {
-		return getJsonPaths()//
-				.stream()
+		return getJsonPaths().stream()
 				.map(jp -> extractElement(jp, json))
 				.flatMap(Collection::stream)
 				.collect(Collectors.toList());
@@ -111,11 +110,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	}
 
 	private String extractSingleElement(final JsonPath jsonPath, final String json) {
-		return extractElement(jsonPath, json)//
-				.stream()
-				.findFirst()
-				.map(Object::toString)
-				.orElse("");
+		return extractElement(jsonPath, json).stream().findFirst().map(Object::toString).orElse("");
 	}
 
 	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match")
@@ -126,14 +121,12 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	public void setDefaultValue(final String defaultValue) {
 		this.defaultValue = defaultValue;
 	}
-	//
 	// @Property(name = "JSONPath Expression", description = "The path to the values
 	// to be shown. If more than one item is returned one single value will be
 	// chosen randomly.", type = "text")
 	// public String getPathExpression() {
 	// return pathExpression;
 	// }
-	//
 	// public void setPathExpression(String pathExpression) {
 	// this.pathExpression = pathExpression;
 	// }
@@ -142,10 +135,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		// if (getPathExpressions().length == 0) {
 		// return Arrays.asList(JsonPath.compile(getPathExpression()));
 		// } else {
-		return Arrays//
-				.stream(getPathExpressions())
-				.map(JsonPath::compile)
-				.collect(Collectors.toList());
+		return Arrays.stream(getPathExpressions()).map(JsonPath::compile).collect(Collectors.toList());
 		// }
 	}
 

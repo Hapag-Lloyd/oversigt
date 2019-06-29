@@ -34,6 +34,8 @@ import io.swagger.annotations.Tag;
 						description = "This authorization definition uses JSON Web Tokens. To correctly use it please prepend a 'Bearer ' to the token.") }),
 		consumes = { MediaType.APPLICATION_JSON },
 		produces = { MediaType.APPLICATION_JSON })
-public class Api {
-	// Empty class just for Swagger definition
+public final class Api {
+	private Api() {
+		throw new RuntimeException();
+	}
 }

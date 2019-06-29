@@ -4,6 +4,7 @@ import static com.hlag.oversigt.util.Utils.map;
 import static io.undertow.util.Methods.GET;
 import static io.undertow.util.Methods.POST;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URL;
@@ -49,7 +50,7 @@ public class LoginHandler implements HttpHandler {
 	@Inject
 	public LoginHandler(final Configuration templateConfiguration,
 			final Authenticator authenticator,
-			final HttpServerExchangeHandler exchangeHelper) {
+			final HttpServerExchangeHandler exchangeHelper) throws IOException {
 		this.templateConfiguration = templateConfiguration;
 		this.authenticator = authenticator;
 		this.exchangeHelper = exchangeHelper;
@@ -65,8 +66,6 @@ public class LoginHandler implements HttpHandler {
 					} else {
 						break;
 					}
-				} catch (final Exception ignore) {
-					// empty by design
 				}
 			} catch (final IllegalArgumentException e) {
 				break;

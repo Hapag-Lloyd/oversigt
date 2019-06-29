@@ -157,9 +157,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 				.filter(i -> i.getName().equals(s))
 				.findAny()
 				.get();
-		parameters//
-				.stream()//
-				.filter(s -> s.startsWith(widgetData))//
+		parameters.stream()
+				.filter(s -> s.startsWith(widgetData))
 				.forEach(s -> widget.setWidgetData(getProperty.apply(widget, s.substring(widgetData.length())),
 						getHelper().param(formData, s)));
 		// save
@@ -184,9 +183,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			final int py = Integer.parseInt(value.get("y"));
 			final int sx = Integer.parseInt(value.get("w"));
 			final int sy = Integer.parseInt(value.get("h"));
-			if (widget.getPosX() != px //
-					|| widget.getPosY() != py //
-					|| widget.getSizeX() != sx //
+			if (widget.getPosX() != px
+					|| widget.getPosY() != py
+					|| widget.getSizeX() != sx
 					|| widget.getSizeY() != sy) {
 				widget.setPosX(px);
 				widget.setPosY(py);
@@ -281,14 +280,12 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_checkUsername(final HttpServerExchange exchange, final FormData formData) {
-		return okJson(getHelper().maybeParam(formData, "username")//
-				.map(authenticator::isUsernameValid)//
-				.orElse(false));
+		return okJson(getHelper().maybeParam(formData, "username").map(authenticator::isUsernameValid).orElse(false));
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_OWNER, dashboard = true)
 	protected ActionResponse doAction_setOwners(final HttpServerExchange exchange, final FormData formData) {
-		final Optional<List<String>> newOwners = getHelper().maybeParam(formData, "usernames")//
+		final Optional<List<String>> newOwners = getHelper().maybeParam(formData, "usernames")
 				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
 				.map(ArrayList<String>::new);
 
@@ -325,7 +322,7 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
 	protected ActionResponse doAction_setEditors(final HttpServerExchange exchange, final FormData formData) {
-		final Optional<List<String>> newEditors = getHelper().maybeParam(formData, "usernames")//
+		final Optional<List<String>> newEditors = getHelper().maybeParam(formData, "usernames")
 				.map(Splitter.on(Pattern.compile("[,\\s]+")).omitEmptyStrings()::splitToList)
 				.map(ArrayList<String>::new);
 

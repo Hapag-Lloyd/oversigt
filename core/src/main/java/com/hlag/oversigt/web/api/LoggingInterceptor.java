@@ -39,6 +39,10 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 
 	static final ThreadLocal<Object[]> PAREMETERS = new ThreadLocal<>();
 
+	public LoggingInterceptor() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@Override
 	public void filter(final ContainerRequestContext requestContext) throws IOException {
 		PAREMETERS.set(null);
@@ -66,7 +70,8 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 							method.getDeclaringClass().getSimpleName(),
 							method.getName(),
 							values.stream().collect(Collectors.joining(", ")));
-				} else if (responseContext.getStatus() == 401/* UNAUTHORIZED */) {
+				} else if (responseContext.getStatus() == 401) {
+					// 401 means UNAUTHORIZED
 					Utils.logChange("somebody",
 							"Failed calling %s.%s()",
 							method.getDeclaringClass().getSimpleName(),
@@ -90,11 +95,11 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 	}
 
 	private static boolean isApiParameter(final Parameter parameter) {
-		return parameter.isAnnotationPresent(PathParam.class)//
-				|| parameter.isAnnotationPresent(QueryParam.class)//
-				|| parameter.isAnnotationPresent(HeaderParam.class)//
-				|| parameter.isAnnotationPresent(CookieParam.class)//
-				|| parameter.isAnnotationPresent(FormParam.class)//
+		return parameter.isAnnotationPresent(PathParam.class)
+				|| parameter.isAnnotationPresent(QueryParam.class)
+				|| parameter.isAnnotationPresent(HeaderParam.class)
+				|| parameter.isAnnotationPresent(CookieParam.class)
+				|| parameter.isAnnotationPresent(FormParam.class)
 				|| parameter.isAnnotationPresent(MatrixParam.class);
 	}
 

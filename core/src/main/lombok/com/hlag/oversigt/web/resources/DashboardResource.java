@@ -77,6 +77,10 @@ public class DashboardResource {
 	@Context
 	private UriInfo uri;
 
+	public DashboardResource() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@GET
 	@ApiResponses({
 			@ApiResponse(code = 200,
@@ -97,12 +101,11 @@ public class DashboardResource {
 	@ApiResponses({
 			@ApiResponse(code = 201,
 					message = "A new dashboard has been created. The body contains a detailed representation of the newly created dashboard",
-					response = Dashboard.class), //
+					response = Dashboard.class),
 			@ApiResponse(code = 303,
-					message = "The dashboard already exists. Sending redirect to dashboard information.") //
-	})
+					message = "The dashboard already exists. Sending redirect to dashboard information.") })
 	@JwtSecured
-	@ApiOperation(value = "Create new dashboard", //
+	@ApiOperation(value = "Create new dashboard",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	public Response createDashboard(@Context final SecurityContext securityContext,
 			@QueryParam("dashboardId") @NotNull final String id,
@@ -116,8 +119,7 @@ public class DashboardResource {
 		dashboard = dashboardController.createDashboard(id,
 				Principal.loadPrincipal(authenticator, ownerUserId),
 				enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));
-		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId()))//
-				.entity(dashboard)
+		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId())).entity(dashboard)
 				.type(MediaType.APPLICATION_JSON_TYPE)
 				.build();
 	}
@@ -127,11 +129,12 @@ public class DashboardResource {
 	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "A detailed representation of the requested dashboard",
-					response = Dashboard.class), //
-			@ApiResponse(code = 404, message = "The requested dashboard does not exist", response = ErrorResponse.class) //
-	})
+					response = Dashboard.class),
+			@ApiResponse(code = 404,
+					message = "The requested dashboard does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured(mustBeAuthenticated = false)
-	@ApiOperation(value = "Read dashboard details", //
+	@ApiOperation(value = "Read dashboard details",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@NoChangeLog
 	@PermitAll
@@ -153,15 +156,14 @@ public class DashboardResource {
 
 	@PATCH
 	@Path("/{dashboardId}")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class), //
-			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class),
+			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class),
 			@ApiResponse(code = 403,
 					message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to",
-					response = ErrorResponse.class), //
-			@ApiResponse(code = 404, message = "The dashboard does not exist") //
-	})
-	@ApiOperation(value = "Partially update dashboard details", //
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = "The dashboard does not exist") })
+	@ApiOperation(value = "Partially update dashboard details",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
@@ -219,15 +221,14 @@ public class DashboardResource {
 
 	@PUT
 	@Path("/{dashboardId}")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class), //
-			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "The dashboard has been updated", response = Dashboard.class),
+			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class),
 			@ApiResponse(code = 403,
 					message = "The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to",
-					response = ErrorResponse.class), //
-			@ApiResponse(code = 404, message = "The dashboard does not exist") //
-	})
-	@ApiOperation(value = "Update dashboard details", //
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = "The dashboard does not exist") })
+	@ApiOperation(value = "Update dashboard details",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
@@ -297,12 +298,11 @@ public class DashboardResource {
 
 	@PUT
 	@Path("/{dashboardId}/positions")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The widget positions has been updated"), //
-			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class), //
-			@ApiResponse(code = 404, message = "The dashboard does not exist") //
-	})
-	@ApiOperation(value = "Update dashboard widget positions", //
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "The widget positions has been updated"),
+			@ApiResponse(code = 400, message = "The provided information are invalid", response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = "The dashboard does not exist") })
+	@ApiOperation(value = "Update dashboard widget positions",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
@@ -317,12 +317,9 @@ public class DashboardResource {
 		}
 
 		// Do all given widget positions match a dashboard widget?
-		final Set<String> unmatchedWidgetIds = widgetPositions.stream()//
+		final Set<String> unmatchedWidgetIds = widgetPositions.stream()
 				.mapToInt(WidgetPosition::getWidgetId)
-				.filter(i -> !dashboard.getWidgets()//
-						.stream()
-						.mapToInt(Widget::getId)
-						.anyMatch(w -> i == w))
+				.filter(i -> !dashboard.getWidgets().stream().mapToInt(Widget::getId).anyMatch(w -> i == w))
 				.mapToObj(Integer::toString)
 				.collect(Collectors.toSet());
 		if (!unmatchedWidgetIds.isEmpty()) {
@@ -344,12 +341,11 @@ public class DashboardResource {
 
 	@DELETE
 	@Path("/{dashboardId}")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "The dashboard has been deleted"), //
-			@ApiResponse(code = 404, message = "The dashboard does not exist", response = ErrorResponse.class) //
-	})
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "The dashboard has been deleted"),
+			@ApiResponse(code = 404, message = "The dashboard does not exist", response = ErrorResponse.class) })
 	@JwtSecured
-	@ApiOperation(value = "Delete dashboard", //
+	@ApiOperation(value = "Delete dashboard",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response deleteDashboard(@PathParam("dashboardId") final String id) {
@@ -378,6 +374,10 @@ public class DashboardResource {
 	}
 
 	public static class WidgetPosition {
+		public WidgetPosition() {
+			// no fields to be initialized
+		}
+
 		@NotNull
 		@Min(1)
 		@Positive

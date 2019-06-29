@@ -163,15 +163,14 @@ public class AbstractConfigurationHandler implements HttpHandler {
 			model = new HashMap<>();
 		}
 		final Optional<Principal> principal = exchangeHelper.getPrincipal(exchange);
-		model.putAll(map(//
-				"principal",
+		model.putAll(map("principal",
 				principal.orElse(null),
 				"menuItems",
 				pages.entrySet()
 						.stream()
 						.filter(p -> principal.map(p.getValue()::isAllowedFor).orElse(false))
 						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
-						.toArray(), //
+						.toArray(),
 				"activeMenuItem",
 				page,
 				"formUrl",
@@ -285,25 +284,23 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	protected boolean isAjax(final FormData data) {
-		return Optional//
-				.ofNullable(data.getFirst("ajax"))//
-				.map(FormValue::getValue)//
-				.map(Boolean::parseBoolean)//
+		return Optional.ofNullable(data.getFirst("ajax"))
+				.map(FormValue::getValue)
+				.map(Boolean::parseBoolean)
 				.orElse(false);
 	}
 
 	private Method getMethod(final String name, final Object... objects) {
-		try {
-			final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
-			final Class<?>[] classes = new Class<?>[objs.length];
-			for (int i = 0; i < objs.length; i += 1) {
-				classes[i] = objs[i].getClass();
-			}
-			return getClass().getDeclaredMethod("doAction_" + name, classes);
-		} catch (final Exception ignore) {
-			// empty by design
+		final Object[] objs = Nullables.orElseGet(objects, () -> new Object[0]);
+		final Class<?>[] classes = new Class<?>[objs.length];
+		for (int i = 0; i < objs.length; i += 1) {
+			classes[i] = objs[i].getClass();
 		}
-		return null;
+		try {
+			return getClass().getDeclaredMethod("doAction_" + name, classes);
+		} catch (final NoSuchMethodException | SecurityException ignore) {
+			return null;
+		}
 	}
 
 	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
@@ -319,14 +316,14 @@ public class AbstractConfigurationHandler implements HttpHandler {
 						final NeedsRole needsRole = method.getAnnotation(NeedsRole.class);
 						boolean proceed = false;
 						if (!needsRole.dashboard()) {
-							proceed = exchangeHelper.getPrincipal(exchange)//
-									.map(p -> p.hasRole(needsRole.role().getRole()))//
+							proceed = exchangeHelper.getPrincipal(exchange)
+									.map(p -> p.hasRole(needsRole.role().getRole()))
 									.orElse(false);
 						} else {
-							proceed = exchangeHelper.getPrincipal(exchange)//
+							proceed = exchangeHelper.getPrincipal(exchange)
 									.map(p -> p.hasRole(needsRole.role()
 											.getRole()
-											.getDashboardSpecificRole(getDashboard(exchange).getId())))//
+											.getDashboardSpecificRole(getDashboard(exchange).getId())))
 									.orElse(false);
 						}
 						if (!proceed) {
@@ -411,9 +408,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 		public boolean equals(final Object other) {
 			if (other instanceof PageInfo) {
 				final PageInfo that = (PageInfo) other;
-				return name.equals(that.name) //
-						&& filename.equals(that.filename) //
-						&& title.equals(that.title);
+				return name.equals(that.name) && filename.equals(that.filename) && title.equals(that.title);
 			}
 			return false;
 		}

@@ -89,6 +89,10 @@ public class JsonUtils {
 	@Inject
 	private Storage storage;
 
+	public JsonUtils() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	public String toJson(final Object object) {
 		return gson.toJson(object);
 	}
@@ -195,7 +199,7 @@ public class JsonUtils {
 				maps.add(0, map("value", 0, "title", "\u00a0"));
 			}
 		} catch (final NoSuchFieldException | SecurityException ignore) {
-			// empty by design
+			// continue if EMPTY is not found
 		}
 		return map("type",
 				"string",
@@ -280,8 +284,8 @@ public class JsonUtils {
 		} else {
 			// check for notnull
 			final List<Field> fields = TypeUtils.streamFields(clazz)
-					.filter(f -> !Modifier.isTransient(f.getModifiers()))//
-					.filter(f -> !Modifier.isStatic(f.getModifiers()))//
+					.filter(f -> !Modifier.isTransient(f.getModifiers()))
+					.filter(f -> !Modifier.isStatic(f.getModifiers()))
 					.collect(Collectors.toList());
 			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
 			for (final Field field : fields) {
@@ -295,7 +299,7 @@ public class JsonUtils {
 				fieldsMap.put(field.getName(), map);
 			}
 			final Map<String, Object> map = map("type",
-					"object", //
+					"object",
 					"title",
 					makeFirstCharacterCapital(clazz.getSimpleName()),
 					"properties",

@@ -49,7 +49,7 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 			final ApiValidationException ave = (ApiValidationException) exception;
 			return ErrorResponse.badRequest(uuid,
 					"Unable to validate input parameters.",
-					ave.getViolations()//
+					ave.getViolations()
 							.stream()
 							.map(v -> v.getPropertyPath() + " " + v.getMessage())
 							.collect(Collectors.toList()));

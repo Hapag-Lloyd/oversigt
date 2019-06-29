@@ -41,6 +41,10 @@ import io.undertow.server.handlers.form.FormData;
 public class DashboardConfigurationHandlerTest {
 	private static final Set<String> VALID_USERNAMES = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
+	public DashboardConfigurationHandlerTest() {
+		// no fields to be initialized
+	}
+
 	private static Dashboard createValidDashboard() {
 		return new Dashboard("TEST",
 				"TEST",

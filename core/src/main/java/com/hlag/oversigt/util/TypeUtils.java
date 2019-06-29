@@ -60,8 +60,9 @@ public final class TypeUtils {
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c) && //
-				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent)));
+		return findClasses(packageToSearch,
+				c -> assignableTo.isAssignableFrom(c)
+						&& (annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent)));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Predicate<Class<?>> filter) {
@@ -70,8 +71,7 @@ public final class TypeUtils {
 				packageToSearch);
 		final Set<ClassInfo> classes;
 		try {
-			classes = ClassPath//
-					.from(Thread.currentThread().getContextClassLoader())
+			classes = ClassPath.from(Thread.currentThread().getContextClassLoader())
 					.getTopLevelClassesRecursive(packageToSearch.getName());
 		} catch (final IOException e) {
 			throw new RuntimeException("Unable to search classes in class path", e);
@@ -80,14 +80,13 @@ public final class TypeUtils {
 		// iterates over all classes, filter by HandlesEvent annotation and transforms
 		// stream to needed form
 		@SuppressWarnings("unchecked")
-		final Stream<Class<T>> stream = classes//
-				.stream()//
-				.map(TypeUtils::loadClassInfo)//
-				.filter(Optional::isPresent)//
-				.map(Optional::get)//
-				.filter(c -> !c.isInterface())//
-				.filter(filter)//
-				.filter(c -> !Modifier.isAbstract(c.getModifiers()))//
+		final Stream<Class<T>> stream = classes.stream()
+				.map(TypeUtils::loadClassInfo)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.filter(c -> !c.isInterface())
+				.filter(filter)
+				.filter(c -> !Modifier.isAbstract(c.getModifiers()))
 				.map(c -> (Class<T>) c);
 		return stream;
 	}
@@ -96,16 +95,16 @@ public final class TypeUtils {
 			final Collection<String> classNames,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		final Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c) && //
-				(annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent));
+		final Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c)
+				&& (annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent));
 		@SuppressWarnings("unchecked")
 		final Stream<Class<T>> stream = classNames.stream()
 				.map(s -> loadClassInfo(classLoader, s))
 				.filter(Optional::isPresent)
 				.map(Optional::get)
-				.filter(c -> !c.isInterface())//
-				.filter(predicate)//
-				.filter(c -> !Modifier.isAbstract(c.getModifiers()))//
+				.filter(c -> !c.isInterface())
+				.filter(predicate)
+				.filter(c -> !Modifier.isAbstract(c.getModifiers()))
 				.map(c -> (Class<T>) c);
 		return stream;
 	}
@@ -162,16 +161,14 @@ public final class TypeUtils {
 	}
 
 	public static Stream<String> getMembers(final Class<?> clazz) {
-		return streamFields(clazz) //
-				.filter(f -> !Modifier.isTransient(f.getModifiers()))
+		return streamFields(clazz).filter(f -> !Modifier.isTransient(f.getModifiers()))
 				.filter(f -> !Modifier.isStatic(f.getModifiers()))
 				.map(Field::getName);
 	}
 
 	public static Map<String, Object> toMemberMap(final Object object) {
 		try {
-			return Stream//
-					.of(Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors())//
+			return Stream.of(Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors())
 					.filter(i -> i.getReadMethod() != null)
 					.filter(i -> !i.getReadMethod().isAnnotationPresent(JsonIgnore.class))
 					.filter(i -> i.getWriteMethod() == null
@@ -199,10 +196,9 @@ public final class TypeUtils {
 		} catch (final NoSuchFieldException | SecurityException e) {
 			throw new RuntimeException("Unable to find standard values", e);
 		}
-		members.addAll(streamFields(clazz)//
-				.filter(f -> !Modifier.isTransient(f.getModifiers()))//
-				.filter(f -> !Modifier.isStatic(f.getModifiers()))//
-				.map(SerializablePropertyMember::new)//
+		members.addAll(streamFields(clazz).filter(f -> !Modifier.isTransient(f.getModifiers()))
+				.filter(f -> !Modifier.isStatic(f.getModifiers()))
+				.map(SerializablePropertyMember::new)
 				.collect(Collectors.toList()));
 		members = new ArrayList<>(members);
 		((List<?>) members).remove(0);
@@ -263,7 +259,7 @@ public final class TypeUtils {
 			try {
 				return createInstance(clazz, input);
 			} catch (final Exception ignore) {
-				// empty by design
+				// ignore any problem when creating an instance
 			}
 		}
 		return defaultValueSupplier.get();
@@ -304,8 +300,7 @@ public final class TypeUtils {
 				throw new RuntimeException("Unknown primitive type: " + clazz.getName());
 			}
 		} else {
-			final List<Constructor<?>> constructors = Arrays//
-					.stream(clazz.getDeclaredConstructors())//
+			final List<Constructor<?>> constructors = Arrays.stream(clazz.getDeclaredConstructors())
 					.filter(c -> c.getParameterCount() == parameters.length)
 					.filter(c -> {
 						for (int i = 0; i < parameters.length; i += 1) {
@@ -315,7 +310,7 @@ public final class TypeUtils {
 						}
 						return true;
 					})
-					.limit(2)//
+					.limit(2)
 					.collect(Collectors.toList());
 			if (constructors.size() == 1) {
 				constructors.get(0).setAccessible(true);
@@ -329,11 +324,10 @@ public final class TypeUtils {
 				}
 			}
 
-			final List<Method> fabricMethods = Arrays//
-					.stream(clazz.getDeclaredMethods())//
-					.filter(m -> Modifier.isStatic(m.getModifiers()))//
-					.filter(m -> m.getParameterTypes().length == parameters.length)//
-					.filter(m -> clazz.isAssignableFrom(m.getReturnType()))//
+			final List<Method> fabricMethods = Arrays.stream(clazz.getDeclaredMethods())
+					.filter(m -> Modifier.isStatic(m.getModifiers()))
+					.filter(m -> m.getParameterTypes().length == parameters.length)
+					.filter(m -> clazz.isAssignableFrom(m.getReturnType()))
 					.filter(m -> {
 						for (int i = 0; i < parameters.length; i += 1) {
 							if (!m.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {
@@ -367,21 +361,16 @@ public final class TypeUtils {
 	private static <T> Optional<T> tryStaticMethods(final Collection<Method> methods,
 			final String[] names,
 			final Object... values) {
-		return (Optional<T>) Arrays//
-				.stream(names)//
-				.map(name -> tryStaticMethod(methods, name, values))//
-				.findAny()//
+		return (Optional<T>) Arrays.stream(names)
+				.map(name -> tryStaticMethod(methods, name, values))
+				.findAny()
 				.orElse(Optional.empty());
 	}
 
 	private static <T> Optional<T> tryStaticMethod(final Collection<Method> methods,
 			final String name,
 			final Object... values) {
-		return methods//
-				.stream()//
-				.filter(m -> m.getName().equals(name))//
-				.findAny()//
-				.map(m -> invokeStaticMethod(m, values));
+		return methods.stream().filter(m -> m.getName().equals(name)).findAny().map(m -> invokeStaticMethod(m, values));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -403,11 +392,10 @@ public final class TypeUtils {
 
 		Class<?> currentClazz = clazz;
 		while (currentClazz != Object.class) {
-			final Optional<Method> method = Stream//
-					.of(currentClazz.getDeclaredMethods())//
-					.filter(m -> methodNames.contains(m.getName()))//
+			final Optional<Method> method = Stream.of(currentClazz.getDeclaredMethods())
+					.filter(m -> methodNames.contains(m.getName()))
 					.filter(m -> Arrays.deepEquals(m.getParameterTypes(), parameterTypes))
-					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))//
+					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))
 					.findFirst();
 			if (method.isPresent()) {
 				return method.get();
@@ -475,16 +463,14 @@ public final class TypeUtils {
 		private final boolean required;
 
 		private SerializablePropertyMember(final Field field) {
-			this(//
-					field,
+			this(field,
 					field.getName(),
 					Type.fromField(field),
 					field.isAnnotationPresent(Member.class) ? field.getAnnotation(Member.class) : null);
 		}
 
 		private SerializablePropertyMember(final Field field, final String name, final Type type, final Member member) {
-			this(//
-					field,
+			this(field,
 					name,
 					type,
 					member != null ? member.icon() : "tag",
@@ -664,10 +650,9 @@ public final class TypeUtils {
 
 	public static final class ReturnValue {
 		public static ReturnValue find(final Class<?> clazz, final String methodName, final Object returnValue) {
-			return new ReturnValue(Arrays.stream(clazz.getMethods())//
-					.filter(m -> m.getName().equals(methodName))
-					.findFirst()
-					.get(), returnValue);
+			return new ReturnValue(
+					Arrays.stream(clazz.getMethods()).filter(m -> m.getName().equals(methodName)).findFirst().get(),
+					returnValue);
 		}
 
 		private final Method method;

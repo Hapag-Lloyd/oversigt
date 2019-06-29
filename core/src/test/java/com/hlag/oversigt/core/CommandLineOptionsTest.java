@@ -8,15 +8,15 @@ import java.util.Map;
 import org.junit.Test;
 
 public class CommandLineOptionsTest {
+	public CommandLineOptionsTest() {
+		// no fields to be initialized
+	}
+
 	@Test
 	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() throws Exception {
 		// given
-		final String[] givenCommandLine = new String[] { //
-				"--debug", //
-				"--startEventSources", //
-				"--ldapBindPassword", //
-				"idefix", //
-		};
+		final String[] givenCommandLine
+				= new String[] { "--debug", "--startEventSources", "--ldapBindPassword", "idefix", };
 
 		// when
 		final CommandLineOptions actualStartOptions = CommandLineOptions.parse(givenCommandLine);
@@ -31,11 +31,7 @@ public class CommandLineOptionsTest {
 	@Test
 	public void shouldCreateFilledMap_whenParsingStringArray_givenValidCommandLine() throws Exception {
 		// given
-		final String[] givenCommandLine = new String[] { //
-				"--debug", //
-				"--ldapBindPassword", //
-				"idefix", //
-		};
+		final String[] givenCommandLine = new String[] { "--debug", "--ldapBindPassword", "idefix", };
 		final Map<String, String> expectedProperties = new HashMap<>();
 		expectedProperties.put("debugFallback", "true");
 		expectedProperties.put("ldapBindPasswordFallback", "idefix");

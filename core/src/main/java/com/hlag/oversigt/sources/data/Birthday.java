@@ -14,6 +14,10 @@ public class Birthday {
 	@NotNull
 	private LocalDate date;
 
+	public Birthday() {
+		// no fields to be initialized
+	}
+
 	public String getName() {
 		return name;
 	}

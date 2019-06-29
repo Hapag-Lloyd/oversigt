@@ -10,6 +10,10 @@ public interface Authenticator extends AutoCloseable {
 	Principal readPrincipal(String username);
 
 	class NoAuthenticator implements Authenticator {
+		NoAuthenticator() {
+			// empty by design
+		}
+
 		@Override
 		public Principal login(final String username, final String password) {
 			return null;

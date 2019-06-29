@@ -113,8 +113,7 @@ public class EventSourceInstanceResource {
 			startableFilter = i -> i.getDescriptor().getEventClass() != null;
 		}
 
-		Stream<EventSourceInstanceInfo> stream = controller//
-				.getEventSourceInstances()
+		Stream<EventSourceInstanceInfo> stream = controller.getEventSourceInstances()
 				.stream()
 				.filter(containingFilter)
 				.filter(startableFilter)
@@ -214,7 +213,7 @@ public class EventSourceInstanceResource {
 
 	@PUT
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200,
 					message = "The event source instance has been updated",
 					response = FullEventSourceInstanceInfo.class),
@@ -244,7 +243,7 @@ public class EventSourceInstanceResource {
 			return ErrorResponse.badRequest("The event source does not take a frequency");
 		}
 		final Set<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
-		unnessaccaryDataItems.removeAll(instance.getDescriptor()//
+		unnessaccaryDataItems.removeAll(instance.getDescriptor()
 				.getDataItems()
 				.stream()
 				.map(EventSourceProperty::getName)
@@ -286,7 +285,7 @@ public class EventSourceInstanceResource {
 
 	@DELETE
 	@Path("/{id}")
-	@ApiResponses({ //
+	@ApiResponses({
 			@ApiResponse(code = 200, message = "The event source instance has been deleted"),
 			@ApiResponse(code = 404,
 					message = "The event source instance with the given id does not exist",
@@ -322,8 +321,7 @@ public class EventSourceInstanceResource {
 			final Function<EventSourceProperty, String> getValue,
 			final Predicate<EventSourceProperty> hasValue,
 			final boolean removeEmpty) {
-		return removePasswords(propertyStream//
-				.filter(p -> !(removeEmpty && !hasValue.test(p)))
+		return removePasswords(propertyStream.filter(p -> !(removeEmpty && !hasValue.test(p)))
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
 					String string = getValue.apply(p);
 					if (p.isJson()) {
@@ -374,8 +372,7 @@ public class EventSourceInstanceResource {
 			enabled = instance.isEnabled();
 			running = controller.isRunning(instance);
 			hasError = controller.hasException(instance);
-			usedBy = new ArrayList<>(controller//
-					.getDashboardsWhereEventSourceIsUsed(instance)
+			usedBy = new ArrayList<>(controller.getDashboardsWhereEventSourceIsUsed(instance)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList()));
 		}

@@ -216,8 +216,7 @@ public class OversigtServer extends AbstractIdleService {
 	@Override
 	protected void startUp() throws Exception {
 		LOGGER.info("Loading event source descriptors");
-		dashboardController.loadEventSourceDescriptors(//
-				Arrays.asList(MotivationEventSource.class.getPackage()),
+		dashboardController.loadEventSourceDescriptors(Arrays.asList(MotivationEventSource.class.getPackage()),
 				Arrays.asList(addonFolders),
 				Arrays.asList(widgetsPaths));
 		LOGGER.info("Loading event source instances");
@@ -227,7 +226,7 @@ public class OversigtServer extends AbstractIdleService {
 
 		LOGGER.info("Configuring web server");
 		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
-			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
+			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))
 					.map(Deque::getFirst)
 					.map(dashboardController::getDashboard)
 					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
@@ -251,40 +250,38 @@ public class OversigtServer extends AbstractIdleService {
 		// withLogin(dashboardConfigurationHandler);
 
 		// Create Handlers for dynamic content
-		final RoutingHandler routingHandler = Handlers//
-				.routing()//
+		final RoutingHandler routingHandler = Handlers.routing()
 				// dashboard handling
-				.get("/{dashboard}", this::serveDashboard)//
-				.get("/events", sseHandler)//
-				.get("/views/{widget}", this::serveWidget)//
+				.get("/{dashboard}", this::serveDashboard)
+				.get("/events", sseHandler)
+				.get("/views/{widget}", this::serveWidget)
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
 				// dashboard configuration
-				.get("/{dashboard}/config", this::redirectToConfigPage)//
-				.post("/{dashboard}/config", this::redirectToConfigPage)//
-				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)//
-				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)//
-				.get("/{dashboard}/create", securedDashboardCreationHandler)//
-				.post("/{dashboard}/create", securedDashboardCreationHandler)//
-				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
-				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)//
+				.get("/{dashboard}/config", this::redirectToConfigPage)
+				.post("/{dashboard}/config", this::redirectToConfigPage)
+				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)
+				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)
+				.get("/{dashboard}/create", securedDashboardCreationHandler)
+				.post("/{dashboard}/create", securedDashboardCreationHandler)
+				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)
+				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)
 				// server configuration
-				// .get("/config", securedEventSourceConfigurationHandler)//
-				// .post("/config", securedEventSourceConfigurationHandler)//
-				// .get("/config/{page}", securedEventSourceConfigurationHandler)//
-				// .post("/config/{page}", securedEventSourceConfigurationHandler)//
+				// .get("/config", securedEventSourceConfigurationHandler)
+				// .post("/config", securedEventSourceConfigurationHandler)
+				// .get("/config/{page}", securedEventSourceConfigurationHandler)
+				// .post("/config/{page}", securedEventSourceConfigurationHandler)
 				// JSON Schema output
 				.get("/schema/{class}", withLogin(this::serveJsonSchema))
 				// session handling
-				.get("/logout", withSession(this::doLogout))//
+				.get("/logout", withSession(this::doLogout))
 				// default handler
 				.get("/", this::redirectToWelcomePage)
 				.get("/welcome", welcomeHandler)
 				.get("/welcome/{page}", welcomeHandler);
 
 		// Create Handlers for static content
-		final HttpHandler rootHandler = Handlers//
-				.path(routingHandler)//
+		final HttpHandler rootHandler = Handlers.path(routingHandler)
 				.addPrefixPath("/assets", createAssetsHandler())
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
@@ -292,9 +289,9 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/config", createAngularHandler("oversigt-ui"));
 
 		// Create Handler for compressing content
-		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()//
-				.addEncodingHandler("gzip", new GzipEncodingProvider(), 50, Predicates.maxContentSize(5))//
-				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(10)))//
+		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()
+				.addEncodingHandler("gzip", new GzipEncodingProvider(), 50, Predicates.maxContentSize(5))
+				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(10)))
 						.setNext(rootHandler);
 
 		final Logger accessLogger = LoggerFactory.getLogger("access");
@@ -304,10 +301,10 @@ public class OversigtServer extends AbstractIdleService {
 				OversigtServer.class.getClassLoader());
 
 		final Builder builder = Undertow.builder();
-		listeners.stream()//
+		listeners.stream()
 				.filter(not(HttpListenerConfiguration::isSsl))
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
-		listeners.stream()//
+		listeners.stream()
 				.filter(HttpListenerConfiguration::isSsl)
 				.forEach(c -> builder
 						.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
@@ -474,7 +471,7 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
 
-	private HttpHandler createAngularHandler(final String prefix) {
+	private HttpHandler createAngularHandler(final String prefix) throws IOException {
 		final Path basePath;
 		try {
 			basePath = FileUtils.getPath(Resources.getResource(prefix).toURI());
@@ -495,8 +492,6 @@ public class OversigtServer extends AbstractIdleService {
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
 					.collect(toList()));
-		} catch (final IOException ignore) {
-			// empty by design
 		}
 
 		return exchange -> {
@@ -594,16 +589,15 @@ public class OversigtServer extends AbstractIdleService {
 		if (!mappingString.equals("/*")) {
 			prefix = mappingString.substring(0, mappingString.length() - 2);
 		}
-		final ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServlet30Dispatcher.class)//
-				.setAsyncSupported(true)
-				.setLoadOnStartup(1)
-				.addMapping(mappingString);
+		final ServletInfo resteasyServlet
+				= servlet("ResteasyServlet", HttpServlet30Dispatcher.class).setAsyncSupported(true)
+						.setLoadOnStartup(1)
+						.addMapping(mappingString);
 		if (prefix != null) {
 			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
 		}
 
-		return new DeploymentInfo()//
-				.addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
+		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
 				.addServlet(resteasyServlet);
 	}
 
@@ -634,7 +628,7 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final class OversigtServerListener extends Listener {
 		private OversigtServerListener() {
-			// empty by design
+			// no fileds to be initialized
 		}
 
 		@Override

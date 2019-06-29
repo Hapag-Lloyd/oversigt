@@ -56,6 +56,12 @@ import io.swagger.annotations.Authorization;
 public class Authentication {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Authentication.class);
 
+	private static Map<String, String> createTokenMap(final String token) {
+		final Map<String, String> map = new HashMap<>();
+		map.put("token", token);
+		return map;
+	}
+
 	@Inject
 	private ApiAuthenticationUtils authentication;
 
@@ -65,20 +71,17 @@ public class Authentication {
 	@Context
 	private SecurityContext securityContext;
 
-	private static Map<String, String> createTokenMap(final String token) {
-		final Map<String, String> map = new HashMap<>();
-		map.put("token", token);
-		return map;
+	public Authentication() {
+		// no fields to be initialized manually, some will be injected
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/login")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "User successfully logged in", response = AuthData.class), //
-			@ApiResponse(code = 403, message = "Log in failed") //
-	})
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "User successfully logged in", response = AuthData.class),
+			@ApiResponse(code = 403, message = "Log in failed") })
 	@ApiOperation("Log in a user")
 	public Response authenticateUser(@FormParam("username") final String username,
 			@FormParam("password") @ApiParam(format = "password") final String password) {
@@ -103,10 +106,9 @@ public class Authentication {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/renew")
-	@ApiResponses({ //
-			@ApiResponse(code = 200, message = "Token successfully renewed", response = AuthData.class), //
-			@ApiResponse(code = 403, message = "Token renewal failed") //
-	})
+	@ApiResponses({
+			@ApiResponse(code = 200, message = "Token successfully renewed", response = AuthData.class),
+			@ApiResponse(code = 403, message = "Token renewal failed") })
 	@ApiOperation("Renew the authentication token")
 	@NoChangeLog
 	public Response renewToken(@HeaderParam("token") @NotBlank @ApiParam(allowEmptyValue = false,
@@ -119,7 +121,7 @@ public class Authentication {
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
 		} catch (final Exception ignore) {
-			// empty by design
+			// take any exception of the token check as login failure
 		}
 		if (newToken == null) {
 			return Response.status(Status.FORBIDDEN).build();
@@ -141,11 +143,7 @@ public class Authentication {
 	}
 
 	private Set<String> findRolesForUser(final Principal principal) {
-		return roleProvider//
-				.getRoles(principal.getUsername())
-				.stream()
-				.map(Role::getName)
-				.collect(toSet());
+		return roleProvider.getRoles(principal.getUsername()).stream().map(Role::getName).collect(toSet());
 	}
 
 	@GET

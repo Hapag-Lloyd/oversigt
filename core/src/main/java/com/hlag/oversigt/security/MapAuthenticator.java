@@ -59,6 +59,6 @@ public class MapAuthenticator implements Authenticator {
 
 	@Override
 	public void close() {
-		// empty by design
+		// there is no resource to be closed
 	}
 }

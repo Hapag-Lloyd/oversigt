@@ -38,6 +38,10 @@ public class SqlCountEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 
 	private String sqlStatement = "";
 
+	public SqlCountEventSource() {
+		// no fields to be initialized
+	}
+
 	@Property(name = "SQL",
 			description = "SQL Statement returning one row and two columns (hour, count). :DATE: is replaced by the current date/yesterday's date and is mandatory to use. Query has to start with select and no \";\" are allowed.",
 			type = "sql")

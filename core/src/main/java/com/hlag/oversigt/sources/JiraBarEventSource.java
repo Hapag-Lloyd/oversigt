@@ -23,6 +23,10 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 
 	private double minimumHeight = 0.35;
 
+	public JiraBarEventSource() {
+		// no fields to be initialized manually
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	protected HlBarChartEvent produceEvent() {

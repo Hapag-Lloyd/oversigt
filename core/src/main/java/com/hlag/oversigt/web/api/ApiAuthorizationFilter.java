@@ -33,6 +33,10 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	@Context
 	private ResourceInfo resourceInfo;
 
+	public ApiAuthorizationFilter() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public void filter(final ContainerRequestContext requestContext) throws IOException {

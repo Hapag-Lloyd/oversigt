@@ -87,6 +87,6 @@ public class ClassPathResourceManager implements ResourceManager {
 
 	@Override
 	public void close() throws IOException {
-		// empty by design
+		// there is no resource to be closed
 	}
 }
