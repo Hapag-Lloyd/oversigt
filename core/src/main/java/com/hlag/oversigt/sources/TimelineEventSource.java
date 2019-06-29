@@ -78,7 +78,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	}
 
 	@Override
-	protected Optional<TimelineEvent> produceExchangeEvent() throws Exception {
+	protected Optional<TimelineEvent> produceExchangeEvent() {
 		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
 		final LocalDate now = LocalDate.now(getZoneId());
 
@@ -94,13 +94,13 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		return Optional.of(event);
 	}
 
-	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) throws ServiceLocalException {
+	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {
 		addBirthdays(event, now);
 		addHolidays(event, now);
 		addExchangeCalendar(event, now);
 	}
 
-	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) throws ServiceLocalException {
+	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
 		final ZonedDateTime from = now.minusMonths(5).atStartOfDay(getZoneId());
 		final ZonedDateTime until = now.plus(getMaximumPointInFuture())
 				.plus(getMaximumPointInFuture())
