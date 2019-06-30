@@ -29,8 +29,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@NotNull
 	private final String displayName;
 
-	@Nullable
-	private final String description;
+	private final Optional<String> description;
 
 	@NotNull
 	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
@@ -56,7 +55,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 
 	EventSourceDescriptor(@NotNull final EventSourceKey key,
 			@NotNull final String displayName,
-			final String description,
+			@Nullable final String description,
 			@NotBlank final String view,
 			final boolean standAlone) {
 		this(key, displayName, description, view, null, null, NOP.class);
@@ -72,7 +71,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 			final Class<? extends Module> moduleClass) {
 		this.key = key;
 		this.displayName = displayName;
-		this.description = description != null && description.trim().length() > 1 ? description : null;
+		this.description = Optional.ofNullable(Strings.emptyToNull(description));
 		this.view = view;
 		this.serviceClass = Optional.ofNullable(serviceClass);
 		this.eventClass = Optional.ofNullable(eventClass);
@@ -125,8 +124,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return displayName;
 	}
 
-	@Nullable
-	public String getDescription() {
+	public Optional<String> getDescription() {
 		return description;
 	}
 

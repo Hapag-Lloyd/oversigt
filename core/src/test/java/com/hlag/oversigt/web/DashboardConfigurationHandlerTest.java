@@ -135,7 +135,7 @@ public class DashboardConfigurationHandlerTest {
 		final Set<String> expectedMailSet = new HashSet<>(Arrays.asList("USER2"));
 		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
-		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(Optional.of(dashboard));
 
 		// then
 		final ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
@@ -163,7 +163,7 @@ public class DashboardConfigurationHandlerTest {
 		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1"));
 		final Set<String> expectedListOfEditors = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
-		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(Optional.of(dashboard));
 
 		// then
 		final ActionResponse result = dashboardConfigurationHandler.doAction_setEditors(exchange, formData);

@@ -4,6 +4,7 @@ import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static javax.ws.rs.core.Response.ok;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -24,7 +25,6 @@ import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -100,8 +100,7 @@ public class EventSourceDescriptionResource {
 			return descriptor.getDisplayName();
 		}
 
-		@Nullable
-		public String getDescription() {
+		public Optional<String> getDescription() {
 			return descriptor.getDescription();
 		}
 

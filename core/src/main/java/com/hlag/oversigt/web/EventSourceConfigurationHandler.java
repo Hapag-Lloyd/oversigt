@@ -127,6 +127,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 					getDashboardController().getDashboardIds()
 							.stream()
 							.map(getDashboardController()::getDashboard)
+							.map(Optional::get)
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 							.collect(Collectors.toList()));
 		case "createEventSource":
@@ -277,7 +278,9 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		// read Properties
 		for (final EventSourceProperty p : descriptor.getProperties()) {
 			Optional<String> maybeParam = getHelper().maybeParam(data, eventSourceId + ".property." + p.getName());
-			if ((p.getClazz() == Boolean.class || p.getClazz() == boolean.class) && !maybeParam.isPresent()) {
+			if (p.getClazz().isPresent()
+					&& (p.getClazz().get() == Boolean.class || p.getClazz().get() == boolean.class)
+					&& !maybeParam.isPresent()) {
 				maybeParam = Optional.of("false");
 			}
 			final String value = maybeParam.get();
@@ -317,7 +320,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		final String eventSourceId = getHelper().param(data, "id");
 		final Collection<String> preventingDashboards
 				= getDashboardController().deleteEventSourceInstance(eventSourceId);
-		if (preventingDashboards == null || preventingDashboards.isEmpty()) {
+		if (preventingDashboards.isEmpty()) {
 			logChange(exchange, "Delete event source id[%s]", eventSourceId);
 			return redirect(exchange.getRequestURI());
 		}
@@ -387,7 +390,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	protected ActionResponse doAction_reloadDashboard(@SuppressWarnings("unused") final HttpServerExchange exchange,
 			final FormData formData) {
 		final String id = getHelper().param(formData, "dashboardId");
-		getDashboardController().reloadDashboards(getDashboardController().getDashboard(id));
+		getDashboardController().reloadDashboards(getDashboardController().getDashboard(id).get());
 		return ok();
 	}
 

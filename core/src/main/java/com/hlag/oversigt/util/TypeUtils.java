@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
@@ -250,19 +249,16 @@ public final class TypeUtils {
 				+ Arrays.toString(initArgs));
 	}
 
-	@Nullable
 	@SafeVarargs
-	public static <T> T tryToCreateInstance(final String input,
-			final Supplier<T> defaultValueSupplier,
-			final Class<? extends T>... classes) {
+	public static <T> Optional<T> tryToCreateInstance(final String input, final Class<? extends T>... classes) {
 		for (final Class<? extends T> clazz : classes) {
 			try {
-				return createInstance(clazz, input);
+				return Optional.of(createInstance(clazz, input));
 			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// ignore any problem when creating an instance
 			}
 		}
-		return defaultValueSupplier.get();
+		return Optional.empty();
 	}
 
 	@SuppressWarnings("unchecked")

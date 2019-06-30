@@ -382,6 +382,7 @@ public class SystemResource {
 		results.addAll(dashboardController.getDashboardIds()
 				.stream()
 				.map(dashboardController::getDashboard)
+				.map(Optional::get)
 				.filter(d -> d.getTitle().toLowerCase().contains(searchString)
 						|| d.getId().toLowerCase().contains(searchString))
 				.map(d -> SearchResult.builder().title(d.getTitle()).id(d.getId()).type("dashboard").build())

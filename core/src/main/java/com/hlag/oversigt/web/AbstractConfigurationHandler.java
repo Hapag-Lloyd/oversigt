@@ -180,7 +180,7 @@ public class AbstractConfigurationHandler implements HttpHandler {
 	}
 
 	protected final Optional<Dashboard> maybeGetDashboard(final HttpServerExchange exchange) {
-		return exchangeHelper.query(exchange, "dashboard").map(dashboardController::getDashboard);
+		return exchangeHelper.query(exchange, "dashboard").flatMap(dashboardController::getDashboard);
 	}
 
 	protected final Dashboard getDashboard(final HttpServerExchange exchange) {

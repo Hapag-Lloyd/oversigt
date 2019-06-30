@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -215,6 +216,7 @@ public class EventSourceInstanceResource {
 			return ok(controller.getEventSourceInstanceUsage(instanceId)
 					.stream()
 					.map(controller::getDashboard)
+					.map(Optional::get)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList())).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -312,11 +314,12 @@ public class EventSourceInstanceResource {
 					defaultValue = "false",
 					value = "true to also remove all widgets using this event source") final boolean force) {
 		try {
-			final Set<String> dashboards = controller.deleteEventSourceInstance(instanceId, force);
-			if (dashboards == null) {
+			final Set<String> dashboardsPreventingDeletion = controller.deleteEventSourceInstance(instanceId, force);
+			if (dashboardsPreventingDeletion.isEmpty()) {
 				return ok().build();
 			}
-			return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
+			return ErrorResponse.unprocessableEntity("Unable to delete event source instance",
+					dashboardsPreventingDeletion);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
@@ -379,7 +382,7 @@ public class EventSourceInstanceResource {
 		public EventSourceInstanceInfo(final EventSourceInstance instance, final DashboardController controller) {
 			id = instance.getId();
 			name = instance.getName();
-			isService = instance.getDescriptor().getServiceClass() != null;
+			isService = instance.getDescriptor().getServiceClass().isPresent();
 			enabled = instance.isEnabled();
 			running = controller.isRunning(instance);
 			hasError = controller.hasException(instance);

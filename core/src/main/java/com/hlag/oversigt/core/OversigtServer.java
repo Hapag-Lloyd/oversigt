@@ -229,7 +229,7 @@ public class OversigtServer extends AbstractIdleService {
 		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
 			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))
 					.map(Deque::getFirst)
-					.map(dashboardController::getDashboard)
+					.flatMap(dashboardController::getDashboard)
 					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
 			eventBus.post(connection);
 		});
@@ -413,25 +413,26 @@ public class OversigtServer extends AbstractIdleService {
 			// check if the URI is correct... otherwise redirect to proper dashboard URI
 			final String correctUri = "/" + dashboardId;
 			if (correctUri.equals(exchange.getRequestURI())) {
-				final Dashboard dashboard = dashboardController.getDashboard(dashboardId);
-				if (dashboard == null || !dashboard.isEnabled()) {
-					// redirect to config page in order to create new dashboard
-					redirect(exchange, "/" + dashboardId + "/create", false, true);
-				} else {
+				final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
+				if (dashboard.isPresent() && dashboard.get().isEnabled()) {
 					final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
 							map("title",
-									dashboard.getTitle(),
+									dashboard.get().getTitle(),
 									"columns",
-									dashboard.getColumns(),
+									dashboard.get().getColumns(),
 									"backgroundColor",
-									dashboard.getBackgroundColor().getHexColor(),
+									dashboard.get().getBackgroundColor().getHexColor(),
 									"computedTileWidth",
-									dashboard.getComputedTileWidth(),
+									dashboard.get().getComputedTileWidth(),
 									"computedTileHeight",
-									dashboard.getComputedTileHeight(),
+									dashboard.get().getComputedTileHeight(),
 									"widgets",
-									dashboard.getWidgets()));
+									dashboard.get().getWidgets()));
 					exchange.getResponseSender().send(html);
+				} else {
+					// redirect to config page in order to create new dashboard
+					redirect(exchange, "/" + dashboardId + "/create", false, true);
+					// TODO change to angular ui screen
 				}
 			} else {
 				redirect(exchange, correctUri, true, true);

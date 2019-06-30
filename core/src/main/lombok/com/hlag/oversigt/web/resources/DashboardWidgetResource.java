@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -98,8 +99,8 @@ public class DashboardWidgetResource {
 			@PathParam("dashboardId") @NotNull final String dashboardId,
 			@QueryParam("containing") @ApiParam(required = false,
 					value = "Only show widgets containing this text") final String containing) {
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
@@ -131,7 +132,8 @@ public class DashboardWidgetResource {
 			filterSecu = Widget::isEnabled;
 		}
 
-		return ok(dashboard.getWidgets()
+		return ok(dashboard.get()
+				.getWidgets()
 				.stream()
 				.filter(filterName)
 				.filter(filterSecu)
@@ -153,14 +155,14 @@ public class DashboardWidgetResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response createWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
 			@QueryParam("eventSource") @ApiParam(required = true) @NotBlank final String eventSourceInstanceId) {
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		final Widget widget;
 		try {
-			widget = controller.createWidgetForDashboard(dashboard, eventSourceInstanceId);
+			widget = controller.createWidgetForDashboard(dashboard.get(), eventSourceInstanceId);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
@@ -184,13 +186,13 @@ public class DashboardWidgetResource {
 			@PathParam("id") @Positive final int widgetId,
 			@QueryParam("showAllProperties") @DefaultValue("true") @ApiParam(defaultValue = "true",
 					value = "false to show only properties defined for this specific widget. true to additionally show all properties inherited from the underlaying event source.") final boolean all) {
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		try {
-			return ok(new WidgetDetails(dashboard.getWidget(widgetId), all)).build();
+			return ok(new WidgetDetails(dashboard.get().getWidget(widgetId), all)).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist in this dashboard");
 		}
@@ -209,8 +211,8 @@ public class DashboardWidgetResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response readEventSourceInstanceForWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
 			@PathParam("id") @Positive final int widgetId) {
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		final Widget widget = dashboard.getWidget(widgetId);
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		final Widget widget = dashboard.get().getWidget(widgetId);
 		final FullEventSourceInstanceInfo info
 				= eventSourceInstanceResource.getInstanceInfo(widget.getEventSourceInstance().getId());
 		return ok(info).build();
@@ -229,14 +231,14 @@ public class DashboardWidgetResource {
 			@PathParam("id") @Positive final int widgetId,
 			@NotNull final WidgetDetails details) {
 
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		final Widget widget;
 		try {
-			widget = dashboard.getWidget(widgetId);
+			widget = dashboard.get().getWidget(widgetId);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist");
 		}
@@ -297,14 +299,14 @@ public class DashboardWidgetResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response deleteWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
 			@PathParam("id") @Positive final int widgetId) {
-		final Dashboard dashboard = controller.getDashboard(dashboardId);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
+		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");
 		}
 
 		final Widget widget;
 		try {
-			widget = dashboard.getWidget(widgetId);
+			widget = dashboard.get().getWidget(widgetId);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The widget does not exist");
 		}

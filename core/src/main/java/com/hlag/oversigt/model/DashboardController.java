@@ -158,8 +158,8 @@ public class DashboardController {
 		return dashboards.keySet();
 	}
 
-	public Dashboard getDashboard(final String id) {
-		return dashboards.get(id);
+	public Optional<Dashboard> getDashboard(final String id) {
+		return Optional.ofNullable(dashboards.get(id));
 	}
 
 	Dashboard getDashboard(final Widget widget) {
@@ -190,32 +190,33 @@ public class DashboardController {
 	 * @return the newly created dashboard object or <code>null</code> if a
 	 *         dashboard with the given ID already exists.
 	 */
-	public Dashboard createDashboard(final String id, final Principal owner, final boolean enabled) {
+	public Optional<Dashboard> createDashboard(final String id, final Principal owner, final boolean enabled) {
 		if (dashboards.containsKey(id)) {
-			return null;
+			return Optional.empty();
 		}
 		final Dashboard dashboard = new Dashboard(id, owner.getUsername(), enabled);
 		storage.persistDashboard(dashboard);
 		dashboards.put(id, dashboard);
-		return dashboard;
+		// TODO if owner is not admin -> send mail to admins
+		return Optional.of(dashboard);
 	}
 
 	public boolean updateDashboard(final Dashboard dashboard) {
-		final Dashboard originalDashboard = getDashboard(dashboard.getId());
-		if (originalDashboard == null) {
+		final Optional<Dashboard> originalDashboard = getDashboard(dashboard.getId());
+		if (!originalDashboard.isPresent()) {
 			return false;
 		}
-		copyProperties(dashboard, originalDashboard);
-		storage.persistDashboard(originalDashboard);
+		copyProperties(dashboard, originalDashboard.get());
+		storage.persistDashboard(originalDashboard.get());
 		return true;
 	}
 
 	public boolean deleteDashboard(final String id) {
-		final Dashboard dashboard = getDashboard(id);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = getDashboard(id);
+		if (!dashboard.isPresent()) {
 			return false;
 		}
-		return deleteDashboard(dashboard);
+		return deleteDashboard(dashboard.get());
 	}
 
 	public boolean deleteDashboard(final Dashboard dashboard) {
@@ -395,11 +396,9 @@ public class DashboardController {
 	}
 
 	public EventSourceInstance getEventSourceInstance(final String id) {
+		// TODO replace by orElseThrow()
 		return eventSourceInstancesLock.read(
-				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get()); // TODO
-																															// replace
-																															// by
-																															// orElseThrow()
+				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get());
 	}
 
 	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewName) {
@@ -494,7 +493,7 @@ public class DashboardController {
 				"dummy");
 		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
 			try {
-				final Object defaultValue = Objects.requireNonNull(property.getGetter().invoke(service),
+				final Object defaultValue = Objects.requireNonNull(property.getGetter().get().invoke(service),
 						"The default value of a property must not be null.");
 				instance.setProperty(property, defaultValue);
 			} catch (final IllegalAccessException
@@ -508,7 +507,7 @@ public class DashboardController {
 
 	String getValueString(final EventSourceProperty property, final Object value) {
 		try {
-			if (TypeUtils.isOfType(property.getClazz(), SerializableProperty.class)) {
+			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {
 				return spController.toString((SerializableProperty) value);
 			} else if (value != null
 					&& value.getClass().isArray()
@@ -517,13 +516,14 @@ public class DashboardController {
 								"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
 					} else if (value == null) {
 						return "";
-					} else if (property.isJson() || TypeUtils.isOfType(property.getClazz(), JsonBasedData.class)) {
-						return json.toJson(value);
-					} else if (value.getClass().isArray()) {
-						return Arrays.deepToString((Object[]) value);
-					} else {
-						return value.toString();
-					}
+					} else if (property.isJson()
+							|| TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
+								return json.toJson(value);
+							} else if (value.getClass().isArray()) {
+								return Arrays.deepToString((Object[]) value);
+							} else {
+								return value.toString();
+							}
 		} catch (final IllegalArgumentException | SecurityException e) {
 			throw new RuntimeException("Unable to convert property '" + property.getName() + "' to string", e);
 		}
@@ -626,9 +626,10 @@ public class DashboardController {
 				.getProperties()
 				.stream()
 				.filter(instance::hasPropertyValue)
+				.filter(property -> property.getSetter().isPresent())
 				.forEach(property -> {
 					try {
-						property.getSetter().invoke(service, instance.getPropertyValue(property));
+						property.getSetter().get().invoke(service, instance.getPropertyValue(property));
 					} catch (final IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
 						throw new RuntimeException("Unable to set property: " + property.getName(), e);
 					}
@@ -681,14 +682,16 @@ public class DashboardController {
 		}
 	}
 
-	public void restartInstancesUsingSerializableProperty(final SerializableProperty prop) {
+	public void restartInstancesUsingSerializableProperty(final SerializableProperty changedProperty) {
 		getEventSourceInstances().stream()
 				.filter(this::isRunning)
-				.filter(i -> i.getDescriptor()
+				.filter(instance -> instance.getDescriptor()
 						.getProperties()
 						.stream()
-						.anyMatch(p -> p.getClazz() == prop.getClass()
-								&& ((SerializableProperty) i.getPropertyValue(p)).getId() == prop.getId()))
+						.filter(property -> property.getClazz().isPresent())
+						.anyMatch(property -> property.getClazz().get() == changedProperty.getClass()
+								&& ((SerializableProperty) instance.getPropertyValue(property))
+										.getId() == changedProperty.getId()))
 				.map(EventSourceInstance::getId)
 				.forEach(id -> restartInstance(id, false));
 	}
@@ -775,7 +778,7 @@ public class DashboardController {
 		storage.deleteEventSourceInstance(eventSourceId);
 		removeEventSourceInstance(instance);
 
-		return null;
+		return Collections.emptySet();
 	}
 
 	public Set<String> getEventSourceInstanceUsage(final String eventSourceId) {
@@ -806,13 +809,18 @@ public class DashboardController {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property, final String string) {
-		final Class<?> type = property.getClazz();
+	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property,
+			final String inputString) {
+		// TODO check all callers
+		final Class<?> type = property.getClazz()
+				.orElseThrow(() -> new RuntimeException(
+						String.format("Property '%s' cannot create a value. It does not have a Java class.",
+								property.getName())));
+		final String string = Objects.requireNonNull(inputString, "The input string must not be null.");
 		try {
 			if (type == null || String.class == type) {
 				return string;
-			}
-			if (type.isPrimitive()) {
+			} else if (type.isPrimitive()) {
 				if (type == boolean.class) {
 					return string == null ? Boolean.FALSE : Boolean.parseBoolean(string);
 				}
@@ -838,8 +846,7 @@ public class DashboardController {
 					return string.charAt(0);
 				}
 				throw new RuntimeException("Unknown primitive type: " + type);
-			}
-			if (Enum.class.isAssignableFrom(type)) {
+			} else if (Enum.class.isAssignableFrom(type)) {
 				final Enum<T> enumValue;
 				if (string != null) {
 					enumValue = Enum.valueOf((Class<T>) type, string);
@@ -848,48 +855,40 @@ public class DashboardController {
 				}
 				// method.invoke(eventSource, enumValue);
 				return enumValue;
-			}
-			if (string == null) {
-				// method.invoke(eventSource, string);
-				return string;
-			}
-			if (SerializableProperty.class.isAssignableFrom(type)) {
+			} else if (SerializableProperty.class.isAssignableFrom(type)) {
 				try {
 					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
 				} catch (@SuppressWarnings("unused") final NumberFormatException ignore) {
 					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}
-			}
-			if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
+			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				final Object value = json.fromJson(string, type);
 				if (value != null) {
 					return value;
 				}
 				return TypeUtils.createInstance(type);
-			}
-			if (type.isArray()) {
+			} else if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);
-			}
-			if (Path.class == type) {
+			} else if (Path.class == type) {
 				return Paths.get(string);
-			}
-			if (TemporalAmount.class == type) {
+			} else if (TemporalAmount.class == type) {
 				// This is quite difficult. Java has many classes that are temporal amount.
 				// We need to test a bit, which one can interpret the String.
-				return TypeUtils.<TemporalAmount>tryToCreateInstance(string, () -> null, Duration.class, Period.class);
-			}
-			if (type.isInterface()) {
+				return TypeUtils.<TemporalAmount>tryToCreateInstance(string, Duration.class, Period.class)
+						.orElseThrow(() -> new RuntimeException("Unable to create TemporalAmount from: " + string));
+			} else if (type.isInterface()) {
 				final String message = "Type "
 						+ type.getName()
 						+ " is an interface. Please use concrete classes for getters and setters.";
 				LOGGER.error(message);
 				throw new RuntimeException(message);
+			} else {
+				return TypeUtils.createInstance(type, string);
 			}
-			return TypeUtils.createInstance(type, string);
 		} catch (final Exception e) {
-			LOGGER.error("Unable to set property value of type " + type + " from string '" + string + "'", e);
-			return null;
+			throw new RuntimeException("Unable to set property value of type " + type + " from string '" + string + "'",
+					e);
 		}
 	}
 
@@ -951,7 +950,7 @@ public class DashboardController {
 	}
 
 	private EventSourceProperty createDummyEventSourceProperty(final String name) {
-		return new EventSourceProperty(name, name, null, "text", true, null, null, null, null, false, null);
+		return new EventSourceProperty(name, name, null, "text", true);
 	}
 
 	private EventSourceProperty createEventSourceProperty(final PropertyDescriptor descriptor) {
@@ -973,8 +972,9 @@ public class DashboardController {
 		}
 
 		final String name = descriptor.getName();
-		final String displayName = getOrDefault(property, Property::name, name);
-		final String description = getOrDefault(property, Property::description, "");
+		final String displayName = property.name();
+		@Nullable
+		final String description = Strings.emptyToNull(property.description());
 		final boolean customValuesAllowed = false;
 		final Method getter = descriptor.getReadMethod();
 		final Method setter = descriptor.getWriteMethod();
@@ -991,10 +991,12 @@ public class DashboardController {
 			hint = tmpClass.getAnnotation(JsonHint.class);
 		}
 		final boolean json = !UiUtils.hasDedicatedEditor(clazz);
-		final String jsonSchema = json ? this.json.toJsonSchema(clazz, hint) : null;
 
-		final String inputType
-				= getType(name, getOrDefault(property, Property::type, null), descriptor.getPropertyType(), json, null);
+		final String inputType = getType(name,
+				Optional.ofNullable(Strings.emptyToNull(property.type())),
+				Optional.of(descriptor.getPropertyType()),
+				json,
+				Collections.emptyList());
 
 		final EventSourceProperty esProperty = new EventSourceProperty(name,
 				displayName,
@@ -1006,44 +1008,27 @@ public class DashboardController {
 				clazz,
 				hint,
 				json,
-				jsonSchema);
+				json ? this.json.toJsonSchema(clazz, hint) : null);
 
 		collectAllowedValues(clazz).forEach(esProperty::addAllowedValue);
 		return esProperty;
 	}
 
 	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
-		final String displayName;
-		final String description;
-		final String inputType;
-		final boolean customValuesAllowed;
+		final String displayName = properties.getProperty("dataItem." + name + ".title", name);
+		@Nullable
+		final String description = properties.getProperty("dataItem." + name + ".description");
+		final String inputType = properties.getProperty("dataItem." + name + ".type", "text");
+		final boolean customValuesAllowed
+				= Boolean.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
 		final List<String> allowedValues = new ArrayList<>();
-
-		if (properties != null) {
-			displayName = properties.getProperty("dataItem." + name + ".title", name);
-			description = properties.getProperty("dataItem." + name + ".description");
-			inputType = properties.getProperty("dataItem." + name + ".type", "text");
-			customValuesAllowed = Boolean
-					.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
-			allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
-		} else {
-			displayName = name;
-			description = null;
-			inputType = "text";
-			customValuesAllowed = false;
-		}
+		allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
 
 		final EventSourceProperty property = new EventSourceProperty(name,
 				displayName,
-				Strings.emptyToNull(description),
-				getType(displayName, inputType, null, false, allowedValues),
-				customValuesAllowed,
-				null,
-				null,
-				null,
-				null,
-				false,
-				null);
+				description,
+				getType(displayName, Optional.of(inputType), Optional.empty(), false, allowedValues),
+				customValuesAllowed);
 		allowedValues.forEach(v -> property.addAllowedValue(v, v));
 		return property;
 	}
@@ -1069,48 +1054,53 @@ public class DashboardController {
 	}
 
 	private String getType(final String name,
-			final String propertyType,
-			final Class<?> type,
+			final Optional<String> propertyType,
+			final Optional<Class<?>> optionalType,
 			final boolean json,
 			final Collection<?> allowedValues) {
-		if (propertyType != null && propertyType.trim().length() > 0) {
-			return propertyType;
-		} else if (Enum.class.isAssignableFrom(type) || allowedValues != null && !allowedValues.isEmpty()) {
-			return "enum";
-		} else if (json || TypeUtils.isOfType(type, JsonBasedData.class)) {
-			return "json";
-		} else if (type == LocalDate.class) {
-			return "date";
-		} else if (type == LocalTime.class) {
-			return "time";
-		} else if (type == LocalDateTime.class) {
-			return "datetime-local";
-		} else if (type == ZonedDateTime.class) {
-			return "datetime";
-		} else if (type == Duration.class) {
-			return "duration";
-		} else if (type == boolean.class) {
-			return "boolean";
-		} else if (SerializableProperty.class.isAssignableFrom(type)) {
-			return "value_" + type.getSimpleName();
-		} else if (type == int.class
-				|| type == long.class
-				|| type == short.class
-				|| type == byte.class
-				|| type == Integer.class
-				|| type == Long.class
-				|| type == Short.class
-				|| type == Byte.class) {
-					return "number";
-				} else if (name.toLowerCase().contains("password")) {
-					return "password";
-				} else if (type == URL.class
-						|| type == String.class
-								&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
-									return "url";
-								} else {
-									return "text";
-								}
+		if (propertyType.isPresent() && propertyType.get().trim().length() > 0) {
+			return propertyType.get();
+		} else if (optionalType.isPresent()) {
+			final Class<?> type = optionalType.get();
+			if (Enum.class.isAssignableFrom(type) || !allowedValues.isEmpty()) {
+				return "enum";
+			} else if (json || TypeUtils.isOfType(type, JsonBasedData.class)) {
+				return "json";
+			} else if (type == LocalDate.class) {
+				return "date";
+			} else if (type == LocalTime.class) {
+				return "time";
+			} else if (type == LocalDateTime.class) {
+				return "datetime-local";
+			} else if (type == ZonedDateTime.class) {
+				return "datetime";
+			} else if (type == Duration.class) {
+				return "duration";
+			} else if (type == boolean.class) {
+				return "boolean";
+			} else if (SerializableProperty.class.isAssignableFrom(type)) {
+				return "value_" + type.getSimpleName();
+			} else if (type == int.class
+					|| type == long.class
+					|| type == short.class
+					|| type == byte.class
+					|| type == Integer.class
+					|| type == Long.class
+					|| type == Short.class
+					|| type == Byte.class) {
+						return "number";
+					} else if (name.toLowerCase().contains("password")) {
+						return "password";
+					} else if (type == URL.class
+							|| type == String.class
+									&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
+										return "url";
+									} else {
+										return "text";
+									}
+		} else {
+			throw new RuntimeException("Unable to determine type for: " + name);
+		}
 	}
 
 	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources(final Collection<String> widgetsPaths) {
@@ -1154,9 +1144,8 @@ public class DashboardController {
 
 		// load additional information
 		final Path prop = folder.resolve(folder.getFileName().toString() + ".properties");
-		final Properties properties;
+		final Properties properties = new Properties();
 		if (Files.exists(prop)) {
-			properties = new Properties();
 			try (Reader in = Files.newBufferedReader(prop)) {
 				properties.load(in);
 			}
@@ -1174,7 +1163,6 @@ public class DashboardController {
 			description = properties.getProperty("description");
 		} else {
 			standAlone = true;
-			properties = null;
 		}
 
 		// check if we should continue
@@ -1190,10 +1178,8 @@ public class DashboardController {
 		addDataItemsFromHtml(dataItems, folder);
 		addDataItemsFromCoffeeScript(dataItems, folder);
 		dataItems.removeAll(RESERVED_DATA_BINDINGS);
-		if (properties != null) {
-			dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
-			dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
-		}
+		dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
+		dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
 
 		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(descriptor::addDataItem);
 
@@ -1220,13 +1206,6 @@ public class DashboardController {
 			dataItems.addAll(gets);
 			dataItems.removeAll(sets);
 		}
-	}
-
-	private static <T, I> T getOrDefault(final I input, final Function<I, T> extractor, final T defaultValue) {
-		if (input == null) {
-			return defaultValue;
-		}
-		return extractor.apply(input);
 	}
 
 	@SuppressWarnings("unchecked")

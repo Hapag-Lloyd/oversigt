@@ -249,6 +249,7 @@ public class Dashboard {
 	}
 
 	public Widget getWidget(final int id) {
+		// TODO return optional
 		return getWidgets().stream().filter(w -> w.getId() == id).findFirst().get();
 	}
 
