@@ -128,7 +128,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (key == null ? 0 : key.hashCode());
+		result = prime * result + key.hashCode();
 		return result;
 	}
 
@@ -146,11 +146,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 			return false;
 		}
 		final EventSourceKey other = (EventSourceKey) obj;
-		if (key == null) {
-			if (other.key != null) {
-				return false;
-			}
-		} else if (!key.equals(other.key)) {
+		if (!key.equals(other.key)) {
 			return false;
 		}
 		return true;

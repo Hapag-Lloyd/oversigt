@@ -363,8 +363,8 @@ public class DashboardController {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S extends Service> S getService(final EventSourceInstance instance) {
-		return eventSourceInstancesLock.read(() -> (S) eventSourceInstancesInternal.get(instance));
+	private <S extends Service> Optional<S> getService(final EventSourceInstance instance) {
+		return eventSourceInstancesLock.read(() -> Optional.ofNullable((S) eventSourceInstancesInternal.get(instance)));
 	}
 
 	private void setService(final EventSourceInstance instance, final Service service) {
@@ -401,9 +401,10 @@ public class DashboardController {
 				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get());
 	}
 
-	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewName) {
-		final String key
-				= className == null ? EventSourceKey.PREFIX_WIDGET + viewName : EventSourceKey.PREFIX_CLASS + className;
+	private EventSourceDescriptor getEventSourceDescriptor(final Optional<String> className, final String viewName) {
+		final String key = className.isPresent()
+				? EventSourceKey.PREFIX_CLASS + className.get().toString()
+				: EventSourceKey.PREFIX_WIDGET + viewName;
 		return getEventSourceDescriptor(EventSourceKey.getKey(key));
 	}
 
@@ -509,21 +510,17 @@ public class DashboardController {
 		try {
 			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {
 				return spController.toString((SerializableProperty) value);
-			} else if (value != null
-					&& value.getClass().isArray()
-					&& TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {
-						throw new NotImplementedException(
-								"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
-					} else if (value == null) {
-						return "";
-					} else if (property.isJson()
-							|| TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
-								return json.toJson(value);
-							} else if (value.getClass().isArray()) {
-								return Arrays.deepToString((Object[]) value);
-							} else {
-								return value.toString();
-							}
+			} else if (value.getClass().isArray()) {
+				if (TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {
+					throw new NotImplementedException(
+							"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
+				}
+				return Arrays.deepToString((Object[]) value);
+			} else if (property.isJson() || TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
+				return json.toJson(value);
+			} else {
+				return value.toString();
+			}
 		} catch (final IllegalArgumentException | SecurityException e) {
 			throw new RuntimeException("Unable to convert property '" + property.getName() + "' to string", e);
 		}
@@ -571,7 +568,7 @@ public class DashboardController {
 
 	public void startAllInstances() {
 		getEventSourceInstances().stream()
-				.filter(i -> i.getDescriptor().getServiceClass() != null)
+				.filter(i -> i.getDescriptor().getServiceClass().isPresent())
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
 				.forEach(this::startInstance);
@@ -586,7 +583,7 @@ public class DashboardController {
 
 		synchronized (instance) {
 			// check everything
-			if (getService(instance) != null) {
+			if (getService(instance).isPresent()) {
 				throw new RuntimeException("Instance " + id + " is already started.");
 			}
 			if (!instance.getDescriptor().getServiceClass().isPresent()) {
@@ -640,7 +637,7 @@ public class DashboardController {
 
 	public void stopAllInstances() {
 		getEventSourceInstances().stream()
-				.filter(i -> i.getDescriptor().getServiceClass() != null)
+				.filter(i -> i.getDescriptor().getServiceClass().isPresent())
 				.filter(this::isRunning)
 				.map(EventSourceInstance::getId)
 				.forEach(this::stopInstance);
@@ -650,11 +647,8 @@ public class DashboardController {
 		final EventSourceInstance instance = getEventSourceInstance(id);
 
 		synchronized (instance) {
-			final Service service = getService(instance);
-			// check everything
-			if (service == null) {
-				throw new RuntimeException("Instance " + id + " is not running");
-			}
+			final Service service = getService(instance)
+					.orElseThrow(() -> new RuntimeException("Instance " + id + " is not running"));
 
 			// stop service
 			if (service.state() != State.TERMINATED && service.state() != State.STOPPING) {
@@ -697,11 +691,18 @@ public class DashboardController {
 	}
 
 	public boolean isRunning(final EventSourceInstance instance) {
-		return getService(instance) != null;
+		return getService(instance).isPresent();
 	}
 
 	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance));
+		if (!instance.getDescriptor()
+				.getServiceClass()
+				.map(ScheduledEventSource.class::isAssignableFrom)
+				.orElse(false)) {
+			throw new RuntimeException(
+					String.format("Event source %s is not a ScheduledEventSource", instance.getId()));
+		}
+		return getService(instance);
 	}
 
 	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {

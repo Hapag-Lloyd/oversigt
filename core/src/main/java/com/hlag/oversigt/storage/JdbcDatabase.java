@@ -189,7 +189,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public EventSourceInstance loadEventSourceInstance(final String eventSourceId,
-			final BiFunction<String, String, EventSourceDescriptor> descriptorSupplier) {
+			final BiFunction<Optional<String>, String, EventSourceDescriptor> descriptorSupplier) {
 		final Map<String, Object> infos = load(TABLE_EVENT_SOURCE,
 				"*",
 				Optional.of("ID"),
@@ -200,7 +200,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 		final String view = (String) infos.get("VIEW");
 		final String name = (String) infos.get("NAME");
 		final boolean enabled = is(infos.get("ENABLED"));
-		final String className = (String) infos.get("EVENT_SOURCE_CLASS");
+		final Optional<String> className = Optional.ofNullable((String) infos.get("EVENT_SOURCE_CLASS"));
 		final Duration frequency = Optional.ofNullable((Number) infos.get("FREQUENCY"))
 				.map(Number::longValue)
 				.map(Duration::ofSeconds)

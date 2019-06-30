@@ -60,7 +60,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 
 	public String getPropertyValueString(final EventSourceProperty property) {
 		final Optional<Object> value = Optional.ofNullable(propertyValues.get(property));
-		if (property.getClazz() == null) {
+		if (!property.getClazz().isPresent()) {
 			return value.map(v -> (String) v).orElse("");
 		}
 		return value.map(v -> DashboardController.getInstance().getValueString(property, v)).orElse("");
@@ -96,7 +96,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 
 	void setProperty(final EventSourceProperty property, final Object value) {
 		Objects.requireNonNull(value, "The value of a property must not be null");
-		if (property.getClazz() == null
+		if (!property.getClazz().isPresent()
 				&& !property.isCustomValuesAllowed()
 				&& !property.getAllowedValues().isEmpty()
 				&& !property.getAllowedValues().contains(value)) {
@@ -138,8 +138,8 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (id == null ? 0 : id.hashCode());
-		result = prime * result + (name == null ? 0 : name.hashCode());
+		result = prime * result + id.hashCode();
+		result = prime * result + name.hashCode();
 		return result;
 	}
 
@@ -158,18 +158,10 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 			return false;
 		}
 		final EventSourceInstance other = (EventSourceInstance) obj;
-		if (id == null) {
-			if (other.id != null) {
-				return false;
-			}
-		} else if (!id.equals(other.id)) {
+		if (!id.equals(other.id)) {
 			return false;
 		}
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
+		if (!name.equals(other.name)) {
 			return false;
 		}
 		return true;
