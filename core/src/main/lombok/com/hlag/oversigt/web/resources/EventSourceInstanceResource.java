@@ -15,6 +15,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -34,6 +35,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -70,6 +74,8 @@ import lombok.NoArgsConstructor;
 @Path("/event-source/instances")
 @Singleton
 public class EventSourceInstanceResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);
+
 	private static JsonUtils json = null;
 
 	@Inject
@@ -133,7 +139,10 @@ public class EventSourceInstanceResource {
 		if (limit != null && limit > 0) {
 			stream = stream.limit(limit);
 		}
-		return ok(stream.collect(toList())).build();
+		final Set<EventSourceInstanceInfo> infos
+				= new TreeSet<>((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName()));
+		infos.addAll(stream.collect(toList()));
+		return ok(infos).build();
 	}
 
 	@POST
@@ -289,6 +298,7 @@ public class EventSourceInstanceResource {
 				}
 			});
 		} catch (final Exception e) {
+			LOGGER.error("Unable to update event source instance", e);
 			return ErrorResponse.badRequest("Invalid event source instance values", e);
 		}
 
@@ -335,14 +345,15 @@ public class EventSourceInstanceResource {
 			final Function<EventSourceProperty, String> getValue,
 			final Predicate<EventSourceProperty> hasValue,
 			final boolean removeEmpty) {
-		return removePasswords(propertyStream.filter(p -> !(removeEmpty && !hasValue.test(p)))
+		final Map<String, String> map = propertyStream.filter(p -> !(removeEmpty && !hasValue.test(p)))
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
 					String string = getValue.apply(p);
 					if (p.isJson()) {
 						string = json.removePasswordsFromJson(string);
 					}
 					return string;
-				})), "");
+				}));
+		return removePasswords(map, "");
 	}
 
 	private static Map<String, String> getPropertyMap(final EventSourceInstance instance) {

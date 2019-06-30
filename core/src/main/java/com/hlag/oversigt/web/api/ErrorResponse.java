@@ -53,7 +53,7 @@ public final class ErrorResponse {
 	}
 
 	public static Response badRequest(final String message, final Collection<String> errors) {
-		return badRequest(message, errors);
+		return new ErrorResponse(message, errors).forStatus(Status.BAD_REQUEST);
 	}
 
 	public static Response badRequest(final String message, final Exception e) {

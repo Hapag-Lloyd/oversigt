@@ -506,6 +506,7 @@ public class DashboardController {
 		}
 	}
 
+	// TODO better handling for optionals in values!!
 	String getValueString(final EventSourceProperty property, final Object value) {
 		try {
 			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {
@@ -515,7 +516,8 @@ public class DashboardController {
 					throw new NotImplementedException(
 							"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
 				}
-				return Arrays.deepToString((Object[]) value);
+				// return Arrays.deepToString((Object[]) value);
+				return json.toJson(value);
 			} else if (property.isJson() || TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
 				return json.toJson(value);
 			} else {
@@ -695,14 +697,8 @@ public class DashboardController {
 	}
 
 	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
-		if (!instance.getDescriptor()
-				.getServiceClass()
-				.map(ScheduledEventSource.class::isAssignableFrom)
-				.orElse(false)) {
-			throw new RuntimeException(
-					String.format("Event source %s is not a ScheduledEventSource", instance.getId()));
-		}
-		return getService(instance);
+		return getService(instance)
+				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
 	}
 
 	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
@@ -813,10 +809,7 @@ public class DashboardController {
 	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property,
 			final String inputString) {
 		// TODO check all callers
-		final Class<?> type = property.getClazz()
-				.orElseThrow(() -> new RuntimeException(
-						String.format("Property '%s' cannot create a value. It does not have a Java class.",
-								property.getName())));
+		final Class<?> type = property.getClazz().orElse(String.class);
 		final String string = Objects.requireNonNull(inputString, "The input string must not be null.");
 		try {
 			if (type == null || String.class == type) {

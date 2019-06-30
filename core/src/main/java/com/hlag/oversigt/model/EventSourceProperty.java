@@ -88,7 +88,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		this.getter = Optional.of(getter);
 		this.setter = Optional.of(setter);
 		this.clazz = Optional.of(clazz);
-		this.hint = Optional.of(hint);
+		this.hint = Optional.ofNullable(hint);
 		this.json = json;
 		this.jsonSchema = Optional.ofNullable(jsonSchema);
 	}

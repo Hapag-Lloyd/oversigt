@@ -33,8 +33,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
@@ -351,18 +354,18 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		private final String address;
 
-		private final Optional<String> pattern;
+		private final String pattern;
 
 		private LoginData[] loginDatas = new LoginData[0];
 
 		public InternetAddress(final String urlString) {
 			address = urlString;
-			pattern = Optional.empty();
+			pattern = "";
 		}
 
 		public InternetAddress(final String urlString, final String patternString) {
 			address = urlString;
-			pattern = Optional.of(patternString);
+			pattern = patternString;
 		}
 
 		public String getUrlString() {
@@ -370,13 +373,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 
 		public Optional<Pattern> getPattern() {
-			return pattern.map(p -> Pattern.compile(p, Pattern.DOTALL));
+			return Optional.ofNullable(Strings.emptyToNull(pattern)).map(p -> Pattern.compile(p, Pattern.DOTALL));
 		}
 
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			// return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+			return new Gson().toJson(this);
 		}
 	}
 
@@ -402,7 +406,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 
@@ -428,7 +432,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 
