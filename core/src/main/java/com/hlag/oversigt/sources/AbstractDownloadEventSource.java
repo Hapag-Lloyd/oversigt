@@ -176,7 +176,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			logInfo(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
 				url = TEXT_PROCESSOR.process(url);
-				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.loginDatas)));
+				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));
 				final Optional<Pattern> pattern = internetAddress.getPattern();
 				if (pattern.isPresent()) {
 					final List<String> reps = new ArrayList<>();
@@ -374,6 +374,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		public Optional<Pattern> getPattern() {
 			return Optional.ofNullable(Strings.emptyToNull(pattern)).map(p -> Pattern.compile(p, Pattern.DOTALL));
+		}
+
+		public LoginData[] getLoginDatas() {
+			return Optional.ofNullable(loginDatas).orElse(new LoginData[0]);
 		}
 
 		/** {@inheritDoc} */

@@ -8,6 +8,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -56,18 +57,18 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();
 		final List<Series> series = new ArrayList<>();
 		IntStream.range(0, columnCount).forEach(column -> {
-			List<Point> points = new ArrayList<>();
+			final List<Point> points = new ArrayList<>();
 
 			if (!values.isEmpty()) {
 				// Get maximum value of each series to normalize
 				final OptionalLong optionalMaxValue = values.values().stream().mapToLong(v -> v.get(column)).max();
 				final long maxValue = optionalMaxValue.getAsLong() == 0 ? 1 : optionalMaxValue.getAsLong();
 
-				points = values.entrySet()
+				points.addAll(values.entrySet()
 						.stream()
 						.map(e -> new Point(e.getKey().toEpochSecond() - secondsOffset,
 								100 * e.getValue().get(column) / maxValue))
-						.collect(Collectors.toList());
+						.collect(Collectors.toList()));
 			}
 
 			series.add(new Series(titles.length > column ? titles[column] : "", points));
@@ -79,7 +80,13 @@ public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEve
 		if (!values.isEmpty()) {
 			displayValues.addAll(values.get(values.lastKey()));
 		}
-		return Optional.of(new ComplexGraphEvent(series, String.format(labelFormat, displayValues.toArray())));
+		String text = "";
+		try {
+			text = String.format(labelFormat, displayValues.toArray());
+		} catch (final IllegalFormatException e) {
+			getLogger().warn("Unable to fill format: " + getLabelFormat(), e);
+		}
+		return Optional.of(new ComplexGraphEvent(series, text));
 	}
 
 	@Override
