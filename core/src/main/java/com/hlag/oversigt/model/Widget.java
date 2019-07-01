@@ -184,6 +184,7 @@ public class Widget implements Comparable<Widget> {
 		this.title = title;
 	}
 
+	@Nullable
 	public String getWidgetData(final EventSourceProperty property) {
 		return data.get(property);
 	}
