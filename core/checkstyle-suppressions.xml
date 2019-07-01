@@ -5,4 +5,5 @@
 	<suppress files="^.*$" checks="IllegalCatch" message="^Catching &apos;Exception&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="IllegalToken" message="^Using &apos;(break|continue)&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="SuppressWarnings" message="^The warning &apos;resource&apos; cannot be suppressed at this location\.$" />
+	<suppress files="^.*Test\.java$" checks="MissingCtor" />
 </suppressions>

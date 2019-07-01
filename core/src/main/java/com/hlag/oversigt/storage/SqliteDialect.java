@@ -186,8 +186,7 @@ public class SqliteDialect implements SqlDialect {
 	@SuppressWarnings("unused")
 	@Override
 	public String alterTableDropColumn(final String tableName, final String columnName) {
-		throw new RuntimeException("DROP COLUMN is not supported by SQLite");
-		// return "ALTER TABLE " + tableName + " DROP COLUMN " + columnName;
+		throw new UnsupportedOperationException("DROP COLUMN is not supported by SQLite");
 	}
 
 	@Override
@@ -213,6 +212,14 @@ public class SqliteDialect implements SqlDialect {
 			sql += " NULL";
 		} else {
 			sql += " NOT NULL";
+		}
+		if (column.getDefaultValue() != null && !column.isPrimaryKey() && !column.isUnique()) {
+			sql += " DEFAULT ";
+			if (column.getDefaultValue() instanceof String) {
+				sql += "'" + column.getDefaultValue() + "'";
+			} else {
+				sql += column.getDefaultValue();
+			}
 		}
 		return sql;
 	}
