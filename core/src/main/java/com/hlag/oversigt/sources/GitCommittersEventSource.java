@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -19,7 +20,7 @@ public class GitCommittersEventSource extends AbstractGitCommitEventSource<Overs
 	}
 
 	@Override
-	protected OversigtEvent produceEvent() throws Exception {
+	protected Optional<OversigtEvent> produceEvent() throws Exception {
 		// Count commits per user
 		final Map<String, Integer> committers
 				= streamLogWithoutFilteredUsers(s -> s.map(r -> r.getCommitterIdent().getName())
@@ -35,6 +36,6 @@ public class GitCommittersEventSource extends AbstractGitCommitEventSource<Overs
 				.collect(toList());
 
 		// create event
-		return new TwoColumnListEvent<>(list);
+		return Optional.of(new TwoColumnListEvent<>(list));
 	}
 }

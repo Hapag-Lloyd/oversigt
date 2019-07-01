@@ -115,7 +115,7 @@ public class ViewResource {
 	private static Optional<String> readContent(final URL url) {
 		try {
 			return Optional.of(new String(Resources.toByteArray(url), StandardCharsets.UTF_8));
-		} catch (final FileNotFoundException e) {
+		} catch (@SuppressWarnings("unused") final FileNotFoundException ignore) {
 			return Optional.empty();
 		} catch (final Exception e) {
 			throw new SneakyException(e);

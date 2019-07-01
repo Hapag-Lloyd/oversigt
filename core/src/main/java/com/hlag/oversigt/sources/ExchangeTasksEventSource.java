@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -37,13 +38,10 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 	}
 
 	@Override
-	protected TwoColumnListEvent<String> produceExchangeEvent() throws Exception {
+	protected Optional<TwoColumnListEvent<String>> produceExchangeEvent() throws Exception {
 		final List<Task> tasks = getExchangeClient().loadTasks();
-		if (tasks == null) {
-			return null;
-		}
 		final TwoColumnListEvent<String> event = createEvent(tasks);
-		return event;
+		return Optional.of(event);
 	}
 
 	private TwoColumnListEvent<String> createEvent(final List<Task> tasks) {

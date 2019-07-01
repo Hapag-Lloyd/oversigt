@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.joining;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,9 +20,9 @@ public class SqliteDialect implements SqlDialect {
 
 	@Override
 	public String getJdbcConnectionUrl(final String location,
-			final String schemaName,
-			final String username,
-			final String password) {
+			@SuppressWarnings("unused") final String schemaName,
+			@SuppressWarnings("unused") final String username,
+			@SuppressWarnings("unused") final String password) {
 		return "jdbc:sqlite:" + location;
 	}
 
@@ -29,11 +30,11 @@ public class SqliteDialect implements SqlDialect {
 	public String select(final String tableName,
 			final Collection<String> select,
 			final Collection<String> where,
-			final String columnIn,
+			final Optional<String> columnIn,
 			final boolean notIn,
 			final long inValues) {
 		String sql = "SELECT ";
-		if (select != null && !select.isEmpty()) {
+		if (!select.isEmpty()) {
 			sql += select.stream().collect(Collectors.joining(","));
 		} else {
 			sql += "*";
@@ -43,19 +44,19 @@ public class SqliteDialect implements SqlDialect {
 
 	private String getFromAndWhere(final String tableName,
 			final Collection<String> where,
-			final String columnIn,
+			final Optional<String> columnIn,
 			final boolean notIn,
 			final long inValues) {
 		// from
 		final StringBuilder sql = new StringBuilder(" FROM " + tableName);
 
 		// where
-		if (where != null && !where.isEmpty() || columnIn != null && inValues > 0) {
+		if (!where.isEmpty() || columnIn.isPresent() && inValues > 0) {
 			sql.append(" WHERE ");
 
 			// equals
 			final boolean needAnd;
-			if (where != null && !where.isEmpty()) {
+			if (!where.isEmpty()) {
 				sql.append(where.stream().map(s -> s + " = ?").collect(Collectors.joining(" AND ")));
 				needAnd = true;
 			} else {
@@ -63,14 +64,14 @@ public class SqliteDialect implements SqlDialect {
 			}
 
 			// in
-			if (columnIn != null && inValues > 0) {
+			if (columnIn.isPresent() && inValues > 0) {
 				if (needAnd) {
 					sql.append(" AND ");
 				}
 				if (notIn) {
 					sql.append(" NOT ");
 				}
-				sql.append(columnIn
+				sql.append(columnIn.get()
 						+ " IN ("
 						+ Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(", "))
 						+ ")");
@@ -87,7 +88,7 @@ public class SqliteDialect implements SqlDialect {
 			final Collection<String> columnsToCheck,
 			final String columnWithLike) {
 		String sql = "SELECT ";
-		if (select != null && !select.isEmpty()) {
+		if (!select.isEmpty()) {
 			sql += select.stream().collect(Collectors.joining(","));
 		} else {
 			sql += "*";
@@ -95,7 +96,7 @@ public class SqliteDialect implements SqlDialect {
 		sql += " FROM " + tableName;
 		sql += " WHERE ";
 		if (!columnsToCheck.isEmpty()) {
-			sql += columnsToCheck.stream().map(s -> s + "=?").collect(Collectors.joining(",", "", " AND "));
+			sql += columnsToCheck.stream().map(s -> s + "=?").collect(Collectors.joining(" AND ", "", " AND "));
 		}
 		sql += columnWithLike + " LIKE ?";
 		return sql;
@@ -132,7 +133,7 @@ public class SqliteDialect implements SqlDialect {
 	@Override
 	public String delete(final String tableName,
 			final Collection<String> where,
-			final String columnIn,
+			final Optional<String> columnIn,
 			final boolean notIn,
 			final long inValues) {
 		return "DELETE" + getFromAndWhere(tableName, where, columnIn, notIn, inValues);
@@ -185,8 +186,7 @@ public class SqliteDialect implements SqlDialect {
 	@SuppressWarnings("unused")
 	@Override
 	public String alterTableDropColumn(final String tableName, final String columnName) {
-		throw new RuntimeException("DROP COLUMN is not supported by SQLite");
-		// return "ALTER TABLE " + tableName + " DROP COLUMN " + columnName;
+		throw new UnsupportedOperationException("DROP COLUMN is not supported by SQLite");
 	}
 
 	@Override
@@ -212,6 +212,14 @@ public class SqliteDialect implements SqlDialect {
 			sql += " NULL";
 		} else {
 			sql += " NOT NULL";
+		}
+		if (column.getDefaultValue() != null && !column.isPrimaryKey() && !column.isUnique()) {
+			sql += " DEFAULT ";
+			if (column.getDefaultValue() instanceof String) {
+				sql += "'" + column.getDefaultValue() + "'";
+			} else {
+				sql += column.getDefaultValue();
+			}
 		}
 		return sql;
 	}

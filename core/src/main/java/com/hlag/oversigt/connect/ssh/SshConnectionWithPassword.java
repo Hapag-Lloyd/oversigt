@@ -7,6 +7,8 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 class SshConnectionWithPassword extends SshConnection {
 	private final char[] password;
 
@@ -36,9 +38,13 @@ class SshConnectionWithPassword extends SshConnection {
 			this.password = new String(password);
 		}
 
+		/**
+		 * This method should never be called because {@link #promptPassword(String)}
+		 * returns <code>false</code>.
+		 */
 		@Override
 		public String getPassphrase() {
-			return null;
+			return "";
 		}
 
 		@Override
@@ -47,22 +53,22 @@ class SshConnectionWithPassword extends SshConnection {
 		}
 
 		@Override
-		public boolean promptPassphrase(final String arg0) {
+		public boolean promptPassphrase(@SuppressWarnings("unused") @Nullable final String arg0) {
 			return false;
 		}
 
 		@Override
-		public boolean promptPassword(final String arg0) {
+		public boolean promptPassword(@SuppressWarnings("unused") @Nullable final String arg0) {
 			return true;
 		}
 
 		@Override
-		public boolean promptYesNo(final String arg0) {
+		public boolean promptYesNo(@SuppressWarnings("unused") @Nullable final String arg0) {
 			return false;
 		}
 
 		@Override
-		public void showMessage(final String arg0) {
+		public void showMessage(@SuppressWarnings("unused") @Nullable final String arg0) {
 			// there is no message
 		}
 	}

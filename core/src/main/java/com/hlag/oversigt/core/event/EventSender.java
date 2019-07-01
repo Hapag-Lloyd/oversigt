@@ -13,13 +13,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +34,7 @@ import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.util.JsonUtils;
 
 import de.larssh.utils.OptionalLongs;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.AttachmentKey;
 
@@ -117,7 +117,8 @@ public class EventSender {
 	@Subscribe
 	void removeEventWithId(final String id) {
 		synchronized (cachedEvents) {
-			final boolean deleted = cachedEvents.values().removeIf(event -> event.getId().equals(id));
+			final boolean deleted
+					= cachedEvents.values().removeIf(event -> Objects.requireNonNull(event.getId()).equals(id));
 			if (deleted) {
 				logWarn(LOGGER, "Deleted cached events for ID [%s]", id);
 			}
@@ -132,7 +133,7 @@ public class EventSender {
 
 		// filter for current dashboard
 		if (!Optional.ofNullable(connection.getAttachment(DASHBOARD_KEY))
-				.map(d -> doesDashboardContainEventId(d, event.getId()))
+				.map(d -> doesDashboardContainEventId(d, Objects.requireNonNull(event.getId())))
 				.orElse(true)) {
 			return false;
 		}

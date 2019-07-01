@@ -2,6 +2,7 @@ package com.hlag.oversigt.sources;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
@@ -16,12 +17,8 @@ public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEve
 	}
 
 	@Override
-	protected PieChartEvent produceEvent() {
+	protected Optional<PieChartEvent> produceEvent() {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
-		if (issues == null) {
-			return null;
-		}
-
 		final long sumMails = issues.values().stream().flatMap(Set::stream).count();
 
 		final PieChartEvent event = new PieChartEvent();
@@ -33,6 +30,6 @@ public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEve
 					(double) count / sumMails,
 					displayOption.getColor().getHexColor());
 		}
-		return event;
+		return Optional.of(event);
 	}
 }

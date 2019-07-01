@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @Target(value = { ElementType.TYPE, ElementType.FIELD, ElementType.METHOD })
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface JsonHint {
@@ -13,16 +15,22 @@ public @interface JsonHint {
 	ArrayStyle arrayStyle() default ArrayStyle.DEFAULT;
 
 	enum ArrayStyle {
-		DEFAULT(null),
-		GRID(null),
+		DEFAULT,
+		GRID,
 		TABLE("table"),
 		TABS("tabs");
+		@Nullable
 		private final String value;
+
+		ArrayStyle() {
+			value = null;
+		}
 
 		ArrayStyle(final String value) {
 			this.value = value;
 		}
 
+		@Nullable
 		public String value() {
 			return value;
 		}

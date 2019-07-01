@@ -8,6 +8,8 @@ import javax.ws.rs.ext.Provider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JacksonConfig implements ContextResolver<ObjectMapper> {
@@ -19,7 +21,7 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 	}
 
 	@Override
-	public ObjectMapper getContext(final Class<?> objectType) {
+	public ObjectMapper getContext(@SuppressWarnings("unused") @Nullable final Class<?> objectType) {
 		return objectMapper;
 	}
 }

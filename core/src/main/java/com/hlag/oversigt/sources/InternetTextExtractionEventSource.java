@@ -36,7 +36,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	}
 
 	@Override
-	protected TwoColumnListEvent<String> produceEvent() {
+	protected Optional<TwoColumnListEvent<String>> produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
 
 		final String body = downloadText();
@@ -50,7 +50,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 				.stream()
 				.map(l -> new ListEventItem<>(l, ""))
 				.collect(Collectors.toList());
-		return new TwoColumnListEvent<>(items);
+		return Optional.of(new TwoColumnListEvent<>(items));
 	}
 
 	private String downloadText() {
@@ -132,14 +132,18 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 					.registerRegularExpressionFunction(downloadedContent)
 					.process(condition)
 					.trim();
-			if (Boolean.parseBoolean(result)) {
-				return true;
+			try {
+				if (Boolean.parseBoolean(result)) {
+					return true;
+				}
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
+				/* ignore */
 			}
 			try {
 				if (Long.parseLong(result) > 0L) {
 					return true;
 				}
-			} catch (final NumberFormatException ignore) {
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// ignore invalid user input
 			}
 			return false;

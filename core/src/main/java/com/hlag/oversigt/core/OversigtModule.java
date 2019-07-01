@@ -32,6 +32,7 @@ import com.atlassian.jira.rest.client.internal.async.AsynchronousHttpClientFacto
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 import com.google.common.base.Charsets;
@@ -76,8 +77,10 @@ import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
+import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 
 /**
  * Main application configuration module. Configures server and all necessary
@@ -91,6 +94,7 @@ class OversigtModule extends AbstractModule {
 
 	private final Runnable shutdownRunnable;
 
+	@Nullable
 	private final CommandLineOptions options;
 
 	/**
@@ -102,7 +106,7 @@ class OversigtModule extends AbstractModule {
 	 *                         executed
 	 * @param extensions       list of modules that will additionally be loaded
 	 */
-	OversigtModule(final CommandLineOptions options, final Runnable shutdownRunnable) {
+	OversigtModule(@Nullable final CommandLineOptions options, final Runnable shutdownRunnable) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
@@ -152,7 +156,9 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Service.class).annotatedWith(Names.named("NightlyReloader")).to(NightlyReloaderService.class);
 
 		// GSON
-		final Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, serializer(Class<?>::getName))
+		final Gson gson = new GsonBuilder()//
+				.registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory())
+				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
 				.registerTypeAdapter(Color.class, deserializer(Color::parse))
@@ -176,6 +182,7 @@ class OversigtModule extends AbstractModule {
 		objectMapper.registerModule(module);
 		// objectMapper.registerModule(new JavaTimeModule()); // instead the
 		// InstantDeserializer and ZonedDateTimeSerializer are used directly
+		objectMapper.registerModule(new Jdk8Module());
 		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		binder().bind(ObjectMapper.class).toInstance(objectMapper);
 
@@ -199,9 +206,12 @@ class OversigtModule extends AbstractModule {
 		// binds properties
 		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
-		configuration.bindProperties(binder(), options.isDebugFallback(), options.getLdapBindPasswordFallback());
-		if (options != null) {
-			Names.bindProperties(binder(), options.getProperties());
+		final CommandLineOptions checkedOptions = options; // null pointer check
+		if (checkedOptions != null) {
+			configuration.bindProperties(binder(),
+					checkedOptions.isDebugFallback(),
+					checkedOptions.getLdapBindPasswordFallback());
+			Names.bindProperties(binder(), checkedOptions.getProperties());
 		}
 	}
 
@@ -299,18 +309,18 @@ class OversigtModule extends AbstractModule {
 
 		/** {@inheritDoc} */
 		@Override
-		public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
+		public <T extends ConstraintValidator<?, ?>> T getInstance(@Nullable final Class<T> key) {
 			/*
 			 * By default, all beans are in prototype scope, so new instance will be
 			 * obtained each time. Validator implementer may declare it as singleton and
 			 * manually maintain internal state (to re-use validators and simplify life for
 			 * GC)
 			 */
-			final boolean bound = injector.getBindings()
+			final boolean bound = injector.getBindings()//
 					.keySet()
 					.stream()
 					.map(k -> k.getTypeLiteral().getRawType())
-					.anyMatch(k -> key.equals(k));
+					.anyMatch(k -> key != null && key.equals(k));
 			if (bound) {
 				return injector.getInstance(key);
 			}
@@ -319,7 +329,7 @@ class OversigtModule extends AbstractModule {
 
 		/** {@inheritDoc} */
 		@Override
-		public void releaseInstance(@SuppressWarnings("unused") final ConstraintValidator<?, ?> instance) {
+		public void releaseInstance(@SuppressWarnings("unused") @Nullable final ConstraintValidator<?, ?> instance) {
 			/* Garbage collector will do it */
 		}
 

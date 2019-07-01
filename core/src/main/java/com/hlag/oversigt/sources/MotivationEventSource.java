@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import com.hlag.oversigt.core.eventsource.DataItemDefault;
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -32,7 +33,7 @@ public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
 	}
 
 	@Override
-	protected MeterEvent produceEvent() {
+	protected Optional<MeterEvent> produceEvent() {
 		final ZonedDateTime now = ZonedDateTime.now(HERE);
 		ZonedDateTime start = getStartingTime();
 		ZonedDateTime stop = getQuittingTime();
@@ -62,7 +63,7 @@ public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
 		final double factor = 1.0 - DayOfWeek.values().length * 0.05;
 		motivation = offset + motivation * factor;
 
-		return new MeterEvent((byte) (motivation * 100 + 0.5));
+		return Optional.of(new MeterEvent((byte) (motivation * 100 + 0.5)));
 	}
 
 	private static ZonedDateTime getStartingTime() {

@@ -2,6 +2,9 @@ package com.hlag.oversigt.security;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class Role {
 	public static final String ROLE_NAME_SERVER_ADMIN = "server.admin";
@@ -30,11 +33,12 @@ public final class Role {
 				id -> new Role(DASHBOARD_EDITOR, "dashboard." + id + ".editor"));
 	}
 
+	@Nullable
 	private final Role parent;
 
 	private final String name;
 
-	private Role(final Role parent, final String name) {
+	private Role(@Nullable final Role parent, final String name) {
 		this.parent = parent;
 		this.name = name;
 	}
@@ -43,8 +47,8 @@ public final class Role {
 		return name;
 	}
 
-	public Role getParent() {
-		return parent;
+	public Optional<Role> getParent() {
+		return Optional.ofNullable(parent);
 	}
 
 	public Role getDashboardSpecificRole(final String dashboardId) {
@@ -59,6 +63,6 @@ public final class Role {
 
 	@Override
 	public String toString() {
-		return parent == null ? name : name + " (" + parent.toString() + ")";
+		return name + getParent().map(s -> " (" + s.toString() + ")").orElse("");
 	}
 }

@@ -1,6 +1,5 @@
 package com.hlag.oversigt.web.api;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -55,14 +54,12 @@ public class ApiAuthenticationUtils {
 		// Authenticate against a database, LDAP, file or whatever
 		// Throw an Exception if the credentials are invalid
 
-		final Principal principal = authenticator.login(username, password);
-		if (principal == null) {
-			throw new RuntimeException("Unable to log in");
-		}
-		return principal;
+		return authenticator//
+				.login(username, password)
+				.orElseThrow(() -> new RuntimeException("Unable to log in"));
 	}
 
-	public String issueToken(final Principal principal) throws IllegalArgumentException, UnsupportedEncodingException {
+	public String issueToken(final Principal principal) throws IllegalArgumentException {
 		final long nowMillis = System.currentTimeMillis();
 		final Date now = new Date(nowMillis);
 		final String id = nowMillis + "-" + UUID.randomUUID().toString();
@@ -101,6 +98,6 @@ public class ApiAuthenticationUtils {
 			throw new RuntimeException("JWT expired");
 		}
 
-		return Principal.loadPrincipal(authenticator, claims.get("username", String.class));
+		return Principal.loadPrincipal(authenticator, claims.get("username", String.class)).get();
 	}
 }

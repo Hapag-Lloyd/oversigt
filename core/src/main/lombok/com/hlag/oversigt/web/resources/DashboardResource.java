@@ -2,6 +2,7 @@ package com.hlag.oversigt.web.resources;
 
 import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
 import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
+import static com.hlag.oversigt.web.api.ErrorResponse.internalServerError;
 import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -12,8 +13,10 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +41,9 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -50,11 +56,11 @@ import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
-import com.hlag.oversigt.web.api.ApiValidationException;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -68,14 +74,21 @@ import lombok.Getter;
 @Path("/dashboards")
 @Singleton
 public class DashboardResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResource.class);
+
 	@Inject
 	private DashboardController dashboardController;
 
 	@Inject
 	private Authenticator authenticator;
 
+	@Nullable
 	@Context
-	private UriInfo uri;
+	private UriInfo injectedUriInfo;
+
+	private UriInfo getUriInfo() {
+		return Objects.requireNonNull(injectedUriInfo);
+	}
 
 	public DashboardResource() {
 		// no fields to be initialized manually, some will be injected
@@ -93,6 +106,7 @@ public class DashboardResource {
 		return ok(dashboardController.getDashboardIds()
 				.stream()
 				.map(dashboardController::getDashboard)
+				.map(Optional::get)
 				.map(DashboardInfo::fromDashboard)
 				.collect(toList())).build();
 	}
@@ -111,15 +125,22 @@ public class DashboardResource {
 			@QueryParam("dashboardId") @NotNull final String id,
 			@QueryParam("owner") @NotNull @UserId final String ownerUserId,
 			@QueryParam("enabled") @ApiParam(defaultValue = "false") final boolean enabled) {
-		Dashboard dashboard = dashboardController.getDashboard(id);
-		if (dashboard != null) {
-			return Response.seeOther(URI.create(uri.getAbsolutePath() + "/" + id)).build();
+		final Optional<Dashboard> existingDashboard = dashboardController.getDashboard(id);
+		if (existingDashboard.isPresent()) {
+			return Response.seeOther(URI.create(getUriInfo().getAbsolutePath() + "/" + id)).build();
 		}
 
-		dashboard = dashboardController.createDashboard(id,
-				Principal.loadPrincipal(authenticator, ownerUserId),
+		final Optional<Dashboard> createdDashboard = dashboardController.createDashboard(id,
+				Principal.loadPrincipal(authenticator, ownerUserId)
+						.orElseThrow(() -> new RuntimeException("Unknown principal for: " + ownerUserId)),
 				enabled && securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));
-		return created(URI.create(uri.getAbsolutePath() + "/" + dashboard.getId())).entity(dashboard)
+		if (!createdDashboard.isPresent()) {
+			final UUID uuid = UUID.randomUUID();
+			LOGGER.error("Dashboard {} does not exist, but creation failed, too.", id);
+			return internalServerError(uuid, "Unable to create dashboard. Details are written to log file.");
+		}
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + createdDashboard.get().getId()))
+				.entity(createdDashboard.get())
 				.type(MediaType.APPLICATION_JSON_TYPE)
 				.build();
 	}
@@ -169,15 +190,15 @@ public class DashboardResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateDashboardPartially(@Context final SecurityContext securityContext,
 			@PathParam("dashboardId") @NotNull final String id,
-			final Map<String, Object> newDashboardData) throws ApiValidationException {
+			final Map<String, Object> newDashboardData) {
 		// load current dashboard from storage
-		final Dashboard dashboard = dashboardController.getDashboard(id);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = dashboardController.getDashboard(id);
+		if (!dashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
 
 		// clone it to work on it
-		final Dashboard newDashboard = dashboard.copy();
+		final Dashboard newDashboard = dashboard.get().copy();
 
 		// check dashboard id
 		if (newDashboardData.containsKey("id")
@@ -234,17 +255,18 @@ public class DashboardResource {
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateDashboard(@Context final SecurityContext securityContext,
 			@PathParam("dashboardId") @NotNull final String id,
-			final Dashboard newDashboardData) throws ApiValidationException {
+			final Dashboard newDashboardData) {
 		// load current dashboard from storage
-		final Dashboard originalDashboard = dashboardController.getDashboard(id);
+		final Optional<Dashboard> maybeOriginalDashboard = dashboardController.getDashboard(id);
 
 		// Checks
 		// ======
 
 		// does it exist?
-		if (originalDashboard == null) {
+		if (!maybeOriginalDashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
+		final Dashboard originalDashboard = maybeOriginalDashboard.get();
 
 		// check dashboard id
 		if (!id.equals(newDashboardData.getId()) || !id.equals(originalDashboard.getId())) {
@@ -286,11 +308,12 @@ public class DashboardResource {
 
 		// return dashboard info
 		// =====================
-		final Dashboard changedDashboard = dashboardController.getDashboard(id);
+		final Optional<Dashboard> changedDashboard = dashboardController.getDashboard(id);
 
 		// reload user rights
-		users.addAll(Stream.concat(changedDashboard.getOwners().stream(), changedDashboard.getEditors().stream())
-				.collect(toSet()));
+		users.addAll(
+				Stream.concat(changedDashboard.get().getOwners().stream(), changedDashboard.get().getEditors().stream())
+						.collect(toSet()));
 		users.forEach(authenticator::reloadRoles);
 
 		return ok(changedDashboard).build();
@@ -307,19 +330,19 @@ public class DashboardResource {
 	@JwtSecured
 	@RolesAllowed("dashboard.{dashboardId}.editor")
 	public Response updateWidgetPositions(@PathParam("dashboardId") @NotNull final String id,
-			final List<WidgetPosition> widgetPositions) throws ApiValidationException {
+			final List<WidgetPosition> widgetPositions) {
 		// load current dashboard from storage
-		final Dashboard dashboard = dashboardController.getDashboard(id);
+		final Optional<Dashboard> dashboard = dashboardController.getDashboard(id);
 
 		// does it exist?
-		if (dashboard == null) {
+		if (!dashboard.isPresent()) {
 			return notFound("Dashboard does not exist.");
 		}
 
 		// Do all given widget positions match a dashboard widget?
 		final Set<String> unmatchedWidgetIds = widgetPositions.stream()
 				.mapToInt(WidgetPosition::getWidgetId)
-				.filter(i -> !dashboard.getWidgets().stream().mapToInt(Widget::getId).anyMatch(w -> i == w))
+				.filter(i -> !dashboard.get().getWidgets().stream().mapToInt(Widget::getId).anyMatch(w -> i == w))
 				.mapToObj(Integer::toString)
 				.collect(Collectors.toSet());
 		if (!unmatchedWidgetIds.isEmpty()) {
@@ -328,7 +351,7 @@ public class DashboardResource {
 
 		// Update widget positions
 		widgetPositions.forEach(t -> {
-			final Widget widget = dashboard.getWidget(t.getWidgetId());
+			final Widget widget = dashboard.get().getWidget(t.getWidgetId());
 			widget.setSizeX(t.getSizeX());
 			widget.setSizeY(t.getSizeY());
 			widget.setPosX(t.getPosX());
@@ -360,6 +383,10 @@ public class DashboardResource {
 	public static class DashboardInfo {
 		public static DashboardInfo fromDashboard(final Dashboard dashboard) {
 			return builder().id(dashboard.getId()).title(dashboard.getTitle()).build();
+		}
+
+		public static DashboardInfo fromDashboard(final Optional<Dashboard> dashboard) {
+			return fromDashboard(dashboard.get());
 		}
 
 		@NotNull

@@ -1,6 +1,7 @@
 package com.hlag.oversigt.sources;
 
 import java.time.ZoneId;
+import java.util.Optional;
 
 import com.hlag.oversigt.connect.exchange.ExchangeClient;
 import com.hlag.oversigt.connect.exchange.ExchangeClientFactory;
@@ -31,17 +32,20 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 
 	private ZoneId zoneId = ZoneId.systemDefault();
 
-	private ExchangeClient exchangeClient;
+	private Optional<ExchangeClient> exchangeClient = Optional.empty();
 
 	@Override
 	protected void startUp() throws Exception {
-		exchangeClient = ExchangeClientFactory.createExchangeClient(getServerConnection(), getCredentials());
+		exchangeClient
+				= Optional.of(ExchangeClientFactory.createExchangeClient(getServerConnection(), getCredentials()));
 		super.startUp();
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
-		exchangeClient.close();
+		if (exchangeClient.isPresent()) {
+			exchangeClient.get().close();
+		}
 		super.shutDown();
 	}
 
@@ -75,30 +79,26 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	}
 
 	protected ExchangeClient getExchangeClient() {
-		return exchangeClient;
+		return exchangeClient.orElseThrow(() -> new RuntimeException("The exchange client has not been created yet."));
 	}
 
 	@Override
-	protected final T produceEvent() throws Exception {
+	protected final Optional<T> produceEvent() throws Exception {
 		try {
 			return produceExchangeEvent();
 		} catch (final Exception e) {
 			if (isLoginException(e)) {
 				return failure(String.format("Unable to log in with user '%s' to %s",
-						getCredentials() != null ? getCredentials().getUsername() : "",
-						getServerConnection() != null ? getServerConnection().getUrl() : ""));
+						getCredentials().getUsername(),
+						getServerConnection().getUrl()));
 			}
-			final String message = getFailureMessage(e);
-			if (message == null) {
-				return failure("Unable to produce Exchange event", e);
-			}
-			return failure(message, e);
+			return failure(getFailureMessage(e).orElse("Unable to produce Exchange event"), e);
 		}
 	}
 
-	protected String getFailureMessage(@SuppressWarnings("unused") final Exception e) {
-		return null;
+	protected Optional<String> getFailureMessage(@SuppressWarnings("unused") final Exception e) {
+		return Optional.empty();
 	}
 
-	protected abstract T produceExchangeEvent() throws Exception;
+	protected abstract Optional<T> produceExchangeEvent() throws Exception;
 }

@@ -14,6 +14,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
@@ -38,6 +41,8 @@ import lombok.Getter;
 @Path("/event-source/state")
 @Singleton
 public class EventSourceStatusResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceStatusResource.class);
+
 	@Inject
 	private DashboardController controller;
 
@@ -62,7 +67,7 @@ public class EventSourceStatusResource {
 		try {
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
 	}
@@ -93,9 +98,10 @@ public class EventSourceStatusResource {
 			}
 			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
 					.build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (final Exception e) {
+			LOGGER.error("Unable to set event source status", e);
 			return ErrorResponse.preconditionFailed("Unable to start/ stop event source", e);
 		}
 	}
@@ -111,11 +117,11 @@ public class EventSourceStatusResource {
 					.createdBy(instance.getCreatedBy())
 					.lastChangedBy(instance.getLastChangeBy())
 					.running(controller.isRunning(instance))
-					.lastRun(controller.getLastRun(instance))
-					.lastSuccess(controller.getLastSuccessfulRun(instance))
-					.lastFailure(controller.getLastFailureDateTime(instance))
-					.lastReason(controller.getLastFailureDescription(instance))
-					.lastException(controller.getLastFailureException(instance))
+					.lastRun(controller.getLastRun(instance).orElse(null))
+					.lastSuccess(controller.getLastSuccessfulRun(instance).orElse(null))
+					.lastFailure(controller.getLastFailureDateTime(instance).orElse(null))
+					.lastReason(controller.getLastFailureDescription(instance).orElse(null))
+					.lastException(controller.getLastFailureException(instance).orElse(null))
 					.build();
 		}
 

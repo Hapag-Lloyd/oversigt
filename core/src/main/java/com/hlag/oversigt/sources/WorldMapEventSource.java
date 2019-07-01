@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -81,8 +82,8 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 	}
 
 	@Override
-	protected MapEvent produceEventFromData() {
-		return new MapEvent(stream().collect(Collectors.toList()));
+	protected Optional<MapEvent> produceEventFromData() {
+		return Optional.of(new MapEvent(stream().collect(Collectors.toList())));
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABS, headerTemplate = "Mapping {{i1}}")

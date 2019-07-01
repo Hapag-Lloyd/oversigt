@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class DashboardDesign {
 	static final int TILE_DISTANCE = Finals.constant(6);
@@ -119,13 +120,15 @@ public final class DashboardDesign {
 	public static class StyleAddon {
 		private final String css;
 
+		@Nullable
 		private final Color backgroundColor;
 
-		public StyleAddon(final String css, final Color backgroundColor) {
+		public StyleAddon(final String css, @Nullable final Color backgroundColor) {
 			this.css = css;
 			this.backgroundColor = backgroundColor;
 		}
 
+		@Nullable
 		public Color getBackgroundColor() {
 			return backgroundColor;
 		}

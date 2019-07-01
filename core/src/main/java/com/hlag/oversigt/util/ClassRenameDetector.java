@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -49,7 +50,8 @@ public final class ClassRenameDetector {
 		return className.contains(".") ? className.substring(className.lastIndexOf(".") + 1) : className;
 	}
 
-	public static EventSourceKey detectPackageMove(final Map<String, EventSourceKey> keys, final String className) {
+	public static Optional<EventSourceKey> detectPackageMove(final Map<String, EventSourceKey> keys,
+			final String className) {
 		final String simpleClassNameWithDot = "." + getSimpleName(className);
 		final Set<Entry<String, EventSourceKey>> candidates = keys.entrySet()
 				.stream()
@@ -57,7 +59,7 @@ public final class ClassRenameDetector {
 				.filter(s -> s.getKey().endsWith(simpleClassNameWithDot))
 				.collect(toSet());
 		if (candidates.size() == 1) {
-			return candidates.iterator().next().getValue();
+			return Optional.of(candidates.iterator().next().getValue());
 		}
 		if (candidates.isEmpty()) {
 			LOGGER.warn("No moved class found for name: {}", className);
@@ -66,48 +68,70 @@ public final class ClassRenameDetector {
 					className,
 					candidates.stream().map(Entry::getKey).collect(joining(", ")));
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private static final MetricStringDistance DISTANCE = new Levenshtein();
 
-	public static EventSourceKey detectSimpleRename(final Map<String, EventSourceKey> keys, final String className) {
+	public static Optional<EventSourceKey> detectSimpleRename(final Map<String, EventSourceKey> keys,
+			final String className) {
 		final String simpleClassName = getSimpleName(className);
-		final List<Tuple<EventSourceKey, Double>> candidates = keys.entrySet()
+		final List<KeyDistance> candidates = keys.entrySet()//
 				.stream()
 				.filter(s -> s.getKey().startsWith("class:"))
-				.map(s -> new Tuple<>(s.getValue(), DISTANCE.distance(simpleClassName, getSimpleName(s.getKey()))))
-				.filter(t -> t.getSecond() <= 2.0)
-				.sorted((a, b) -> Double.compare(a.getSecond(), b.getSecond()))
+				.map(s -> new KeyDistance(s.getValue(), DISTANCE.distance(simpleClassName, getSimpleName(s.getKey()))))
+				.filter(t -> t.getDistance() <= 2.0)
+				.sorted((a, b) -> Double.compare(a.getDistance(), b.getDistance()))
 				.collect(toList());
 		if (candidates.size() == 1) {
-			return candidates.iterator().next().getFirst();
+			return Optional.of(candidates.iterator().next().getKey());
 		}
 		if (candidates.isEmpty()) {
 			LOGGER.warn("No renamed class found for name: {}", className);
 		} else if (candidates.size() > 1) {
 			LOGGER.warn("Multiple renamed candidates found for class [{}]: {}",
 					className,
-					candidates.stream().map(Tuple::getFirst).map(EventSourceKey::getKey).collect(joining(", ")));
+					candidates.stream().map(KeyDistance::getKey).map(EventSourceKey::getKey).collect(joining(", ")));
 		}
-		return null;
+		return Optional.empty();
 	}
 
-	public static EventSourceKey detectComplexRename(final Map<String, EventSourceKey> keys, final String className) {
+	public static Optional<EventSourceKey> detectComplexRename(final Map<String, EventSourceKey> keys,
+			final String className) {
 		final String newClassName = RENAME_PROPERTIES.getProperty(className);
 		if (newClassName != null) {
 			try {
 				Class.forName(newClassName);
 				LOGGER.info("Class {} replaced by {}", className, newClassName);
-				return keys.get("class:" + newClassName);
+				return Optional.of(keys.get("class:" + newClassName));
 			} catch (final Exception e) {
 				LOGGER.error("Unable to load class {} in order to replace class {}", newClassName, className, e);
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private ClassRenameDetector() {
 		throw new UnsupportedOperationException();
+	}
+
+	private static final class KeyDistance {
+		private final EventSourceKey key;
+
+		private final Double distance;
+
+		private KeyDistance(final EventSourceKey key, final Double distance) {
+			this.key = key;
+			this.distance = distance;
+		}
+
+		public EventSourceKey getKey() {
+			return key;
+		}
+
+		public Double getDistance() {
+			return distance;
+		}
+
 	}
 }

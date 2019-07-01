@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +25,8 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Scheduled EventSource - produces events with specified time period.
@@ -57,17 +60,17 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	private AtomicBoolean immediateExecution = new AtomicBoolean(false);
 
-	private ZonedDateTime lastRun = null;
+	private Optional<ZonedDateTime> lastRun = Optional.empty();
 
-	private ZonedDateTime lastSuccessfulRun = null;
+	private Optional<ZonedDateTime> lastSuccessfulRun = Optional.empty();
 
 	private final AtomicInteger numberOfFailedRuns = new AtomicInteger(0);
 
-	private ZonedDateTime lastFailureDateTime = null;
+	private Optional<ZonedDateTime> lastFailureDateTime = Optional.empty();
 
-	private String lastFailureDescription = null;
+	private Optional<String> lastFailureDescription = Optional.empty();
 
-	private Throwable lastFailureException = null;
+	private Optional<Throwable> lastFailureException = Optional.empty();
 
 	protected String getEventId() {
 		return eventId;
@@ -91,15 +94,22 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 		try {
 			logTrace(getLogger(), "Starting to produce event");
-			if (sendEvent(produceEvent())) {
+			Optional<T> event;
+			try {
+				event = produceEvent();
+			} catch (@SuppressWarnings("unused") final EventSourceException e) {
+				// TODO Use this exception more...
+				event = Optional.empty();
+			}
+			if (sendEvent(event)) {
 				resetFailure();
 			} else {
-				sendEvent(new ErrorEvent(getLastFailureDescription()));
+				sendEvent(Optional.of(new ErrorEvent(getLastFailureDescription().orElse(null))));
 			}
 			logTrace(getLogger(), "Done producing event");
 			setLastRunNow(true);
 		} catch (final Throwable e) {
-			sendEvent(new ErrorEvent(e));
+			sendEvent(Optional.of(new ErrorEvent(e)));
 			logError(getLogger(), "Cannot produce event with id %s. Deleting last event.", eventId);
 			failure("Event source threw an exception", e);
 			setLastRunNow(false);
@@ -117,15 +127,15 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		}
 	}
 
-	protected final boolean sendEvent(final OversigtEvent event) {
-		if (event != null) {
-			event.setId(eventId);
+	protected final boolean sendEvent(final Optional<? extends OversigtEvent> event) {
+		if (event.isPresent()) {
+			event.get().setId(eventId);
 			try {
-				event.setLifetime(getEventLifetime());
+				event.get().setLifetime(getEventLifetime());
 			} catch (final Exception e) {
 				logWarn(getLogger(), "Unable to compute event life time", e);
 			}
-			this.eventBus.post(event);
+			this.eventBus.post(event.get());
 			return true;
 		}
 		return false;
@@ -145,7 +155,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return getClass().getSimpleName() + "[eventID=" + eventId + "]";
 	}
 
-	protected abstract T produceEvent() throws Exception;
+	protected abstract Optional<T> produceEvent() throws Exception;
 
 	protected final Logger getLogger() {
 		return LOGGERS.computeIfAbsent(getClass().getName(), LoggerFactory::getLogger);
@@ -182,10 +192,10 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	private synchronized void setLastRun(final boolean success, final ZonedDateTime lastRun) {
 		logDebug(getLogger(), "Setting last run timestamp to %s", lastRun);
-		this.lastRun = lastRun;
+		this.lastRun = Optional.of(lastRun);
 		if (success) {
 			logDebug(getLogger(), "Setting last successful run timestamp, too");
-			lastSuccessfulRun = ZonedDateTime.from(lastRun);
+			lastSuccessfulRun = Optional.of(ZonedDateTime.from(lastRun));
 			numberOfFailedRuns.set(0);
 		}
 	}
@@ -197,49 +207,59 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 				lastRun,
 				frequency,
 				(Supplier<ZonedDateTime>) ZonedDateTime::now,
-				(Supplier<Duration>) () -> Duration.between(lastRun, ZonedDateTime.now()),
-				(Supplier<Duration>) () -> frequency.minus(Duration.between(lastRun, ZonedDateTime.now())));
-		return immediateExecution.getAndSet(false)
-				|| lastRun == null
-				|| frequency.minus(Duration.between(lastRun, ZonedDateTime.now())).isNegative();
-		// || Duration.between(lastRun, LocalDateTime.now()).compareTo(frequency) > 1;
+				(Supplier<Duration>) () -> Duration.between(lastRun.get()/* TODO check isPresent */,
+						ZonedDateTime.now()),
+				(Supplier<Duration>) () -> frequency
+						.minus(Duration.between(lastRun.get()/* TODO check isPresent */, ZonedDateTime.now())));
+		return immediateExecution.getAndSet(false) //
+				|| !lastRun.isPresent() //
+				|| frequency.minus(Duration.between(lastRun.get()/* TODO check isPresent */, ZonedDateTime.now()))
+						.isNegative();
 	}
 
-	public synchronized ZonedDateTime getLastRun() {
+	public synchronized Optional<ZonedDateTime> getLastRun() {
 		return lastRun;
 	}
 
-	public synchronized ZonedDateTime getLastSuccessfulRun() {
+	public synchronized Optional<ZonedDateTime> getLastSuccessfulRun() {
 		return lastSuccessfulRun;
 	}
 
 	private synchronized void resetFailure() {
-		this.lastFailureDateTime = null;
-		this.lastFailureDescription = null;
-		this.lastFailureException = null;
+		this.lastFailureDateTime = Optional.empty();
+		this.lastFailureDescription = Optional.empty();
+		this.lastFailureException = Optional.empty();
 	}
 
 	protected synchronized <X> X failure(final String message) {
 		return failure(message, null);
 	}
 
-	protected synchronized <X> X failure(final String message, final Throwable exception) {
+	protected synchronized <X> X failure(final String message, @Nullable final Throwable exception) {
 		getLogger().error(message, exception);
-		this.lastFailureDateTime = ZonedDateTime.now();
-		this.lastFailureDescription = message;
-		this.lastFailureException = exception;
-		return null;
+		this.lastFailureDateTime = Optional.of(ZonedDateTime.now());
+		this.lastFailureDescription = Optional.of(message);
+		this.lastFailureException = Optional.of(exception);
+		throw new EventSourceException(message, exception);
 	}
 
-	public synchronized ZonedDateTime getLastFailureDateTime() {
+	public synchronized Optional<ZonedDateTime> getLastFailureDateTime() {
 		return lastFailureDateTime;
 	}
 
-	public synchronized String getLastFailureDescription() {
+	public synchronized Optional<String> getLastFailureDescription() {
 		return lastFailureDescription;
 	}
 
-	public synchronized String getLastFailureException() {
-		return lastFailureException != null ? Throwables.getStackTraceAsString(lastFailureException) : null;
+	public synchronized Optional<String> getLastFailureException() {
+		return lastFailureException.map(Throwables::getStackTraceAsString);
+	}
+
+	private static final class EventSourceException extends RuntimeException {
+		private static final long serialVersionUID = -3175800380445076693L;
+
+		private EventSourceException(final String message, @Nullable final Throwable cause) {
+			super(message, cause);
+		}
 	}
 }

@@ -10,6 +10,8 @@ import com.hlag.oversigt.storage.Storage;
 
 @Singleton
 public class EventSourceNameGenerator {
+	private static final String EVENTSOURCE = "eventsource";
+
 	@Inject
 	private Storage storage;
 
@@ -19,13 +21,16 @@ public class EventSourceNameGenerator {
 
 	public String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
 		// create base name
-		String basename = descriptor.getView();
-		if (descriptor.getServiceClass() != null) {
-			basename = descriptor.getServiceClass().getSimpleName();
-			if (basename.toLowerCase().endsWith("eventsource")) {
-				basename = basename.substring(0, basename.length() - "eventsource".length());
-			}
-		}
+		String basename = descriptor//
+				.getServiceClass()
+				.map(c -> c.getSimpleName())
+				.map(name -> {
+					if (name.toLowerCase().endsWith(EVENTSOURCE)) {
+						return name.substring(0, name.length() - EVENTSOURCE.length());
+					}
+					return name;
+				})
+				.orElse(descriptor.getView());
 		basename = basename.chars()
 				.mapToObj(c -> Character.isUpperCase(c) ? " " + (char) c : Character.toString((char) c))
 				.collect(Collectors.joining())

@@ -18,5 +18,5 @@ import com.google.inject.BindingAnnotation;
 @Documented
 @BindingAnnotation
 public @interface EventId {
-	// no annotation type elements needed
+	/* just a marker annotation */
 }

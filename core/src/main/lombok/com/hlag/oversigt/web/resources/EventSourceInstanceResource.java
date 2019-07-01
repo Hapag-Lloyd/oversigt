@@ -12,13 +12,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -33,6 +35,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -53,6 +58,7 @@ import com.hlag.oversigt.web.api.NoChangeLog;
 import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
 import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -68,20 +74,32 @@ import lombok.NoArgsConstructor;
 @Path("/event-source/instances")
 @Singleton
 public class EventSourceInstanceResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);
+
 	private static JsonUtils json = null;
 
 	@Inject
 	private DashboardController controller;
 
+	@Nullable
 	@Context
-	private UriInfo uri;
+	private UriInfo injectedUriInfo;
 
+	@Nullable
 	@Context
-	private SecurityContext securityContext;
+	private SecurityContext injectedSecurityContext;
 
 	@Inject
 	public EventSourceInstanceResource(final JsonUtils jsonUtils) {
 		json = jsonUtils;
+	}
+
+	private SecurityContext getSecurityContext() {
+		return Objects.requireNonNull(injectedSecurityContext);
+	}
+
+	private UriInfo getUriInfo() {
+		return Objects.requireNonNull(injectedUriInfo);
 	}
 
 	@GET
@@ -121,7 +139,10 @@ public class EventSourceInstanceResource {
 		if (limit != null && limit > 0) {
 			stream = stream.limit(limit);
 		}
-		return ok(stream.collect(toList())).build();
+		final Set<EventSourceInstanceInfo> infos
+				= new TreeSet<>((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName()));
+		infos.addAll(stream.collect(toList()));
+		return ok(infos).build();
 	}
 
 	@POST
@@ -144,20 +165,20 @@ public class EventSourceInstanceResource {
 		final EventSourceKey key;
 		try {
 			key = EventSourceKey.getKey(keyString);
-		} catch (final InvalidKeyException e) {
+		} catch (@SuppressWarnings("unused") final InvalidKeyException e) {
 			return ErrorResponse.badRequest("The key '" + keyString + "' is invalid.");
 		}
 
 		final EventSourceDescriptor descriptor;
 		try {
 			descriptor = controller.getEventSourceDescriptor(key);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("No descriptor found for key: " + keyString);
 		}
 
 		final EventSourceInstance instance
-				= controller.createEventSourceInstance(descriptor, (Principal) securityContext.getUserPrincipal());
-		return created(URI.create(uri.getAbsolutePath() + "/" + instance.getId()))
+				= controller.createEventSourceInstance(descriptor, (Principal) getSecurityContext().getUserPrincipal());
+		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + instance.getId()))
 				.entity(new EventSourceInstanceDetails(instance))
 				.build();
 	}
@@ -180,7 +201,7 @@ public class EventSourceInstanceResource {
 			// read object
 			final FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);
 			return ok(info).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -204,9 +225,10 @@ public class EventSourceInstanceResource {
 			return ok(controller.getEventSourceInstanceUsage(instanceId)
 					.stream()
 					.map(controller::getDashboard)
+					.map(Optional::get)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList())).build();
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
 		}
 	}
@@ -229,7 +251,7 @@ public class EventSourceInstanceResource {
 		final EventSourceInstance instance;
 		try {
 			instance = controller.getEventSourceInstance(instanceId);
-		} catch (final NoSuchElementException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 
@@ -260,7 +282,7 @@ public class EventSourceInstanceResource {
 					details.isEnabled(),
 					details.getFrequency(),
 					instance.getCreatedBy(),
-					((Principal) securityContext.getUserPrincipal()).getUsername());
+					((Principal) getSecurityContext().getUserPrincipal()).getUsername());
 			// TODO how to handle passwords?
 			newInstance.setEnabled(details.isEnabled());
 			newInstance.setName(details.getName());
@@ -276,6 +298,7 @@ public class EventSourceInstanceResource {
 				}
 			});
 		} catch (final Exception e) {
+			LOGGER.error("Unable to update event source instance", e);
 			return ErrorResponse.badRequest("Invalid event source instance values", e);
 		}
 
@@ -301,12 +324,13 @@ public class EventSourceInstanceResource {
 					defaultValue = "false",
 					value = "true to also remove all widgets using this event source") final boolean force) {
 		try {
-			final Set<String> dashboards = controller.deleteEventSourceInstance(instanceId, force);
-			if (dashboards == null) {
+			final Set<String> dashboardsPreventingDeletion = controller.deleteEventSourceInstance(instanceId, force);
+			if (dashboardsPreventingDeletion.isEmpty()) {
 				return ok().build();
 			}
-			return ErrorResponse.unprocessableEntity("Unable to delete event source instance", dashboards);
-		} catch (final NoSuchElementException e) {
+			return ErrorResponse.unprocessableEntity("Unable to delete event source instance",
+					dashboardsPreventingDeletion);
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 	}
@@ -321,14 +345,15 @@ public class EventSourceInstanceResource {
 			final Function<EventSourceProperty, String> getValue,
 			final Predicate<EventSourceProperty> hasValue,
 			final boolean removeEmpty) {
-		return removePasswords(propertyStream.filter(p -> !(removeEmpty && !hasValue.test(p)))
+		final Map<String, String> map = propertyStream.filter(p -> !(removeEmpty && !hasValue.test(p)))
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
 					String string = getValue.apply(p);
 					if (p.isJson()) {
 						string = json.removePasswordsFromJson(string);
 					}
 					return string;
-				})), "");
+				}));
+		return removePasswords(map, "");
 	}
 
 	private static Map<String, String> getPropertyMap(final EventSourceInstance instance) {
@@ -368,7 +393,7 @@ public class EventSourceInstanceResource {
 		public EventSourceInstanceInfo(final EventSourceInstance instance, final DashboardController controller) {
 			id = instance.getId();
 			name = instance.getName();
-			isService = instance.getDescriptor().getServiceClass() != null;
+			isService = instance.getDescriptor().getServiceClass().isPresent();
 			enabled = instance.isEnabled();
 			running = controller.isRunning(instance);
 			hasError = controller.hasException(instance);

@@ -1,10 +1,13 @@
 package com.hlag.oversigt.util.text;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Function;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 class JsonPathFunction implements Function<String, String> {
 	private final Configuration configuration;
@@ -17,7 +20,8 @@ class JsonPathFunction implements Function<String, String> {
 	}
 
 	@Override
-	public String apply(final String jsonPathString) {
+	public String apply(@Nullable final String jsonPathString) {
+		Objects.requireNonNull(jsonPathString, "Input for a JsonPath must be non null");
 		final JsonPath jsonPath = JsonPath.compile(jsonPathString);
 		final Object result = jsonPath.read(json, configuration);
 

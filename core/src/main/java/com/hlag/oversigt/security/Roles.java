@@ -31,16 +31,12 @@ public enum Roles {
 		return role;
 	}
 
-	public static Optional<Roles> maybeFromString(final String string) {
-		return Optional.ofNullable(fromString(string));
-	}
-
-	public static Roles fromString(final String string) {
+	public static Optional<Roles> fromString(final String string) {
 		for (final Roles roles : values()) {
 			if (roles.name().equalsIgnoreCase(string) || roles.name.equalsIgnoreCase(string)) {
-				return roles;
+				return Optional.of(roles);
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 }

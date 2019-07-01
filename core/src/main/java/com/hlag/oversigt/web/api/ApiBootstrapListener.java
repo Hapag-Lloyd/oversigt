@@ -36,6 +36,7 @@ import com.google.inject.matcher.Matchers;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.resources.Authentication;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
@@ -49,14 +50,14 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 
 	/** {@inheritDoc} */
 	@Override
-	protected List<? extends Module> getModules(final ServletContext context) {
+	protected List<? extends Module> getModules(@SuppressWarnings("unused") @Nullable final ServletContext context) {
 		return Arrays.asList(new ApiModule());
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	protected void withInjector(final Injector injector) {
-		processInjector(injector, this::checkClassMethods);
+	protected void withInjector(@Nullable final Injector injector) {
+		processInjector(Objects.requireNonNull(injector), this::checkClassMethods);
 	}
 
 	private void checkClassMethods(final Class<?> clazz) {

@@ -62,25 +62,30 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		}
 	}
 
-	protected ActionResponse doAction_create(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_create(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		final Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (!maybeDashboard.isPresent()) {
 			final String dashboardId = getHelper().query(exchange, "dashboard").get();
 			final Principal principal = getHelper().getPrincipal(exchange).get();
-			final Dashboard dashboard = getDashboardController()
+			final Optional<Dashboard> dashboard = getDashboardController()
 					.createDashboard(dashboardId, principal, principal.hasRole(Role.ROLE_NAME_SERVER_ADMIN));
-			logChange(exchange, "Created dashboard %s - enabled: %s", dashboard.getId(), dashboard.isEnabled());
-			if (dashboard.isEnabled()) {
-				return redirect("/" + dashboard.getId() + "/config");
+			logChange(exchange,
+					"Created dashboard %s - enabled: %s",
+					dashboard.get().getId(),
+					dashboard.get().isEnabled());
+			if (dashboard.get().isEnabled()) {
+				return redirect("/" + dashboard.get().getId() + "/config");
 			}
-			mailSender.sendNewDashboard(getHelper().getPrincipal(exchange).get(), dashboard);
-			return redirect("/" + dashboard.getId() + "/create/create");
+			mailSender.sendNewDashboard(getHelper().getPrincipal(exchange).get(), dashboard.get());
+			return redirect("/" + dashboard.get().getId() + "/create/create");
 		}
 		throw new RuntimeException("The dashboard to be created already exists.");
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_enable(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_enable(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		final Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (maybeDashboard.isPresent()) {
 			final Dashboard dashboard = maybeDashboard.get();
@@ -97,7 +102,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_delete(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_delete(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		final Optional<Dashboard> maybeDashboard = maybeGetDashboard(exchange);
 		if (maybeDashboard.isPresent()) {
 			final Dashboard dashboard = maybeDashboard.get();
@@ -109,7 +115,8 @@ public class DashboardCreationHandler extends AbstractConfigurationHandler {
 		throw new RuntimeException("The dashboard to be deleted doesn't exists.");
 	}
 
-	protected ActionResponse doAction_abort(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_abort(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		return redirect("/");
 	}
 }

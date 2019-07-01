@@ -19,9 +19,11 @@ package com.hlag.oversigt.util;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 
 import com.google.common.io.Resources;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.UndertowMessages;
 import io.undertow.server.handlers.resource.Resource;
 import io.undertow.server.handlers.resource.ResourceChangeListener;
@@ -53,20 +55,27 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public Resource getResource(final String path) throws IOException {
-		String modPath = path;
+	public @Nullable Resource getResource(@Nullable final String path) throws IOException {
+		String modPath = Objects.requireNonNull(path);
 		if (modPath.startsWith("/")) {
 			modPath = path.substring(1);
 		}
 		final String realPath = prefix + modPath;
-		final URL resourceUrl = getResourceUrl(realPath);
-		if (resourceUrl == null) {
+		try {
+			return new URLResource(getResourceUrl(realPath), path);
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
 			return null;
 		}
-		return new URLResource(resourceUrl, path);
 	}
 
-	protected URL getResourceUrl(final String realPath) {
+	/**
+	 * Find the URL for a resource
+	 *
+	 * @param realPath the path to the resource for which to find the URL
+	 * @return the URL to the denoted resource
+	 * @throws IllegalArgumentException if the the resource cannot be found
+	 */
+	protected URL getResourceUrl(final String realPath) throws IllegalArgumentException {
 		return Resources.getResource(realPath);
 	}
 
@@ -76,17 +85,19 @@ public class ClassPathResourceManager implements ResourceManager {
 	}
 
 	@Override
-	public void registerResourceChangeListener(final ResourceChangeListener listener) {
+	public void registerResourceChangeListener(
+			@SuppressWarnings("unused") @Nullable final ResourceChangeListener listener) {
 		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
 	}
 
 	@Override
-	public void removeResourceChangeListener(final ResourceChangeListener listener) {
+	public void removeResourceChangeListener(
+			@SuppressWarnings("unused") @Nullable final ResourceChangeListener listener) {
 		throw UndertowMessages.MESSAGES.resourceChangeListenerNotSupported();
 	}
 
 	@Override
 	public void close() throws IOException {
-		// there is no resource to be closed
+		/* nothing to close here */
 	}
 }

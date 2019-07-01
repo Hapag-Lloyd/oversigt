@@ -4,6 +4,7 @@ import static com.hlag.oversigt.util.Utils.map;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
@@ -22,7 +23,8 @@ public class WelcomeHandler extends AbstractConfigurationHandler {
 	}
 
 	@Override
-	protected Map<String, Object> getModel(final HttpServerExchange exchange, final String page) {
+	protected Map<String, Object> getModel(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final String page) {
 		switch (page) {
 		case "welcome":
 			return map("title",
@@ -31,6 +33,7 @@ public class WelcomeHandler extends AbstractConfigurationHandler {
 					getDashboardController().getDashboardIds()
 							.stream()
 							.map(getDashboardController()::getDashboard)
+							.map(Optional::get)
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 							.collect(Collectors.toList()));
 		default:

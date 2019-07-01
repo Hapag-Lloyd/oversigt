@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -77,7 +78,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 	}
 
 	@Override
-	protected TimelineEvent produceExchangeEvent() throws Exception {
+	protected Optional<TimelineEvent> produceExchangeEvent() {
 		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());
 		final LocalDate now = LocalDate.now(getZoneId());
 
@@ -90,16 +91,16 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 			event.addEvent(TODAY, now, now, false, colorToday);
 		}
 
-		return event;
+		return Optional.of(event);
 	}
 
-	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) throws ServiceLocalException {
+	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {
 		addBirthdays(event, now);
 		addHolidays(event, now);
 		addExchangeCalendar(event, now);
 	}
 
-	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) throws ServiceLocalException {
+	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
 		final ZonedDateTime from = now.minusMonths(5).atStartOfDay(getZoneId());
 		final ZonedDateTime until = now.plus(getMaximumPointInFuture())
 				.plus(getMaximumPointInFuture())
@@ -110,7 +111,16 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		}
 	}
 
-	private void addAppointment(final TimelineEvent event, final Appointment appointment) throws ServiceLocalException {
+	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
+		try {
+			addAppointment_unsafe(event, appointment);
+		} catch (@SuppressWarnings("unused") final ServiceLocalException ignore) {
+			/* in case of exception ignore event */
+		}
+	}
+
+	private void addAppointment_unsafe(final TimelineEvent event, final Appointment appointment)
+			throws ServiceLocalException {
 		final ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
 		final ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
 		final LocalDate now = LocalDate.now(getZoneId());
@@ -161,17 +171,15 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private void addBirthdays(final TimelineEvent event, final LocalDate now) {
 		for (final Birthday birthday : getBirthdays()) {
-			if (birthday.getDate() != null) {
-				LocalDate date = birthday.getDate().withYear(now.getYear());
-				if (date.isBefore(now)) {
-					date = date.plusYears(1);
-				}
-				event.addEvent(birthday.getName() + " (" + birthday.getDate().until(date).getYears() + ")",
-						date,
-						date,
-						true,
-						colorBirthday);
+			LocalDate date = birthday.getDate().withYear(now.getYear());
+			if (date.isBefore(now)) {
+				date = date.plusYears(1);
 			}
+			event.addEvent(birthday.getName() + " (" + birthday.getDate().until(date).getYears() + ")",
+					date,
+					date,
+					true,
+					colorBirthday);
 		}
 	}
 

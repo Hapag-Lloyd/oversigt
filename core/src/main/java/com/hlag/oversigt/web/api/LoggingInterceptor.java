@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.Priority;
@@ -29,28 +30,36 @@ import org.slf4j.LoggerFactory;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.util.Utils;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @Provider
 @Priority(Priorities.USER)
 public class LoggingInterceptor implements ContainerRequestFilter, ContainerResponseFilter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingInterceptor.class);
 
+	@Nullable
 	@Context
-	private ResourceInfo resourceInfo;
+	private ResourceInfo injectedResourceInfo = null;
 
-	static final ThreadLocal<Object[]> PAREMETERS = new ThreadLocal<>();
+	static final ThreadLocal<Object[]> PARAMETERS = new ThreadLocal<>();
 
 	public LoggingInterceptor() {
 		// no fields to be initialized manually, some will be injected
 	}
 
 	@Override
-	public void filter(final ContainerRequestContext requestContext) throws IOException {
-		PAREMETERS.set(null);
+	public void filter(@SuppressWarnings("unused") @Nullable final ContainerRequestContext requestContext)
+			throws IOException {
+		PARAMETERS.set(null);
 	}
 
 	@Override
-	public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
-			throws IOException {
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext,
+			@Nullable final ContainerResponseContext nullableResponseContext) throws IOException {
+		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);
+		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);
+		final ContainerResponseContext responseContext = Objects.requireNonNull(nullableResponseContext);
+
 		final Method method = resourceInfo.getResourceMethod();
 		if (method != null) {
 			if (method.isAnnotationPresent(JwtSecured.class) && !method.isAnnotationPresent(NoChangeLog.class)) {
@@ -62,7 +71,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 					for (int i = 0; i < parameters.length; i += 1) {
 						if (!values.isEmpty() || isApiParameter(parameters[i])) {
 							values.add(
-									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.PAREMETERS.get()[i]);
+									getApiParameterName(parameters[i]) + "=" + LoggingInterceptor.PARAMETERS.get()[i]);
 						}
 					}
 					Utils.logChange(principal,
@@ -91,7 +100,7 @@ public class LoggingInterceptor implements ContainerRequestFilter, ContainerResp
 					requestContext.getUriInfo().getAbsolutePath());
 		}
 
-		PAREMETERS.set(null);
+		PARAMETERS.set(null);
 	}
 
 	private static boolean isApiParameter(final Parameter parameter) {

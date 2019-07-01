@@ -6,5 +6,5 @@ package com.hlag.oversigt.properties;
  * @author neumaol
  */
 public interface JsonBasedData {
-	// marker interface
+	// marker interface without implementation
 }

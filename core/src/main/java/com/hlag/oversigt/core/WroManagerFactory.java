@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.Properties;
 
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import ro.isdc.wro.extensions.processor.css.RubySassCssProcessor;
 import ro.isdc.wro.extensions.processor.js.CoffeeScriptProcessor;
 import ro.isdc.wro.manager.factory.ConfigurableWroManagerFactory;
@@ -40,8 +42,10 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 		final SimpleProcessorsFactory factory = new SimpleProcessorsFactory();
 		factory.addPreProcessor(new ProcessorDecorator(new CoffeeScriptProcessor()) {
 			@Override
-			public void process(final Resource resource, final Reader reader, final Writer writer) throws IOException {
-				if (resource.getUri().endsWith(COFFEE_FILENAME)) {
+			public void process(@Nullable final Resource resource,
+					@Nullable final Reader reader,
+					@Nullable final Writer writer) throws IOException {
+				if (Objects.requireNonNull(resource).getUri().endsWith(COFFEE_FILENAME)) {
 					super.process(resource, reader, writer);
 				} else {
 					CharStreams.copy(reader, writer);

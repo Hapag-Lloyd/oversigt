@@ -4,7 +4,6 @@ import static com.hlag.oversigt.util.Utils.map;
 import static io.undertow.util.Methods.GET;
 import static io.undertow.util.Methods.POST;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URL;
@@ -50,7 +49,7 @@ public class LoginHandler implements HttpHandler {
 	@Inject
 	public LoginHandler(final Configuration templateConfiguration,
 			final Authenticator authenticator,
-			final HttpServerExchangeHandler exchangeHelper) throws IOException {
+			final HttpServerExchangeHandler exchangeHelper) {
 		this.templateConfiguration = templateConfiguration;
 		this.authenticator = authenticator;
 		this.exchangeHelper = exchangeHelper;
@@ -66,8 +65,8 @@ public class LoginHandler implements HttpHandler {
 					} else {
 						break;
 					}
-				}
-			} catch (final IllegalArgumentException e) {
+				} catch (@SuppressWarnings("unused") final Exception ignore) { /* do nothing */ }
+			} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
 				break;
 			}
 		}
@@ -111,11 +110,11 @@ public class LoginHandler implements HttpHandler {
 			final String username = exchangeHelper.param(formData, "username");
 			final String password = exchangeHelper.param(formData, "password");
 
-			final Principal user = authenticator.login(username, password);
-			if (user != null) {
+			final Optional<Principal> principal = authenticator.login(username, password);
+			if (principal.isPresent()) {
 				final Session session = exchangeHelper.getOrCreateSession(exchange);
-				session.setAttribute("PRINCIPAL", user);
-				CHANGE_LOGGER.info("User logged in: " + user.getUsername());
+				session.setAttribute("PRINCIPAL", principal.get());
+				CHANGE_LOGGER.info("User logged in: " + principal.get().getUsername());
 				HttpUtils.redirect(exchange, exchange.getRequestURI(), true, true);
 			} else {
 				HttpUtils.redirect(exchange, "?message=failed", false, true);

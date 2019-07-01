@@ -1,8 +1,10 @@
 package com.hlag.oversigt.web.api;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 import javax.validation.constraints.NotBlank;
@@ -15,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @JsonInclude(Include.NON_NULL)
 public final class ErrorResponse {
@@ -29,7 +33,7 @@ public final class ErrorResponse {
 	}
 
 	public static Response createErrorResponse(final int statusCode, final String message, final String... strings) {
-		return new ErrorResponse(null, message, Arrays.asList(strings)).forStatus(statusCode);
+		return new ErrorResponse(message, Arrays.asList(strings)).forStatus(statusCode);
 	}
 
 	public static Response forbidden(final String message) {
@@ -37,11 +41,11 @@ public final class ErrorResponse {
 	}
 
 	public static Response notFound(final String message, final String... strings) {
-		return new ErrorResponse(null, message, Arrays.asList(strings)).forStatus(Status.NOT_FOUND);
+		return new ErrorResponse(message, Arrays.asList(strings)).forStatus(Status.NOT_FOUND);
 	}
 
 	public static Response badRequest(final String message) {
-		return badRequest(message, (Collection<String>) null);
+		return badRequest(message);
 	}
 
 	public static Response badRequest(final UUID uuid, final String message, final Collection<String> errors) {
@@ -49,7 +53,7 @@ public final class ErrorResponse {
 	}
 
 	public static Response badRequest(final String message, final Collection<String> errors) {
-		return badRequest(null, message, errors);
+		return new ErrorResponse(message, errors).forStatus(Status.BAD_REQUEST);
 	}
 
 	public static Response badRequest(final String message, final Exception e) {
@@ -57,11 +61,11 @@ public final class ErrorResponse {
 	}
 
 	public static Response unprocessableEntity(final String message, final Collection<String> errors) {
-		return new ErrorResponse(null, message, errors).forStatus(422);
+		return new ErrorResponse(message, errors).forStatus(422);
 	}
 
 	public static Response preconditionFailed(final String message, final Exception e) {
-		return new ErrorResponse(null, message, getErrorMessages(e)).forStatus(Status.PRECONDITION_FAILED);
+		return new ErrorResponse(message, getErrorMessages(e)).forStatus(Status.PRECONDITION_FAILED);
 	}
 
 	public static Response internalServerError(final UUID uuid, final String message) {
@@ -77,16 +81,27 @@ public final class ErrorResponse {
 
 	@JsonProperty(required = false)
 	@JsonPropertyDescription("Details to the error message")
+	@Nullable
 	private final Collection<@NotBlank @NotNull String> errors;
 
 	private ErrorResponse(final UUID uuid, final String message) {
-		this(uuid, message, null);
+		this(uuid, message, Collections.emptyList());
+	}
+
+	private ErrorResponse(final String message) {
+		this(message, Collections.emptyList());
+	}
+
+	private ErrorResponse(@NotBlank final String message, final Collection<String> errors) {
+		uuid = UUID.randomUUID();
+		this.message = message;
+		this.errors = errors.isEmpty() ? null : new ArrayList<>(errors);
 	}
 
 	private ErrorResponse(final UUID uuid, @NotBlank final String message, final Collection<String> errors) {
-		this.uuid = uuid != null ? uuid : UUID.randomUUID();
+		this.uuid = uuid;
 		this.message = message;
-		this.errors = errors == null || errors.isEmpty() ? null : errors;
+		this.errors = errors.isEmpty() ? null : new ArrayList<>(errors);
 	}
 
 	public String getMessage() {
@@ -101,6 +116,7 @@ public final class ErrorResponse {
 		return uuid;
 	}
 
+	@Nullable
 	public Collection<String> getErrors() {
 		return errors;
 	}

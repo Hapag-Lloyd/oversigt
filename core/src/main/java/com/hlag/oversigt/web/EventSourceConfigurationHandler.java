@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
@@ -126,6 +127,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 					getDashboardController().getDashboardIds()
 							.stream()
 							.map(getDashboardController()::getDashboard)
+							.map(Optional::get)
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 							.collect(Collectors.toList()));
 		case "createEventSource":
@@ -147,9 +149,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 								.collect(Collectors.toMap(EventSourceInstance::getId, instance -> {
 									return Stream.of(instance.getId(),
 											instance.getName(),
-											Optional.ofNullable(instance.getDescriptor().getServiceClass())
-													.map(Class::getName)
-													.orElse(""),
+											instance.getDescriptor().getServiceClass().map(Class::getName).orElse(""),
 											instance.getDescriptor().getView(),
 											instance.getDescriptor()
 													.getProperties()
@@ -278,7 +278,9 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		// read Properties
 		for (final EventSourceProperty p : descriptor.getProperties()) {
 			Optional<String> maybeParam = getHelper().maybeParam(data, eventSourceId + ".property." + p.getName());
-			if ((p.getClazz() == Boolean.class || p.getClazz() == boolean.class) && !maybeParam.isPresent()) {
+			if (p.getClazz().isPresent()
+					&& (p.getClazz().get() == Boolean.class || p.getClazz().get() == boolean.class)
+					&& !maybeParam.isPresent()) {
 				maybeParam = Optional.of("false");
 			}
 			final String value = maybeParam.get();
@@ -318,7 +320,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 		final String eventSourceId = getHelper().param(data, "id");
 		final Collection<String> preventingDashboards
 				= getDashboardController().deleteEventSourceInstance(eventSourceId);
-		if (preventingDashboards == null || preventingDashboards.isEmpty()) {
+		if (preventingDashboards.isEmpty()) {
 			logChange(exchange, "Delete event source id[%s]", eventSourceId);
 			return redirect(exchange.getRequestURI());
 		}
@@ -369,23 +371,26 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_stopAllEventSources(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_stopAllEventSources(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Stop all event sources");
 		getDashboardController().stopAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_startAllEventSources(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_startAllEventSources(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Start all event sources");
 		getDashboardController().startAllInstances();
 		return ok();
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_reloadDashboard(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final FormData formData) {
 		final String id = getHelper().param(formData, "dashboardId");
-		getDashboardController().reloadDashboards(getDashboardController().getDashboard(id));
+		getDashboardController().reloadDashboards(getDashboardController().getDashboard(id).get());
 		return ok();
 	}
 
@@ -398,12 +403,13 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_shutdown(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_shutdown(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		logChange(exchange, "Shutdown");
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final InterruptedException ignore) {
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// on interruption continue
 			}
 			shutdown.run();
@@ -422,7 +428,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 			try {
 				values.put(member,
 						member.createInstance(getHelper().param(formData, "create-" + type + "-" + member.getName())));
-			} catch (final MemberMissingException e) {
+			} catch (@SuppressWarnings("unused") final MemberMissingException e) {
 				throw new RuntimeException("The member '"
 						+ member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");
@@ -442,12 +448,12 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		final Class<? extends SerializableProperty> spClass = spController.getClass(type);
 		final SerializableProperty property = spController.getProperty(spClass, id);
-		final SerializableProperty clone = spController.clone(property);
+		final SerializableProperty clone = copy(property);
 
 		for (final SerializablePropertyMember member : spController.getMembers(spClass)) {
 			try {
 				member.set(clone, getHelper().param(formData, "edit-" + type + "-" + member.getName()));
-			} catch (final MemberMissingException e) {
+			} catch (@SuppressWarnings("unused") final MemberMissingException e) {
 				throw new RuntimeException("The member '"
 						+ member.getDisplayName()
 						+ "' has not been set, but it is mandatory.\nNo updates have been done.");
@@ -461,6 +467,11 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 
 		logChange(exchange, "Edit property: %s", property);
 		return ok();
+	}
+
+	private <T> T copy(final T original) {
+		return Objects.requireNonNull(json.fromJson(json.toJson(original), original.getClass()),
+				"Unable to copy object");
 	}
 
 	@NeedsRole(role = Roles.ADMIN)

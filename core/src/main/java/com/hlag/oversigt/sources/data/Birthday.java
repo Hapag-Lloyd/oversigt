@@ -1,6 +1,7 @@
 package com.hlag.oversigt.sources.data;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import javax.validation.constraints.NotNull;
 
@@ -9,13 +10,18 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 @JsonHint(headerTemplate = "{{ self.name }}", arrayStyle = ArrayStyle.TABLE)
 public class Birthday {
 	@NotNull
-	private String name;
+	private String name = "";
 
 	@NotNull
-	private LocalDate date;
+	private LocalDate date = LocalDate.now().minusYears(20);
 
 	public Birthday() {
 		// no fields to be initialized
+	}
+
+	public Birthday(@NotNull final String name, @NotNull final LocalDate date) {
+		this.name = Objects.requireNonNull(name);
+		this.date = Objects.requireNonNull(date);
 	}
 
 	public String getName() {
@@ -23,7 +29,7 @@ public class Birthday {
 	}
 
 	public void setName(final String name) {
-		this.name = name;
+		this.name = Objects.requireNonNull(name);
 	}
 
 	public LocalDate getDate() {
@@ -31,6 +37,6 @@ public class Birthday {
 	}
 
 	public void setDate(final LocalDate date) {
-		this.date = date;
+		this.date = Objects.requireNonNull(date);
 	}
 }

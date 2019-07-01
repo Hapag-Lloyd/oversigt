@@ -4,10 +4,12 @@ import java.util.Collection;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class ProgressBarEvent extends OversigtEvent {
 	private Collection<Item> progressItems;
 
-	public ProgressBarEvent(final String title, final Collection<Item> items) {
+	public ProgressBarEvent(@Nullable final String title, final Collection<Item> items) {
 		setTitle(title);
 		progressItems = items;
 	}

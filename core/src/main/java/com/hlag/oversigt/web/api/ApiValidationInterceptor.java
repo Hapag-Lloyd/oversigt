@@ -1,6 +1,7 @@
 package com.hlag.oversigt.web.api;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -10,6 +11,8 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
 import com.google.inject.Inject;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Interceptor that checks parameters of calls to public API methods. The javax
@@ -28,9 +31,11 @@ public class ApiValidationInterceptor implements MethodInterceptor {
 
 	/** {@inheritDoc} */
 	@Override
-	public Object invoke(final MethodInvocation invocation) throws Throwable {
+	public Object invoke(@Nullable final MethodInvocation nullableInvocation) throws Throwable {
+		final MethodInvocation invocation = Objects.requireNonNull(nullableInvocation);
+
 		// save parameters for logging
-		LoggingInterceptor.PAREMETERS.set(invocation.getArguments());
+		LoggingInterceptor.PARAMETERS.set(invocation.getArguments());
 
 		// Validate call
 		final Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();

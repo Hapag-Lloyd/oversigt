@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Predicate;
@@ -23,14 +24,17 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
 
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +53,11 @@ import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.MailSender;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
@@ -73,10 +79,15 @@ import lombok.Builder;
 @Path("/system")
 @Singleton
 public class SystemResource {
+	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(SystemResource.class);
+
 	private final Runnable shutdownRunnable;
 
 	@Inject
 	private EventSender eventSender;
+
+	@Inject
+	private MailSender mailSender;
 
 	@Inject
 	private Authenticator authenticator;
@@ -112,7 +123,7 @@ public class SystemResource {
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
 				Thread.sleep(1000);
-			} catch (final InterruptedException ignore) {
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// on interruption continue
 			}
 			shutdownRunnable.run();
@@ -128,7 +139,7 @@ public class SystemResource {
 	@ApiOperation(value = "Read the current server configuration",
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
-	public Response readConfiguration() throws IOException {
+	public Response readConfiguration() {
 		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
 			final String key = s.toLowerCase();
 			return !(key.contains("password") || key.contains("secret"));
@@ -296,7 +307,8 @@ public class SystemResource {
 			return ok(events).build();
 		}
 
-		final Optional<OversigtEvent> event = events.stream().filter(e -> e.getId().equals(filter)).findFirst();
+		final Optional<OversigtEvent> event
+				= events.stream().filter(e -> Objects.requireNonNull(e.getId()).equals(filter)).findFirst();
 		if (!event.isPresent()) {
 			return ErrorResponse.notFound("The event source does not exist", filter);
 		}
@@ -332,6 +344,23 @@ public class SystemResource {
 		return new ServerInfo();
 	}
 
+	@POST
+	@Path("/mail")
+	@ApiResponses({ @ApiResponse(code = 200, message = "Send mail for test purpose", response = boolean.class) })
+	@ApiOperation(value = "Send mail")
+	@NoChangeLog
+	public boolean sendMail(@Context final SecurityContext securityContext,
+			@HeaderParam("x-os-recipient") final String recipient,
+			final String content) {
+		try {
+			mailSender.sendRawMail((Principal) securityContext.getUserPrincipal(), recipient, content);
+			return true;
+		} catch (final Exception e) {
+			LOGGER.error("Unable to send test mail.", e);
+			return false;
+		}
+	}
+
 	@GET
 	@Path("/server/all-objects")
 	@ApiResponses({ @ApiResponse(code = 200, message = "Search all server objects", response = ServerInfo.class) })
@@ -353,6 +382,7 @@ public class SystemResource {
 		results.addAll(dashboardController.getDashboardIds()
 				.stream()
 				.map(dashboardController::getDashboard)
+				.map(Optional::get)
 				.filter(d -> d.getTitle().toLowerCase().contains(searchString)
 						|| d.getId().toLowerCase().contains(searchString))
 				.map(d -> SearchResult.builder().title(d.getTitle()).id(d.getId()).type("dashboard").build())

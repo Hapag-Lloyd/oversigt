@@ -1,2 +1,2 @@
-@javax.annotation.ParametersAreNonnullByDefault
+@de.larssh.utils.annotations.NonNullByDefault
 package com.hlag.oversigt.connect.exchange;

@@ -6,6 +6,8 @@ import static javax.ws.rs.core.Response.ok;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotBlank;
@@ -38,6 +40,7 @@ import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.JwtSecured;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -68,11 +71,16 @@ public class Authentication {
 	@Inject
 	private RoleProvider roleProvider;
 
+	@Nullable
 	@Context
-	private SecurityContext securityContext;
+	private SecurityContext injectedSecurityContext;
 
 	public Authentication() {
 		// no fields to be initialized manually, some will be injected
+	}
+
+	private SecurityContext getSecurityContext() {
+		return Objects.requireNonNull(injectedSecurityContext);
 	}
 
 	@POST
@@ -120,7 +128,7 @@ public class Authentication {
 
 			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),
 					MediaType.APPLICATION_JSON).build();
-		} catch (final Exception ignore) {
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			// take any exception of the token check as login failure
 		}
 		if (newToken == null) {
@@ -139,7 +147,7 @@ public class Authentication {
 	@NoChangeLog
 	@JwtSecured
 	public Response getRoles() {
-		return ok(new AuthData(findRolesForUser((Principal) securityContext.getUserPrincipal()))).build();
+		return ok(new AuthData(findRolesForUser((Principal) getSecurityContext().getUserPrincipal()))).build();
 	}
 
 	private Set<String> findRolesForUser(final Principal principal) {
@@ -160,41 +168,44 @@ public class Authentication {
 		try {
 			authentication.validateToken(token);
 			return true; // ok(true).build();
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception e) {
 			return false; // ok(false).build();
 		}
 	}
 
 	public static class AuthData {
-		private final String userId;
+		private final Optional<String> userId;
 
-		private final String displayName;
+		private final Optional<String> displayName;
 
-		private final String token;
+		private final Optional<String> token;
 
 		@NotNull
 		private final Set<@NotBlank String> roles;
 
 		AuthData(final String userId, final String displayName, final String token, final Set<@NotBlank String> roles) {
-			this.userId = userId;
-			this.displayName = displayName;
-			this.token = token;
+			this.userId = Optional.of(userId);
+			this.displayName = Optional.of(displayName);
+			this.token = Optional.of(token);
 			this.roles = new LinkedHashSet<>(roles);
 		}
 
 		AuthData(final Set<String> roles) {
-			this(null, null, null, roles);
+			userId = Optional.empty();
+			displayName = Optional.empty();
+			token = Optional.empty();
+			this.roles = new LinkedHashSet<>(roles);
 		}
 
-		public String getUserId() {
+		public Optional<String> getUserId() {
 			return userId;
 		}
 
-		public String getDisplayName() {
+		public Optional<String> getDisplayName() {
 			return displayName;
 		}
 
-		public String getToken() {
+		public Optional<String> getToken() {
 			return token;
 		}
 

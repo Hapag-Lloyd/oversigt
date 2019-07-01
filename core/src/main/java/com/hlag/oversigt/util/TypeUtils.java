@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
@@ -43,6 +42,7 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Member;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class TypeUtils {
 
@@ -54,15 +54,14 @@ public final class TypeUtils {
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Class<T> assignableTo) {
-		return findClasses(packageToSearch, assignableTo, null);
+		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		return findClasses(packageToSearch,
-				c -> assignableTo.isAssignableFrom(c)
-						&& (annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent)));
+		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c) && //
+				c.isAnnotationPresent(annotationToBePresent));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Predicate<Class<?>> filter) {
@@ -95,8 +94,8 @@ public final class TypeUtils {
 			final Collection<String> classNames,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		final Predicate<Class<?>> predicate = c -> assignableTo.isAssignableFrom(c)
-				&& (annotationToBePresent == null || c.isAnnotationPresent(annotationToBePresent));
+		final Predicate<Class<?>> predicate
+				= c -> assignableTo.isAssignableFrom(c) && c.isAnnotationPresent(annotationToBePresent);
 		@SuppressWarnings("unchecked")
 		final Stream<Class<T>> stream = classNames.stream()
 				.map(s -> loadClassInfo(classLoader, s))
@@ -251,18 +250,15 @@ public final class TypeUtils {
 	}
 
 	@SafeVarargs
-	public static <T> T tryToCreateInstance(final Class<T> target,
-			final String input,
-			final Supplier<T> defaultValueSupplier,
-			final Class<? extends T>... classes) {
+	public static <T> Optional<T> tryToCreateInstance(final String input, final Class<? extends T>... classes) {
 		for (final Class<? extends T> clazz : classes) {
 			try {
-				return createInstance(clazz, input);
-			} catch (final Exception ignore) {
+				return Optional.of(createInstance(clazz, input));
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// ignore any problem when creating an instance
 			}
 		}
-		return defaultValueSupplier.get();
+		return Optional.empty();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -383,11 +379,11 @@ public final class TypeUtils {
 		}
 	}
 
-	public static Method getMethod(final Class<?> clazz,
+	public static Optional<Method> getMethod(final Class<?> clazz,
 			final List<String> methodNames,
 			final Class<?>[] parameterTypes) {
-		if (methodNames == null || methodNames.isEmpty()) {
-			return null;
+		if (methodNames.isEmpty()) {
+			return Optional.empty();
 		}
 
 		Class<?> currentClazz = clazz;
@@ -398,11 +394,11 @@ public final class TypeUtils {
 					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))
 					.findFirst();
 			if (method.isPresent()) {
-				return method.get();
+				return method;
 			}
 			currentClazz = currentClazz.getSuperclass();
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	private static int getClassDepth(final Class<?> clazz) {
@@ -434,6 +430,13 @@ public final class TypeUtils {
 		throw new UnsupportedOperationException();
 	}
 
+	private static String getName(@Nullable final Method method) {
+		if (method == null) {
+			return "";
+		}
+		return method.getName();
+	}
+
 	private static final class IndexOfComparator implements Comparator<Method> {
 		private final List<String> methodNames;
 
@@ -442,8 +445,8 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public int compare(final Method a, final Method b) {
-			return Integer.compare(methodNames.indexOf(a.getName()), methodNames.indexOf(b.getName()));
+		public int compare(@Nullable final Method a, @Nullable final Method b) {
+			return Integer.compare(methodNames.indexOf(getName(a)), methodNames.indexOf(getName(b)));
 		}
 	}
 
@@ -466,16 +469,21 @@ public final class TypeUtils {
 			this(field,
 					field.getName(),
 					Type.fromField(field),
-					field.isAnnotationPresent(Member.class) ? field.getAnnotation(Member.class) : null);
+					field.isAnnotationPresent(Member.class)
+							? Optional.of(field.getAnnotation(Member.class))
+							: Optional.empty());
 		}
 
-		private SerializablePropertyMember(final Field field, final String name, final Type type, final Member member) {
+		private SerializablePropertyMember(final Field field,
+				final String name,
+				final Type type,
+				final Optional<Member> member) {
 			this(field,
 					name,
 					type,
-					member != null ? member.icon() : "tag",
-					member != null ? member.size() : 2,
-					member != null ? member.mayBeEmpty() : false);
+					member.map(Member::icon).orElse("tag"),
+					member.map(Member::size).orElse(2),
+					member.map(Member::mayBeEmpty).orElse(false));
 		}
 
 		private SerializablePropertyMember(final Field field,
@@ -486,7 +494,7 @@ public final class TypeUtils {
 				final boolean empty) {
 			this.field = field;
 			field.setAccessible(true);
-			this.name = name;
+			this.name = Objects.requireNonNull(name);
 			displayName = Character.toUpperCase(name.charAt(0)) + name.substring(1);
 			this.type = type;
 			this.icon = icon;
@@ -505,11 +513,12 @@ public final class TypeUtils {
 			return TypeUtils.createInstance(getClazz(), stringValue);
 		}
 
+		// TODO check if really unused
 		public void set(final SerializableProperty property, final String value) throws MemberMissingException {
 			set(property, createInstance(value));
 		}
 
-		public void set(final SerializableProperty property, final Object object) throws MemberMissingException {
+		public void set(final SerializableProperty property, final Object object) {
 			try {
 				field.set(property, object);
 			} catch (final IllegalArgumentException | IllegalAccessException e) {
@@ -556,7 +565,7 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(@Nullable final Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -567,11 +576,7 @@ public final class TypeUtils {
 				return false;
 			}
 			final SerializablePropertyMember other = (SerializablePropertyMember) obj;
-			if (name == null) {
-				if (other.name != null) {
-					return false;
-				}
-			} else if (!name.equals(other.name)) {
+			if (!name.equals(other.name)) {
 				return false;
 			}
 			return true;
@@ -619,7 +624,6 @@ public final class TypeUtils {
 
 			private MemberMissingException(final String message) {
 				super(message);
-				// TODO Auto-generated constructor stub
 			}
 		}
 	}
@@ -639,7 +643,9 @@ public final class TypeUtils {
 		}
 
 		@Override
-		public Object invoke(final Object object, final Method method, final Object[] args) throws Throwable {
+		public Object invoke(@SuppressWarnings("unused") @Nullable final Object object,
+				@Nullable final Method method,
+				@SuppressWarnings("unused") @Nullable final Object[] args) throws Throwable {
 			return returns.stream()
 					.filter(r -> r.getMethod().equals(method))
 					.map(ReturnValue::getReturnValue)

@@ -68,7 +68,7 @@ public class RoleProvider {
 	private static void addWithDefaultRole(final Collection<Role> roles,
 			final Collection<Role> rolesToAdd,
 			final Role defaultRole) {
-		if (rolesToAdd != null && !rolesToAdd.isEmpty()) {
+		if (!rolesToAdd.isEmpty()) {
 			roles.addAll(rolesToAdd);
 			roles.add(defaultRole);
 		}

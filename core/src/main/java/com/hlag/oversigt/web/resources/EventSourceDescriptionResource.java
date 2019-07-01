@@ -4,6 +4,7 @@ import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static javax.ws.rs.core.Response.ok;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -77,7 +78,7 @@ public class EventSourceDescriptionResource {
 			final EventSourceDescriptor descriptor
 					= dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
 			return ok(descriptor).build();
-		} catch (final NoSuchElementException | InvalidKeyException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException | InvalidKeyException ignore) {
 			return notFound("The event source descriptor does not exist.");
 		}
 	}
@@ -99,8 +100,7 @@ public class EventSourceDescriptionResource {
 			return descriptor.getDisplayName();
 		}
 
-		@NotNull
-		public String getDescription() {
+		public Optional<String> getDescription() {
 			return descriptor.getDescription();
 		}
 

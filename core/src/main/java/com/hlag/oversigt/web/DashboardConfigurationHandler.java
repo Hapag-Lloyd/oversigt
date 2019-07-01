@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -51,8 +52,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 
 	private final JsonUtils json;
 
-	private static final Type TYPE_POSITIONS_MAP
-			= new TypeToken<Map<String, Map<String, String>>>() { /* empty by design */ }.getType();
+	private static final Type TYPE_POSITIONS_MAP = new TypeToken<Map<String, Map<String, String>>>() {
+		/* generics detection */
+	}.getType();
 
 	@Inject
 	public DashboardConfigurationHandler(final DashboardController dashboardController,
@@ -173,7 +175,9 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 			final FormData formData) {
 		final Dashboard dashboard = getDashboard(exchange);
 		final String json = formData.get("positions").getFirst().getValue();
-		final Map<String, Map<String, String>> positions = this.json.fromJson(json, TYPE_POSITIONS_MAP);
+		// TODO check for null from JSON
+		final Map<String, Map<String, String>> positions
+				= Objects.requireNonNull(this.json.fromJson(json, TYPE_POSITIONS_MAP));
 
 		// Update positions in database
 		positions.entrySet().forEach(e -> {
@@ -240,14 +244,16 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	}
 
 	@NeedsRole(role = Roles.ADMIN)
-	protected ActionResponse doAction_deleteDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_deleteDashboard(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		final Dashboard dashboard = getDashboard(exchange);
 		getDashboardController().deleteDashboard(dashboard);
 		logChange(exchange, "Delete dashboard %s", dashboard.getId());
 		return redirect("/" + dashboard.getId() + "/create");
 	}
 
-	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_reloadDashboard(final HttpServerExchange exchange,
+			@SuppressWarnings("unused") final FormData formData) {
 		triggerDashboardReload(getDashboard(exchange));
 		return ok();
 	}
@@ -279,7 +285,8 @@ public class DashboardConfigurationHandler extends AbstractConfigurationHandler 
 	}
 
 	@NeedsRole(role = Roles.DASHBOARD_EDITOR, dashboard = true)
-	protected ActionResponse doAction_checkUsername(final HttpServerExchange exchange, final FormData formData) {
+	protected ActionResponse doAction_checkUsername(@SuppressWarnings("unused") final HttpServerExchange exchange,
+			final FormData formData) {
 		return okJson(getHelper().maybeParam(formData, "username").map(authenticator::isUsernameValid).orElse(false));
 	}
 

@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Set of useful stuff for working with strings
  *
@@ -35,7 +37,8 @@ public final class StringUtils {
 		return str.substring(0, pos);
 	}
 
-	public static List<String> list(final String string) {
+	// TODO make this non nullable
+	public static List<String> list(@Nullable final String string) {
 		if (string == null) {
 			return Collections.emptyList();
 		}

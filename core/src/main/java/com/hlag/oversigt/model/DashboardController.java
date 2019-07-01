@@ -13,7 +13,11 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -83,13 +87,13 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.SimpleReadWriteLock;
 import com.hlag.oversigt.util.StringUtils;
-import com.hlag.oversigt.util.ThrowingConsumer;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Collectors;
 import de.larssh.utils.function.ThrowingFunction;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class DashboardController {
@@ -99,7 +103,8 @@ public class DashboardController {
 
 	private static final Collection<String> RESERVED_DATA_BINDINGS = Arrays.asList("title");
 
-	private static DashboardController instance = null;
+	@Nullable
+	private static DashboardController instance;
 
 	{
 		instance = this;
@@ -107,7 +112,11 @@ public class DashboardController {
 	}
 
 	static DashboardController getInstance() {
-		return instance;
+		final DashboardController checkedInstance = instance;
+		if (checkedInstance == null) {
+			throw new RuntimeException("Instance has not been initialized yet.");
+		}
+		return checkedInstance;
 	}
 
 	@Inject
@@ -149,8 +158,8 @@ public class DashboardController {
 		return dashboards.keySet();
 	}
 
-	public Dashboard getDashboard(final String id) {
-		return dashboards.get(id);
+	public Optional<Dashboard> getDashboard(final String id) {
+		return Optional.ofNullable(dashboards.get(id));
 	}
 
 	Dashboard getDashboard(final Widget widget) {
@@ -181,32 +190,33 @@ public class DashboardController {
 	 * @return the newly created dashboard object or <code>null</code> if a
 	 *         dashboard with the given ID already exists.
 	 */
-	public Dashboard createDashboard(final String id, final Principal owner, final boolean enabled) {
+	public Optional<Dashboard> createDashboard(final String id, final Principal owner, final boolean enabled) {
 		if (dashboards.containsKey(id)) {
-			return null;
+			return Optional.empty();
 		}
 		final Dashboard dashboard = new Dashboard(id, owner.getUsername(), enabled);
 		storage.persistDashboard(dashboard);
 		dashboards.put(id, dashboard);
-		return dashboard;
+		// TODO if owner is not admin -> send mail to admins
+		return Optional.of(dashboard);
 	}
 
 	public boolean updateDashboard(final Dashboard dashboard) {
-		final Dashboard originalDashboard = getDashboard(dashboard.getId());
-		if (originalDashboard == null) {
+		final Optional<Dashboard> originalDashboard = getDashboard(dashboard.getId());
+		if (!originalDashboard.isPresent()) {
 			return false;
 		}
-		copyProperties(dashboard, originalDashboard);
-		storage.persistDashboard(originalDashboard);
+		copyProperties(dashboard, originalDashboard.get());
+		storage.persistDashboard(originalDashboard.get());
 		return true;
 	}
 
 	public boolean deleteDashboard(final String id) {
-		final Dashboard dashboard = getDashboard(id);
-		if (dashboard == null) {
+		final Optional<Dashboard> dashboard = getDashboard(id);
+		if (!dashboard.isPresent()) {
 			return false;
 		}
-		return deleteDashboard(dashboard);
+		return deleteDashboard(dashboard.get());
 	}
 
 	public boolean deleteDashboard(final Dashboard dashboard) {
@@ -353,8 +363,8 @@ public class DashboardController {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S extends Service> S getService(final EventSourceInstance instance) {
-		return eventSourceInstancesLock.read(() -> (S) eventSourceInstancesInternal.get(instance));
+	private <S extends Service> Optional<S> getService(final EventSourceInstance instance) {
+		return eventSourceInstancesLock.read(() -> Optional.ofNullable((S) eventSourceInstancesInternal.get(instance)));
 	}
 
 	private void setService(final EventSourceInstance instance, final Service service) {
@@ -386,16 +396,15 @@ public class DashboardController {
 	}
 
 	public EventSourceInstance getEventSourceInstance(final String id) {
+		// TODO replace by orElseThrow()
 		return eventSourceInstancesLock.read(
-				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get()); // TODO
-																															// replace
-																															// by
-																															// orElseThrow()
+				() -> eventSourceInstancesInternal.keySet().stream().filter(i -> id.equals(i.getId())).findAny().get());
 	}
 
-	private EventSourceDescriptor getEventSourceDescriptor(final String className, final String viewName) {
-		final String key
-				= className == null ? EventSourceKey.PREFIX_WIDGET + viewName : EventSourceKey.PREFIX_CLASS + className;
+	private EventSourceDescriptor getEventSourceDescriptor(final Optional<String> className, final String viewName) {
+		final String key = className.isPresent()
+				? EventSourceKey.PREFIX_CLASS + className.get().toString()
+				: EventSourceKey.PREFIX_WIDGET + viewName;
 		return getEventSourceDescriptor(EventSourceKey.getKey(key));
 	}
 
@@ -442,9 +451,9 @@ public class DashboardController {
 
 		String id;
 		do {
-			id = (descriptor.getServiceClass() != null
-					? descriptor.getServiceClass().getSimpleName()
-					: descriptor.getView()) + "__" + UUID.randomUUID().toString().replace("-", "_");
+			id = descriptor.getServiceClass().map(c -> c.getSimpleName()).orElse(descriptor.getView())
+					+ "__"
+					+ UUID.randomUUID().toString().replace("-", "_");
 		} while (existingIds.contains(id));
 		return id;
 	}
@@ -464,7 +473,7 @@ public class DashboardController {
 				createdBy.getUsername(),
 				createdBy.getUsername());
 
-		if (descriptor.getServiceClass() != null) {
+		if (descriptor.getServiceClass().isPresent()) {
 			adoptDefaultEventSourceProperties(instance, descriptor);
 		}
 
@@ -474,34 +483,46 @@ public class DashboardController {
 		return instance;
 	}
 
+	@SuppressWarnings("checkstyle:XIllegalCatchCustom")
 	private void adoptDefaultEventSourceProperties(final EventSourceInstance instance,
 			final EventSourceDescriptor descriptor) {
 		// Create a new object of the source to retrieve the default values
-		final Service service
-				= createServiceInstance(descriptor.getServiceClass(), descriptor.getModuleClass(), "dummy");
-		instance.getDescriptor()
-				.getProperties()
-				.forEach(ThrowingConsumer.sneakc(p -> instance.setProperty(p, p.getGetter().invoke(service))));
+		final Service service = createServiceInstance(
+				descriptor.getServiceClass()
+						.orElseThrow(() -> new NullPointerException("Service class must not be null")),
+				descriptor.getModuleClass(),
+				"dummy");
+		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {
+			try {
+				final Object defaultValue = Objects.requireNonNull(property.getGetter().get().invoke(service),
+						"The default value of a property must not be null.");
+				instance.setProperty(property, defaultValue);
+			} catch (final IllegalAccessException
+					| IllegalArgumentException
+					| InvocationTargetException
+					| NullPointerException e) {
+				throw new RuntimeException("Unable to set property: " + property.getName(), e);
+			}
+		}
 	}
 
+	// TODO better handling for optionals in values!!
 	String getValueString(final EventSourceProperty property, final Object value) {
 		try {
-			if (TypeUtils.isOfType(property.getClazz(), SerializableProperty.class)) {
+			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {
 				return spController.toString((SerializableProperty) value);
-			} else if (value != null
-					&& value.getClass().isArray()
-					&& TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {
-						throw new NotImplementedException(
-								"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
-					} else if (value == null) {
-						return "";
-					} else if (property.isJson() || TypeUtils.isOfType(property.getClazz(), JsonBasedData.class)) {
-						return json.toJson(value);
-					} else if (value.getClass().isArray()) {
-						return Arrays.deepToString((Object[]) value);
-					} else {
-						return value.toString();
-					}
+			} else if (value.getClass().isArray()) {
+				if (TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {
+					throw new NotImplementedException(
+							"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
+				}
+				// return Arrays.deepToString((Object[]) value);
+				return json.toJson(value);
+			} else if (property.isJson() || TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
+				return json.toJson(value);
+			} else {
+				return value.toString();
+			}
 		} catch (final IllegalArgumentException | SecurityException e) {
 			throw new RuntimeException("Unable to convert property '" + property.getName() + "' to string", e);
 		}
@@ -527,7 +548,7 @@ public class DashboardController {
 			final Map<String, String> propertyStrings = storage.getEventSourceInstanceProperties(id);
 			final Map<String, String> dataItemStrings = storage.getEventSourceInstanceDataItems(id);
 
-			if (instance.getDescriptor().getServiceClass() != null) {
+			if (instance.getDescriptor().getServiceClass().isPresent()) {
 				adoptDefaultEventSourceProperties(instance, instance.getDescriptor());
 			}
 			instance.getDescriptor()
@@ -549,7 +570,7 @@ public class DashboardController {
 
 	public void startAllInstances() {
 		getEventSourceInstances().stream()
-				.filter(i -> i.getDescriptor().getServiceClass() != null)
+				.filter(i -> i.getDescriptor().getServiceClass().isPresent())
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
 				.forEach(this::startInstance);
@@ -564,43 +585,61 @@ public class DashboardController {
 
 		synchronized (instance) {
 			// check everything
-			if (getService(instance) != null) {
+			if (getService(instance).isPresent()) {
 				throw new RuntimeException("Instance " + id + " is already started.");
 			}
-			if (instance.getDescriptor().getServiceClass() == null) {
+			if (!instance.getDescriptor().getServiceClass().isPresent()) {
 				throw new RuntimeException("Instance " + id + " does not have a service class.");
 			}
 			if (!instance.isEnabled()) {
 				throw new RuntimeException("Instance " + id + " is not enabled.");
 			}
 
-			// create class instance
-			final Service service = createServiceInstance(instance.getDescriptor().getServiceClass(),
-					instance.getDescriptor().getModuleClass(),
-					id);
-			if (service instanceof ScheduledEventSource) {
-				((ScheduledEventSource<?>) service).setFrequency(instance.getFrequency());
+			final Optional<Service> service = createAndConfigureServiceInstance(instance);
+
+			if (service.isPresent()) {
+				// start service
+				LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
+				setService(instance, service.get());
+				service.get().startAsync();
+				service.get().awaitRunning();
+				LOGGER.info("Started event source: " + id + " (" + instance.getName() + ")");
+			} else {
+				throw new RuntimeException("Service could not be started."); // TODO
 			}
-
-			// set property values
-			instance.getDescriptor()
-					.getProperties()
-					.stream()
-					.filter(instance::hasPropertyValue)
-					.forEach(ThrowingConsumer.sneakc(p -> p.getSetter().invoke(service, instance.getPropertyValue(p))));
-
-			// start service
-			LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
-			setService(instance, service);
-			service.startAsync();
-			service.awaitRunning();
-			LOGGER.info("Started event source: " + id + " (" + instance.getName() + ")");
 		}
+	}
+
+	private Optional<Service> createAndConfigureServiceInstance(final EventSourceInstance instance) {
+		// create class instance
+		final Service service = createServiceInstance(instance.getDescriptor().getServiceClass().get(),
+				instance.getDescriptor().getModuleClass(),
+				instance.getId());
+		if (service instanceof ScheduledEventSource) {
+			((ScheduledEventSource<?>) service).setFrequency(instance.getFrequency());
+		}
+
+		// set property values
+		instance//
+				.getDescriptor()
+				.getProperties()
+				.stream()
+				.filter(instance::hasPropertyValue)
+				.filter(property -> property.getSetter().isPresent())
+				.forEach(property -> {
+					try {
+						property.getSetter().get().invoke(service, instance.getPropertyValue(property));
+					} catch (final IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
+						throw new RuntimeException("Unable to set property: " + property.getName(), e);
+					}
+				});
+
+		return Optional.of(service);
 	}
 
 	public void stopAllInstances() {
 		getEventSourceInstances().stream()
-				.filter(i -> i.getDescriptor().getServiceClass() != null)
+				.filter(i -> i.getDescriptor().getServiceClass().isPresent())
 				.filter(this::isRunning)
 				.map(EventSourceInstance::getId)
 				.forEach(this::stopInstance);
@@ -610,11 +649,8 @@ public class DashboardController {
 		final EventSourceInstance instance = getEventSourceInstance(id);
 
 		synchronized (instance) {
-			final Service service = getService(instance);
-			// check everything
-			if (service == null) {
-				throw new RuntimeException("Instance " + id + " is not running");
-			}
+			final Service service = getService(instance)
+					.orElseThrow(() -> new RuntimeException("Instance " + id + " is not running"));
 
 			// stop service
 			if (service.state() != State.TERMINATED && service.state() != State.STOPPING) {
@@ -642,55 +678,51 @@ public class DashboardController {
 		}
 	}
 
-	public void restartInstancesUsingSerializableProperty(final SerializableProperty prop) {
+	public void restartInstancesUsingSerializableProperty(final SerializableProperty changedProperty) {
 		getEventSourceInstances().stream()
 				.filter(this::isRunning)
-				.filter(i -> i.getDescriptor()
+				.filter(instance -> instance.getDescriptor()
 						.getProperties()
 						.stream()
-						.anyMatch(p -> p.getClazz() == prop.getClass()
-								&& ((SerializableProperty) i.getPropertyValue(p)).getId() == prop.getId()))
+						.filter(property -> property.getClazz().isPresent())
+						.anyMatch(property -> property.getClazz().get() == changedProperty.getClass()
+								&& ((SerializableProperty) instance.getPropertyValue(property))
+										.getId() == changedProperty.getId()))
 				.map(EventSourceInstance::getId)
 				.forEach(id -> restartInstance(id, false));
 	}
 
 	public boolean isRunning(final EventSourceInstance instance) {
-		return getService(instance) != null;
+		return getService(instance).isPresent();
 	}
 
-	public ZonedDateTime getLastRun(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastRun)
-				.orElse(null);
+	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
+		return getService(instance)
+				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
 	}
 
-	public ZonedDateTime getLastSuccessfulRun(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastSuccessfulRun)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
 	}
 
-	public ZonedDateTime getLastFailureDateTime(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureDateTime)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastSuccessfulRun(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRun);
 	}
 
-	public String getLastFailureDescription(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureDescription)
-				.orElse(null);
+	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDateTime);
 	}
 
-	public String getLastFailureException(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureException)
-				.orElse(null);
+	public Optional<String> getLastFailureDescription(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDescription);
+	}
+
+	public Optional<String> getLastFailureException(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException);
 	}
 
 	public boolean hasException(final EventSourceInstance instance) {
-		return Optional.ofNullable((ScheduledEventSource<?>) getService(instance))
-				.map(ScheduledEventSource::getLastFailureException)
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException)
 				.map(x -> x != null)
 				.orElse(false);
 	}
@@ -743,7 +775,7 @@ public class DashboardController {
 		storage.deleteEventSourceInstance(eventSourceId);
 		removeEventSourceInstance(instance);
 
-		return null;
+		return Collections.emptySet();
 	}
 
 	public Set<String> getEventSourceInstanceUsage(final String eventSourceId) {
@@ -774,13 +806,15 @@ public class DashboardController {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property, final String string) {
-		final Class<?> type = property.getClazz();
+	public <T extends Enum<T>> Object createObjectFromString(final EventSourceProperty property,
+			final String inputString) {
+		// TODO check all callers
+		final Class<?> type = property.getClazz().orElse(String.class);
+		final String string = Objects.requireNonNull(inputString, "The input string must not be null.");
 		try {
 			if (type == null || String.class == type) {
 				return string;
-			}
-			if (type.isPrimitive()) {
+			} else if (type.isPrimitive()) {
 				if (type == boolean.class) {
 					return string == null ? Boolean.FALSE : Boolean.parseBoolean(string);
 				}
@@ -806,8 +840,7 @@ public class DashboardController {
 					return string.charAt(0);
 				}
 				throw new RuntimeException("Unknown primitive type: " + type);
-			}
-			if (Enum.class.isAssignableFrom(type)) {
+			} else if (Enum.class.isAssignableFrom(type)) {
 				final Enum<T> enumValue;
 				if (string != null) {
 					enumValue = Enum.valueOf((Class<T>) type, string);
@@ -816,46 +849,40 @@ public class DashboardController {
 				}
 				// method.invoke(eventSource, enumValue);
 				return enumValue;
-			}
-			if (string == null) {
-				// method.invoke(eventSource, string);
-				return string;
-			}
-			if (SerializableProperty.class.isAssignableFrom(type)) {
+			} else if (SerializableProperty.class.isAssignableFrom(type)) {
 				try {
 					return spController.getProperty((Class<SerializableProperty>) type, Integer.parseInt(string));
-				} catch (final NumberFormatException ignore) {
+				} catch (@SuppressWarnings("unused") final NumberFormatException ignore) {
 					LOGGER.warn("Unable to find property type '{}' for id '{}'", type.getSimpleName(), string);
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}
-			}
-			if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
+			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
 				final Object value = json.fromJson(string, type);
-				return value;
-			}
-			if (type.isArray()) {
+				if (value != null) {
+					return value;
+				}
+				return TypeUtils.createInstance(type);
+			} else if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);
-			}
-			if (Path.class == type) {
+			} else if (Path.class == type) {
 				return Paths.get(string);
-			}
-			if (TemporalAmount.class == type) {
+			} else if (TemporalAmount.class == type) {
 				// This is quite difficult. Java has many classes that are temporal amount.
 				// We need to test a bit, which one can interpret the String.
-				return TypeUtils
-						.tryToCreateInstance(TemporalAmount.class, string, () -> null, Duration.class, Period.class);
-			}
-			if (type.isInterface()) {
+				return TypeUtils.<TemporalAmount>tryToCreateInstance(string, Duration.class, Period.class)
+						.orElseThrow(() -> new RuntimeException("Unable to create TemporalAmount from: " + string));
+			} else if (type.isInterface()) {
 				final String message = "Type "
 						+ type.getName()
 						+ " is an interface. Please use concrete classes for getters and setters.";
 				LOGGER.error(message);
 				throw new RuntimeException(message);
+			} else {
+				return TypeUtils.createInstance(type, string);
 			}
-			return TypeUtils.createInstance(type, string);
 		} catch (final Exception e) {
-			LOGGER.error("Unable to set property value of type " + type + " from string '" + string + "'", e);
-			return null;
+			throw new RuntimeException("Unable to set property value of type " + type + " from string '" + string + "'",
+					e);
 		}
 	}
 
@@ -917,7 +944,7 @@ public class DashboardController {
 	}
 
 	private EventSourceProperty createDummyEventSourceProperty(final String name) {
-		return new EventSourceProperty(name, name, null, "text", true, null, null, null, null, false, null);
+		return new EventSourceProperty(name, name, null, "text", true);
 	}
 
 	private EventSourceProperty createEventSourceProperty(final PropertyDescriptor descriptor) {
@@ -939,8 +966,9 @@ public class DashboardController {
 		}
 
 		final String name = descriptor.getName();
-		final String displayName = getOrDefault(property, Property::name, name);
-		final String description = getOrDefault(property, Property::description, "");
+		final String displayName = property.name();
+		@Nullable
+		final String description = Strings.emptyToNull(property.description());
 		final boolean customValuesAllowed = false;
 		final Method getter = descriptor.getReadMethod();
 		final Method setter = descriptor.getWriteMethod();
@@ -957,10 +985,12 @@ public class DashboardController {
 			hint = tmpClass.getAnnotation(JsonHint.class);
 		}
 		final boolean json = !UiUtils.hasDedicatedEditor(clazz);
-		final String jsonSchema = json ? this.json.toJsonSchema(clazz, hint) : null;
 
-		final String inputType
-				= getType(name, getOrDefault(property, Property::type, null), descriptor.getPropertyType(), json, null);
+		final String inputType = getType(name,
+				Optional.ofNullable(Strings.emptyToNull(property.type())),
+				Optional.of(descriptor.getPropertyType()),
+				json,
+				Collections.emptyList());
 
 		final EventSourceProperty esProperty = new EventSourceProperty(name,
 				displayName,
@@ -972,44 +1002,27 @@ public class DashboardController {
 				clazz,
 				hint,
 				json,
-				jsonSchema);
+				json ? this.json.toJsonSchema(clazz, hint) : null);
 
 		collectAllowedValues(clazz).forEach(esProperty::addAllowedValue);
 		return esProperty;
 	}
 
 	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
-		final String displayName;
-		final String description;
-		final String inputType;
-		final boolean customValuesAllowed;
+		final String displayName = properties.getProperty("dataItem." + name + ".title", name);
+		@Nullable
+		final String description = properties.getProperty("dataItem." + name + ".description");
+		final String inputType = properties.getProperty("dataItem." + name + ".type", "text");
+		final boolean customValuesAllowed
+				= Boolean.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
 		final List<String> allowedValues = new ArrayList<>();
-
-		if (properties != null) {
-			displayName = properties.getProperty("dataItem." + name + ".title", name);
-			description = properties.getProperty("dataItem." + name + ".description");
-			inputType = properties.getProperty("dataItem." + name + ".type", "text");
-			customValuesAllowed = Boolean
-					.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
-			allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
-		} else {
-			displayName = name;
-			description = null;
-			inputType = "text";
-			customValuesAllowed = false;
-		}
+		allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
 
 		final EventSourceProperty property = new EventSourceProperty(name,
 				displayName,
-				Strings.emptyToNull(description),
-				getType(displayName, inputType, null, false, allowedValues),
-				customValuesAllowed,
-				null,
-				null,
-				null,
-				null,
-				false,
-				null);
+				description,
+				getType(displayName, Optional.of(inputType), Optional.empty(), false, allowedValues),
+				customValuesAllowed);
 		allowedValues.forEach(v -> property.addAllowedValue(v, v));
 		return property;
 	}
@@ -1035,48 +1048,53 @@ public class DashboardController {
 	}
 
 	private String getType(final String name,
-			final String propertyType,
-			final Class<?> type,
+			final Optional<String> propertyType,
+			final Optional<Class<?>> optionalType,
 			final boolean json,
 			final Collection<?> allowedValues) {
-		if (propertyType != null && propertyType.trim().length() > 0) {
-			return propertyType;
-		} else if (Enum.class.isAssignableFrom(type) || allowedValues != null && !allowedValues.isEmpty()) {
-			return "enum";
-		} else if (json || TypeUtils.isOfType(type, JsonBasedData.class)) {
-			return "json";
-		} else if (type == LocalDate.class) {
-			return "date";
-		} else if (type == LocalTime.class) {
-			return "time";
-		} else if (type == LocalDateTime.class) {
-			return "datetime-local";
-		} else if (type == ZonedDateTime.class) {
-			return "datetime";
-		} else if (type == Duration.class) {
-			return "duration";
-		} else if (type == boolean.class) {
-			return "boolean";
-		} else if (SerializableProperty.class.isAssignableFrom(type)) {
-			return "value_" + type.getSimpleName();
-		} else if (type == int.class
-				|| type == long.class
-				|| type == short.class
-				|| type == byte.class
-				|| type == Integer.class
-				|| type == Long.class
-				|| type == Short.class
-				|| type == Byte.class) {
-					return "number";
-				} else if (name.toLowerCase().contains("password")) {
-					return "password";
-				} else if (type == URL.class
-						|| type == String.class
-								&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
-									return "url";
-								} else {
-									return "text";
-								}
+		if (propertyType.isPresent() && propertyType.get().trim().length() > 0) {
+			return propertyType.get();
+		} else if (optionalType.isPresent()) {
+			final Class<?> type = optionalType.get();
+			if (Enum.class.isAssignableFrom(type) || !allowedValues.isEmpty()) {
+				return "enum";
+			} else if (json || TypeUtils.isOfType(type, JsonBasedData.class)) {
+				return "json";
+			} else if (type == LocalDate.class) {
+				return "date";
+			} else if (type == LocalTime.class) {
+				return "time";
+			} else if (type == LocalDateTime.class) {
+				return "datetime-local";
+			} else if (type == ZonedDateTime.class) {
+				return "datetime";
+			} else if (type == Duration.class) {
+				return "duration";
+			} else if (type == boolean.class) {
+				return "boolean";
+			} else if (SerializableProperty.class.isAssignableFrom(type)) {
+				return "value_" + type.getSimpleName();
+			} else if (type == int.class
+					|| type == long.class
+					|| type == short.class
+					|| type == byte.class
+					|| type == Integer.class
+					|| type == Long.class
+					|| type == Short.class
+					|| type == Byte.class) {
+						return "number";
+					} else if (name.toLowerCase().contains("password")) {
+						return "password";
+					} else if (type == URL.class
+							|| type == String.class
+									&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
+										return "url";
+									} else {
+										return "text";
+									}
+		} else {
+			throw new RuntimeException("Unable to determine type for: " + name);
+		}
 	}
 
 	private List<EventSourceDescriptor> loadMultipleEventSourceFromResources(final Collection<String> widgetsPaths) {
@@ -1120,9 +1138,8 @@ public class DashboardController {
 
 		// load additional information
 		final Path prop = folder.resolve(folder.getFileName().toString() + ".properties");
-		final Properties properties;
+		final Properties properties = new Properties();
 		if (Files.exists(prop)) {
-			properties = new Properties();
 			try (Reader in = Files.newBufferedReader(prop)) {
 				properties.load(in);
 			}
@@ -1140,7 +1157,6 @@ public class DashboardController {
 			description = properties.getProperty("description");
 		} else {
 			standAlone = true;
-			properties = null;
 		}
 
 		// check if we should continue
@@ -1156,10 +1172,8 @@ public class DashboardController {
 		addDataItemsFromHtml(dataItems, folder);
 		addDataItemsFromCoffeeScript(dataItems, folder);
 		dataItems.removeAll(RESERVED_DATA_BINDINGS);
-		if (properties != null) {
-			dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
-			dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
-		}
+		dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
+		dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
 
 		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(descriptor::addDataItem);
 
@@ -1188,25 +1202,47 @@ public class DashboardController {
 		}
 	}
 
-	private static <T, I> T getOrDefault(final I input, final Function<I, T> extractor, final T defaultValue) {
-		if (input == null) {
-			return defaultValue;
-		}
-		return extractor.apply(input);
-	}
-
 	@SuppressWarnings("unchecked")
 	private static Class<? extends OversigtEvent> getEventClass(final Class<? extends Service> clazz) {
-		final Method method = TypeUtils.getMethod(clazz,
+		final Optional<Method> method = TypeUtils.getMethod(clazz,
 				Arrays.asList("produceEventFromData", "produceCachedEvent", "produceEvent"),
 				new Class<?>[0]);
-		if (method == null) {
+		if (!method.isPresent()) {
 			return OversigtEvent.class;
 		}
-		if (TypeUtils.isOfType(method.getReturnType(), OversigtEvent.class)) {
-			return (Class<? extends OversigtEvent>) method.getReturnType();
+
+		final Class<?> rawTypeOfOptional;
+		if (method.get().getReturnType() == Optional.class) {
+			final ParameterizedType parameterizedType = (ParameterizedType) method.get().getGenericReturnType();
+			final Type typeOfOptional = parameterizedType.getActualTypeArguments()[0];
+			if (typeOfOptional instanceof TypeVariable<?>) {
+				final TypeVariable<?> typeVariable = (TypeVariable<?>) typeOfOptional;
+				final Type boundary = typeVariable.getBounds()[0];
+				if (boundary instanceof Class<?>) {
+					rawTypeOfOptional = (Class<?>) boundary;
+				} else {
+					throw new RuntimeException(String.format(
+							"Unable to inspect optional return value of method [%s]. Type in question: %s",
+							method.toString(),
+							parameterizedType));
+				}
+			} else if (typeOfOptional instanceof Class<?>) {
+				rawTypeOfOptional = (Class<?>) typeOfOptional;
+			} else if (typeOfOptional instanceof ParameterizedType) {
+				rawTypeOfOptional = (Class<?>) ((ParameterizedType) typeOfOptional).getRawType();
+			} else {
+				throw new RuntimeException("Unknown type: " + typeOfOptional.getClass().getName());
+			}
+		} else {
+			rawTypeOfOptional = method.get().getReturnType();
 		}
-		throw new RuntimeException("Event producing method does not return " + OversigtEvent.class.getName());
+
+		if (TypeUtils.isOfType(rawTypeOfOptional, OversigtEvent.class)) {
+			return (Class<? extends OversigtEvent>) rawTypeOfOptional;
+		}
+		throw new RuntimeException(String.format("Event producing method [%s] does not return event of type %s",
+				method.toString(),
+				OversigtEvent.class.getName()));
 	}
 
 	private static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {

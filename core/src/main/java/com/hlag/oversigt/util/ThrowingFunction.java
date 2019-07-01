@@ -3,6 +3,7 @@ package com.hlag.oversigt.util;
 import java.util.function.Function;
 
 import de.larssh.utils.SneakyException;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @FunctionalInterface
 public interface ThrowingFunction<T, R> extends Function<T, R> {
@@ -11,7 +12,7 @@ public interface ThrowingFunction<T, R> extends Function<T, R> {
 	}
 
 	@Override
-	default R apply(final T t) {
+	default R apply(@Nullable final T t) {
 		try {
 			return applyThrowing(t);
 		} catch (final Exception e) {
@@ -19,5 +20,5 @@ public interface ThrowingFunction<T, R> extends Function<T, R> {
 		}
 	}
 
-	R applyThrowing(T t) throws Exception;
+	R applyThrowing(@Nullable T t) throws Exception;
 }

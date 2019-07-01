@@ -40,7 +40,7 @@ public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> exte
 			description = "If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.")
 	@JsonHint(arrayStyle = ArrayStyle.TABLE)
 	public String[] getUsersToSuppress() {
-		return usersToSuppress != null ? usersToSuppress : new String[0];
+		return usersToSuppress;
 	}
 
 	public void setUsersToSuppress(final String[] usersToSuppress) {
@@ -50,7 +50,7 @@ public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> exte
 	@Property(name = "Name mappings",
 			description = "Some users have different user names. Use these mappings to map all the known user names to one single name.")
 	public NameMapping[] getNameMappings() {
-		return nameMappings != null ? nameMappings : new NameMapping[0];
+		return nameMappings;
 	}
 
 	public void setNameMappings(final NameMapping[] nameMappings) {

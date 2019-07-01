@@ -1,10 +1,12 @@
 package com.hlag.oversigt.storage;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 
-import de.larssh.utils.OptionalInts;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public interface SqlDialect {
 
@@ -18,25 +20,25 @@ public interface SqlDialect {
 
 	String alterTableDropColumn(String tableName, String columnName);
 
-	default String select(final String tableName, final Collection<String> select) {
-		return select(tableName, null, select);
+	default String select(final String tableName, final Collection<String> where) {
+		return select(tableName, Collections.emptyList(), where);
 	}
 
 	default String select(final String tableName, final Collection<String> select, final Collection<String> where) {
-		return select(tableName, select, where, null, false, 0L);
+		return select(tableName, select, where, Optional.empty(), false, 0L);
 	}
 
 	default String select(final String tableName,
 			final Collection<String> select,
-			final String columnIn,
+			final Optional<String> columnIn,
 			final long inValues) {
-		return select(tableName, select, null, columnIn, false, inValues);
+		return select(tableName, select, Collections.emptyList(), columnIn, false, inValues);
 	}
 
 	String select(String tableName,
 			Collection<String> select,
 			Collection<String> where,
-			String columnIn,
+			Optional<String> columnIn,
 			boolean notIn,
 			long inValues);
 
@@ -51,7 +53,7 @@ public interface SqlDialect {
 
 	String delete(String tableName, Collection<String> whereNames);
 
-	String delete(String tableName, Collection<String> where, String columnIn, boolean notIn, long inValues);
+	String delete(String tableName, Collection<String> where, Optional<String> columnIn, boolean notIn, long inValues);
 
 	Object convertValue(Object object);
 
@@ -74,6 +76,7 @@ public interface SqlDialect {
 
 		private final boolean nullable;
 
+		@Nullable
 		private final Object defaultValue;
 
 		private final boolean primaryKey;
@@ -82,13 +85,13 @@ public interface SqlDialect {
 
 		private final boolean unique;
 
-		private final Integer length;
+		private final OptionalInt length;
 
-		private final Integer precision;
+		private final OptionalInt precision;
 
 		public ColumnOptions(final String name,
 				final ColumnType type,
-				final Object defaultValue,
+				@Nullable final Object defaultValue,
 				final boolean nullable,
 				final boolean primaryKey) {
 			this(name, type, defaultValue, nullable, primaryKey, false, false);
@@ -96,7 +99,7 @@ public interface SqlDialect {
 
 		public ColumnOptions(final String name,
 				final ColumnType type,
-				final Object defaultValue,
+				@Nullable final Object defaultValue,
 				final boolean nullable,
 				final boolean primaryKey,
 				final boolean autoincrement,
@@ -107,11 +110,12 @@ public interface SqlDialect {
 			this.nullable = nullable;
 			this.primaryKey = primaryKey;
 			this.autoincrement = autoincrement;
-			length = null;
-			precision = null;
+			length = OptionalInt.empty();
+			precision = OptionalInt.empty();
 			this.unique = unique;
 		}
 
+		@Nullable
 		public Object getDefaultValue() {
 			return defaultValue;
 		}
@@ -121,11 +125,11 @@ public interface SqlDialect {
 		}
 
 		public OptionalInt getLength() {
-			return OptionalInts.ofNullable(length);
+			return length;
 		}
 
 		public OptionalInt getPrecision() {
-			return OptionalInts.ofNullable(precision);
+			return precision;
 		}
 
 		public ColumnType getType() {

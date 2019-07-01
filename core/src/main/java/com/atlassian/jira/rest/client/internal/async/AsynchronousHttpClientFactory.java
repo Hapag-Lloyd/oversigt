@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.event.api.EventPublisher;
 import com.atlassian.httpclient.apache.httpcomponents.DefaultHttpClientFactory;
 import com.atlassian.httpclient.api.HttpClient;
+import com.atlassian.httpclient.api.Request.Builder;
 import com.atlassian.httpclient.api.factory.HttpClientOptions;
 import com.atlassian.jira.rest.client.api.AuthenticationHandler;
 import com.atlassian.sal.api.ApplicationProperties;
@@ -42,11 +43,14 @@ import com.atlassian.sal.api.executor.ThreadLocalContextManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * Factory for asynchronous http clients.
  *
  * @since v2.0
  */
+/* This class has been copied here to overwrite the socket timeout */
 public class AsynchronousHttpClientFactory {
 	@Inject
 	@Named("jiraSocketTimeout")
@@ -64,13 +68,15 @@ public class AsynchronousHttpClientFactory {
 				= new DefaultHttpClientFactory<>(new NoOpEventPublisher(),
 						new RestClientApplicationProperties(serverUri),
 						new ThreadLocalContextManager<Object>() {
+							@Nullable
 							@Override
 							public Object getThreadLocalContext() {
 								return null;
 							}
 
 							@Override
-							public void setThreadLocalContext(final Object context) {
+							public void setThreadLocalContext(
+									@SuppressWarnings("unused") @Nullable final Object context) {
 								// empty by design
 							}
 
@@ -91,7 +97,9 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	public DisposableHttpClient createClient(final HttpClient client) {
-		return new AtlassianHttpClientDecorator(client, null) {
+		return new AtlassianHttpClientDecorator(client, (@Nullable final Builder builder) -> {
+			/* empty to remove null error */
+		}) {
 
 			@Override
 			public void destroy() throws Exception {
@@ -110,17 +118,17 @@ public class AsynchronousHttpClientFactory {
 		}
 
 		@Override
-		public void publish(final Object o) {
+		public void publish(@SuppressWarnings("unused") @Nullable final Object o) {
 			// empty by design
 		}
 
 		@Override
-		public void register(final Object o) {
+		public void register(@SuppressWarnings("unused") @Nullable final Object o) {
 			// empty by design
 		}
 
 		@Override
-		public void unregister(final Object o) {
+		public void unregister(@SuppressWarnings("unused") @Nullable final Object o) {
 			// empty by design
 		}
 
@@ -160,7 +168,7 @@ public class AsynchronousHttpClientFactory {
 		 */
 		@Nonnull
 		@Override
-		public String getBaseUrl(final UrlMode urlMode) {
+		public String getBaseUrl(@SuppressWarnings("unused") @Nullable final UrlMode urlMode) {
 			return baseUrl;
 		}
 
@@ -206,7 +214,7 @@ public class AsynchronousHttpClientFactory {
 		 */
 		@Deprecated
 		@Override
-		public String getPropertyValue(final String s) {
+		public String getPropertyValue(@SuppressWarnings("unused") @Nullable final String s) {
 			throw new UnsupportedOperationException("Not implemented");
 		}
 	}

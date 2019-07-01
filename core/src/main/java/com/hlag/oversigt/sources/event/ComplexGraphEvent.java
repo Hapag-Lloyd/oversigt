@@ -7,7 +7,7 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 public class ComplexGraphEvent extends OversigtEvent {
 	private List<Series> series;
 
-	private String displayedValue;
+	private String displayedValue = "";
 
 	public ComplexGraphEvent(final List<Series> series) {
 		this.series = series;

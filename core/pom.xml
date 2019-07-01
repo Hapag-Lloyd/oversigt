@@ -51,7 +51,6 @@
 
 		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
 		<compilerArgument>-parameters</compilerArgument>
-		<org.eclipse.jdt.core.compiler.annotation.missingNonNullByDefaultAnnotation>ignore</org.eclipse.jdt.core.compiler.annotation.missingNonNullByDefaultAnnotation>
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
 		<guice.version>4.2.1</guice.version>
@@ -167,6 +166,11 @@
 			<artifactId>jackson-datatype-jsr310</artifactId>
 			<version>2.9.7</version>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jdk8</artifactId>
+			<version>2.9.7</version>
+		</dependency>
 		<!--javax.el is dependency required by weld-servlet -->
 		<dependency>
 			<groupId>javax.el</groupId>
@@ -237,6 +241,11 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.dongliu</groupId>
+			<artifactId>gson-java8-datatype</artifactId>
+			<version>1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>

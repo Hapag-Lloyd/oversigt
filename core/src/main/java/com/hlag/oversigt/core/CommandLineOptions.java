@@ -8,15 +8,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class CommandLineOptions {
-
+	@Nullable
 	public static CommandLineOptions parse(final String[] args) {
 		final CommandLineOptions options = new CommandLineOptions();
 		final CmdLineParser parser = new CmdLineParser(options);
@@ -83,6 +85,7 @@ public final class CommandLineOptions {
 		}
 	}
 
+	@Nullable
 	private String get(final Method method) {
 		try {
 			return Nullables.map(method.invoke(this), Object::toString);
@@ -93,6 +96,6 @@ public final class CommandLineOptions {
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 }

@@ -18,6 +18,7 @@ import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Finals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
@@ -42,17 +43,14 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	private static EventSourceKey findKeyFromClass(final String className) {
-		EventSourceKey key = detectPackageMove(KEYS, className);
-		if (key == null) {
+		Optional<EventSourceKey> key = detectPackageMove(KEYS, className);
+		if (!key.isPresent()) {
 			key = detectSimpleRename(KEYS, className);
 		}
-		if (key == null) {
+		if (!key.isPresent()) {
 			key = detectComplexRename(KEYS, className);
 		}
-		if (key == null) {
-			throw new RuntimeException("Unable to find matching class for: " + className);
-		}
-		return key;
+		return key.orElseThrow(() -> new RuntimeException("Unable to find matching class for: " + className));
 	}
 
 	private static EventSourceKey findKeyFromWidget(final String widget) {
@@ -85,14 +83,11 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
-		String displayName = null;
+		Optional<String> displayName = Optional.empty();
 		if (clazz.isAnnotationPresent(EventSource.class)) {
-			displayName = clazz.getAnnotation(EventSource.class).displayName();
+			displayName = Optional.ofNullable(clazz.getAnnotation(EventSource.class).displayName());
 		}
-		if (Strings.isNullOrEmpty(displayName)) {
-			displayName = clazz.getSimpleName();
-		}
-		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName));
+		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName.orElse(clazz.getSimpleName())));
 	}
 
 	static EventSourceKey createKeyFromWidget(final String widgetName, final String displayName) {
@@ -133,12 +128,12 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (key == null ? 0 : key.hashCode());
+		result = prime * result + key.hashCode();
 		return result;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -151,18 +146,14 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 			return false;
 		}
 		final EventSourceKey other = (EventSourceKey) obj;
-		if (key == null) {
-			if (other.key != null) {
-				return false;
-			}
-		} else if (!key.equals(other.key)) {
+		if (!key.equals(other.key)) {
 			return false;
 		}
 		return true;
 	}
 
 	@Override
-	public int compareTo(final EventSourceKey that) {
+	public int compareTo(@Nullable final EventSourceKey that) {
 		return COMPARATOR_BY_KEY.compare(this, that);
 	}
 

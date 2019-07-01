@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
 
@@ -42,6 +43,7 @@ import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Roles;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -128,6 +130,10 @@ public class MailSender {
 				map("dashboard", dashboard));
 	}
 
+	public void sendRawMail(final Principal sender, final String recipient, final String content) {
+		send_internal(sender, new String[] { recipient }, "Oversigt test mail", "<p>" + content + "</p>", content);
+	}
+
 	private void sendMailToAdmins(final Principal sender,
 			final String subject,
 			final String title,
@@ -164,8 +170,11 @@ public class MailSender {
 			final String title,
 			final String templatePath,
 			final Map<String, Object> model) {
-		final Principal receiver = authenticator.readPrincipal(userId);
-		sendMail(sender, receiver.getName(), receiver.getEmail(), subject, title, templatePath, model);
+		final Optional<Principal> receiver = authenticator.readPrincipal(userId);
+		if (!receiver.isPresent()) {
+			throw new RuntimeException("Unknown receiver principal: " + userId);
+		}
+		sendMail(sender, receiver.get().getName(), receiver.get().getEmail(), subject, title, templatePath, model);
 	}
 
 	private void sendMail(final Principal sender,
@@ -298,12 +307,13 @@ public class MailSender {
 	}
 
 	private javax.mail.Authenticator createAuthenticator() {
-		if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
-			return null;
-		}
 		return new javax.mail.Authenticator() {
+			@Nullable
 			@Override
 			protected PasswordAuthentication getPasswordAuthentication() {
+				if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {
+					return null;
+				}
 				return new PasswordAuthentication(username, password);
 			}
 		};

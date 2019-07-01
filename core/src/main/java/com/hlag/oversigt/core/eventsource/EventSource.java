@@ -71,6 +71,6 @@ public @interface EventSource {
 	 * not need custom configuration
 	 */
 	interface NOP extends Module {
-		// empty by design
+		/* Empty module to have a default value */
 	}
 }

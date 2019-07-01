@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -11,17 +12,20 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.text.WordUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
 import com.hlag.oversigt.sources.data.JsonHint;
 
 import de.larssh.utils.Optionals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	@NotBlank
-	private String name = null;
+	private String name;
 
 	@NotBlank
 	private final String displayName;
 
+	@Nullable
 	private final String description;
 
 	@NotBlank
@@ -32,24 +36,42 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	private final boolean customValuesAllowed;
 
 	@JsonIgnore
-	private final Method getter;
+	private final Optional<Method> getter;
 
 	@JsonIgnore
-	private final Method setter;
+	private final Optional<Method> setter;
 
 	@JsonIgnore
-	private final Class<?> clazz;
+	private final Optional<Class<?>> clazz;
 
 	@JsonIgnore
-	private final JsonHint hint;
+	private final Optional<JsonHint> hint;
 
 	private final boolean json;
 
-	private final String jsonSchema;
+	private final Optional<String> jsonSchema;
 
 	EventSourceProperty(@NotBlank final String name,
 			@NotBlank final String displayName,
-			final String description,
+			@Nullable final String description,
+			final String inputType,
+			final boolean customValuesAllowed) {
+		this.name = name;
+		this.displayName = displayName;
+		this.description = Strings.emptyToNull(description);
+		this.inputType = inputType;
+		this.customValuesAllowed = customValuesAllowed;
+		getter = Optional.empty();
+		setter = Optional.empty();
+		clazz = Optional.empty();
+		hint = Optional.empty();
+		json = false;
+		jsonSchema = Optional.empty();
+	}
+
+	EventSourceProperty(@NotBlank final String name,
+			@NotBlank final String displayName,
+			@Nullable final String description,
 			final String inputType,
 			final boolean customValuesAllowed,
 			final Method getter,
@@ -57,18 +79,18 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 			final Class<?> clazz,
 			final JsonHint hint,
 			final boolean json,
-			final String jsonSchema) {
+			@Nullable final String jsonSchema) {
 		this.name = name;
 		this.displayName = displayName;
-		this.description = description != null && description.trim().length() > 1 ? description : null;
+		this.description = Strings.emptyToNull(description);
 		this.inputType = inputType;
 		this.customValuesAllowed = customValuesAllowed;
-		this.getter = getter;
-		this.setter = setter;
-		this.clazz = clazz;
-		this.hint = hint;
+		this.getter = Optional.of(getter);
+		this.setter = Optional.of(setter);
+		this.clazz = Optional.of(clazz);
+		this.hint = Optional.ofNullable(hint);
 		this.json = json;
-		this.jsonSchema = jsonSchema;
+		this.jsonSchema = Optional.ofNullable(jsonSchema);
 	}
 
 	void addAllowedValue(@NotNull final String value, final String title) {
@@ -84,6 +106,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		return displayName;
 	}
 
+	@Nullable
 	public String getDescription() {
 		return description;
 	}
@@ -104,19 +127,19 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		return customValuesAllowed;
 	}
 
-	public Method getGetter() {
+	public Optional<Method> getGetter() {
 		return getter;
 	}
 
-	public Method getSetter() {
+	public Optional<Method> getSetter() {
 		return setter;
 	}
 
-	public Class<?> getClazz() {
+	public Optional<Class<?>> getClazz() {
 		return clazz;
 	}
 
-	public JsonHint getHint() {
+	public Optional<JsonHint> getHint() {
 		return hint;
 	}
 
@@ -124,22 +147,23 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		return json;
 	}
 
-	public String getJsonSchema() {
+	public Optional<String> getJsonSchema() {
 		return jsonSchema;
 	}
 
 	@JsonIgnore
 	public String getType() {
-		return getter == null ? "DATA" : "PROPERTY";
+		return getter.isPresent() ? "PROPERTY" : "DATA";
 	}
 
 	@Override
-	public int compareTo(final EventSourceProperty that) {
-		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(@Nullable final EventSourceProperty that) {
+		return getDisplayName()
+				.compareToIgnoreCase(Optional.ofNullable(that).map(EventSourceProperty::getDisplayName).orElse(""));
 	}
 
 	@Override
 	public String toString() {
-		return getName() + (getClazz() != null ? " (" + getClazz().getSimpleName() + ")" : "");
+		return getName() + getClazz().map(Class::getSimpleName).map(s -> " (" + s + ")").orElse("");
 	}
 }

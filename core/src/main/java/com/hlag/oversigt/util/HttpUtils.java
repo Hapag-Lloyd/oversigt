@@ -1,16 +1,17 @@
 package com.hlag.oversigt.util;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
 
 public final class HttpUtils {
 
-	public static <T> T reloadWithGet(final HttpServerExchange exchange) {
-		return redirect(exchange, exchange.getRequestURI(), false, true);
+	public static void reloadWithGet(final HttpServerExchange exchange) {
+		redirect(exchange, exchange.getRequestURI(), false, true);
 	}
 
-	public static <T> T redirect(final HttpServerExchange exchange,
+	public static void redirect(final HttpServerExchange exchange,
 			final String location,
 			final boolean permanent,
 			final boolean changeToGet) {
@@ -31,43 +32,34 @@ public final class HttpUtils {
 		exchange.setStatusCode(code);
 		exchange.getResponseHeaders().put(Headers.LOCATION, location);
 		exchange.endExchange();
-		return null;
 	}
 
-	public static <T> T notFound(final HttpServerExchange exchange) {
-		return notFound(exchange, "Not found");
+	public static void notFound(final HttpServerExchange exchange) {
+		notFound(exchange, "Not found");
 	}
 
-	public static <T> T notFound(final HttpServerExchange exchange, final String message) {
+	public static void notFound(final HttpServerExchange exchange, final String message) {
 		exchange.setStatusCode(StatusCodes.NOT_FOUND);
 		exchange.getResponseSender().send("404 - " + message);
 		exchange.endExchange();
-		return null;
 	}
 
-	public static <T> T forbidden(final HttpServerExchange exchange) {
+	public static void forbidden(final HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.FORBIDDEN);
 		exchange.getResponseSender().send("403 - Forbidden");
 		exchange.endExchange();
-		return null;
 	}
 
-	public static <T> T badRequest(final HttpServerExchange exchange) {
-		return badRequest(exchange, null);
-	}
-
-	public static <T> T badRequest(final HttpServerExchange exchange, final String message) {
+	public static void badRequest(final HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.BAD_REQUEST);
-		exchange.getResponseSender().send("400 - Bad Request" + (message != null ? " - " + message : ""));
+		exchange.getResponseSender().send("400 - Bad Request");
 		exchange.endExchange();
-		return null;
 	}
 
-	public static <T> T internalServerError(final HttpServerExchange exchange) {
+	public static void internalServerError(final HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
 		exchange.getResponseSender().send("500 - Internal Server Error");
 		exchange.endExchange();
-		return null;
 	}
 
 	/**
@@ -77,10 +69,10 @@ public final class HttpUtils {
 	 * @return String
 	 */
 	@SuppressWarnings("checkstyle:IllegalToken")
-	public static String encodeByteArrayToUrlString(final byte[] in) {
+	public static String encodeByteArrayToUrlString(/* TODO remove Nullable */@Nullable final byte[] in) {
 		int i = 0;
-		if (in == null || in.length <= 0) {
-			return null;
+		if (in == null || in.length == 0) {
+			return "";
 		}
 
 		final String[] pseudo = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };

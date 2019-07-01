@@ -19,6 +19,7 @@ import com.hlag.oversigt.storage.Storage;
 
 import ch.qos.logback.classic.LoggerContext;
 import de.larssh.utils.Finals;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -175,6 +176,7 @@ public final class Oversigt {
 	 * Oversigt builder
 	 */
 	public static class Builder {
+		@Nullable
 		private CommandLineOptions options = null;
 
 		public Builder() {

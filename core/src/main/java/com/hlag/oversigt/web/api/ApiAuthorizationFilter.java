@@ -3,6 +3,7 @@ package com.hlag.oversigt.web.api;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -21,17 +22,21 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @Provider
 @Priority(Priorities.AUTHORIZATION)
 @JwtSecured
 public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}");
 
+	@Nullable
 	@Context
-	private UriInfo uriInfo;
+	private UriInfo injectedUriInfo;
 
+	@Nullable
 	@Context
-	private ResourceInfo resourceInfo;
+	private ResourceInfo injectedResourceInfo;
 
 	public ApiAuthorizationFilter() {
 		// no fields to be initialized manually, some will be injected
@@ -39,7 +44,11 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 
 	/** {@inheritDoc} */
 	@Override
-	public void filter(final ContainerRequestContext requestContext) throws IOException {
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext) throws IOException {
+		final UriInfo uriInfo = Objects.requireNonNull(injectedUriInfo);
+		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);
+		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);
+
 		final Method method = resourceInfo.getResourceMethod();
 
 		// @DenyAll on the method takes precedence over @RolesAllowed and @PermitAll
@@ -50,7 +59,7 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 		// @RolesAllowed on the method takes precedence over @PermitAll
 		RolesAllowed rolesAllowed = method.getAnnotation(RolesAllowed.class);
 		if (rolesAllowed != null) {
-			performAuthorization(requestContext, rolesAllowed.value());
+			performAuthorization(requestContext, rolesAllowed.value(), uriInfo);
 			return;
 		}
 
@@ -65,7 +74,7 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 		// @RolesAllowed on the class takes precedence over @PermitAll on the class
 		rolesAllowed = resourceInfo.getResourceClass().getAnnotation(RolesAllowed.class);
 		if (rolesAllowed != null) {
-			performAuthorization(requestContext, rolesAllowed.value());
+			performAuthorization(requestContext, rolesAllowed.value(), uriInfo);
 		}
 
 		// @PermitAll on the class
@@ -83,13 +92,15 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 	/**
 	 * Perform authorization based on roles.
 	 */
-	private void performAuthorization(final ContainerRequestContext requestContext, final String[] rolesAllowed) {
+	private void performAuthorization(final ContainerRequestContext requestContext,
+			final String[] rolesAllowed,
+			final UriInfo uriInfo) {
 		if (rolesAllowed.length > 0 && !isAuthenticated(requestContext)) {
 			refuseRequest(requestContext);
 		}
 
 		for (final String role : rolesAllowed) {
-			if (requestContext.getSecurityContext().isUserInRole(enhanceRole(requestContext, role))) {
+			if (requestContext.getSecurityContext().isUserInRole(enhanceRole(requestContext, role, uriInfo))) {
 				return;
 			}
 		}
@@ -111,16 +122,20 @@ public class ApiAuthorizationFilter implements ContainerRequestFilter {
 		requestContext.abortWith(ErrorResponse.forbidden("You don't have permissions to perform this action."));
 	}
 
-	private String enhanceRole(final ContainerRequestContext requestContext, final String requiredRole) {
+	private String enhanceRole(final ContainerRequestContext requestContext,
+			final String requiredRole,
+			final UriInfo uriInfo) {
 		String role = requiredRole;
 		for (final String placeholder : getPlaceholders(role)) {
-			final String newValue = getParameter(requestContext, placeholder);
+			final String newValue = getParameter(requestContext, placeholder, uriInfo);
 			role = role.replace("{" + placeholder + "}", newValue);
 		}
 		return role;
 	}
 
-	private String getParameter(final ContainerRequestContext requestContext, final String parameterName) {
+	private String getParameter(final ContainerRequestContext requestContext,
+			final String parameterName,
+			final UriInfo uriInfo) {
 		Optional<String> param = Optional.empty();
 
 		// path params

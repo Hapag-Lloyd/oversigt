@@ -3,16 +3,18 @@ package com.hlag.oversigt.model;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.properties.Color;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class Widget implements Comparable<Widget> {
 	private static final Comparator<Widget> COMPARE_BY_NAME
@@ -111,9 +113,7 @@ public class Widget implements Comparable<Widget> {
 
 	@JsonIgnore
 	public String getType() {
-		return Optional.ofNullable(eventSourceInstance.getDescriptor().getServiceClass())
-				.map(Class::getSimpleName)
-				.orElse("");
+		return eventSourceInstance.getDescriptor().getServiceClass().map(Class::getSimpleName).orElse("");
 	}
 
 	public EventSourceInstance getEventSourceInstance() {
@@ -184,6 +184,7 @@ public class Widget implements Comparable<Widget> {
 		this.title = title;
 	}
 
+	@Nullable
 	public String getWidgetData(final EventSourceProperty property) {
 		return data.get(property);
 	}
@@ -216,7 +217,7 @@ public class Widget implements Comparable<Widget> {
 	}
 
 	@Override
-	public int compareTo(final Widget that) {
+	public int compareTo(@Nullable final Widget that) {
 		return COMPARE.compare(this, that);
 	}
 
@@ -249,6 +250,6 @@ public class Widget implements Comparable<Widget> {
 	/** {@inheritDoc} */
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 }

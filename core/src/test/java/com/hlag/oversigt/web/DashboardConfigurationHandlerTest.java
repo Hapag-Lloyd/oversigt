@@ -6,7 +6,6 @@ import static com.hlag.oversigt.test.UndertowHelper.createHttpExchangeWithQueryP
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +81,7 @@ public class DashboardConfigurationHandlerTest {
 	private DashboardConfigurationHandler dashboardConfigurationHandler;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		when(authenticator.isUsernameValid(ArgumentMatchers.anyString())).thenReturn(false);
 		VALID_USERNAMES.forEach(s -> when(authenticator.isUsernameValid(s)).thenReturn(true));
 
@@ -136,7 +135,7 @@ public class DashboardConfigurationHandlerTest {
 		final Set<String> expectedMailSet = new HashSet<>(Arrays.asList("USER2"));
 		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
-		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(Optional.of(dashboard));
 
 		// then
 		final ActionResponse result = dashboardConfigurationHandler.doAction_setOwners(exchange, formData);
@@ -164,7 +163,7 @@ public class DashboardConfigurationHandlerTest {
 		final Set<String> expectedListOfOwners = new HashSet<>(Arrays.asList("USER1"));
 		final Set<String> expectedListOfEditors = new HashSet<>(Arrays.asList("USER1", "USER2"));
 
-		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(dashboard);
+		when(dashboardController.getDashboard(dashboard.getId())).thenReturn(Optional.of(dashboard));
 
 		// then
 		final ActionResponse result = dashboardConfigurationHandler.doAction_setEditors(exchange, formData);

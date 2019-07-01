@@ -56,9 +56,9 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 	private final Set<AggregationType> aggregationTypes
 			= Collections.synchronizedSet(new TreeSet<>(Arrays.asList(AggregationType.STATUS)));
 
-	private DisplayOption[] displayOptions = null;
+	private DisplayOption[] displayOptions = new DisplayOption[0];
 
-	private DisplayOption defaultDisplayOption = null;
+	private DisplayOption defaultDisplayOption = new DisplayOption();
 
 	private boolean showEmptyCategories = false;
 
@@ -128,7 +128,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 			final Issue issue,
 			final String value) {
 		final DisplayOption defaultDisplayOption = getDefaultDisplayOption();
-		if (defaultDisplayOption != null && !Strings.isNullOrEmpty(defaultDisplayOption.getDisplayValue())) {
+		if (!Strings.isNullOrEmpty(defaultDisplayOption.getDisplayValue())) {
 			return defaultDisplayOption;
 		}
 		return new DisplayOption(aggregationType.getDisplayValue(issue, value));
@@ -176,9 +176,6 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 	@Property(name = "Display Options",
 			description = "Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.")
 	public DisplayOption[] getDisplayOptions() {
-		if (displayOptions == null) {
-			return new DisplayOption[0];
-		}
 		return displayOptions;
 	}
 
@@ -274,7 +271,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 							.collect(Collectors.toList());
 
 					if (contains(auths, "getUserFromBasicAuthentication") && contains(auths, "checkAuthenticated")) {
-						if (getJiraCredentials() == null || getJiraCredentials() == Credentials.EMPTY) {
+						if (getJiraCredentials() == Credentials.EMPTY) {
 							return failure("No credentials configured.");
 						}
 						return failure("Unable to log in to JIRA. Username: " + getJiraCredentials().getUsername());

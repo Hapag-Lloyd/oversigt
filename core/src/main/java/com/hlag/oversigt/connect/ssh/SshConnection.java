@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -68,7 +69,7 @@ public abstract class SshConnection {
 
 	private final String username;
 
-	private final AtomicReference<Session> sessionReference = new AtomicReference<>(null);
+	private final AtomicReference<Optional<Session>> sessionReference = new AtomicReference<>(Optional.empty());
 
 	protected SshConnection(final String hostname, final int port, final String username) {
 		this.hostname = hostname;
@@ -88,9 +89,13 @@ public abstract class SshConnection {
 		return port;
 	}
 
-	private boolean isSessionAlive(final Session session) {
+	private boolean isSessionAlive() {
+		if (!sessionReference.get().isPresent()) {
+			return false;
+		}
+
 		try {
-			final ChannelExec testChannel = (ChannelExec) sessionReference.get().openChannel("exec");
+			final ChannelExec testChannel = (ChannelExec) sessionReference.get().get().openChannel("exec");
 			testChannel.setCommand("true");
 			testChannel.connect();
 			if (LOGGER.isDebugEnabled()) {
@@ -98,10 +103,10 @@ public abstract class SshConnection {
 			}
 			testChannel.disconnect();
 			return true;
-		} catch (final JSchException e) {
+		} catch (@SuppressWarnings("unused") final JSchException e) {
 			try {
-				session.disconnect();
-			} catch (final Exception ignore) {
+				sessionReference.get().ifPresent(Session::disconnect);
+			} catch (@SuppressWarnings("unused") final Exception ignore) {
 				// do not throw inside catch
 			}
 			return false;
@@ -110,16 +115,16 @@ public abstract class SshConnection {
 
 	private Session getSession() {
 		synchronized (sessionReference) {
-			if (sessionReference.get() != null) {
-				if (isSessionAlive(sessionReference.get())) {
-					return sessionReference.get();
-				}
-				sessionReference.set(null);
+			if (isSessionAlive()) {
+				return sessionReference.get().get();
 			}
 
+			sessionReference.set(Optional.empty());
+
 			try {
-				sessionReference.set(createSession(JSCH));
-				return sessionReference.get();
+				final Session session = createSession(JSCH);
+				sessionReference.set(Optional.of(session));
+				return session;
 			} catch (final JSchException e) {
 				throw new RuntimeException("Unable to create session.", e);
 			}
@@ -130,29 +135,18 @@ public abstract class SshConnection {
 
 	private void disconnect() {
 		synchronized (sessionReference) {
-			if (sessionReference.get() != null) {
-				sessionReference.get().disconnect();
-			}
+			sessionReference.get().ifPresent(Session::disconnect);
 		}
 	}
 
 	public double getCpuUsage() {
-		final String result = runSshCommand("lparstat 1 1");
-		if (result == null) {
-			return Double.NaN;
-		}
-
-		double percent = parseCpuUsage(result);
-		if (percent < 0.0) {
-			percent = 0.0;
-		}
-		if (percent > 1.0) {
-			percent = 1.0;
-		}
-		return percent;
+		return runSshCommand("lparstat 1 1")//
+				.map(SshConnection::parseCpuUsage)
+				.map(SshConnection::capTo0And1)
+				.orElse(Double.NaN);
 	}
 
-	public String getTopas() {
+	public Optional<String> getTopas() {
 		final String filename = "hl_topas_" + UUID.randomUUID().toString() + ".tmp";
 		final String[] commands = new String[] {
 				"cd /tmp",
@@ -173,7 +167,17 @@ public abstract class SshConnection {
 		return 1.0 - Double.parseDouble(lines[lines.length - 1].substring(pos, len)) / 100.0;
 	}
 
-	private String runSshCommand(final String command) {
+	private static double capTo0And1(final double d) {
+		if (d < 0.0) {
+			return 0.0;
+		} else if (d > 1.0) {
+			return 1.0;
+		} else {
+			return d;
+		}
+	}
+
+	private Optional<String> runSshCommand(final String command) {
 		try {
 			final Session session = getSession();
 
@@ -202,29 +206,25 @@ public abstract class SshConnection {
 					}
 					try {
 						Thread.sleep(100);
-					} catch (final InterruptedException ignore) {
+					} catch (@SuppressWarnings("unused") final Exception ignore) {
 						// on interruption continue
 					}
 				}
 				channel.disconnect();
 
-				return bos.toString();
+				return Optional.of(bos.toString());
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Unknown exception while running SSH command.", e);
-			return null;
+			return Optional.empty();
 		}
 	}
 
-	private String runShellCommands(final String... commands) {
+	private Optional<String> runShellCommands(final String... commands) {
 		try {
 			final Session session = getSession();
 
 			final ChannelShell channel = (ChannelShell) session.openChannel("shell");
-			// channel.setCommand(command);
-			// channel.setInputStream(null);
-			// channel.setErrStream(System.err);
-			// InputStream in = channel.getInputStream();
 			channel.connect();
 			final PrintStream out = new PrintStream(channel.getOutputStream());
 
@@ -235,7 +235,7 @@ public abstract class SshConnection {
 			out.print("exit");
 			out.flush();
 
-			try (InputStream in = channel.getInputStream();
+			try (InputStream in = channel.getInputStream(); //
 					ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 				final byte[] buffer = new byte[1024];
 				while (true) {
@@ -258,17 +258,17 @@ public abstract class SshConnection {
 					}
 					try {
 						Thread.sleep(100);
-					} catch (final InterruptedException ignore) {
+					} catch (@SuppressWarnings("unused") final Exception ignore) {
 						// on interruption continue
 					}
 				}
 				channel.disconnect();
 
-				return bos.toString();
+				return Optional.of(bos.toString());
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Unknown exception while running SSH command.", e);
-			return null;
+			return Optional.empty();
 		}
 	}
 }

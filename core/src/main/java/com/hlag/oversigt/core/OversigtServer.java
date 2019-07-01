@@ -72,6 +72,7 @@ import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 
 import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import io.undertow.Handlers;
@@ -122,8 +123,10 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final EventBus eventBus;
 
+	@Nullable
 	private ServerSentEventHandler sseHandler;
 
+	@Nullable
 	private Undertow server;
 
 	private EventSender sender;
@@ -177,7 +180,6 @@ public class OversigtServer extends AbstractIdleService {
 	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners,
 			final EventBus eventBus,
 			final EventSender sender,
-
 			final Configuration templateConfiguration,
 			final WelcomeHandler welcomeHandler,
 			final LoginHandler loginHandler,
@@ -187,7 +189,6 @@ public class OversigtServer extends AbstractIdleService {
 			final DashboardController dashboardController,
 			final HttpServerExchangeHandler exchangeHandler,
 			final Application restApiApplication,
-			@Named("additionalPackages") final String[] additionalPackages,
 			@Named("addonFolders") final Path[] addonFolders,
 			@Named("widgetsPaths") final String[] widgetsPaths) {
 		this.listeners = listeners;
@@ -228,7 +229,7 @@ public class OversigtServer extends AbstractIdleService {
 		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
 			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))
 					.map(Deque::getFirst)
-					.map(dashboardController::getDashboard)
+					.flatMap(dashboardController::getDashboard)
 					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
 			eventBus.post(connection);
 		});
@@ -236,7 +237,14 @@ public class OversigtServer extends AbstractIdleService {
 		eventBus.register(new Consumer<OversigtEvent>() {
 			@Subscribe
 			@Override
-			public void accept(final OversigtEvent event) {
+			public void accept(@Nullable final OversigtEvent event) {
+				if (event == null) {
+					return;
+				}
+				final ServerSentEventHandler sseHandler = OversigtServer.this.sseHandler;
+				if (sseHandler == null) {
+					return;
+				}
 				sseHandler.getConnections()
 						.stream()
 						.forEach(connection -> sender.sendEventToConnection(event, connection));
@@ -306,9 +314,11 @@ public class OversigtServer extends AbstractIdleService {
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
 		listeners.stream()
 				.filter(HttpListenerConfiguration::isSsl)
-				.forEach(c -> builder
-						.addHttpsListener(c.getPort(), c.getIp(), c.getSSLConfiguration().createSSLContext()));
-		server = builder.setHandler(accessHandler).build();
+				.forEach(c -> builder.addHttpsListener(c.getPort(),
+						c.getIp(),
+						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
+		final Undertow server = builder.setHandler(accessHandler).build();
+		this.server = server;
 
 		LOGGER.info("Starting web server");
 		try {
@@ -371,7 +381,7 @@ public class OversigtServer extends AbstractIdleService {
 			} else {
 				HttpUtils.notFound(exchange);
 			}
-		} catch (final Exception e) {
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			HttpUtils.notFound(exchange);
 		}
 	}
@@ -403,25 +413,26 @@ public class OversigtServer extends AbstractIdleService {
 			// check if the URI is correct... otherwise redirect to proper dashboard URI
 			final String correctUri = "/" + dashboardId;
 			if (correctUri.equals(exchange.getRequestURI())) {
-				final Dashboard dashboard = dashboardController.getDashboard(dashboardId);
-				if (dashboard == null || !dashboard.isEnabled()) {
-					// redirect to config page in order to create new dashboard
-					redirect(exchange, "/" + dashboardId + "/create", false, true);
-				} else {
+				final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
+				if (dashboard.isPresent() && dashboard.get().isEnabled()) {
 					final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
 							map("title",
-									dashboard.getTitle(),
+									dashboard.get().getTitle(),
 									"columns",
-									dashboard.getColumns(),
+									dashboard.get().getColumns(),
 									"backgroundColor",
-									dashboard.getBackgroundColor().getHexColor(),
+									dashboard.get().getBackgroundColor().getHexColor(),
 									"computedTileWidth",
-									dashboard.getComputedTileWidth(),
+									dashboard.get().getComputedTileWidth(),
 									"computedTileHeight",
-									dashboard.getComputedTileHeight(),
+									dashboard.get().getComputedTileHeight(),
 									"widgets",
-									dashboard.getWidgets()));
+									dashboard.get().getWidgets()));
 					exchange.getResponseSender().send(html);
+				} else {
+					// redirect to config page in order to create new dashboard
+					redirect(exchange, "/" + dashboardId + "/create", false, true);
+					// TODO change to angular ui screen
 				}
 			} else {
 				redirect(exchange, correctUri, true, true);
@@ -458,11 +469,11 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new AssetsClassPathResourceManager("statics", widgetsPaths));
 	}
 
-	private static URL getResourceUrl(final String path) {
+	private static Optional<URL> getResourceUrl(final String path) {
 		try {
-			return Resources.getResource(path);
-		} catch (final IllegalArgumentException e) {
-			return null;
+			return Optional.of(Resources.getResource(path));
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
+			return Optional.empty();
 		}
 	}
 
@@ -614,11 +625,17 @@ public class OversigtServer extends AbstractIdleService {
 
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");
-		sseHandler.getConnections().forEach(ServerSentEventConnection::shutdown);
+		final ServerSentEventHandler sseHandler = this.sseHandler;
+		if (sseHandler != null) {
+			sseHandler.getConnections().forEach(ServerSentEventConnection::shutdown);
+		}
 
 		/* stop the server */
 		LOGGER.info("Stopping web server");
-		server.stop();
+		final Undertow server = this.server;
+		if (server != null) {
+			server.stop();
+		}
 	}
 
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
@@ -633,21 +650,24 @@ public class OversigtServer extends AbstractIdleService {
 
 		@Override
 		public void running() {
-			LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
-					server.getListenerInfo()
-							.stream()
-							.map(li -> (InetSocketAddress) li.getAddress())
-							.mapToInt(InetSocketAddress::getPort)
-							.toArray());
+			final Undertow server = OversigtServer.this.server;
+			if (server != null) {
+				LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
+						server.getListenerInfo()
+								.stream()
+								.map(li -> (InetSocketAddress) li.getAddress())
+								.mapToInt(InetSocketAddress::getPort)
+								.toArray());
+			}
 		}
 
 		@Override
-		public void failed(final State from, final Throwable failure) {
+		public void failed(@Nullable final State from, @Nullable final Throwable failure) {
 			LOGGER.error("Embedded Oversigt server failed from: " + from, failure);
 		}
 
 		@Override
-		public void stopping(final State from) {
+		public void stopping(@SuppressWarnings("unused") @Nullable final State from) {
 			LOGGER.info("Stopping embedded Oversigt server");
 		}
 	}
@@ -661,15 +681,16 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		@Override
-		protected URL getResourceUrl(final String realPath) {
+		protected URL getResourceUrl(final String realPath) throws IllegalArgumentException {
 			if (realPath.startsWith("statics/widgets/")) {
 				final String end = realPath.substring("statics/widgets/".length());
 				return Arrays.stream(widgetsPaths)
 						.map(s -> s + end)
 						.map(OversigtServer::getResourceUrl)
-						.filter(not(Objects::isNull))
+						.filter(Optional::isPresent)
+						.map(Optional::get)
 						.findFirst()
-						.orElse(null);
+						.orElseThrow(() -> new IllegalArgumentException("Resource " + realPath + " cannot be found."));
 			}
 			return super.getResourceUrl(realPath);
 		}

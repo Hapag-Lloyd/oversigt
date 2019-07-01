@@ -2,6 +2,7 @@ package com.hlag.oversigt.model;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -15,7 +16,10 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
 	@NotNull
@@ -25,7 +29,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@NotNull
 	private final String displayName;
 
-	private final String description;
+	private final Optional<String> description;
 
 	@NotNull
 	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
@@ -40,9 +44,9 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
 
-	private final Class<? extends Service> serviceClass;
+	private final Optional<Class<? extends Service>> serviceClass;
 
-	private final Class<? extends OversigtEvent> eventClass;
+	private final Optional<Class<? extends OversigtEvent>> eventClass;
 
 	@JsonIgnore
 	private final Class<? extends Module> moduleClass;
@@ -50,27 +54,27 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	private boolean standAlone = false;
 
 	EventSourceDescriptor(@NotNull final EventSourceKey key,
-			@NotBlank final String displayName,
-			final String description,
+			@NotNull final String displayName,
+			@Nullable final String description,
 			@NotBlank final String view,
 			final boolean standAlone) {
-		this(key, displayName, description, view, null, null, null);
+		this(key, displayName, description, view, null, null, NOP.class);
 		this.standAlone = standAlone;
 	}
 
 	EventSourceDescriptor(@NotNull final EventSourceKey key,
 			@NotBlank final String displayName,
-			final String description,
+			@Nullable final String description,
 			@NotBlank final String view,
-			final Class<? extends Service> serviceClass,
-			final Class<? extends OversigtEvent> eventClass,
+			@Nullable final Class<? extends Service> serviceClass,
+			@Nullable final Class<? extends OversigtEvent> eventClass,
 			final Class<? extends Module> moduleClass) {
 		this.key = key;
 		this.displayName = displayName;
-		this.description = description != null && description.trim().length() > 1 ? description : null;
+		this.description = Optional.ofNullable(Strings.emptyToNull(description));
 		this.view = view;
-		this.serviceClass = serviceClass;
-		this.eventClass = eventClass;
+		this.serviceClass = Optional.ofNullable(serviceClass);
+		this.eventClass = Optional.ofNullable(eventClass);
 		this.moduleClass = moduleClass;
 	}
 
@@ -82,27 +86,34 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return view;
 	}
 
-	public Class<? extends Service> getServiceClass() {
+	public Optional<Class<? extends Service>> getServiceClass() {
 		return serviceClass;
 	}
 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
 	public String getServiceClassName() {
-		return serviceClass != null ? serviceClass.getName() : null;
+		return serviceClass.map(Class::getName).orElse(null);
 	}
 
 	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
 	public String getEventClassName() {
-		return eventClass != null ? eventClass.getName() : null;
+		return eventClass.map(Class::getName).orElse(null);
 	}
 
 	@JsonIgnore
 	public boolean isScheduledService() {
-		return serviceClass != null && ScheduledEventSource.class.isAssignableFrom(serviceClass);
+		return serviceClass.map(ScheduledEventSource.class::isAssignableFrom).orElse(false);
 	}
 
+	public boolean isDeprecated() {
+		return serviceClass.map(clazz -> clazz.isAnnotationPresent(Deprecated.class)).orElse(false);
+	}
+
+	@Nullable
 	public Class<? extends OversigtEvent> getEventClass() {
-		return eventClass;
+		return eventClass.orElse(null);
 	}
 
 	public Class<? extends Module> getModuleClass() {
@@ -113,7 +124,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return displayName;
 	}
 
-	public String getDescription() {
+	public Optional<String> getDescription() {
 		return description;
 	}
 
@@ -155,8 +166,9 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	}
 
 	@Override
-	public int compareTo(final EventSourceDescriptor that) {
-		return getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(@Nullable final EventSourceDescriptor that) {
+		return getDisplayName()
+				.compareToIgnoreCase(Optional.ofNullable(that).map(EventSourceDescriptor::getDisplayName).orElse(""));
 	}
 
 	@Override

@@ -18,11 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,9 +33,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
@@ -42,7 +46,6 @@ import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.ThrowingBiFunction;
-import com.hlag.oversigt.util.Tuple;
 import com.hlag.oversigt.util.text.TextProcessor;
 
 import de.larssh.utils.text.StringConverters;
@@ -72,8 +75,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		this.proxy = proxy;
 	}
 
-	private URLConnection createConnection(final String urlString, final String cookie, final LoginData[] loginData)
-			throws IOException {
+	private URLConnection createConnection(final String urlString,
+			final Optional<String> cookie,
+			final Collection<LoginData> loginData) throws IOException {
 		final URL url = new URL(urlString);
 		final URLConnection con = url.openConnection(getHttpProxy().getProxy());
 		con.setConnectTimeout(30 * 1000);
@@ -92,18 +96,16 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 		}
 
-		if (cookie != null) {
-			con.setRequestProperty("Cookie", cookie);
-		} else if ((loginData == null || loginData.length == 0)
-				&& getCredentials() != null
-				&& getCredentials() != Credentials.EMPTY) {
-					final String encoded = Base64.getEncoder()
-							.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
-									.getBytes(StandardCharsets.UTF_8));
-					con.setRequestProperty("Authorization", "Basic " + encoded);
-				}
+		if (cookie.isPresent()) {
+			con.setRequestProperty("Cookie", cookie.get());
+		} else if (loginData.isEmpty() && getCredentials() != Credentials.EMPTY) {
+			final String encoded = Base64.getEncoder()
+					.encodeToString((getCredentials().getUsername() + ":" + getCredentials().getPassword())
+							.getBytes(StandardCharsets.UTF_8));
+			con.setRequestProperty("Authorization", "Basic " + encoded);
+		}
 
-		if (con instanceof HttpURLConnection && loginData != null && loginData.length > 0) {
+		if (con instanceof HttpURLConnection && !loginData.isEmpty()) {
 			final HttpURLConnection hcon = (HttpURLConnection) con;
 			hcon.setDoOutput(true);
 			hcon.setInstanceFollowRedirects(false);
@@ -137,22 +139,22 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	protected URLConnection createConnection(final List<InternetAddress> addresses) throws IOException {
 		final List<List<String>> replacements = new ArrayList<>();
-		URLConnection connection = null;
-		String cookie = null;
+		Optional<URLConnection> connection = Optional.empty();
+		Optional<String> cookie = Optional.empty();
 
 		for (int i = 0; i < addresses.size(); i += 1) {
 			final InternetAddress internetAddress = addresses.get(i);
-			if (connection != null) {
+			if (connection.isPresent()) {
 				logDebug(getLogger(), "Reading cookie from old connection");
-				final String newCookie = connection.getHeaderField("Set-Cookie");
+				final String newCookie = connection.get().getHeaderField("Set-Cookie");
 				logTrace(getLogger(), "New Cookie: %s", cookie);
 				if (newCookie != null) {
-					cookie = newCookie;
+					cookie = Optional.ofNullable(newCookie);
 				}
 
 				logDebug(getLogger(), "Closing connection");
-				connection.getInputStream().close();
-				connection = null;
+				connection.get().getInputStream().close();
+				connection = Optional.empty();
 			}
 
 			String url = internetAddress.getUrlString();
@@ -174,13 +176,13 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			logInfo(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
 				url = TEXT_PROCESSOR.process(url);
-				connection = createConnection(url, cookie, internetAddress.loginDatas);
-				final Pattern pattern = internetAddress.getPattern();
-				if (pattern != null) {
+				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));
+				final Optional<Pattern> pattern = internetAddress.getPattern();
+				if (pattern.isPresent()) {
 					final List<String> reps = new ArrayList<>();
 					logInfo(getLogger(), "Downloading content for matcher: %s", pattern.toString());
-					final String content = downloadString(connection);
-					final Matcher matcher = pattern.matcher(content);
+					final String content = downloadString(connection.get());
+					final Matcher matcher = pattern.get().matcher(content);
 					if (matcher.find()) {
 						for (int j = 1; j <= matcher.groupCount(); j += 1) {
 							reps.add(matcher.group(j));
@@ -193,22 +195,22 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 						if (reps.isEmpty()) {
 							throw new RuntimeException("Pattern did not match. Unable to call next URL.");
 						}
-						addresses.add(new InternetAddress(reps.get(0), null));
+						addresses.add(new InternetAddress(reps.get(0)));
 					}
 				}
 			}
 		}
-		return connection;
+		return connection.orElseThrow(() -> new RuntimeException("Unable to create URLConnection"));
 	}
 
 	protected URLConnection createConfiguredConnection() throws IOException {
 		return createConnection(new ArrayList<>(Arrays.asList(getUrls())));
 	}
 
-	protected Tuple<byte[], String> downloadBytes(final URLConnection connectionToRead) throws IOException {
-		return read(connectionToRead,
-				(connection, inputStream) -> new Tuple<>(ByteStreams.toByteArray(inputStream),
-						connection.getContentType()));
+	protected DownloadData downloadBytes(final URLConnection connectionToRead) throws IOException {
+		return read(connectionToRead, //
+				(connection, inputStream) -> //
+				new DownloadData(ByteStreams.toByteArray(inputStream), connection.getContentType()));
 	}
 
 	protected String downloadString(final URLConnection connectionToRead) throws IOException {
@@ -326,7 +328,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	@Property(name = "HTTP Headers", description = "Possible HTTP headers to be sent to the server")
 	public HttpHeader[] getHttpHeaders() {
-		return httpHeaders != null ? httpHeaders : new HttpHeader[0];
+		return httpHeaders;
 	}
 
 	public void setHttpHeaders(final HttpHeader[] httpHeaders) {
@@ -347,14 +349,19 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	@JsonHint(headerTemplate = "URL #{{i1}}", arrayStyle = ArrayStyle.GRID)
 	public static class InternetAddress {
 		static InternetAddress fromUrl(final URL url) {
-			return new InternetAddress(url.toString(), null);
+			return new InternetAddress(url.toString());
 		}
 
 		private final String address;
 
 		private final String pattern;
 
-		private LoginData[] loginDatas = null;
+		private LoginData[] loginDatas = new LoginData[0];
+
+		public InternetAddress(final String urlString) {
+			address = urlString;
+			pattern = "";
+		}
 
 		public InternetAddress(final String urlString, final String patternString) {
 			address = urlString;
@@ -362,23 +369,22 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		}
 
 		public String getUrlString() {
-			if (Strings.isNullOrEmpty(address)) {
-				return null;
-			}
 			return address;
 		}
 
-		public Pattern getPattern() {
-			if (Strings.isNullOrEmpty(pattern)) {
-				return null;
-			}
-			return Pattern.compile(pattern, Pattern.DOTALL);
+		public Optional<Pattern> getPattern() {
+			return Optional.ofNullable(Strings.emptyToNull(pattern)).map(p -> Pattern.compile(p, Pattern.DOTALL));
+		}
+
+		public LoginData[] getLoginDatas() {
+			return Optional.ofNullable(loginDatas).orElse(new LoginData[0]);
 		}
 
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			// return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+			return new Gson().toJson(this);
 		}
 	}
 
@@ -404,7 +410,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 
@@ -430,7 +436,26 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		/** {@inheritDoc} */
 		@Override
 		public String toString() {
-			return ToStringBuilder.reflectionToString(this);
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+		}
+	}
+
+	protected static final class DownloadData {
+		private final byte[] data;
+
+		private final String contentType;
+
+		private DownloadData(final byte[] data, final String contentType) {
+			this.data = data;
+			this.contentType = contentType;
+		}
+
+		public String getContentType() {
+			return contentType;
+		}
+
+		public byte[] getData() {
+			return data;
 		}
 	}
 }
