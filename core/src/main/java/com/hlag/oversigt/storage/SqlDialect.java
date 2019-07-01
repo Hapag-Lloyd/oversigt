@@ -20,8 +20,8 @@ public interface SqlDialect {
 
 	String alterTableDropColumn(String tableName, String columnName);
 
-	default String select(final String tableName, final Collection<String> select) {
-		return select(tableName, Collections.emptyList(), select);
+	default String select(final String tableName, final Collection<String> where) {
+		return select(tableName, Collections.emptyList(), where);
 	}
 
 	default String select(final String tableName, final Collection<String> select, final Collection<String> where) {

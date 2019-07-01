@@ -71,7 +71,7 @@ public class SqliteDialect implements SqlDialect {
 				if (notIn) {
 					sql.append(" NOT ");
 				}
-				sql.append(columnIn
+				sql.append(columnIn.get()
 						+ " IN ("
 						+ Stream.generate(() -> "?").limit(inValues).collect(Collectors.joining(", "))
 						+ ")");
@@ -96,7 +96,7 @@ public class SqliteDialect implements SqlDialect {
 		sql += " FROM " + tableName;
 		sql += " WHERE ";
 		if (!columnsToCheck.isEmpty()) {
-			sql += columnsToCheck.stream().map(s -> s + "=?").collect(Collectors.joining(",", "", " AND "));
+			sql += columnsToCheck.stream().map(s -> s + "=?").collect(Collectors.joining(" AND ", "", " AND "));
 		}
 		sql += columnWithLike + " LIKE ?";
 		return sql;
