@@ -92,7 +92,7 @@ public class JsonUtils {
 	private Gson gson;
 
 	@Inject
-	private Storage storage;
+	private Storage storage; // TODO remove this
 
 	public JsonUtils() {
 		// no fields to be initialized manually, some will be injected
