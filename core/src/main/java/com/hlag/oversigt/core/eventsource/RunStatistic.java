@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class RunStatistic {
+public final class RunStatistic {
 	public static StatisticsCollector createCollector() {
 		return new StatisticsCollector();
 	}
