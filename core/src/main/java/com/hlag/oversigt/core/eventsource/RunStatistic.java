@@ -3,6 +3,7 @@ package com.hlag.oversigt.core.eventsource;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,16 +22,20 @@ public class RunStatistic {
 
 	private final Optional<Throwable> throwable;
 
+	private final List<Action> actions;
+
 	private RunStatistic(final ZonedDateTime startTime,
 			final Duration duration,
 			final boolean success,
 			final Optional<String> message,
-			final Optional<Throwable> throwable) {
+			final Optional<Throwable> throwable,
+			final List<Action> actions) {
 		this.startTime = startTime;
 		this.duration = duration;
 		this.success = success;
 		this.message = message;
 		this.throwable = throwable;
+		this.actions = Collections.unmodifiableList(actions);
 	}
 
 	public Duration getDuration() {
@@ -53,6 +58,10 @@ public class RunStatistic {
 		return success;
 	}
 
+	public List<Action> getActions() {
+		return actions;
+	}
+
 	public static final class Action {
 		private final String name;
 
@@ -70,6 +79,12 @@ public class RunStatistic {
 		public String getName() {
 			return name;
 		}
+
+		@Override
+		public String toString() {
+			return String.format("Action[%s: %s]", name, duration);
+		}
+
 	}
 
 	public static final class StatisticsCollector {
@@ -105,7 +120,7 @@ public class RunStatistic {
 				final Optional<String> message,
 				final Optional<Throwable> throwable) {
 			final Duration duration = Duration.between(startTime, ZonedDateTime.now());
-			return new RunStatistic(startTime, duration, success, message, throwable);
+			return new RunStatistic(startTime, duration, success, message, throwable, actions);
 		}
 	}
 }

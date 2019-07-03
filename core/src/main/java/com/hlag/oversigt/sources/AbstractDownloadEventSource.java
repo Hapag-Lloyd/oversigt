@@ -1,7 +1,6 @@
 package com.hlag.oversigt.sources;
 
 import static com.hlag.oversigt.util.Utils.logDebug;
-import static com.hlag.oversigt.util.Utils.logInfo;
 import static com.hlag.oversigt.util.Utils.logTrace;
 import static com.hlag.oversigt.util.Utils.logWarn;
 
@@ -15,6 +14,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -173,14 +173,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 					logTrace(getLogger(), "Replacing %s with %s to %s", search, replacement, url);
 				}
 			}
-			logInfo(getLogger(), "Connecting to URL: %s", url);
+			logDebug(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
 				url = TEXT_PROCESSOR.process(url);
 				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));
 				final Optional<Pattern> pattern = internetAddress.getPattern();
 				if (pattern.isPresent()) {
 					final List<String> reps = new ArrayList<>();
-					logInfo(getLogger(), "Downloading content for matcher: %s", pattern.toString());
+					logDebug(getLogger(), "Downloading content for matcher: %s", pattern.toString());
 					final String content = downloadString(connection.get());
 					final Matcher matcher = pattern.get().matcher(content);
 					if (matcher.find()) {
@@ -221,6 +221,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	private <R> R read(final URLConnection inputConnection,
 			final ThrowingBiFunction<URLConnection, InputStream, R> inputStreamConsumer) throws IOException {
+		final long startTime = System.currentTimeMillis();
 		final URLConnection connectionToRead = handleRedirects(inputConnection);
 		try (InputStream in = connectionToRead.getInputStream()) {
 			return inputStreamConsumer.apply(connectionToRead, in);
@@ -228,6 +229,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading data from connection.", e);
+		} finally {
+			final long endTime = System.currentTimeMillis();
+			getStatisticsCollector().addAction("Download: " + inputConnection.getURL(),
+					Duration.ofMillis(endTime - startTime));
 		}
 	}
 

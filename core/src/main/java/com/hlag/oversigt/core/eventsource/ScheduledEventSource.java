@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector;
+import com.hlag.oversigt.util.Utils;
 
 /**
  * Scheduled EventSource - produces events with specified time period.
@@ -79,6 +80,9 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	}
 
 	private void addStatistics(final RunStatistic runStatistic) {
+		getLogger().info(String.format("Execution duration: %s %s",
+				Utils.formatDuration(runStatistic.getDuration()),
+				runStatistic.getActions()));
 		// save newest entry
 		statistics.add(runStatistic);
 		// remove entries if too many are in the list
@@ -128,8 +132,9 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 					Optional.ofNullable(e.getCause())));
 			sendEvent(Optional.of(new ErrorEvent(e)));
 
-			logError(getLogger(), "Cannot produce event with id %s. Deleting last event.", eventId);
+			getLogger().error(String.format("Cannot produce event with id %s. Deleting last event.", eventId), e);
 			removeLastEvent();
+
 			if (numberOfFailedRuns.incrementAndGet() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
 				logWarn(getLogger(),
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
