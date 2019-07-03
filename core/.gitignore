@@ -52,3 +52,4 @@ rebel.xml
 /data/*.db
 /lib-user/*.jar
 /addons/*.jar
+/private-test/*
