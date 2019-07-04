@@ -315,9 +315,9 @@
 
 		<!-- JIRA support -->
 		<dependency>
-			<groupId>io.atlassian.fugue</groupId>
-			<artifactId>fugue</artifactId>
-			<version>4.7.2</version>
+			<groupId>com.hlag.oversigt</groupId>
+			<artifactId>jira-rest-java-client-fix</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.jira</groupId>
@@ -447,9 +447,6 @@
 							<usedDependencies>
 								<!-- UI Resources -->
 								<usedDependency>com.hlag.oversigt:oversigt-ui</usedDependency>
-
-								<!-- Jira Client -->
-								<usedDependency>io.atlassian.fugue:fugue</usedDependency>
 
 								<!-- REST API -->
 								<usedDependency>javax.el:javax.el-api</usedDependency>
