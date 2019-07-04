@@ -12,7 +12,7 @@ import java.util.concurrent.ForkJoinPool;
 
 import org.apache.commons.io.IOUtils;
 
-import com.atlassian.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Charsets;
 
 public class Restarter implements Runnable {
