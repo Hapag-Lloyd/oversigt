@@ -65,10 +65,13 @@ public final class RunStatistic {
 	public static final class Action {
 		private final String name;
 
+		private final String detail;
+
 		private final Duration duration;
 
-		private Action(final String name, final Duration duration) {
+		private Action(final String name, final String detail, final Duration duration) {
 			this.name = name;
+			this.detail = detail;
 			this.duration = duration;
 		}
 
@@ -80,11 +83,14 @@ public final class RunStatistic {
 			return name;
 		}
 
-		@Override
-		public String toString() {
-			return String.format("Action[%s: %s]", name, duration);
+		public String getDetail() {
+			return detail;
 		}
 
+		@Override
+		public String toString() {
+			return String.format("%s(%s): %s", name, detail, duration);
+		}
 	}
 
 	public static final class StatisticsCollector {
@@ -96,8 +102,12 @@ public final class RunStatistic {
 			startTime = ZonedDateTime.now();
 		}
 
-		public void addAction(final String name, final Duration duration) {
-			actions.add(new Action(name, duration));
+		public StartedAction startAction(final String name, final String detail) {
+			return new StartedAction(name, detail);
+		}
+
+		public void addAction(final String name, final String detail, final Duration duration) {
+			actions.add(new Action(name, detail, duration));
 		}
 
 		RunStatistic success() {
@@ -121,6 +131,25 @@ public final class RunStatistic {
 				final Optional<Throwable> throwable) {
 			final Duration duration = Duration.between(startTime, ZonedDateTime.now());
 			return new RunStatistic(startTime, duration, success, message, throwable, actions);
+		}
+
+		public final class StartedAction {
+			private final long actionStartTime;
+
+			private final String name;
+
+			private final String detail;
+
+			private StartedAction(final String name, final String detail) {
+				this.name = name;
+				this.detail = detail;
+				actionStartTime = System.currentTimeMillis();
+			}
+
+			public void done() {
+				final long actionEndTime = System.currentTimeMillis();
+				addAction(name, detail, Duration.ofMillis(actionEndTime - actionStartTime));
+			}
 		}
 	}
 }

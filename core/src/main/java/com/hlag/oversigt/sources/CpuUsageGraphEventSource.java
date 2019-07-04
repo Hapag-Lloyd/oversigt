@@ -16,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import com.hlag.oversigt.connect.ssh.SshConnection;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.data.JsonHint;
@@ -70,16 +71,21 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	private int getCpuUsage(final Server server) {
 		final int usage;
-		switch (server.operatingSystem) {
-		case Linux:
-		case Aix:
-			usage = getUnixCpuUsage(server);
-			break;
-		// case Windows:
-		// usage = getWindowsCpuUsage(server);
-		// break;
-		default:
-			throw new RuntimeException("Unknown operating system: " + server.operatingSystem.name());
+		final StartedAction action = getStatisticsCollector().startAction("Retreive CPU usage", server.hostname);
+		try {
+			switch (server.operatingSystem) {
+			case Linux:
+			case Aix:
+				usage = getUnixCpuUsage(server);
+				break;
+			// case Windows:
+			// usage = getWindowsCpuUsage(server);
+			// break;
+			default:
+				throw new RuntimeException("Unknown operating system: " + server.operatingSystem.name());
+			}
+		} finally {
+			action.done();
 		}
 		Utils.logInfo(getSpecialLogger(), "%s: %s", server.hostname, usage);
 		return usage;

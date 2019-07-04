@@ -1,5 +1,7 @@
 package com.hlag.oversigt.sources;
 
+import static java.util.stream.Collectors.joining;
+
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +24,7 @@ import com.hlag.oversigt.connect.exchange.Room;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -41,8 +44,14 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	@Override
 	protected Optional<RoomAvailabilityListEvent> produceExchangeEvent() throws Exception {
 		final ZonedDateTime now = ZonedDateTime.now(getZoneId());
-		final Map<Room, List<Meeting>> meetings
-				= getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());
+		final Map<Room, List<Meeting>> meetings;
+		final StartedAction action = getStatisticsCollector().startAction("Exchange read meetings",
+				Arrays.asList(getRooms()).stream().map(Object::toString).collect(joining(", ")));
+		try {
+			meetings = getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());
+		} finally {
+			action.done();
+		}
 
 		final List<RoomAvailabilityItem> unsortedItems = meetings.entrySet()
 				.stream()

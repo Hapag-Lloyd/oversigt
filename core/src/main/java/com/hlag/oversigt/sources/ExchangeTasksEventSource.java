@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
@@ -39,7 +40,13 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 
 	@Override
 	protected Optional<TwoColumnListEvent<String>> produceExchangeEvent() throws Exception {
-		final List<Task> tasks = getExchangeClient().loadTasks();
+		final List<Task> tasks;
+		final StartedAction action = getStatisticsCollector().startAction("Exchange read tasks", "");
+		try {
+			tasks = getExchangeClient().loadTasks();
+		} finally {
+			action.done();
+		}
 		final TwoColumnListEvent<String> event = createEvent(tasks);
 		return Optional.of(event);
 	}

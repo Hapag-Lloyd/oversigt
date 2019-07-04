@@ -14,7 +14,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -40,6 +39,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.HttpProxy;
 import com.hlag.oversigt.sources.data.JsonHint;
@@ -221,7 +221,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	private <R> R read(final URLConnection inputConnection,
 			final ThrowingBiFunction<URLConnection, InputStream, R> inputStreamConsumer) throws IOException {
-		final long startTime = System.currentTimeMillis();
+		final StartedAction action
+				= getStatisticsCollector().startAction("Download", inputConnection.getURL().toExternalForm());
 		final URLConnection connectionToRead = handleRedirects(inputConnection);
 		try (InputStream in = connectionToRead.getInputStream()) {
 			return inputStreamConsumer.apply(connectionToRead, in);
@@ -230,9 +231,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading data from connection.", e);
 		} finally {
-			final long endTime = System.currentTimeMillis();
-			getStatisticsCollector().addAction("Download: " + inputConnection.getURL(),
-					Duration.ofMillis(endTime - startTime));
+			action.done();
 		}
 	}
 

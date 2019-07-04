@@ -31,10 +31,12 @@ import com.atlassian.jira.rest.client.api.domain.IssueField;
 import com.atlassian.jira.rest.client.api.domain.User;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.hlag.oversigt.connect.jira.JiraClient;
 import com.hlag.oversigt.connect.jira.JiraClientException;
 import com.hlag.oversigt.connect.jira.JiraClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
@@ -73,7 +75,13 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		// List all issues as defined by JQL query
 		final List<Issue> issues;
 		try {
-			issues = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials()).search(getQuery());
+			final JiraClient client = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials());
+			final StartedAction action = getStatisticsCollector().startAction("JIRA query", getQuery());
+			try {
+				issues = client.search(getQuery());
+			} finally {
+				action.done();
+			}
 		} catch (final JiraClientException | TimeoutException e) {
 			return handleException(e);
 		}

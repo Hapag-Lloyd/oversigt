@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.DatabaseConnection;
@@ -134,8 +135,8 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	protected abstract Optional<T> produceEventFromData();
 
-	public static <T> List<T> readFromDatabase(final Connection connection,
-			final ResultSetFunction<T> readOneLine,
+	public <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
 			final String sql,
 			final Object... parameters) throws SQLException {
 
@@ -144,7 +145,12 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			return readFromDatabase(stmt, readOneLine);
+			final StartedAction action = getStatisticsCollector().startAction("SQL-Query", sql);
+			try {
+				return readFromDatabase(stmt, readOneLine);
+			} finally {
+				action.done();
+			}
 		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
 			throw e;
