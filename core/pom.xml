@@ -401,7 +401,6 @@
 			<groupId>org.jboss.xnio</groupId>
 			<artifactId>xnio-api</artifactId>
 			<version>3.3.8.Final</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
