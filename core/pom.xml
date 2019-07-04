@@ -392,6 +392,29 @@
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
 					<execution>
+						<!-- analyze-only -->
+						<id>default</id>
+						<configuration>
+							<usedDependencies>
+								<!-- UI Resources -->
+								<usedDependency>com.hlag.oversigt:oversigt-ui</usedDependency>
+
+								<!-- Jira Client -->
+								<usedDependency>io.atlassian.fugue:fugue</usedDependency>
+
+								<!-- REST API -->
+								<usedDependency>javax.el:javax.el-api</usedDependency>
+								<usedDependency>org.glassfish.web:javax.el</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-client</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-links</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-jackson2-provider</usedDependency>
+
+								<!-- REST API Validation -->
+								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
+							</usedDependencies>
+						</configuration>
+					</execution>
+					<execution>
 						<id>copy-dependencies</id>
 						<phase>package</phase>
 						<goals>
