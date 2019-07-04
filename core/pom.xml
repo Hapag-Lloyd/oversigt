@@ -47,18 +47,18 @@
 	<properties>
 		<spotbugs.skip>true</spotbugs.skip>
 		<pmd.skip>true</pmd.skip>
-		<mdep.analyze.skip>true</mdep.analyze.skip>
 
 		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
 		<compilerArgument>-parameters</compilerArgument>
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
-		<guice.version>4.2.1</guice.version>
-		<undertow.version>2.0.21.Final</undertow.version>
 		<freemarker.version>2.3.28</freemarker.version>
-		<wro.version>1.8.0</wro.version>
+		<guice.version>4.2.1</guice.version>
+		<jackson.version>2.9.7</jackson.version>
 		<resteasy.version>3.6.1.SP2</resteasy.version>
+		<undertow.version>2.0.21.Final</undertow.version>
 		<weld.version>2.4.8.Final</weld.version>
+		<wro.version>1.8.0</wro.version>
 	</properties>
 
 	<dependencies>
@@ -106,6 +106,11 @@
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
 			<version>${undertow.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.spec.javax.servlet</groupId>
+			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
+			<version>1.0.0.Final</version>
 		</dependency>
 
 		<!-- Validation -->
@@ -174,17 +179,27 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jdk8</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<!--javax.el is dependency required by weld-servlet -->
 		<dependency>
@@ -329,6 +344,11 @@
 			<artifactId>atlassian-util-concurrent</artifactId>
 			<version>4.0.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jettison</groupId>
+			<artifactId>jettison</artifactId>
+			<version>1.1</version>
+		</dependency>
 
 		<!-- SSH support -->
 		<dependency>
@@ -427,6 +447,9 @@
 								<!-- UI Resources -->
 								<usedDependency>com.hlag.oversigt:oversigt-ui</usedDependency>
 
+								<!-- Undertow -->
+								<usedDependency>org.jboss.spec.javax.annotation:jboss-annotations-api_1.2_spec</usedDependency>
+
 								<!-- REST API -->
 								<usedDependency>javax.el:javax.el-api</usedDependency>
 								<usedDependency>org.glassfish.web:javax.el</usedDependency>
@@ -436,6 +459,9 @@
 
 								<!-- REST API Validation -->
 								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
+
+								<!-- JIRA REST Client -->
+								<usedDependency>com.atlassian.jira:jira-rest-java-client-core</usedDependency>
 							</usedDependencies>
 						</configuration>
 					</execution>
