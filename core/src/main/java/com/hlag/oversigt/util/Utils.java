@@ -194,9 +194,14 @@ public final class Utils {
 	}
 
 	/**
+	 * Collector that allows parallelized calculation of a jobs hash code based upon
+	 * {@link Objects#hashCode()}.
+	 *
+	 * @param <T> the type of input elements to the reduction operation
+	 * @return collector that allows parallelized calculation of a jobs hash code
 	 * @see <a href="https://stackoverflow.com/questions/39385860">StackOverflow</a>
 	 */
-	public static <T> Collector<T, ?, Integer> hashing() {
+	private static <T> Collector<T, ?, Integer> hashing() {
 		return Collector.of(() -> new int[2], (a, o) -> {
 			a[0] = a[0] * 31 + Objects.hashCode(o);
 			a[1] += 1;

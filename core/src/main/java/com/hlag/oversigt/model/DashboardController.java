@@ -1111,20 +1111,20 @@ public class DashboardController {
 		return FileUtils.streamResourcesFromClasspath()
 				.filter(allowedPathsFilter)
 				.map(Path::getParent)
-				.map(this::loadEventSourceFromPath)
+				.map(this::loadEventSourceFromPathOrFail)
 				.filter(not(Objects::isNull))
 				.collect(toList());
 	}
 
-	private EventSourceDescriptor loadEventSourceFromPath(final Path folder) {
+	private EventSourceDescriptor loadEventSourceFromPathOrFail(final Path folder) {
 		try {
-			return loadEventSourceFromPath_unsafe(folder);
+			return loadEventSourceFromPath(folder);
 		} catch (final IOException e) {
 			throw new RuntimeException("Unable to load widget from: " + folder, e);
 		}
 	}
 
-	private EventSourceDescriptor loadEventSourceFromPath_unsafe(final Path folder) throws IOException {
+	private EventSourceDescriptor loadEventSourceFromPath(final Path folder) throws IOException {
 		LOGGER.trace("Inspecting path: %s", folder);
 
 		// find name of EventSource

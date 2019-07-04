@@ -171,28 +171,27 @@ public class JsonUtils {
 	public String toJsonSchema(final Class<?> clazz, @Nullable final JsonHint hint) {
 		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
-		if (!SerializableProperty.class.isAssignableFrom(clazz)) {
-			schema = map("$schema",
-					"http://json-schema.org/schema#",
-					"$id",
-					"http://schema.hlag.com/oversigt/type/" + clazz.getName(),
-					"title",
-					clazz.getSimpleName());
-			schema.putAll(toJsonSchema_internal((Type) clazz, hint));
-		} else {
+		if (SerializableProperty.class.isAssignableFrom(clazz)) {
 			schema = map("$schema",
 					"http://json-schema.org/schema#",
 					"$id",
 					"http://schema.hlag.com/oversigt/property/" + clazz.getName(),
 					"title",
 					clazz.getSimpleName());
-			schema.putAll(toJsonSchema_SerializablePropertyEnum((Class<? extends SerializableProperty>) clazz));
+			schema.putAll(toJsonSchemaFromProperty((Class<? extends SerializableProperty>) clazz));
+		} else {
+			schema = map("$schema",
+					"http://json-schema.org/schema#",
+					"$id",
+					"http://schema.hlag.com/oversigt/type/" + clazz.getName(),
+					"title",
+					clazz.getSimpleName());
+			schema.putAll(toJsonSchemaFromType(clazz, hint));
 		}
 		return gson.toJson(schema);
 	}
 
-	private Map<String, Object> toJsonSchema_SerializablePropertyEnum(
-			final Class<? extends SerializableProperty> clazz) {
+	private Map<String, Object> toJsonSchemaFromProperty(final Class<? extends SerializableProperty> clazz) {
 		final List<? extends SerializableProperty> props = storage.listProperties(clazz);
 		final List<String> names
 				= new ArrayList<>(props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
@@ -221,8 +220,28 @@ public class JsonUtils {
 				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", maps)));
 	}
 
+	private static Map<String, Object> toJsonSchemaFromType(final Type type, @Nullable final JsonHint hint) {
+		if (type instanceof Class) {
+			JsonHint jsonHint = hint;
+			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
+				jsonHint = ((Class<?>) type).getAnnotation(JsonHint.class);
+			}
+			return toJsonSchemaFromClass((Class<?>) type, jsonHint);
+		} else if (type instanceof ParameterizedType) {
+			return toJsonSchemaFromType(((ParameterizedType) type).getActualTypeArguments()[0], hint);
+		} else if (type instanceof TypeVariable) {
+			// TypeVariable<?> tv = (TypeVariable<?>) type;
+			// AnnotatedType[] at = tv.getAnnotatedBounds();
+			// Type[] b = tv.getBounds();
+			// GenericDeclaration d = tv.getGenericDeclaration();
+			return map();
+		} else {
+			throw new RuntimeException("Unknown type: " + type);
+		}
+	}
+
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchema_internal(final Class<?> clazz, @Nullable final JsonHint hint) {
+	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz, @Nullable final JsonHint hint) {
 		JsonHint jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
@@ -263,7 +282,7 @@ public class JsonUtils {
 			final Map<String, Object> map = map("type",
 					"array",
 					"items",
-					toJsonSchema_internal(componentType, null),
+					toJsonSchemaFromType(componentType, null),
 					"additionalItems",
 					false);
 			if (Set.class.isAssignableFrom(clazz)) {
@@ -299,7 +318,7 @@ public class JsonUtils {
 				if (field.isAnnotationPresent(JsonHint.class)) {
 					fieldHint = field.getAnnotation(JsonHint.class);
 				}
-				final Map<String, Object> map = JsonUtils.toJsonSchema_internal(field.getType(), fieldHint);
+				final Map<String, Object> map = JsonUtils.toJsonSchemaFromClass(field.getType(), fieldHint);
 				map.put("title", makeFirstCharacterCapital(field.getName()));
 				getFormat(field).ifPresent(format -> map.put("format", format));
 				fieldsMap.put(field.getName(), map);
@@ -324,26 +343,6 @@ public class JsonUtils {
 				}
 			}
 			return map;
-		}
-	}
-
-	private static Map<String, Object> toJsonSchema_internal(final Type type, @Nullable final JsonHint hint) {
-		if (type instanceof Class) {
-			JsonHint jsonHint = hint;
-			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
-				jsonHint = ((Class<?>) type).getAnnotation(JsonHint.class);
-			}
-			return toJsonSchema_internal((Class<?>) type, jsonHint);
-		} else if (type instanceof ParameterizedType) {
-			return toJsonSchema_internal(((ParameterizedType) type).getActualTypeArguments()[0], hint);
-		} else if (type instanceof TypeVariable) {
-			// TypeVariable<?> tv = (TypeVariable<?>) type;
-			// AnnotatedType[] at = tv.getAnnotatedBounds();
-			// Type[] b = tv.getBounds();
-			// GenericDeclaration d = tv.getGenericDeclaration();
-			return map();
-		} else {
-			throw new RuntimeException("Unknown type: " + type);
 		}
 	}
 
