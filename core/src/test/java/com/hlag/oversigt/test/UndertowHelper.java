@@ -44,7 +44,7 @@ public final class UndertowHelper {
 		final StreamConnection streamConnection = createStreamConnection();
 		final OptionMap options = OptionMap.EMPTY;
 		final ServerConnection connection = new HttpServerConnection(streamConnection, null, null, options, 0, null);
-		return createHttpExchange(connection, headerMap, null);
+		return createHttpExchange(connection, headerMap, new String[0]);
 	}
 
 	private static HttpServerExchange createHttpExchange(final ServerConnection connection,
@@ -84,10 +84,8 @@ public final class UndertowHelper {
 	}
 
 	private static void addPairs(final BiConsumer<String, String> consumer, final String[] strings) {
-		if (strings != null) {
-			for (int i = 0; i < strings.length; i += 2) {
-				consumer.accept(strings[i], strings[i + 1]);
-			}
+		for (int i = 0; i < strings.length; i += 2) {
+			consumer.accept(strings[i], strings[i + 1]);
 		}
 	}
 
