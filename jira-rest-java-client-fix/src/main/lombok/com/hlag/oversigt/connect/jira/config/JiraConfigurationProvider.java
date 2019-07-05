@@ -5,18 +5,17 @@ import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientF
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.experimental.UtilityClass;
+
 /**
  * Provide jira properties
  *
  * @author neumaol
  */
+@UtilityClass
 @SuppressWarnings("PMD.ClassNamingConventions")
 public final class JiraConfigurationProvider {
-	/** no instantiation */
-	private JiraConfigurationProvider() {
-		throw new UnsupportedOperationException();
-	}
-
 	/**
 	 * Socket Timeout
 	 *
@@ -34,6 +33,7 @@ public final class JiraConfigurationProvider {
 	 *
 	 * @return the timeout for a jira request
 	 */
+	@SuppressFBWarnings(value = "MRC_METHOD_RETURNS_CONSTANT", justification = "socketTimeout is not really a constant")
 	public static int getSocketTimeout() {
 		return socketTimeout;
 	}
