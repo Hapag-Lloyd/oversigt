@@ -10,12 +10,7 @@ import com.google.inject.name.Named;
  *
  * @author neumaol
  */
-@SuppressWarnings({
-		"checkstyle:JavadocVariable",
-		"checkstyle:MissingJavadocMethod",
-		"checkstyle:MissingJavadocType",
-		"javadoc",
-		"PMD.CommentRequired" })
+@SuppressWarnings("PMD.ClassNamingConventions")
 public final class JiraConfigurationProvider {
 	/** no instantiation */
 	private JiraConfigurationProvider() {
