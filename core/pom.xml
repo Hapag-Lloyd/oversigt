@@ -53,10 +53,10 @@
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
 		<freemarker.version>2.3.28</freemarker.version>
-		<guice.version>4.2.1</guice.version>
-		<jackson.version>2.9.7</jackson.version>
-		<resteasy.version>3.6.1.SP2</resteasy.version>
-		<undertow.version>2.0.21.Final</undertow.version>
+		<guice.version>4.2.2</guice.version>
+		<jackson.version>2.9.9</jackson.version>
+		<resteasy.version>3.8.0.Final</resteasy.version>
+		<undertow.version>2.0.22.Final</undertow.version>
 		<weld.version>2.4.8.Final</weld.version>
 		<wro.version>1.8.0</wro.version>
 	</properties>
