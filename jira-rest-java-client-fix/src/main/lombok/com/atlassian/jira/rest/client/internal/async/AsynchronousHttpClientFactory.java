@@ -39,8 +39,7 @@ import com.atlassian.jira.rest.client.api.AuthenticationHandler;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.UrlMode;
 import com.atlassian.sal.api.executor.ThreadLocalContextManager;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 
 import de.larssh.utils.annotations.PackagePrivate;
 import de.larssh.utils.function.ThrowingRunnable;
@@ -66,21 +65,9 @@ import lombok.experimental.UtilityClass;
 		"javadoc",
 		"PMD.CommentRequired" })
 public class AsynchronousHttpClientFactory {
-	/**
-	 * Socket Timeout
-	 *
-	 * <p>
-	 * The value of this field will be injected using Google Guice and is named
-	 * {@code jiraSocketTimeout}.
-	 */
-	@Inject
-	@Named("jiraSocketTimeout")
-	@SuppressWarnings("checkstyle:MagicNumber")
-	private static int socketTimeout = 60;
-
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
 		final HttpClientOptions options = new HttpClientOptions();
-		options.setSocketTimeout(socketTimeout, TimeUnit.SECONDS);
+		options.setSocketTimeout(JiraConfigurationProvider.getSocketTimeout(), TimeUnit.SECONDS);
 
 		final DefaultHttpClientFactory<?> defaultHttpClientFactory
 				= new DefaultHttpClientFactory<>(NoOpEventPublisher.INSTANCE,
