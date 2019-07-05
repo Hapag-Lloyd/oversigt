@@ -444,12 +444,6 @@
 						<id>default</id>
 						<configuration>
 							<usedDependencies>
-								<!-- UI Resources -->
-								<usedDependency>com.hlag.oversigt:oversigt-ui</usedDependency>
-
-								<!-- Undertow -->
-								<usedDependency>org.jboss.spec.javax.annotation:jboss-annotations-api_1.2_spec</usedDependency>
-
 								<!-- REST API -->
 								<usedDependency>javax.el:javax.el-api</usedDependency>
 								<usedDependency>org.glassfish.web:javax.el</usedDependency>
