@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -70,6 +69,7 @@ import com.hlag.oversigt.web.HttpServerExchangeHandler;
 import com.hlag.oversigt.web.LoginHandler;
 import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
+import com.hlag.oversigt.web.ui.OversigtUiHelper;
 
 import de.larssh.utils.Nullables;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -294,7 +294,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addPrefixPath("/compiled", createAggregationHandler())
 				.addPrefixPath("/api/swagger", createSwaggerUiHandler())
 				.addPrefixPath(MAPPING_API, createApiHandler())
-				.addPrefixPath("/config", createAngularHandler("oversigt-ui"));
+				.addPrefixPath("/config", createAngularHandler());
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()
@@ -482,17 +482,11 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
 	}
 
-	private HttpHandler createAngularHandler(final String prefix) throws IOException {
-		final Path basePath;
-		try {
-			basePath = FileUtils.getPath(Resources.getResource(prefix).toURI());
-		} catch (final URISyntaxException e) {
-			throw new RuntimeException(String.format("Unable to find prefix '%s' in resources", prefix), e);
-		}
+	private HttpHandler createAngularHandler() throws IOException {
+		final Path basePath = FileUtils.getPath(OversigtUiHelper.getPathToUiResources().get());
 		final Path indexHtml = basePath.resolve("index.html");
 		if (!(Files.exists(indexHtml) && Files.isRegularFile(indexHtml))) {
-			throw new RuntimeException(
-					String.format("No file called 'index.html' found for angular handler in prefix '%s'", prefix));
+			throw new RuntimeException(String.format("No file called 'index.html' found for Oversigt UI"));
 		}
 
 		// find all files belonging to the UI

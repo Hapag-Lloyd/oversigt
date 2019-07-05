@@ -48,6 +48,13 @@
 		<mdep.analyze.skip>true</mdep.analyze.skip>
 	</properties>
 
+	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -117,7 +124,7 @@
 							</arguments>
 							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
 							<target>
-								<echo message="ng build"/>
+								<echo message="ng build" />
 							</target>
 						</configuration>
 					</execution>
