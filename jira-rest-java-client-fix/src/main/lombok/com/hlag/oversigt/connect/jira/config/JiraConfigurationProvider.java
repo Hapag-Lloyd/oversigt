@@ -24,6 +24,7 @@ public final class JiraConfigurationProvider {
 
 	/**
 	 * Socket Timeout
+	 *
 	 * <p>
 	 * The value of this field will be injected using Google Guice and is named
 	 * {@code jiraSocketTimeout}.
