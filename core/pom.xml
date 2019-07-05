@@ -453,9 +453,6 @@
 
 								<!-- REST API Validation -->
 								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
-
-								<!-- JIRA REST Client -->
-								<usedDependency>com.atlassian.jira:jira-rest-java-client-core</usedDependency>
 							</usedDependencies>
 						</configuration>
 					</execution>
