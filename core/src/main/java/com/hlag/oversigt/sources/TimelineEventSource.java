@@ -108,7 +108,7 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 				.plus(getMaximumPointInFuture())
 				.plusDays(1)
 				.atStartOfDay(getZoneId());
-		List<Appointment> appointments;
+		final List<Appointment> appointments;
 		final StartedAction action
 				= getStatisticsCollector().startAction("Exchange read appointments", from + " - " + until);
 		try {
