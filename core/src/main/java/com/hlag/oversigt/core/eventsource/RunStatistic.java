@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Throwables;
+
 public final class RunStatistic {
 	public static StatisticsCollector createCollector() {
 		return new StatisticsCollector();
@@ -50,8 +53,13 @@ public final class RunStatistic {
 		return startTime;
 	}
 
+	@JsonIgnore
 	public Optional<Throwable> getThrowable() {
 		return throwable;
+	}
+
+	public Optional<String> getThrowableStackTrace() {
+		return throwable.map(Throwables::getStackTraceAsString);
 	}
 
 	public boolean isSuccess() {

@@ -11,9 +11,8 @@
  */
 
 
-export interface EventSourceInfo { 
-    name: string;
-    key: string;
-    description?: string;
-    image: string;
+export interface Action { 
+    name?: string;
+    detail?: string;
+    duration?: string;
 }

@@ -75,6 +75,7 @@ import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.RunStatistic;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -701,12 +702,24 @@ public class DashboardController {
 				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
 	}
 
-	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
+	public Optional<ZonedDateTime> getLastRunStartTime(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRunStartTime);
+	}
+
+	public Optional<ZonedDateTime> getLastSuccessfulRunStartTime(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRunStartTime);
+	}
+
+	public Optional<RunStatistic> getLastRun(final EventSourceInstance instance) {
 		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
 	}
 
-	public Optional<ZonedDateTime> getLastSuccessfulRun(final EventSourceInstance instance) {
+	public Optional<RunStatistic> getLastSuccessfulRun(final EventSourceInstance instance) {
 		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRun);
+	}
+
+	public List<RunStatistic> getRunStatistics(final EventSourceInstance instance) {
+		return getScheduledEventSource(instance).map(ScheduledEventSource::getRunStatistics).orElse(new ArrayList<>());
 	}
 
 	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {

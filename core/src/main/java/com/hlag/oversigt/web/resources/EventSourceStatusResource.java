@@ -2,8 +2,9 @@ package com.hlag.oversigt.web.resources;
 
 import static javax.ws.rs.core.Response.ok;
 
-import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.core.eventsource.RunStatistic;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.security.Role;
@@ -33,8 +35,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.Builder;
-import lombok.Getter;
 
 @Api(tags = { "EventSource" },
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -106,23 +106,17 @@ public class EventSourceStatusResource {
 		}
 	}
 
-	@Builder
-	@Getter
 	public static class EventSourceInstanceState {
 		public static EventSourceInstanceState fromInstance(final DashboardController controller,
 				final EventSourceInstance instance) {
-			return EventSourceInstanceState.builder()
-					.id(instance.getId())
-					.serviceClass(instance.getDescriptor().getServiceClassName())
-					.createdBy(instance.getCreatedBy())
-					.lastChangedBy(instance.getLastChangeBy())
-					.running(controller.isRunning(instance))
-					.lastRun(controller.getLastRun(instance).orElse(null))
-					.lastSuccess(controller.getLastSuccessfulRun(instance).orElse(null))
-					.lastFailure(controller.getLastFailureDateTime(instance).orElse(null))
-					.lastReason(controller.getLastFailureDescription(instance).orElse(null))
-					.lastException(controller.getLastFailureException(instance).orElse(null))
-					.build();
+			return new EventSourceInstanceState(instance.getId(),
+					instance.getDescriptor().getServiceClassName(),
+					instance.getCreatedBy(),
+					instance.getLastChangeBy(),
+					controller.isRunning(instance),
+					controller.getRunStatistics(instance),
+					controller.getLastSuccessfulRun(instance),
+					controller.getLastRun(instance));
 		}
 
 		@NotBlank
@@ -136,14 +130,60 @@ public class EventSourceStatusResource {
 
 		private final boolean running;
 
-		private final ZonedDateTime lastRun;
+		private final List<RunStatistic> statistics;
 
-		private final ZonedDateTime lastSuccess;
+		private final Optional<RunStatistic> lastSuccessfulRun;
 
-		private final ZonedDateTime lastFailure;
+		private final Optional<RunStatistic> lastRun;
 
-		private final String lastException;
+		public EventSourceInstanceState(@NotBlank final String id,
+				final String serviceClass,
+				final String createdBy,
+				final String lastChangedBy,
+				final boolean running,
+				final List<RunStatistic> statistics,
+				final Optional<RunStatistic> lastSuccessfulRun,
+				final Optional<RunStatistic> lastRun) {
+			this.id = id;
+			this.serviceClass = serviceClass;
+			this.createdBy = createdBy;
+			this.lastChangedBy = lastChangedBy;
+			this.running = running;
+			this.statistics = statistics;
+			this.lastSuccessfulRun = lastSuccessfulRun;
+			this.lastRun = lastRun;
+		}
 
-		private final String lastReason;
+		public String getId() {
+			return id;
+		}
+
+		public String getServiceClass() {
+			return serviceClass;
+		}
+
+		public String getCreatedBy() {
+			return createdBy;
+		}
+
+		public String getLastChangedBy() {
+			return lastChangedBy;
+		}
+
+		public boolean isRunning() {
+			return running;
+		}
+
+		public List<RunStatistic> getStatistics() {
+			return statistics;
+		}
+
+		public Optional<RunStatistic> getLastSuccessfulRun() {
+			return lastSuccessfulRun;
+		}
+
+		public Optional<RunStatistic> getLastRun() {
+			return lastRun;
+		}
 	}
 }

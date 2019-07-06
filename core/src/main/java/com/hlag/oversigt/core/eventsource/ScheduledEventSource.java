@@ -211,25 +211,39 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		logTrace(getLogger(),
 				"immediateExexcution=%s ; lastRun=%s ; frequency=%s ; now()=%s ; duration.between=%s ; diff=%s",
 				immediateExecution,
-				getLastRun().map(Object::toString).orElse("never"),
+				getLastRunStartTime().map(Object::toString).orElse("never"),
 				frequency,
 				(Supplier<ZonedDateTime>) ZonedDateTime::now,
-				(Supplier<Duration>) () -> Duration.between(getLastRun().get()/* TODO check isPresent */,
+				(Supplier<Duration>) () -> Duration.between(getLastRunStartTime().get()/* TODO check isPresent */,
 						ZonedDateTime.now()),
-				(Supplier<Duration>) () -> frequency
-						.minus(Duration.between(getLastRun().get()/* TODO check isPresent */, ZonedDateTime.now())));
+				(Supplier<Duration>) () -> frequency.minus(
+						Duration.between(getLastRunStartTime().get()/* TODO check isPresent */, ZonedDateTime.now())));
 		return immediateExecution.getAndSet(false) //
-				|| !getLastRun().isPresent() //
-				|| frequency.minus(Duration.between(getLastRun().get()/* TODO check isPresent */, ZonedDateTime.now()))
+				|| !getLastRunStartTime().isPresent() //
+				|| frequency
+						.minus(Duration.between(getLastRunStartTime().get()/* TODO check isPresent */,
+								ZonedDateTime.now()))
 						.isNegative();
 	}
 
-	public synchronized Optional<ZonedDateTime> getLastRun() {
+	public synchronized Optional<ZonedDateTime> getLastRunStartTime() {
 		return statistics.stream().findFirst().map(RunStatistic::getStartTime);
 	}
 
-	public synchronized Optional<ZonedDateTime> getLastSuccessfulRun() {
+	public synchronized Optional<ZonedDateTime> getLastSuccessfulRunStartTime() {
 		return lastSuccessfulRun.map(RunStatistic::getStartTime);
+	}
+
+	public synchronized Optional<RunStatistic> getLastRun() {
+		return statistics.stream().findFirst();
+	}
+
+	public synchronized Optional<RunStatistic> getLastSuccessfulRun() {
+		return lastSuccessfulRun;
+	}
+
+	public synchronized List<RunStatistic> getRunStatistics() {
+		return statistics;
 	}
 
 	protected synchronized <X> X failure(final String message) {
