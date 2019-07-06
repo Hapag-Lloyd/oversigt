@@ -58,6 +58,14 @@
         </form>
       </div>
     </div>
+    <div *ngIf="eventSourceDescriptor.serviceClassName && instanceState.statistics && instanceState.statistics.length > 0" class="card">
+      <div class="card-header">Statistics</div>
+      <div class="card-block">
+        <form clrForm clrLayout="horizontal">
+          <ng-container *ngTemplateOutlet="esStatistics"></ng-container>
+        </form>
+      </div>
+    </div>
   </div>
   <div class="es-info info">
     <div class="card">
@@ -111,11 +119,43 @@
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun && instanceState.lastSuccessfulRun.startTime !== instanceState.lastRun.startTime" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="instanceState.lastRun.startTime" [readOnly]="true"></app-simple-editor>
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.message" name="esLastReason" [id]="'last_reason'" [title]="'Last failure reason'" [ngModel]="instanceState.lastRun.message" [readOnly]="true"></app-simple-editor>
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.throwableStackTrace" name="esLastException" [id]="'last_exception'" [title]="'Last exception'" [ngModel]="instanceState.lastRun.throwableStackTrace" [readOnly]="true" [inputType]="'textarea'"></app-simple-editor>
-  <!--<ul *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun">
-    <li *ngFor="let action of instanceState.lastRun.actions">
-      {{action.name}} <span *ngIf="action.detail">{{action.detail}}</span>: {{action.duration}}
-    </li>
-  </ul>-->
+  <clr-datagrid *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.actions && instanceState.lastRun.actions.length > 0">
+    <clr-dg-column>Action</clr-dg-column>
+    <clr-dg-column>Duration</clr-dg-column>
+
+    <clr-dg-row *ngFor="let action of instanceState.lastRun.actions">
+      <clr-dg-cell>{{action.name}}</clr-dg-cell>
+      <clr-dg-cell>{{action.duration}}</clr-dg-cell>
+      <clr-dg-row-detail *clrIfExpanded>
+        <pre class="event">{{action.detail}}</pre>
+      </clr-dg-row-detail>
+    </clr-dg-row>
+  </clr-datagrid>
+</ng-template>
+
+<ng-template #esStatistics>
+  <clr-stack-view>
+      <clr-stack-block *ngFor="let statistic of instanceState.statistics">
+          <clr-stack-label>Run</clr-stack-label>
+          <clr-stack-content>{{statistic.startTime}} ({{statistic.duration}})</clr-stack-content>
+          <clr-stack-block>
+              <clr-stack-label>Success</clr-stack-label>
+              <clr-stack-content>{{statistic.success}}</clr-stack-content>
+          </clr-stack-block>
+          <clr-stack-block *ngIf="statistic.message">
+              <clr-stack-label>Error message</clr-stack-label>
+              <clr-stack-content>{{statistic.message}}</clr-stack-content>
+          </clr-stack-block>
+          <clr-stack-block *ngIf="statistic.throwableStackTrace">
+              <clr-stack-label>Stacktrace</clr-stack-label>
+              <clr-stack-content>{{statistic.throwableStackTrace}}</clr-stack-content>
+          </clr-stack-block>
+          <clr-stack-block *ngFor="let action of statistic.actions">
+              <clr-stack-label>{{action.name}}</clr-stack-label>
+              <clr-stack-content>{{action.duration}}</clr-stack-content>
+          </clr-stack-block>
+      </clr-stack-block>
+  </clr-stack-view>
 </ng-template>
 
 <ng-template #esControl>
