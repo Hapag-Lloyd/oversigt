@@ -702,14 +702,6 @@ public class DashboardController {
 				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
 	}
 
-	public Optional<ZonedDateTime> getLastRunStartTime(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRunStartTime);
-	}
-
-	public Optional<ZonedDateTime> getLastSuccessfulRunStartTime(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRunStartTime);
-	}
-
 	public Optional<RunStatistic> getLastRun(final EventSourceInstance instance) {
 		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
 	}

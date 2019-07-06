@@ -79,7 +79,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return collector.orElseThrow(() -> new RuntimeException("The statistics collector has not been created."));
 	}
 
-	private void addStatistics(final RunStatistic runStatistic) {
+	private synchronized void addStatistics(final RunStatistic runStatistic) {
 		getLogger().info(String.format("Execution duration: %s %s",
 				Utils.formatDuration(runStatistic.getDuration()),
 				runStatistic.getActions()));
@@ -226,12 +226,8 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 						.isNegative();
 	}
 
-	public synchronized Optional<ZonedDateTime> getLastRunStartTime() {
-		return statistics.stream().findFirst().map(RunStatistic::getStartTime);
-	}
-
-	public synchronized Optional<ZonedDateTime> getLastSuccessfulRunStartTime() {
-		return lastSuccessfulRun.map(RunStatistic::getStartTime);
+	private Optional<ZonedDateTime> getLastRunStartTime() {
+		return getLastRun().map(RunStatistic::getStartTime);
 	}
 
 	public synchronized Optional<RunStatistic> getLastRun() {
