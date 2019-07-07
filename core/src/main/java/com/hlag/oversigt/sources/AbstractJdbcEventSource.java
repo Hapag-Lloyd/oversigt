@@ -48,9 +48,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		this.databaseConnection = databaseConnection;
 	}
 
-	@Property(name = "Credentials",
-			description = "The credentials to be used to connect to the database.",
-			needsRestart = true)
+	@Property(name = "Credentials", description = "The credentials to be used to connect to the database.")
 	public Credentials getCredentials() {
 		return credentials;
 	}

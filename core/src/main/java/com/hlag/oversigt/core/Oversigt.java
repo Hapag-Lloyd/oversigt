@@ -156,7 +156,7 @@ public final class Oversigt {
 	}
 
 	/**
-	 * Called if an exception occurres when dispatching an event in the
+	 * Called if an exception occurred when dispatching an event in the
 	 * application's event bus
 	 *
 	 * @param throwable the exception that occurred

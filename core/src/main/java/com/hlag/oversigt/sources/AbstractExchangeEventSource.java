@@ -58,9 +58,7 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 		this.serverConnection = serverConnection;
 	}
 
-	@Property(name = "Credentials",
-			description = "The credentials to be used when connecting to Exchange.",
-			needsRestart = true)
+	@Property(name = "Credentials", description = "The credentials to be used when connecting to Exchange.")
 	public final Credentials getCredentials() {
 		return credentials;
 	}
