@@ -80,9 +80,17 @@ public class JdbcDatabaseTest {
 	}
 
 	@Test
-	public void shouldReadDashboardIds2() {
-		final List<String> expected = Arrays.asList("Test");
-		final List<String> actual = database.get().getDashboardIds();
+	public void shouldReadEventSourceNames() {
+		final List<String> expected = Arrays.asList("Internet Image",
+				"Restaurant HafenCity",
+				"Jira Bar",
+				"GWRP Mailbox",
+				"Exchange Tasks",
+				"Timeline",
+				"Exchange Room Availability",
+				"Motivation",
+				"P08 Gen");
+		final List<String> actual = database.get().getEventSourceNames();
 
 		assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
 	}

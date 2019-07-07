@@ -9,6 +9,7 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
+import { RunStatistic } from './runStatistic';
 
 
 export interface EventSourceInstanceState { 
@@ -17,9 +18,7 @@ export interface EventSourceInstanceState {
     createdBy?: string;
     lastChangedBy?: string;
     running?: boolean;
-    lastRun?: Date;
-    lastSuccess?: Date;
-    lastFailure?: Date;
-    lastException?: string;
-    lastReason?: string;
+    statistics?: Array<RunStatistic>;
+    lastSuccessfulRun?: RunStatistic;
+    lastRun?: RunStatistic;
 }

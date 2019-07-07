@@ -9,11 +9,14 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
+import { Action } from './action';
 
 
-export interface EventSourceInfo { 
-    name: string;
-    key: string;
-    description?: string;
-    image: string;
+export interface RunStatistic { 
+    startTime?: Date;
+    duration?: string;
+    success?: boolean;
+    message?: string;
+    actions?: Array<Action>;
+    throwableStackTrace?: string;
 }

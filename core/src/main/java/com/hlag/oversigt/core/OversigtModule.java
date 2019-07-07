@@ -50,6 +50,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.event.EventSender;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyReloaderService;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceNameGenerator;
@@ -133,6 +134,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(DashboardConfigurationHandler.class);
 		binder().bind(DashboardCreationHandler.class);
 		binder().bind(EventSourceConfigurationHandler.class);
+		binder().bind(EventSourceStatisticsManager.class);
 		binder().bind(HttpServerExchangeHandler.class);
 		binder().bind(EventSender.class);
 		binder().bind(JsonUtils.class);

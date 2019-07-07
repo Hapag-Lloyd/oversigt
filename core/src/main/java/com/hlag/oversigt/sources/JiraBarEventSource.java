@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.sources.data.DisplayOption;
@@ -30,7 +31,7 @@ public class JiraBarEventSource extends AbstractJiraEventSource<HlBarChartEvent>
 
 	/** {@inheritDoc} */
 	@Override
-	protected Optional<HlBarChartEvent> produceEvent() {
+	protected Optional<HlBarChartEvent> produceEvent() throws EventSourceException {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
 		final int maxMailsPerCategory
 				= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));

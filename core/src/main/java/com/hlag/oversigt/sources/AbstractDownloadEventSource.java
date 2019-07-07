@@ -1,7 +1,6 @@
 package com.hlag.oversigt.sources;
 
 import static com.hlag.oversigt.util.Utils.logDebug;
-import static com.hlag.oversigt.util.Utils.logInfo;
 import static com.hlag.oversigt.util.Utils.logTrace;
 import static com.hlag.oversigt.util.Utils.logWarn;
 
@@ -39,6 +38,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.HttpProxy;
@@ -173,14 +173,14 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 					logTrace(getLogger(), "Replacing %s with %s to %s", search, replacement, url);
 				}
 			}
-			logInfo(getLogger(), "Connecting to URL: %s", url);
+			logDebug(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
 				url = TEXT_PROCESSOR.process(url);
 				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));
 				final Optional<Pattern> pattern = internetAddress.getPattern();
 				if (pattern.isPresent()) {
 					final List<String> reps = new ArrayList<>();
-					logInfo(getLogger(), "Downloading content for matcher: %s", pattern.toString());
+					logDebug(getLogger(), "Downloading content for matcher: %s", pattern.toString());
 					final String content = downloadString(connection.get());
 					final Matcher matcher = pattern.get().matcher(content);
 					if (matcher.find()) {
@@ -221,6 +221,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	private <R> R read(final URLConnection inputConnection,
 			final ThrowingBiFunction<URLConnection, InputStream, R> inputStreamConsumer) throws IOException {
+		final StartedAction action
+				= getStatisticsCollector().startAction("Download", inputConnection.getURL().toExternalForm());
 		final URLConnection connectionToRead = handleRedirects(inputConnection);
 		try (InputStream in = connectionToRead.getInputStream()) {
 			return inputStreamConsumer.apply(connectionToRead, in);
@@ -228,6 +230,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading data from connection.", e);
+		} finally {
+			action.done();
 		}
 	}
 

@@ -1,3 +1,4 @@
+export * from './action';
 export * from './authData';
 export * from './dashboard';
 export * from './dashboardInfo';
@@ -13,6 +14,7 @@ export * from './fullEventSourceInstanceInfo';
 export * from './loggerInfo';
 export * from './oversigtConfiguration';
 export * from './oversigtEvent';
+export * from './runStatistic';
 export * from './serializablePropertyDescription';
 export * from './serializablePropertyMember';
 export * from './serverInfo';

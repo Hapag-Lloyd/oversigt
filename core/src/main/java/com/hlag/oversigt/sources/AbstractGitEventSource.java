@@ -38,6 +38,7 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.util.FileUtils;
@@ -100,7 +101,12 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 	}
 
 	private synchronized Stream<RevCommit> streamLog() throws GitAPIException, IOException {
-		fetch();
+		final StartedAction action = getStatisticsCollector().startAction("GIT fetch", getRepositoryUrl());
+		try {
+			fetch();
+		} finally {
+			action.done();
+		}
 		return StreamSupport.stream(getGit().log().all().call().spliterator(), true)
 				.filter(isCommitAfter(getEarliestPointToTakeIntoAccount()));
 	}
