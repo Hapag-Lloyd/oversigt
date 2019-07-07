@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
@@ -80,6 +82,9 @@ public class EventSourceInstanceResource {
 
 	@Inject
 	private DashboardController controller;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
 
 	@Nullable
 	@Context
@@ -135,7 +140,7 @@ public class EventSourceInstanceResource {
 				.stream()
 				.filter(containingFilter)
 				.filter(startableFilter)
-				.map(instance -> new EventSourceInstanceInfo(instance, controller));
+				.map(instance -> new EventSourceInstanceInfo(controller, statisticsManager, instance));
 		if (limit != null && limit > 0) {
 			stream = stream.limit(limit);
 		}
@@ -338,7 +343,7 @@ public class EventSourceInstanceResource {
 	FullEventSourceInstanceInfo getInstanceInfo(final String instanceId) {
 		final EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
 		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
-				EventSourceInstanceState.fromInstance(controller, instance));
+				EventSourceInstanceState.fromInstance(controller, statisticsManager, instance));
 	}
 
 	static Map<String, String> getValueMap(final Stream<EventSourceProperty> propertyStream,
@@ -390,13 +395,19 @@ public class EventSourceInstanceResource {
 		@NotNull
 		private List<@NotNull DashboardInfo> usedBy;
 
-		public EventSourceInstanceInfo(final EventSourceInstance instance, final DashboardController controller) {
+		public EventSourceInstanceInfo(final DashboardController controller,
+				final EventSourceStatisticsManager statisticsManager,
+				final EventSourceInstance instance) {
 			id = instance.getId();
 			name = instance.getName();
 			isService = instance.getDescriptor().getServiceClass().isPresent();
 			enabled = instance.isEnabled();
 			running = controller.isRunning(instance);
-			hasError = controller.hasException(instance);
+			hasError = statisticsManager.getEventSourceStatistics(instance.getId())
+					.getLastRun()
+					.flatMap(RunStatistic::getThrowable)
+					.map(x -> true)
+					.orElse(false);
 			usedBy = new ArrayList<>(controller.getDashboardsWhereEventSourceIsUsed(instance)
 					.map(DashboardInfo::fromDashboard)
 					.collect(toList()));

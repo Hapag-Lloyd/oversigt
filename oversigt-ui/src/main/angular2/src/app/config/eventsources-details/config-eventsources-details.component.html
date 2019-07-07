@@ -115,8 +115,8 @@
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName" name="esRunning" [id]="'running'" [title]="'Running'" [ngModel]="instanceState.running ? 'yes' : 'no'" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esCreatedBy" [id]="'created_by'" [title]="'Created By'" [ngModel]="instanceState.createdBy" [readOnly]="true"></app-simple-editor>
   <app-simple-editor name="esChangedBy" [id]="'changed_by'" [title]="'Changed By'" [ngModel]="instanceState.lastChangedBy" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastSuccessfulRun && instanceState.lastSuccessfulRun.startTime" name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="instanceState.lastSuccessfulRun.startTime" [readOnly]="true"></app-simple-editor>
-  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun && instanceState.lastSuccessfulRun.startTime !== instanceState.lastRun.startTime" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="instanceState.lastRun.startTime" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastSuccessfulRun && instanceState.lastSuccessfulRun.startTime" name="esLastSuccess" [id]="'last_success'" [title]="'Last successful run'" [ngModel]="formatDate(instanceState.lastSuccessfulRun.startTime)" [readOnly]="true"></app-simple-editor>
+  <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun && instanceState.lastSuccessfulRun.startTime !== instanceState.lastRun.startTime" name="esLastRun" [id]="'last_run'" [title]="'Last run'" [ngModel]="formatDate(instanceState.lastRun.startTime)" [readOnly]="true"></app-simple-editor>
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.message" name="esLastReason" [id]="'last_reason'" [title]="'Last failure reason'" [ngModel]="instanceState.lastRun.message" [readOnly]="true"></app-simple-editor>
   <app-simple-editor *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.throwableStackTrace" name="esLastException" [id]="'last_exception'" [title]="'Last exception'" [ngModel]="instanceState.lastRun.throwableStackTrace" [readOnly]="true" [inputType]="'textarea'"></app-simple-editor>
   <clr-datagrid *ngIf="eventSourceDescriptor.serviceClassName && instanceState.lastRun && instanceState.lastRun.actions && instanceState.lastRun.actions.length > 0">
@@ -125,7 +125,7 @@
 
     <clr-dg-row *ngFor="let action of instanceState.lastRun.actions">
       <clr-dg-cell>{{action.name}}</clr-dg-cell>
-      <clr-dg-cell>{{action.duration}}</clr-dg-cell>
+      <clr-dg-cell>{{formatDuration(action.duration)}}</clr-dg-cell>
       <clr-dg-row-detail *clrIfExpanded>
         <pre class="event">{{action.detail}}</pre>
       </clr-dg-row-detail>
@@ -137,7 +137,7 @@
   <clr-stack-view>
       <clr-stack-block *ngFor="let statistic of instanceState.statistics">
           <clr-stack-label>Run</clr-stack-label>
-          <clr-stack-content>{{statistic.startTime}} ({{statistic.duration}})</clr-stack-content>
+          <clr-stack-content>{{formatDate(statistic.startTime)}} ({{formatDuration(statistic.duration)}})</clr-stack-content>
           <clr-stack-block>
               <clr-stack-label>Success</clr-stack-label>
               <clr-stack-content>{{statistic.success}}</clr-stack-content>
@@ -151,8 +151,8 @@
               <clr-stack-content>{{statistic.throwableStackTrace}}</clr-stack-content>
           </clr-stack-block>
           <clr-stack-block *ngFor="let action of statistic.actions">
-              <clr-stack-label>{{action.name}}</clr-stack-label>
-              <clr-stack-content>{{action.duration}}</clr-stack-content>
+              <clr-stack-label><span [title]="action.detail">{{action.name}}</span></clr-stack-label>
+              <clr-stack-content>{{formatDuration(action.duration)}}</clr-stack-content>
           </clr-stack-block>
       </clr-stack-block>
   </clr-stack-view>

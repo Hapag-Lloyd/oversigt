@@ -15,8 +15,8 @@ import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.data.Birthday;

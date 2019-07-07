@@ -20,7 +20,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.core.eventsource.RunStatistic;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.security.Role;
@@ -46,6 +48,9 @@ public class EventSourceStatusResource {
 	@Inject
 	private DashboardController controller;
 
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
+
 	public EventSourceStatusResource() {
 		// no fields to be initialized manually, some will be injected
 	}
@@ -65,8 +70,9 @@ public class EventSourceStatusResource {
 	@NoChangeLog
 	public Response isInstanceRunning(@PathParam("id") @NotBlank final String instanceId) {
 		try {
-			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
-					.build();
+			return ok(EventSourceInstanceState
+					.fromInstance(controller, statisticsManager, controller.getEventSourceInstance(instanceId)))
+							.build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		}
@@ -96,8 +102,9 @@ public class EventSourceStatusResource {
 			} else {
 				controller.stopInstance(instanceId);
 			}
-			return ok(EventSourceInstanceState.fromInstance(controller, controller.getEventSourceInstance(instanceId)))
-					.build();
+			return ok(EventSourceInstanceState
+					.fromInstance(controller, statisticsManager, controller.getEventSourceInstance(instanceId)))
+							.build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("The event source instance does not exist");
 		} catch (final Exception e) {
@@ -108,15 +115,18 @@ public class EventSourceStatusResource {
 
 	public static class EventSourceInstanceState {
 		public static EventSourceInstanceState fromInstance(final DashboardController controller,
+				final EventSourceStatisticsManager statisticsManager,
 				final EventSourceInstance instance) {
+			final EventSourceStatistics stats = statisticsManager.getEventSourceStatistics(instance.getId());
 			return new EventSourceInstanceState(instance.getId(),
 					instance.getDescriptor().getServiceClassName(),
 					instance.getCreatedBy(),
 					instance.getLastChangeBy(),
 					controller.isRunning(instance),
-					controller.getRunStatistics(instance),
-					controller.getLastSuccessfulRun(instance),
-					controller.getLastRun(instance));
+					stats.getLastRuns(),
+					stats.getLastRun(),
+					stats.getLastSuccessfulRun(),
+					stats.getLastFailedRun());
 		}
 
 		@NotBlank
@@ -132,9 +142,11 @@ public class EventSourceStatusResource {
 
 		private final List<RunStatistic> statistics;
 
+		private final Optional<RunStatistic> lastRun;
+
 		private final Optional<RunStatistic> lastSuccessfulRun;
 
-		private final Optional<RunStatistic> lastRun;
+		private final Optional<RunStatistic> lastFailedRun;
 
 		public EventSourceInstanceState(@NotBlank final String id,
 				final String serviceClass,
@@ -142,16 +154,18 @@ public class EventSourceStatusResource {
 				final String lastChangedBy,
 				final boolean running,
 				final List<RunStatistic> statistics,
+				final Optional<RunStatistic> lastRun,
 				final Optional<RunStatistic> lastSuccessfulRun,
-				final Optional<RunStatistic> lastRun) {
+				final Optional<RunStatistic> lastFailedRun) {
 			this.id = id;
 			this.serviceClass = serviceClass;
 			this.createdBy = createdBy;
 			this.lastChangedBy = lastChangedBy;
 			this.running = running;
 			this.statistics = statistics;
-			this.lastSuccessfulRun = lastSuccessfulRun;
 			this.lastRun = lastRun;
+			this.lastSuccessfulRun = lastSuccessfulRun;
+			this.lastFailedRun = lastFailedRun;
 		}
 
 		public String getId() {
@@ -178,12 +192,16 @@ public class EventSourceStatusResource {
 			return statistics;
 		}
 
+		public Optional<RunStatistic> getLastRun() {
+			return lastRun;
+		}
+
 		public Optional<RunStatistic> getLastSuccessfulRun() {
 			return lastSuccessfulRun;
 		}
 
-		public Optional<RunStatistic> getLastRun() {
-			return lastRun;
+		public Optional<RunStatistic> getLastFailedRun() {
+			return lastFailedRun;
 		}
 	}
 }

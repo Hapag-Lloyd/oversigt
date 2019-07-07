@@ -75,7 +75,6 @@ import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -695,29 +694,6 @@ public class DashboardController {
 
 	public boolean isRunning(final EventSourceInstance instance) {
 		return getService(instance).isPresent();
-	}
-
-	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
-		return getService(instance)
-				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
-	}
-
-	public Optional<RunStatistic> getLastRun(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
-	}
-
-	public Optional<RunStatistic> getLastSuccessfulRun(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRun);
-	}
-
-	public List<RunStatistic> getRunStatistics(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).map(ScheduledEventSource::getRunStatistics).orElse(new ArrayList<>());
-	}
-
-	public boolean hasException(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException)
-				.map(x -> x != null)
-				.orElse(false);
 	}
 
 	public void disableEventSourceInstance(final String id) {

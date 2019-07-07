@@ -23,8 +23,8 @@ import com.hlag.oversigt.connect.exchange.Meeting;
 import com.hlag.oversigt.connect.exchange.Room;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
 
 import edu.umd.cs.findbugs.annotations.Nullable;

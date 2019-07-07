@@ -5,10 +5,8 @@ import static com.hlag.oversigt.util.Utils.logTrace;
 import static com.hlag.oversigt.util.Utils.logWarn;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -17,14 +15,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Throwables;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector;
-import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
 
 /**
  * Scheduled EventSource - produces events with specified time period.
@@ -56,11 +52,8 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	@Inject
 	private EventBus eventBus;
 
-	private final List<RunStatistic> statistics = new ArrayList<>();
-
-	private Optional<RunStatistic> lastSuccessfulRun = Optional.empty();
-
-	private Optional<RunStatistic> lastFailedRun = Optional.empty();
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
 
 	private final AtomicInteger numberOfFailedRuns = new AtomicInteger(0);
 
@@ -72,26 +65,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	protected StatisticsCollector getStatisticsCollector() {
 		return collector.orElseThrow(() -> new RuntimeException("The statistics collector has not been created."));
-	}
-
-	private synchronized void addStatistics(final RunStatistic runStatistic) {
-		getLogger().info(String.format("Execution duration: %s %s",
-				Utils.formatDuration(runStatistic.getDuration()),
-				runStatistic.getActions()));
-		// save newest entry
-		statistics.add(runStatistic);
-		// remove entries if too many are in the list
-		while (statistics.size() > ALLOWED_NUMBER_OF_FAILED_CALLS + 1) {
-			statistics.remove(statistics.size() - 1);
-		}
-		// handle special cases
-		if (runStatistic.isSuccess()) {
-			lastSuccessfulRun = Optional.of(runStatistic);
-			numberOfFailedRuns.set(0);
-		} else {
-			lastFailedRun = Optional.of(runStatistic);
-			numberOfFailedRuns.incrementAndGet();
-		}
 	}
 
 	/**
@@ -106,28 +79,31 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 		try {
 			logTrace(getLogger(), "Produce event");
-			collector = Optional.of(RunStatistic.createCollector());
+			collector = Optional.of(statisticsManager.createCollector(getEventId()));
 			final OversigtEvent event = produceEvent()
 					.orElseThrow(() -> new EventSourceException("Event source was unable to produce event."));
-			addStatistics(getStatisticsCollector().success());
+			getStatisticsCollector().success();
 
 			logTrace(getLogger(), "Send event");
 			sendEvent(event);
 			logTrace(getLogger(), "Done with iteration");
+			numberOfFailedRuns.set(0);
 		} catch (final Throwable e) {
-			// prepare error messages
 			logError(getLogger(), "Error while producing event.", e);
+			numberOfFailedRuns.incrementAndGet();
+
+			// prepare error messages
 			final String message;
 			final Optional<Throwable> cause;
 			if (e instanceof EventSourceException) {
-				message = e.getMessage();// an EventSourceException always has an exception
+				message = e.getMessage(); // an EventSourceException always has an exception
 				cause = Optional.ofNullable(e.getCause());
 			} else {
 				message = "Event source did not catch exception properly.";
 				cause = Optional.of(e);
 			}
 			// collect stats
-			addStatistics(getStatisticsCollector().failure(message, cause));
+			getStatisticsCollector().failure(message, cause);
 			logTrace(getLogger(), "Send error event");
 			sendEvent(new ErrorEvent(message, cause));
 
@@ -193,25 +169,5 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	public final void setFrequency(final Duration frequency) {
 		this.frequency = frequency;
-	}
-
-	public synchronized Optional<RunStatistic> getLastRun() {
-		return statistics.stream().findFirst();
-	}
-
-	public synchronized Optional<RunStatistic> getLastSuccessfulRun() {
-		return lastSuccessfulRun;
-	}
-
-	public synchronized List<RunStatistic> getRunStatistics() {
-		return statistics;
-	}
-
-	public synchronized Optional<String> getLastFailureDescription() {
-		return lastFailedRun.flatMap(RunStatistic::getMessage);
-	}
-
-	public synchronized Optional<String> getLastFailureException() {
-		return lastFailedRun.flatMap(RunStatistic::getThrowable).map(Throwables::getStackTraceAsString);
 	}
 }

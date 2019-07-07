@@ -9,8 +9,8 @@ import java.util.Set;
 
 import com.hlag.oversigt.connect.exchange.Mail;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.sources.data.DisplayOption;
 import com.hlag.oversigt.sources.event.HlBarChartEvent;

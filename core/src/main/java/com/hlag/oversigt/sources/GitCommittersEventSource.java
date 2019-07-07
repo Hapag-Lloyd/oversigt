@@ -26,12 +26,12 @@ public class GitCommittersEventSource extends AbstractGitCommitEventSource<Overs
 	@Override
 	protected Optional<OversigtEvent> produceEvent() throws EventSourceException {
 		// Count commits per user
-		Map<String, Integer> committers;
+		final Map<String, Integer> committers;
 		try {
 			committers = streamLogWithoutFilteredUsers(s -> s.map(r -> r.getCommitterIdent().getName())
 					.map(createNameMapper())
 					.collect(toMap(Function.identity(), x -> 1, (x, y) -> x + y)));
-		} catch (GitAPIException | IOException e) {
+		} catch (final GitAPIException | IOException e) {
 			throw new EventSourceException("Unable to retreive GIT information", e);
 		}
 

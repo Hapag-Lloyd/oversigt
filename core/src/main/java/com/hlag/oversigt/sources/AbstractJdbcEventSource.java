@@ -20,8 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.DatabaseConnection;

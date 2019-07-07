@@ -20,10 +20,10 @@ public class GitCommitCountEventSource extends AbstractGitCommitEventSource<Over
 
 	@Override
 	protected Optional<OversigtEvent> produceEvent() throws EventSourceException {
-		long commitCount;
+		final long commitCount;
 		try {
 			commitCount = streamLog(s -> s.count());
-		} catch (GitAPIException | IOException e) {
+		} catch (final GitAPIException | IOException e) {
 			throw new EventSourceException("Unable to retreive GIT information", e);
 		}
 		final NumberEvent event = new NumberEvent((int) commitCount, (int) lastCommitCount);

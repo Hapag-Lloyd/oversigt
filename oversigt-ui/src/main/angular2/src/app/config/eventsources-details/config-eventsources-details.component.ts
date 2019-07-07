@@ -10,6 +10,7 @@ import { getLinkForId, getLinkForEventSource } from 'src/app/app.component';
 import { startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { RecentEventsourcesService } from 'src/app/services/recent-eventsources.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
+import {parse, end, toSeconds, pattern} from 'iso8601-duration';
 
 export class ParsedEventSourceInstanceDetails {
   eventSourceDescriptor: string;
@@ -356,5 +357,25 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
 
   searchEventSource(filter: string): void {
     this.searchTerms.next(filter);
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+
+    return date.toLocaleDateString(this.getLocale(), options);
+  }
+
+  formatDuration(durationString: string): string {
+    const duration = parse(durationString);
+    return toSeconds(duration).toLocaleString() + ' s';
+  }
+
+  getLocale(): string {
+    if (window.navigator.languages) {
+      return window.navigator.languages[0];
+    } else {
+      return /*window.navigator.userLanguage ||*/ window.navigator.language;
+    }
   }
 }

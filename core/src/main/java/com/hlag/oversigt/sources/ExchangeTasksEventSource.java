@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
-import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
