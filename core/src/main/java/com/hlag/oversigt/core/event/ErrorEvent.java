@@ -1,25 +1,36 @@
 package com.hlag.oversigt.core.event;
 
-import com.google.common.base.Throwables;
+import java.util.Optional;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import com.google.common.base.Throwables;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 
 public class ErrorEvent extends OversigtEvent {
-	@Nullable
-	private final String errorMessage;
+	private final Optional<String> errorMessage;
 
 	private final boolean error = true;
 
 	public ErrorEvent(final Throwable t) {
-		this(Throwables.getStackTraceAsString(t));
+		if (t instanceof EventSourceException) {
+			errorMessage = Optional.of(t.getMessage()); // the EventSourceException always has a message!
+		} else {
+			errorMessage = Optional.of(Throwables.getStackTraceAsString(t));
+		}
 	}
 
-	public ErrorEvent(@Nullable final String errorMessage) {
+	public ErrorEvent(final Optional<String> errorMessage) {
 		this.errorMessage = errorMessage;
 	}
 
-	@Nullable
-	public String getErrorMessage() {
+	public ErrorEvent(final String errorMessage) {
+		this(Optional.of(errorMessage));
+	}
+
+	public ErrorEvent(final String errorMessage, final Optional<Throwable> throwable) {
+		this(errorMessage + throwable.map(Throwables::getStackTraceAsString).map(s -> "<br>" + s).orElse(""));
+	}
+
+	public Optional<String> getErrorMessage() {
 		return errorMessage;
 	}
 

@@ -41,15 +41,6 @@ public @interface Property {
 	String type() default "";
 
 	/**
-	 * Determines whether you need to restart the event source if you changed this
-	 * property
-	 *
-	 * @return <code>true</code> if you need to restart the event source if you
-	 *         changed this property
-	 */
-	boolean needsRestart() default true;
-
-	/**
 	 * Determines the allowed values for the current property. If the list is empty
 	 * any value is valid
 	 *

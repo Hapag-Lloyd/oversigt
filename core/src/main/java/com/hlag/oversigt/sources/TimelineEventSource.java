@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -14,6 +15,7 @@ import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.JsonBasedData;
@@ -106,7 +108,15 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 				.plus(getMaximumPointInFuture())
 				.plusDays(1)
 				.atStartOfDay(getZoneId());
-		for (final Appointment appointment : getExchangeClient().loadAppointments(from, until)) {
+		final List<Appointment> appointments;
+		final StartedAction action
+				= getStatisticsCollector().startAction("Exchange read appointments", from + " - " + until);
+		try {
+			appointments = getExchangeClient().loadAppointments(from, until);
+		} finally {
+			action.done();
+		}
+		for (final Appointment appointment : appointments) {
 			addAppointment(event, appointment);
 		}
 	}

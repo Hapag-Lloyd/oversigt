@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.sources.data.DisplayOption;
 import com.hlag.oversigt.sources.event.PieChartEvent;
 
@@ -17,7 +18,7 @@ public class JiraPieChartEventSource extends AbstractJiraEventSource<PieChartEve
 	}
 
 	@Override
-	protected Optional<PieChartEvent> produceEvent() {
+	protected Optional<PieChartEvent> produceEvent() throws EventSourceException {
 		final Map<DisplayOption, Set<Issue>> issues = getJiraTickets();
 		final long sumMails = issues.values().stream().flatMap(Set::stream).count();
 

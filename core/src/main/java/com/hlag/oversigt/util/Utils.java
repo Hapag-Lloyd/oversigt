@@ -3,6 +3,7 @@ package com.hlag.oversigt.util;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -146,6 +147,15 @@ public final class Utils {
 	@SafeVarargs
 	public static <T> Stream<T> concat(final Stream<T>... streams) {
 		return Arrays.stream(streams).flatMap(identity());
+	}
+
+	public static String formatDuration(final Duration duration) {
+		// https://stackoverflow.com/questions/266825/how-to-format-a-duration-in-java-e-g-format-hmmss
+		final long seconds = duration.getSeconds();
+		final long absSeconds = Math.abs(seconds);
+		final String positive
+				= String.format("%d:%02d:%02d", absSeconds / 3600, absSeconds % 3600 / 60, absSeconds % 60);
+		return seconds < 0 ? "-" + positive : positive;
 	}
 
 	public static Map<String, Object> map(final Object... parameters) {

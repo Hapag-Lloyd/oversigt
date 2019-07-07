@@ -696,37 +696,6 @@ public class DashboardController {
 		return getService(instance).isPresent();
 	}
 
-	private Optional<ScheduledEventSource<?>> getScheduledEventSource(final EventSourceInstance instance) {
-		return getService(instance)
-				.map(service -> service instanceof ScheduledEventSource ? (ScheduledEventSource<?>) service : null);
-	}
-
-	public Optional<ZonedDateTime> getLastRun(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastRun);
-	}
-
-	public Optional<ZonedDateTime> getLastSuccessfulRun(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastSuccessfulRun);
-	}
-
-	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDateTime);
-	}
-
-	public Optional<String> getLastFailureDescription(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDescription);
-	}
-
-	public Optional<String> getLastFailureException(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException);
-	}
-
-	public boolean hasException(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException)
-				.map(x -> x != null)
-				.orElse(false);
-	}
-
 	public void disableEventSourceInstance(final String id) {
 		final EventSourceInstance instance = getEventSourceInstance(id);
 		if (isRunning(instance)) {
