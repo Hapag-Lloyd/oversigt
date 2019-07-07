@@ -5,7 +5,6 @@ import static com.hlag.oversigt.util.Utils.logTrace;
 import static com.hlag.oversigt.util.Utils.logWarn;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +55,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	 */
 	@Inject
 	private EventBus eventBus;
-
-	private AtomicBoolean immediateExecution = new AtomicBoolean(false);
 
 	private final List<RunStatistic> statistics = new ArrayList<>();
 
@@ -108,12 +103,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected final void runOneIteration() {
 		logTrace(getLogger(), "Run one iteration");
-		// if the last iteration (if any) is too short in the past, return immediately
-		// so no action will be done.
-		if (!isTimeToRunNextIteration()) {
-			logTrace(getLogger(), "Not the time to run one iteration");
-			return;
-		}
 
 		try {
 			logTrace(getLogger(), "Starting to produce event");
@@ -148,6 +137,8 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		}
 	}
 
+	protected abstract Optional<T> produceEvent() throws Exception;
+
 	protected final boolean sendEvent(final Optional<? extends OversigtEvent> event) {
 		if (event.isPresent()) {
 			event.get().setId(eventId);
@@ -168,15 +159,13 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	@Override
 	protected final Scheduler scheduler() {
-		return Scheduler.newFixedDelaySchedule(1, 1, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(1, getFrequency().toMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	@Override
 	protected final String serviceName() {
 		return getClass().getSimpleName() + "[eventID=" + eventId + "]";
 	}
-
-	protected abstract Optional<T> produceEvent() throws Exception;
 
 	protected final Logger getLogger() {
 		return LOGGERS.computeIfAbsent(getClass().getName(), LoggerFactory::getLogger);
@@ -196,38 +185,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	public final void setFrequency(final Duration frequency) {
 		this.frequency = frequency;
-		scheduleImmediateExecution();
-	}
-
-	/**
-	 * Clears the timestamp of the last iteration of this service resulting in an
-	 * immediate execution of this event source within the next second.
-	 */
-	public final void scheduleImmediateExecution() {
-		immediateExecution.set(true);
-	}
-
-	private synchronized boolean isTimeToRunNextIteration() {
-		logTrace(getLogger(),
-				"immediateExexcution=%s ; lastRun=%s ; frequency=%s ; now()=%s ; duration.between=%s ; diff=%s",
-				immediateExecution,
-				getLastRunStartTime().map(Object::toString).orElse("never"),
-				frequency,
-				(Supplier<ZonedDateTime>) ZonedDateTime::now,
-				(Supplier<Duration>) () -> Duration.between(getLastRunStartTime().get()/* TODO check isPresent */,
-						ZonedDateTime.now()),
-				(Supplier<Duration>) () -> frequency.minus(
-						Duration.between(getLastRunStartTime().get()/* TODO check isPresent */, ZonedDateTime.now())));
-		return immediateExecution.getAndSet(false) //
-				|| !getLastRunStartTime().isPresent() //
-				|| frequency
-						.minus(Duration.between(getLastRunStartTime().get()/* TODO check isPresent */,
-								ZonedDateTime.now()))
-						.isNegative();
-	}
-
-	private Optional<ZonedDateTime> getLastRunStartTime() {
-		return getLastRun().map(RunStatistic::getStartTime);
 	}
 
 	public synchronized Optional<RunStatistic> getLastRun() {
@@ -253,10 +210,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	protected synchronized <X> X failure(final String message, final Optional<Throwable> exception) {
 		getLogger().error(message, exception.orElse(null));
 		throw new EventSourceException(message, exception);
-	}
-
-	public synchronized Optional<ZonedDateTime> getLastFailureDateTime() {
-		return lastFailedRun.map(RunStatistic::getStartTime);
 	}
 
 	public synchronized Optional<String> getLastFailureDescription() {
