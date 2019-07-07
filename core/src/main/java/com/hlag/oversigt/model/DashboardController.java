@@ -714,18 +714,6 @@ public class DashboardController {
 		return getScheduledEventSource(instance).map(ScheduledEventSource::getRunStatistics).orElse(new ArrayList<>());
 	}
 
-	public Optional<ZonedDateTime> getLastFailureDateTime(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDateTime);
-	}
-
-	public Optional<String> getLastFailureDescription(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureDescription);
-	}
-
-	public Optional<String> getLastFailureException(final EventSourceInstance instance) {
-		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException);
-	}
-
 	public boolean hasException(final EventSourceInstance instance) {
 		return getScheduledEventSource(instance).flatMap(ScheduledEventSource::getLastFailureException)
 				.map(x -> x != null)

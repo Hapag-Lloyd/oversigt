@@ -105,25 +105,37 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		logTrace(getLogger(), "Run one iteration");
 
 		try {
-			logTrace(getLogger(), "Starting to produce event");
+			logTrace(getLogger(), "Produce event");
 			collector = Optional.of(RunStatistic.createCollector());
-			final Optional<T> event = produceEvent();
-			if (sendEvent(event)) {
-				addStatistics(getStatisticsCollector().success());
-			} else {
-				addStatistics(getStatisticsCollector()
-						.failure(getLastFailureDescription().orElse("No error message supplied.")));
-				sendEvent(Optional.of(new ErrorEvent(getLastFailureDescription())));
-			}
-			logTrace(getLogger(), "Done producing event");
-		} catch (final Throwable e) {
-			addStatistics(getStatisticsCollector().failure(Optional.ofNullable(e.getMessage()).orElse("No message"),
-					Optional.ofNullable(e.getCause())));
-			sendEvent(Optional.of(new ErrorEvent(e)));
+			final OversigtEvent event = produceEvent()
+					.orElseThrow(() -> new EventSourceException("Event source was unable to produce event."));
+			addStatistics(getStatisticsCollector().success());
 
-			getLogger().error(String.format("Cannot produce event with id %s. Deleting last event.", eventId), e);
+			logTrace(getLogger(), "Send event");
+			sendEvent(event);
+			logTrace(getLogger(), "Done with iteration");
+		} catch (final Throwable e) {
+			// prepare error messages
+			logError(getLogger(), "Error while producing event.", e);
+			final String message;
+			final Optional<Throwable> cause;
+			if (e instanceof EventSourceException) {
+				message = e.getMessage();// an EventSourceException always has an exception
+				cause = Optional.ofNullable(e.getCause());
+			} else {
+				message = "Event source did not catch exception properly.";
+				cause = Optional.of(e);
+			}
+			// collect stats
+			addStatistics(getStatisticsCollector().failure(message, cause));
+			logTrace(getLogger(), "Send error event");
+			sendEvent(new ErrorEvent(message, cause));
+
+			// clear cache
+			logTrace(getLogger(), "Remove event from cache: " + eventId);
 			removeLastEvent();
 
+			// count failures
 			if (numberOfFailedRuns.incrementAndGet() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
 				logWarn(getLogger(),
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
@@ -137,20 +149,16 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		}
 	}
 
-	protected abstract Optional<T> produceEvent() throws Exception;
+	protected abstract Optional<T> produceEvent() throws EventSourceException;
 
-	protected final boolean sendEvent(final Optional<? extends OversigtEvent> event) {
-		if (event.isPresent()) {
-			event.get().setId(eventId);
-			try {
-				event.get().setLifetime(getEventLifetime());
-			} catch (final Exception e) {
-				logWarn(getLogger(), "Unable to compute event life time", e);
-			}
-			this.eventBus.post(event.get());
-			return true;
+	protected final void sendEvent(final OversigtEvent event) {
+		event.setId(eventId);
+		try {
+			event.setLifetime(getEventLifetime());
+		} catch (final Exception e) {
+			logWarn(getLogger(), "Unable to compute event life time", e);
 		}
-		return false;
+		this.eventBus.post(event);
 	}
 
 	protected final void removeLastEvent() {
@@ -197,19 +205,6 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	public synchronized List<RunStatistic> getRunStatistics() {
 		return statistics;
-	}
-
-	protected synchronized <X> X failure(final String message) {
-		return failure(message, Optional.empty());
-	}
-
-	protected synchronized <X> X failure(final String message, final Throwable exception) {
-		return failure(message, Optional.of(exception));
-	}
-
-	protected synchronized <X> X failure(final String message, final Optional<Throwable> exception) {
-		getLogger().error(message, exception.orElse(null));
-		throw new EventSourceException(message, exception);
 	}
 
 	public synchronized Optional<String> getLastFailureDescription() {

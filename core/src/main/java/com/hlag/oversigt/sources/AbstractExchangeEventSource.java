@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.hlag.oversigt.connect.exchange.ExchangeClient;
 import com.hlag.oversigt.connect.exchange.ExchangeClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
@@ -81,16 +82,16 @@ public abstract class AbstractExchangeEventSource<T extends OversigtEvent> exten
 	}
 
 	@Override
-	protected final Optional<T> produceEvent() throws Exception {
+	protected final Optional<T> produceEvent() throws EventSourceException {
 		try {
 			return produceExchangeEvent();
 		} catch (final Exception e) {
 			if (isLoginException(e)) {
-				return failure(String.format("Unable to log in with user '%s' to %s",
+				throw new EventSourceException(String.format("Unable to log in with user '%s' to %s",
 						getCredentials().getUsername(),
 						getServerConnection().getUrl()));
 			}
-			return failure(getFailureMessage(e).orElse("Unable to produce Exchange event"), e);
+			throw new EventSourceException(getFailureMessage(e).orElse("Unable to produce Exchange event"), e);
 		}
 	}
 

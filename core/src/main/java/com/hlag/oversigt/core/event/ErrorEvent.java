@@ -22,6 +22,14 @@ public class ErrorEvent extends OversigtEvent {
 		this.errorMessage = errorMessage;
 	}
 
+	public ErrorEvent(final String errorMessage) {
+		this(Optional.of(errorMessage));
+	}
+
+	public ErrorEvent(final String errorMessage, final Optional<Throwable> throwable) {
+		this(errorMessage + throwable.map(Throwables::getStackTraceAsString).map(s -> "<br>" + s).orElse(""));
+	}
+
 	public Optional<String> getErrorMessage() {
 		return errorMessage;
 	}

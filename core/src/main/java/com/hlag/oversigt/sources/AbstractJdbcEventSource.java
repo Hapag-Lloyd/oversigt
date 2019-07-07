@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -73,9 +74,9 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 	}
 
 	@SuppressWarnings("resource")
-	private Connection getConnection() {
+	private Connection getConnection() throws EventSourceException {
 		if (getDatabaseConnection() == DatabaseConnection.EMPTY) {
-			return failure("Database connection is not configured.");
+			throw new EventSourceException("Database connection is not configured.");
 		}
 		try {
 			// Load the driver
@@ -93,14 +94,14 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			getLogger().info("Created JDBC connection to the data source.");
 			return wrapConnection(con);
 		} catch (final ClassNotFoundException e) {
-			return failure("Could not load JDBC driver.", e);
+			throw new EventSourceException("Could not load JDBC driver.", e);
 		} catch (final SQLException e) {
-			return failure("Failed connecting to data base.", e);
+			throw new EventSourceException("Failed connecting to data base.", e);
 		}
 	}
 
 	@SuppressWarnings("resource")
-	private void withConnection(final DBConnectionConsumer consumer) throws SQLException {
+	private void withConnection(final DBConnectionConsumer consumer) throws SQLException, EventSourceException {
 		final Connection connection = getConnection();
 		try {
 			consumer.apply(connection);
@@ -117,13 +118,13 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 	private Optional<LocalDateTime> lastDbAccessDateTime = Optional.empty();
 
 	@Override
-	protected final Optional<T> produceEvent() {
+	protected final Optional<T> produceEvent() throws EventSourceException {
 		if (lastDbAccessDateTime.map(LocalDateTime.now().minus(getDatabaseQueryInterval())::isAfter).orElse(false)) {
 			try {
 				withConnection(this::gatherDatabaseInfo);
 				lastDbAccessDateTime = Optional.of(LocalDateTime.now());
 			} catch (final SQLException e) {
-				return failure("Unable to gather database info", e);
+				throw new EventSourceException("Unable to gather database info", e);
 			}
 		}
 		return produceEventFromData();

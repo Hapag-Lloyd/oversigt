@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.sources.event.StyleEvent;
 
 @EventSource(view = "ImageView",
@@ -17,12 +18,12 @@ public class InternetImageEventSource extends AbstractDownloadEventSource<StyleE
 	}
 
 	@Override
-	protected Optional<StyleEvent> produceEvent() {
+	protected Optional<StyleEvent> produceEvent() throws EventSourceException {
 		try {
 			final DownloadData image = downloadBytes(createConfiguredConnection());
 			return Optional.of(StyleEvent.backgroundImage(image.getContentType(), image.getData()));
 		} catch (final IOException e) {
-			return failure("Unable to download image: " + e.getMessage(), e);
+			throw new EventSourceException("Unable to download image", e);
 		}
 	}
 }

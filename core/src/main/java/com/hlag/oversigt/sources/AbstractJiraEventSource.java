@@ -35,6 +35,7 @@ import com.hlag.oversigt.connect.jira.JiraClient;
 import com.hlag.oversigt.connect.jira.JiraClientException;
 import com.hlag.oversigt.connect.jira.JiraClientFactory;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.RunStatistic.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -71,7 +72,7 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		super.shutDown();
 	}
 
-	protected Map<DisplayOption, Set<Issue>> getJiraTickets() {
+	protected Map<DisplayOption, Set<Issue>> getJiraTickets() throws EventSourceException {
 		// List all issues as defined by JQL query
 		final List<Issue> issues;
 		try {
@@ -258,15 +259,15 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		this.showUnknownCategories = showUnknownCategories;
 	}
 
-	private <X> X handleException(final Exception original) {
+	private <X> X handleException(final Exception original) throws EventSourceException {
 		Throwable previous = null;
 		Throwable throwable = original;
 
 		while (throwable != null && throwable != previous) {
 			if (throwable instanceof TimeoutException) {
-				failure("JIRA request timed out while waiting for a free connection.");
+				throw new EventSourceException("JIRA request timed out while waiting for a free connection.");
 			} else if (throwable instanceof JiraClientException) {
-				return failure(throwable.getMessage(), throwable.getCause());
+				throw new EventSourceException(throwable.getMessage(), throwable.getCause());
 			} else if (throwable instanceof RestClientException) {
 				final RestClientException rce = (RestClientException) throwable;
 				if (rce.getStatusCode().isPresent()
@@ -280,17 +281,18 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 
 					if (contains(auths, "getUserFromBasicAuthentication") && contains(auths, "checkAuthenticated")) {
 						if (getJiraCredentials() == Credentials.EMPTY) {
-							return failure("No credentials configured.");
+							throw new EventSourceException("No credentials configured.");
 						}
-						return failure("Unable to log in to JIRA. Username: " + getJiraCredentials().getUsername());
+						throw new EventSourceException(
+								"Unable to log in to JIRA. Username: " + getJiraCredentials().getUsername());
 					}
 				}
 			}
 			if (Throwables.getRootCause(throwable) instanceof SocketTimeoutException) {
-				return failure("JIRA not available: Timeout");
+				throw new EventSourceException("JIRA not available: Timeout");
 			}
 			if (Throwables.getRootCause(throwable) instanceof JSONException) {
-				return failure("JIRA not available: Invalid JSON returned from server");
+				throw new EventSourceException("JIRA not available: Invalid JSON returned from server");
 			}
 			previous = throwable;
 			throwable = throwable.getCause();
