@@ -112,15 +112,18 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			removeLastEvent();
 
 			// count failures
-			if (numberOfFailedRuns.get() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
+			if (statisticsManager.getEventSourceStatistics(getEventId()).isAutomticallyStarted()) {
+				logWarn(getLogger(), "Nightly restart resulted in error. Stopping again.");
+				stopAsync();
+			} else if (numberOfFailedRuns.get() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
 				logWarn(getLogger(),
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
 						numberOfFailedRuns.get(),
 						ALLOWED_NUMBER_OF_FAILED_CALLS);
-				stopAsync(); // TODO stop instance.....
+				stopAsync();
 			} else if (!(e instanceof Exception)) /* Throwable is some kind of Error or similar - stop immediately */ {
 				logError(getLogger(), "Error occurred. Stopping service immediately.");
-				stopAsync(); // TODO stop instance.....
+				stopAsync();
 			}
 		}
 	}
