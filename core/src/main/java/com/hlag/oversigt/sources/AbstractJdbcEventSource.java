@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -138,17 +139,24 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			final ResultSetFunction<X> readOneLine,
 			final String sql,
 			final Object... parameters) throws SQLException {
+		return readFromDatabase(connection, readOneLine, Optional.of(getStatisticsCollector()), sql, parameters);
+	}
 
+	public static <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final Optional<StatisticsCollector> statisticsCollector, // TODO this parameter needs to be required
+			final String sql,
+			final Object... parameters) throws SQLException {
 		final long time = System.currentTimeMillis();
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
 			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			final StartedAction action = getStatisticsCollector().startAction("SQL-Query", sql);
+			final Optional<StartedAction> action = statisticsCollector.map(c -> c.startAction("SQL-Query", sql));
 			try {
 				return readFromDatabase(stmt, readOneLine);
 			} finally {
-				action.done();
+				action.ifPresent(StartedAction::done);
 			}
 		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
@@ -174,42 +182,6 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			list.add(item);
 		}
 		return list;
-	}
-
-	/**
-	 * Executes the given query
-	 *
-	 * @param <X>         the type of the return value
-	 * @param connection  the DB connection to use
-	 * @param readOneLine the function converting one line of the result set into a
-	 *                    result row
-	 * @param sql         the query to execute
-	 * @param parameters  parameters to be inserted in the prepared statement
-	 * @return the read rows
-	 * @throws SQLException if something fails
-	 * @deprecated use
-	 *             {@link #readFromDatabase(Connection, ResultSetFunction, String, Object...)}
-	 *             instead
-	 */
-	@Deprecated
-	public static <X> List<X> readFromDatabaseStatic(final Connection connection,
-			final ResultSetFunction<X> readOneLine,
-			final String sql,
-			final Object... parameters) throws SQLException {
-
-		final long time = System.currentTimeMillis();
-		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-			for (int i = 0; i < parameters.length; i += 1) {
-				stmt.setObject(i + 1, parameters[i]);
-			}
-			return readFromDatabase(stmt, readOneLine);
-		} catch (final SQLException e) {
-			DB_LOGGER.error("Query failed", e);
-			throw e;
-		} finally {
-			DB_LOGGER.info("Finished query. Duration: " + (System.currentTimeMillis() - time));
-			DB_LOGGER.trace(sql);
-		}
 	}
 
 	@FunctionalInterface
