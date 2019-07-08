@@ -159,6 +159,21 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
+	/**
+	 * Executes the given query
+	 *
+	 * @param <X>         the type of the return value
+	 * @param connection  the DB connection to use
+	 * @param readOneLine the function converting one line of the result set into a
+	 *                    result row
+	 * @param sql         the query to execute
+	 * @param parameters  parameters to be inserted in the prepared statement
+	 * @return the read rows
+	 * @throws SQLException if something fails
+	 * @deprecated use
+	 *             {@link #readFromDatabase(Connection, ResultSetFunction, String, Object...)}
+	 *             instead
+	 */
 	@Deprecated
 	public static <X> List<X> readFromDatabaseStatic(final Connection connection,
 			final ResultSetFunction<X> readOneLine,
