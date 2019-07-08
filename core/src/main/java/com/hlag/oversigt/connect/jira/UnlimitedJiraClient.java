@@ -8,8 +8,8 @@ import java.util.Optional;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.google.common.collect.Lists;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
 
@@ -49,10 +49,10 @@ final class UnlimitedJiraClient implements JiraClient {
 	private JiraRestClient getJiraRestClient() throws JiraClientException {
 		if (!jiraClient.isPresent()) {
 			try {
-				jiraClient = Optional.of(new AsynchronousJiraRestClientFactory().createWithBasicHttpAuthentication(
-						new URI(connection.getUrl()),
-						credentials.getUsername(),
-						credentials.getPassword()));
+				jiraClient = Optional.of(JiraConfigurationProvider.createClientFactory()
+						.createWithBasicHttpAuthentication(new URI(connection.getUrl()),
+								credentials.getUsername(),
+								credentials.getPassword()));
 			} catch (final URISyntaxException e) {
 				throw new JiraClientException("Jira URI is invalid.", e);
 			}

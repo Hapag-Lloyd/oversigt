@@ -131,7 +131,7 @@ public class MailSender {
 	}
 
 	public void sendRawMail(final Principal sender, final String recipient, final String content) {
-		send_internal(sender, new String[] { recipient }, "Oversigt test mail", "<p>" + content + "</p>", content);
+		send(sender, new String[] { recipient }, "Oversigt test mail", "<p>" + content + "</p>", content);
 	}
 
 	private void sendMailToAdmins(final Principal sender,
@@ -199,7 +199,7 @@ public class MailSender {
 
 		ForkJoinPool.commonPool().execute(() -> {
 			try {
-				sendMail_unsafe(sender, new String[] { recipientEmail }, subject, templatePath, model);
+				sendMail(sender, new String[] { recipientEmail }, subject, templatePath, model);
 			} catch (final IOException | TemplateException e) {
 				LOGGER.error("Unable to send mail.", e);
 			}
@@ -221,7 +221,7 @@ public class MailSender {
 	 *                           sending a mail
 	 * @throws TemplateException if something fails while processing the template
 	 */
-	private void sendMail_unsafe(final Principal sender,
+	private void sendMail(final Principal sender,
 			final String[] recipients,
 			final String subject,
 			final String templateName,
@@ -235,7 +235,7 @@ public class MailSender {
 		final StringWriter text = new StringWriter();
 		textTemplate.process(model, text);
 
-		send_internal(sender, recipients, subject, html.toString(), text.toString());
+		send(sender, recipients, subject, html.toString(), text.toString());
 	}
 
 	/**
@@ -250,7 +250,7 @@ public class MailSender {
 	 * @return <code>true</code> if mail sending was successful, otherwise
 	 *         <code>false</code>
 	 */
-	private void send_internal(final Principal sender,
+	private void send(final Principal sender,
 			final String[] recipients,
 			final String subject,
 			final String htmlContent,

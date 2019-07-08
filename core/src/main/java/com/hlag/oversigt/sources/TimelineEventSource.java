@@ -123,60 +123,55 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 
 	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
 		try {
-			addAppointment_unsafe(event, appointment);
+			final ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
+			final ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
+			final LocalDate now = LocalDate.now(getZoneId());
+
+			// for all day appointments, write "ganztägig"
+			final String duration;
+
+			if (appointment.getIsAllDayEvent()) {
+				final LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
+				final boolean endSameDay = endDate.isEqual(start.toLocalDate());
+				final boolean endsToday = endDate.isEqual(now);
+
+				if (endSameDay || endsToday) {
+					duration = ALL_DAY;
+				} else {
+					duration = ALL_DAY_UNTIL + endDate.format(DateTimeFormatter.ofPattern("d. MMM", getLocale()));
+				}
+			} else {
+				// not an all day event
+				final boolean startInPast = start.toLocalDate().isBefore(now);
+
+				if (startInPast) {
+					duration = UNTIL + end.format(DateTimeFormatter.ofPattern("d. MMM, HH:mm", getLocale()));
+				} else {
+					// begins today or in future: show start time (date is always shown)
+					duration = start.format(DateTimeFormatter.ofPattern("HH:mm", getLocale()));
+				}
+			}
+
+			final String title = String.format("%s (%s)", appointment.getSubject(), duration);
+
+			// for out of office and mailbox handling use special colors
+			Color color = colorAppointment;
+
+			if (LegacyFreeBusyStatus.OOF.equals(appointment.getLegacyFreeBusyStatus())) {
+				color = colorOutOfOffice;
+			} else if (appointment.getSubject() != null && appointment.getSubject().startsWith("Mailbox")) {
+				// TODO Farben auf regel-basis erstellen, nicht hart-kodiert
+				color = colorMailbox;
+			}
+
+			event.addEvent(title,
+					appointment.getStart().toInstant().atZone(getZoneId()).toLocalDate(),
+					appointment.getEnd().toInstant().atZone(getZoneId()).toLocalDate(),
+					appointment.getIsAllDayEvent(),
+					color);
 		} catch (@SuppressWarnings("unused") final ServiceLocalException ignore) {
-			/* in case of exception ignore event */
+			// in case of exception ignore event
 		}
-	}
-
-	private void addAppointment_unsafe(final TimelineEvent event, final Appointment appointment)
-			throws ServiceLocalException {
-		final ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());
-		final ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());
-		final LocalDate now = LocalDate.now(getZoneId());
-
-		// for all day appointments, write "ganztägig"
-		final String duration;
-
-		if (appointment.getIsAllDayEvent()) {
-			final LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);
-			final boolean endSameDay = endDate.isEqual(start.toLocalDate());
-			final boolean endsToday = endDate.isEqual(now);
-
-			if (endSameDay || endsToday) {
-				duration = ALL_DAY;
-			} else {
-				duration = ALL_DAY_UNTIL + endDate.format(DateTimeFormatter.ofPattern("d. MMM", getLocale()));
-			}
-		} else {
-			// not an all day event
-			final boolean startInPast = start.toLocalDate().isBefore(now);
-
-			if (startInPast) {
-				duration = UNTIL + end.format(DateTimeFormatter.ofPattern("d. MMM, HH:mm", getLocale()));
-			} else {
-				// begins today or in future: show start time (date is always shown)
-				duration = start.format(DateTimeFormatter.ofPattern("HH:mm", getLocale()));
-			}
-		}
-
-		final String title = String.format("%s (%s)", appointment.getSubject(), duration);
-
-		// for out of office and mailbox handling use special colors
-		Color color = colorAppointment;
-
-		if (LegacyFreeBusyStatus.OOF.equals(appointment.getLegacyFreeBusyStatus())) {
-			color = colorOutOfOffice;
-		} else if (appointment.getSubject() != null && appointment.getSubject().startsWith("Mailbox")) {
-			// TODO Farben auf regel-basis erstellen, nicht hart-kodiert
-			color = colorMailbox;
-		}
-
-		event.addEvent(title,
-				appointment.getStart().toInstant().atZone(getZoneId()).toLocalDate(),
-				appointment.getEnd().toInstant().atZone(getZoneId()).toLocalDate(),
-				appointment.getIsAllDayEvent(),
-				color);
 	}
 
 	private void addBirthdays(final TimelineEvent event, final LocalDate now) {

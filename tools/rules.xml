@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset comparisonMethod="maven" xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0 http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
+	<ignoreVersions>
+		<!-- Preview -->
+		<ignoreVersion type="regex">^(?i)[\d.]+-?(alpha|b|beta|cr|m|milestone|nightly|p|preview|rc|test)([^a-z].*)?$</ignoreVersion>
+		
+		<!-- Date-based versions from the 2000s -->
+		<ignoreVersion type="regex">^200\d{4}.*$</ignoreVersion>
+		
+		<!-- Vendor specific -->
+		<ignoreVersion type="regex">^(?i).*[^a-z](android|atlassian|jboss|jenkins|redhat)([^a-z].*)?$</ignoreVersion>
+		
+		<!-- Example: commons-logging:commons-logging:99.0-does-not-exist -->
+		<ignoreVersion type="regex">^(?i).*[^a-z]does-not-exist([^a-z].*)?$</ignoreVersion>
+		
+		<!-- Example: org.jvnet.jaxb2_commons:jaxb2-basics:1.11.1-PUBLISHED-BY-MISTAKE -->
+		<ignoreVersion type="regex">^(?i).*[^a-z]published-by-mistake([^a-z].*)?$</ignoreVersion>
+	</ignoreVersions>
+</ruleset>

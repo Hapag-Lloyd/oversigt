@@ -28,7 +28,6 @@ import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.jira.rest.client.internal.async.AsynchronousHttpClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -49,6 +48,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyReloaderService;
@@ -123,7 +123,7 @@ class OversigtModule extends AbstractModule {
 				.toInstance(UUID.randomUUID().toString());
 
 		// Jira
-		binder().requestStaticInjection(AsynchronousHttpClientFactory.class);
+		binder().requestStaticInjection(JiraConfigurationProvider.class);
 		// TextProcessor
 		binder().requestStaticInjection(TextProcessor.class);
 

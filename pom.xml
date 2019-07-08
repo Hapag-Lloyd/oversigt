@@ -34,8 +34,9 @@
 	</developers>
 
 	<modules>
-		<module>core</module>
 		<module>oversigt-ui</module>
+		<module>jira-rest-java-client-fix</module>
+		<module>core</module>
 	</modules>
 
 	<scm>

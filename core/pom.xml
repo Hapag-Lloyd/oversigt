@@ -47,18 +47,18 @@
 	<properties>
 		<spotbugs.skip>true</spotbugs.skip>
 		<pmd.skip>true</pmd.skip>
-		<mdep.analyze.skip>true</mdep.analyze.skip>
 
 		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
 		<compilerArgument>-parameters</compilerArgument>
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
-		<guice.version>4.2.1</guice.version>
-		<undertow.version>2.0.21.Final</undertow.version>
 		<freemarker.version>2.3.28</freemarker.version>
-		<wro.version>1.8.0</wro.version>
-		<resteasy.version>3.6.1.SP2</resteasy.version>
+		<guice.version>4.2.2</guice.version>
+		<jackson.version>2.9.9</jackson.version>
+		<resteasy.version>3.8.0.Final</resteasy.version>
+		<undertow.version>2.0.22.Final</undertow.version>
 		<weld.version>2.4.8.Final</weld.version>
+		<wro.version>1.8.0</wro.version>
 	</properties>
 
 	<dependencies>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>com.hlag.oversigt</groupId>
 			<artifactId>oversigt-ui</artifactId>
-			<version>0.6-SNAPSHOT</version>
+			<version>${project.version}</version>
 		</dependency>
 
 		<!-- logging -->
@@ -103,12 +103,32 @@
 		</dependency>
 		<!-- undertow-servlet for WRO -->
 		<dependency>
+			<groupId>org.jboss.spec.javax.annotation</groupId>
+			<artifactId>jboss-annotations-api_1.2_spec</artifactId>
+			<version>1.0.2.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.spec.javax.servlet</groupId>
+			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
+			<version>1.0.0.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.spec.javax.servlet</groupId>
+			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
+			<version>1.0.0.Final</version>
+		</dependency>
+		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
 			<version>${undertow.version}</version>
 		</dependency>
 
 		<!-- Validation -->
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
@@ -126,6 +146,11 @@
 		</dependency>
 
 		<!-- JaxRS classes to enable REST services -->
+		<dependency>
+			<groupId>org.jboss.spec.javax.ws.rs</groupId>
+			<artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+			<version>1.0.1.Final</version>
+		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxrs</artifactId>
@@ -164,17 +189,27 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jdk8</artifactId>
-			<version>2.9.7</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<!--javax.el is dependency required by weld-servlet -->
 		<dependency>
@@ -230,6 +265,13 @@
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
 			<version>${guice.version}</version>
+		</dependency>
+
+		<!-- Aspect Oriented Programming (Intercepting API method calls for validation) -->
+		<dependency>
+			<groupId>aopalliance</groupId>
+			<artifactId>aopalliance</artifactId>
+			<version>1.0</version>
 		</dependency>
 
 		<!-- other useful stuff -->
@@ -298,14 +340,24 @@
 
 		<!-- JIRA support -->
 		<dependency>
-			<groupId>io.atlassian.fugue</groupId>
-			<artifactId>fugue</artifactId>
-			<version>4.7.2</version>
+			<groupId>com.hlag.oversigt</groupId>
+			<artifactId>jira-rest-java-client-fix</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.jira</groupId>
-			<artifactId>jira-rest-java-client-core</artifactId>
+			<artifactId>jira-rest-java-client-api</artifactId>
 			<version>5.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.atlassian.util.concurrent</groupId>
+			<artifactId>atlassian-util-concurrent</artifactId>
+			<version>4.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jettison</groupId>
+			<artifactId>jettison</artifactId>
+			<version>1.1</version>
 		</dependency>
 
 		<!-- SSH support -->
@@ -353,6 +405,12 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.jboss.xnio</groupId>
+			<artifactId>xnio-api</artifactId>
+			<version>3.3.8.Final</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -391,6 +449,23 @@
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
+					<execution>
+						<!-- analyze-only -->
+						<id>default</id>
+						<configuration>
+							<usedDependencies>
+								<!-- REST API -->
+								<usedDependency>javax.el:javax.el-api</usedDependency>
+								<usedDependency>org.glassfish.web:javax.el</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-client</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-links</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-jackson2-provider</usedDependency>
+
+								<!-- REST API Validation -->
+								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
+							</usedDependencies>
+						</configuration>
+					</execution>
 					<execution>
 						<id>copy-dependencies</id>
 						<phase>package</phase>
