@@ -112,15 +112,15 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			removeLastEvent();
 
 			// count failures
-			if (numberOfFailedRuns.incrementAndGet() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
+			if (numberOfFailedRuns.get() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
 				logWarn(getLogger(),
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
 						numberOfFailedRuns.get(),
 						ALLOWED_NUMBER_OF_FAILED_CALLS);
-				stopAsync();
+				stopAsync(); // TODO stop instance.....
 			} else if (!(e instanceof Exception)) /* Throwable is some kind of Error or similar - stop immediately */ {
 				logError(getLogger(), "Error occurred. Stopping service immediately.");
-				stopAsync();
+				stopAsync(); // TODO stop instance.....
 			}
 		}
 	}

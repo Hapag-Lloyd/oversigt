@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +45,18 @@ public class EventSourceStatisticsManager {
 
 		private final List<RunStatistic> lastRuns = new ArrayList<>();
 
+		private final AtomicBoolean automticallyStarted = new AtomicBoolean(false);
+
 		private EventSourceStatistics() {
 			// hide constructor and nothing to initialize
+		}
+
+		public boolean isAutomticallyStarted() {
+			return automticallyStarted.get();
+		}
+
+		public void setAutomaticallyStarted(final boolean automaticallyStarted) {
+			automticallyStarted.set(automaticallyStarted);
 		}
 
 		public synchronized Optional<RunStatistic> getLastFailedRun() {

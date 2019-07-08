@@ -365,7 +365,7 @@ public class EventSourceConfigurationHandler extends AbstractConfigurationHandle
 	@NeedsRole(role = Roles.DASHBOARD_OWNER)
 	protected ActionResponse doAction_startEventSource(final HttpServerExchange exchange, final FormData data) {
 		final String id = getHelper().param(data, "id");
-		getDashboardController().startInstance(id);
+		getDashboardController().startInstance(id, false);
 		logChange(exchange, "Start event source id[%s]", id);
 		return ok();
 	}

@@ -24,8 +24,8 @@ import com.hlag.oversigt.sources.event.ReloadEvent;
  * @author neumaol
  */
 @Singleton
-public class NightlyReloaderService extends AbstractScheduledService {
-	private static final Logger LOGGER = LoggerFactory.getLogger(NightlyReloaderService.class);
+public class NightlyDashboardReloaderService extends AbstractScheduledService {
+	private static final Logger LOGGER = LoggerFactory.getLogger(NightlyDashboardReloaderService.class);
 
 	public static String getEventId() {
 		return "reload";
@@ -40,7 +40,7 @@ public class NightlyReloaderService extends AbstractScheduledService {
 	@Inject
 	private DashboardController dashboardController;
 
-	public NightlyReloaderService() {
+	public NightlyDashboardReloaderService() {
 		// no fields to be initialized manually, some will be injected
 	}
 

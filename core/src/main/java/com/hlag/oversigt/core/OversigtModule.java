@@ -51,7 +51,8 @@ import com.google.inject.name.Names;
 import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
-import com.hlag.oversigt.core.eventsource.NightlyReloaderService;
+import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
+import com.hlag.oversigt.core.eventsource.NightlyEventSourceRestarterService;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceNameGenerator;
 import com.hlag.oversigt.properties.Color;
@@ -155,7 +156,12 @@ class OversigtModule extends AbstractModule {
 
 		// Bind needed variables
 		binder().bind(Runnable.class).annotatedWith(Names.named("Shutdown")).toInstance(shutdownRunnable);
-		binder().bind(Service.class).annotatedWith(Names.named("NightlyReloader")).to(NightlyReloaderService.class);
+		binder().bind(Service.class)
+				.annotatedWith(Names.named("NightlyDashboardReloader"))
+				.to(NightlyDashboardReloaderService.class);
+		binder().bind(Service.class)
+				.annotatedWith(Names.named("NightlyEventSourceRestarter"))
+				.to(NightlyEventSourceRestarterService.class);
 
 		// GSON
 		final Gson gson = new GsonBuilder()//

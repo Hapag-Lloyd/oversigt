@@ -163,8 +163,12 @@ public class OversigtServer extends AbstractIdleService {
 	private boolean startEventSources;
 
 	@Inject
-	@Named("NightlyReloader")
-	private Service nightlyReloader;
+	@Named("NightlyDashboardReloader")
+	private Service nightlyDashboardReloader;
+
+	@Inject
+	@Named("NightlyEventSourceRestarter")
+	private Service nightlyEventSourceRestarter;
 
 	@Inject
 	@Named("debug")
@@ -330,7 +334,8 @@ public class OversigtServer extends AbstractIdleService {
 			}
 		}
 
-		nightlyReloader.startAsync();
+		nightlyDashboardReloader.startAsync();
+		nightlyEventSourceRestarter.startAsync();
 		if (startEventSources) {
 			LOGGER.info("Starting event source instances");
 			dashboardController.startAllInstances();
@@ -609,9 +614,11 @@ public class OversigtServer extends AbstractIdleService {
 	@Override
 	protected void shutDown() throws Exception {
 		/* stop the service for nightly reloading */
-		LOGGER.info("Stopping reloader service");
-		nightlyReloader.stopAsync();
-		nightlyReloader.awaitTerminated();
+		LOGGER.info("Stopping nightly services");
+		nightlyDashboardReloader.stopAsync();
+		nightlyDashboardReloader.awaitTerminated();
+		nightlyEventSourceRestarter.stopAsync();
+		nightlyEventSourceRestarter.awaitTerminated();
 
 		/* stop all event source instances */
 		LOGGER.info("Stopping event sources");

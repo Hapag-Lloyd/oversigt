@@ -98,7 +98,7 @@ public class EventSourceStatusResource {
 					value = "Whether the event source instance shall be running or not") final boolean running) {
 		try {
 			if (running) {
-				controller.startInstance(instanceId);
+				controller.startInstance(instanceId, false);
 			} else {
 				controller.stopInstance(instanceId);
 			}
