@@ -159,6 +159,23 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
+	private static <T> List<T> readFromDatabase(final PreparedStatement statement,
+			final ResultSetFunction<T> readOneLine) throws SQLException {
+		try (ResultSet rs = statement.executeQuery()) {
+			return readFromDatabase(rs, readOneLine);
+		}
+	}
+
+	private static <T> List<T> readFromDatabase(final ResultSet rs, final ResultSetFunction<T> readOneLine)
+			throws SQLException {
+		final List<T> list = new ArrayList<>();
+		while (rs.next()) {
+			final T item = readOneLine.readLine(rs);
+			list.add(item);
+		}
+		return list;
+	}
+
 	/**
 	 * Executes the given query
 	 *
@@ -193,23 +210,6 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			DB_LOGGER.info("Finished query. Duration: " + (System.currentTimeMillis() - time));
 			DB_LOGGER.trace(sql);
 		}
-	}
-
-	private static <T> List<T> readFromDatabase(final PreparedStatement statement,
-			final ResultSetFunction<T> readOneLine) throws SQLException {
-		try (ResultSet rs = statement.executeQuery()) {
-			return readFromDatabase(rs, readOneLine);
-		}
-	}
-
-	private static <T> List<T> readFromDatabase(final ResultSet rs, final ResultSetFunction<T> readOneLine)
-			throws SQLException {
-		final List<T> list = new ArrayList<>();
-		while (rs.next()) {
-			final T item = readOneLine.readLine(rs);
-			list.add(item);
-		}
-		return list;
 	}
 
 	@FunctionalInterface
