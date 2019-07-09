@@ -19,7 +19,6 @@ import com.hlag.oversigt.storage.Storage;
 
 import ch.qos.logback.classic.LoggerContext;
 import de.larssh.utils.Finals;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -140,9 +139,9 @@ public final class Oversigt {
 	 */
 	public static void main(final String[] args) {
 		// parse command line options
-		final CommandLineOptions options = CommandLineOptions.parse(args);
+		final Optional<CommandLineOptions> options = CommandLineOptions.parse(args);
 		// if command line options fail: shut down
-		if (options == null) {
+		if (!options.isPresent()) {
 			return;
 		}
 
@@ -176,8 +175,7 @@ public final class Oversigt {
 	 * Oversigt builder
 	 */
 	public static class Builder {
-		@Nullable
-		private CommandLineOptions options = null;
+		private Optional<CommandLineOptions> options = Optional.empty();
 
 		public Builder() {
 			// no fields to be initialized
@@ -189,7 +187,7 @@ public final class Oversigt {
 		 * @param options the options from the user
 		 * @return the created builder
 		 */
-		public Builder startOptions(final CommandLineOptions options) {
+		public Builder startOptions(final Optional<CommandLineOptions> options) {
 			this.options = options;
 			return this;
 		}

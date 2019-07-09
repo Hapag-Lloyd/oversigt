@@ -123,11 +123,9 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final EventBus eventBus;
 
-	@Nullable
-	private ServerSentEventHandler sseHandler;
+	private Optional<ServerSentEventHandler> sseHandler = Optional.empty();
 
-	@Nullable
-	private Undertow server;
+	private Optional<Undertow> server = Optional.empty();
 
 	private EventSender sender;
 
@@ -214,6 +212,11 @@ public class OversigtServer extends AbstractIdleService {
 		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());
 	}
 
+	private ServerSentEventHandler getServerSentEventHandler() {
+		return sseHandler
+				.orElseThrow(() -> new RuntimeException("The ServerSentEventHandler has not been initialized."));
+	}
+
 	@Override
 	protected void startUp() throws Exception {
 		LOGGER.info("Loading event source descriptors");
@@ -226,13 +229,13 @@ public class OversigtServer extends AbstractIdleService {
 		dashboardController.loadDashboards();
 
 		LOGGER.info("Configuring web server");
-		sseHandler = Handlers.serverSentEvents((connection, lastEventId) -> {
+		sseHandler = Optional.of(Handlers.serverSentEvents((connection, lastEventId) -> {
 			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))
 					.map(Deque::getFirst)
 					.flatMap(dashboardController::getDashboard)
 					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
 			eventBus.post(connection);
-		});
+		}));
 
 		eventBus.register(new Consumer<OversigtEvent>() {
 			@Subscribe
@@ -241,11 +244,7 @@ public class OversigtServer extends AbstractIdleService {
 				if (event == null) {
 					return;
 				}
-				final ServerSentEventHandler sseHandler = OversigtServer.this.sseHandler;
-				if (sseHandler == null) {
-					return;
-				}
-				sseHandler.getConnections()
+				getServerSentEventHandler().getConnections()
 						.stream()
 						.forEach(connection -> sender.sendEventToConnection(event, connection));
 			}
@@ -261,7 +260,7 @@ public class OversigtServer extends AbstractIdleService {
 		final RoutingHandler routingHandler = Handlers.routing()
 				// dashboard handling
 				.get("/{dashboard}", this::serveDashboard)
-				.get("/events", sseHandler)
+				.get("/events", getServerSentEventHandler())
 				.get("/views/{widget}", this::serveWidget)
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
@@ -318,7 +317,7 @@ public class OversigtServer extends AbstractIdleService {
 						c.getIp(),
 						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
 		final Undertow server = builder.setHandler(accessHandler).build();
-		this.server = server;
+		this.server = Optional.of(server);
 
 		LOGGER.info("Starting web server");
 		try {
@@ -619,17 +618,11 @@ public class OversigtServer extends AbstractIdleService {
 
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");
-		final ServerSentEventHandler sseHandler = this.sseHandler;
-		if (sseHandler != null) {
-			sseHandler.getConnections().forEach(ServerSentEventConnection::shutdown);
-		}
+		getServerSentEventHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
 
 		/* stop the server */
 		LOGGER.info("Stopping web server");
-		final Undertow server = this.server;
-		if (server != null) {
-			server.stop();
-		}
+		server.ifPresent(Undertow::stop);
 	}
 
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
@@ -644,7 +637,7 @@ public class OversigtServer extends AbstractIdleService {
 
 		@Override
 		public void running() {
-			final Undertow server = OversigtServer.this.server;
+			final Undertow server = OversigtServer.this.server.get();
 			if (server != null) {
 				LOGGER.info("Embedded Oversigt server has started and is listening on port(s) {}",
 						server.getListenerInfo()

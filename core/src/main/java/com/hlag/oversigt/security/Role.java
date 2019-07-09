@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
-
 public final class Role {
 	public static final String ROLE_NAME_SERVER_ADMIN = "server.admin";
 
@@ -13,7 +11,7 @@ public final class Role {
 
 	public static final String ROLE_NAME_GENERAL_DASHBOARD_EDITOR = "server.dashboard.editor";
 
-	static final Role SERVER_ADMIN = new Role(null, ROLE_NAME_SERVER_ADMIN);
+	static final Role SERVER_ADMIN = new Role(ROLE_NAME_SERVER_ADMIN);
 
 	static final Role DASHBOARD_OWNER = new Role(SERVER_ADMIN, ROLE_NAME_GENERAL_DASHBOARD_OWNER);
 
@@ -33,13 +31,17 @@ public final class Role {
 				id -> new Role(DASHBOARD_EDITOR, "dashboard." + id + ".editor"));
 	}
 
-	@Nullable
-	private final Role parent;
+	private final Optional<Role> parent;
 
 	private final String name;
 
-	private Role(@Nullable final Role parent, final String name) {
-		this.parent = parent;
+	private Role(final String name) {
+		parent = Optional.empty();
+		this.name = name;
+	}
+
+	private Role(final Role parent, final String name) {
+		this.parent = Optional.of(parent);
 		this.name = name;
 	}
 
@@ -48,7 +50,7 @@ public final class Role {
 	}
 
 	public Optional<Role> getParent() {
-		return Optional.ofNullable(parent);
+		return parent;
 	}
 
 	public Role getDashboardSpecificRole(final String dashboardId) {

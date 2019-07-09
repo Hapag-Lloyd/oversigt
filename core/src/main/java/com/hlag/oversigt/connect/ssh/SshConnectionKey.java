@@ -1,16 +1,10 @@
 package com.hlag.oversigt.connect.ssh;
 
-import java.util.Comparator;
-
 import com.hlag.oversigt.util.Utils;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-class SshConnectionKey implements Comparable<SshConnectionKey> {
-	protected static final Comparator<SshConnectionKey> COMPARATOR = Comparator.comparing(SshConnectionKey::getHostname)
-			.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
-			.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
-
+class SshConnectionKey {
 	private final String hostname;
 
 	private final int port;
@@ -33,11 +27,6 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 
 	protected String getUsername() {
 		return username;
-	}
-
-	@Override
-	public int compareTo(@Nullable final SshConnectionKey that) {
-		return COMPARATOR.compare(this, that);
 	}
 
 	@Override

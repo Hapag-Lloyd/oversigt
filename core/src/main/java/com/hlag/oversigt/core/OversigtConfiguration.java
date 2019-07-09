@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Binder;
 import com.google.inject.Singleton;
@@ -25,7 +26,6 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.LdapAuthenticator;
-import com.hlag.oversigt.security.LdapAuthenticator.LdapConfiguration;
 import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
@@ -263,6 +263,61 @@ public class OversigtConfiguration {
 		private DatabaseConfiguration() {
 			// no fields to be initialized
 		}
+	}
+
+	public static class LdapConfiguration {
+		@Nullable
+		private String url;
+
+		@Nullable
+		private String baseDn;
+
+		@Nullable
+		private String bindUser;
+
+		@Nullable
+		private String bindPassword;
+
+		@Nullable
+		private String uidAttribute;
+
+		public LdapConfiguration() {
+			// no fields to be initialized manually, some will be injected
+		}
+
+		public boolean isBindPasswordSet() {
+			return !Strings.isNullOrEmpty(bindPassword);
+		}
+
+		public void setBindPassword(final String bindPassword) {
+			this.bindPassword = bindPassword;
+		}
+
+		@Nullable
+		public String getUrl() {
+			return url;
+		}
+
+		@Nullable
+		public String getBaseDn() {
+			return baseDn;
+		}
+
+		@Nullable
+		public String getBindPassword() {
+			return bindPassword;
+		}
+
+		@Nullable
+		public String getBindUser() {
+			return bindUser;
+		}
+
+		@Nullable
+		public String getUidAttribute() {
+			return uidAttribute;
+		}
+
 	}
 
 	private static final class MailConfiguration {

@@ -1,12 +1,8 @@
 package com.hlag.oversigt.connect.exchange;
 
-import java.util.Optional;
-
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Representation of a room
@@ -15,7 +11,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  *
  */
 @JsonHint(headerTemplate = "{{self.name}}", arrayStyle = ArrayStyle.TABLE)
-public class Room implements JsonBasedData, Comparable<Room> {
+public class Room implements JsonBasedData {
 	private String name = "RoomName";
 
 	private String smtpAddress = "roomname@exchange.com";
@@ -80,12 +76,6 @@ public class Room implements JsonBasedData, Comparable<Room> {
 	 */
 	public void setRoomNumber(final String roomNumber) {
 		this.roomNumber = roomNumber;
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public int compareTo(@Nullable final Room that) {
-		return String.CASE_INSENSITIVE_ORDER.compare(name, Optional.ofNullable(that).map(Room::getName).orElse(""));
 	}
 
 	/** {@inheritDoc} */

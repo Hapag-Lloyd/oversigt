@@ -22,8 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
+import com.hlag.oversigt.core.OversigtConfiguration.LdapConfiguration;
 
 @Singleton
 public class LdapAuthenticator implements Authenticator {
@@ -39,31 +38,30 @@ public class LdapAuthenticator implements Authenticator {
 
 	private final String identifyingAttribute;
 
-	@Nullable
-	private DirContext serviceCtx = null;
+	private Optional<DirContext> serviceCtx = Optional.empty();
 
 	@Inject
 	private RoleProvider roleProvider;
 
 	@Inject
 	public LdapAuthenticator(final LdapConfiguration configuration) {
-		this(configuration.url,
-				configuration.baseDn,
-				configuration.bindUser,
-				configuration.bindPassword,
-				configuration.uidAttribute);
+		this(notNullOrEmpty(configuration.getUrl(), "The LDAP URL must not be null or empty"),
+				notNullOrEmpty(configuration.getBaseDn(), "The Base-DN must not be null or empty"),
+				notNullOrEmpty(configuration.getBindUser(), "The LDAP identifying attribute must not be null or empty"),
+				notNullOrEmpty(configuration.getBindPassword(), "The LDAP Bind user must not be null or empty"),
+				notNullOrEmpty(configuration.getUidAttribute(), "The LDAP Bind password must not be null or empty"));
 	}
 
-	private LdapAuthenticator(@Nullable final String url,
-			@Nullable final String baseDn,
-			@Nullable final String bindUser,
-			@Nullable final String bindPassword,
-			@Nullable final String uidAttribute) {
-		this.url = notNullOrEmpty(url, "The LDAP URL must not be null or empty");
-		this.baseDn = notNullOrEmpty(baseDn, "The Base-DN must not be null or empty");
-		identifyingAttribute = notNullOrEmpty(uidAttribute, "The LDAP identifying attribute must not be null or empty");
-		this.bindUser = notNullOrEmpty(bindUser, "The LDAP Bind user must not be null or empty");
-		this.bindPassword = notNullOrEmpty(bindPassword, "The LDAP Bind password must not be null or empty");
+	private LdapAuthenticator(final String url,
+			final String baseDn,
+			final String bindUser,
+			final String bindPassword,
+			final String uidAttribute) {
+		this.url = url;
+		this.baseDn = baseDn;
+		identifyingAttribute = uidAttribute;
+		this.bindUser = bindUser;
+		this.bindPassword = bindPassword;
 
 		try {
 			setDirContext();
@@ -74,9 +72,9 @@ public class LdapAuthenticator implements Authenticator {
 	}
 
 	private DirContext setDirContext() throws NamingException {
-		if (serviceCtx != null) {
+		if (serviceCtx.isPresent()) {
 			try {
-				serviceCtx.close();
+				serviceCtx.get().close();
 			} catch (final Exception e) {
 				LOGGER.warn("Exception while closing old Service Context", e);
 			}
@@ -89,8 +87,8 @@ public class LdapAuthenticator implements Authenticator {
 		serviceEnv.put(Context.SECURITY_PRINCIPAL, bindUser);
 		serviceEnv.put(Context.SECURITY_CREDENTIALS, bindPassword);
 
-		serviceCtx = new InitialDirContext(serviceEnv);
-		return serviceCtx;
+		serviceCtx = Optional.of(new InitialDirContext(serviceEnv));
+		return serviceCtx.get();
 	}
 
 	@Override
@@ -142,9 +140,9 @@ public class LdapAuthenticator implements Authenticator {
 		// use a search filter to find only the user we want to authenticate
 		final String searchFilter = "(" + identifyingAttribute + "=" + username + ")";
 		NamingEnumeration<SearchResult> results;
-		if (serviceCtx != null) {
+		if (serviceCtx.isPresent()) {
 			try {
-				results = serviceCtx.search(baseDn, searchFilter, sc);
+				results = serviceCtx.get().search(baseDn, searchFilter, sc);
 			} catch (final NamingException e) {
 				if (e.getCause() instanceof IOException && "connection closed".equals(e.getCause().getMessage())) {
 					LOGGER.info("Connection broken. Trying to create a new connection.");
@@ -207,41 +205,12 @@ public class LdapAuthenticator implements Authenticator {
 
 	@Override
 	public void close() {
-		if (serviceCtx != null) {
+		if (serviceCtx.isPresent()) {
 			try {
-				serviceCtx.close();
+				serviceCtx.get().close();
 			} catch (final NamingException e) {
 				throw new RuntimeException("Unable to close directory context", e);
 			}
-		}
-	}
-
-	public static class LdapConfiguration {
-		@Nullable
-		private String url;
-
-		@Nullable
-		private String baseDn;
-
-		@Nullable
-		private String bindUser;
-
-		@Nullable
-		private String bindPassword;
-
-		@Nullable
-		private String uidAttribute;
-
-		public LdapConfiguration() {
-			// no fields to be initialized manually, some will be injected
-		}
-
-		public boolean isBindPasswordSet() {
-			return !Strings.isNullOrEmpty(bindPassword);
-		}
-
-		public void setBindPassword(final String bindPassword) {
-			this.bindPassword = bindPassword;
 		}
 	}
 }

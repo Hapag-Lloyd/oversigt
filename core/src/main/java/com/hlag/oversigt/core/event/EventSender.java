@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,8 +32,6 @@ import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.util.JsonUtils;
 
-import de.larssh.utils.OptionalLongs;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.AttachmentKey;
 
@@ -50,7 +47,7 @@ public class EventSender {
 	@Inject
 	private String applicationId;
 
-	private final OptionalLong rateLimit;
+	private final long rateLimit;
 
 	// Send events in another thread
 	private final BlockingQueue<EventSendTask> eventsToSend = new LinkedBlockingQueue<>();
@@ -69,10 +66,10 @@ public class EventSender {
 	@Inject
 	public EventSender(final JsonUtils json,
 			@Named("discardEventsAfter") final Duration discardEventsAfter,
-			@Named("rateLimit") @Nullable final Long rateLimit) {
+			@Named("rateLimit") final long rateLimit) {
 		this.json = json;
 		defaultEventLifetime = discardEventsAfter;
-		this.rateLimit = rateLimit == null ? OptionalLong.empty() : OptionalLong.of(rateLimit);
+		this.rateLimit = rateLimit;
 
 		thread = new Thread(this::sendQueuedTasks, "EventSender");
 		thread.setDaemon(true);
@@ -102,12 +99,11 @@ public class EventSender {
 
 	@Subscribe
 	void newConnectionAdded(final ServerSentEventConnection connection) {
-		OptionalLongs.mapToObj(rateLimit, RateLimiter::create)
-				.ifPresent(rateLimiter -> connection.putAttachment(RATE_LIMITER_KEY, rateLimiter));
+		connection.putAttachment(RATE_LIMITER_KEY, RateLimiter.create(rateLimit));
 		logInfo(LOGGER,
 				"Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s",
 				Optional.ofNullable(connection.getAttachment(DASHBOARD_KEY)).map(Dashboard::getId).orElse("*"),
-				rateLimit.orElse(-1L));
+				rateLimit);
 		synchronized (cachedEvents) {
 			cachedEvents.values().removeIf(EventSender::shouldRemoveEvent);
 			cachedEvents.values().forEach(event -> sendEventToConnection(event, connection));

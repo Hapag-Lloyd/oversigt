@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -95,8 +96,7 @@ class OversigtModule extends AbstractModule {
 
 	private final Runnable shutdownRunnable;
 
-	@Nullable
-	private final CommandLineOptions options;
+	private final Optional<CommandLineOptions> options;
 
 	/**
 	 * Create a module to configure Guice for Oversigt creation
@@ -107,7 +107,7 @@ class OversigtModule extends AbstractModule {
 	 *                         executed
 	 * @param extensions       list of modules that will additionally be loaded
 	 */
-	OversigtModule(@Nullable final CommandLineOptions options, final Runnable shutdownRunnable) {
+	OversigtModule(final Optional<CommandLineOptions> options, final Runnable shutdownRunnable) {
 		this.shutdownRunnable = shutdownRunnable;
 		this.options = options;
 	}
@@ -208,13 +208,12 @@ class OversigtModule extends AbstractModule {
 		// binds properties
 		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
-		final CommandLineOptions checkedOptions = options; // null pointer check
-		if (checkedOptions != null) {
+		options.ifPresent(checkedOptions -> {
 			configuration.bindProperties(binder(),
 					checkedOptions.isDebugFallback(),
 					checkedOptions.getLdapBindPasswordFallback());
 			Names.bindProperties(binder(), checkedOptions.getProperties());
-		}
+		});
 	}
 
 	/**

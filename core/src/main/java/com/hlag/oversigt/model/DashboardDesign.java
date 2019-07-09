@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class DashboardDesign {
 	static final int TILE_DISTANCE = Finals.constant(6);
@@ -23,24 +22,24 @@ public final class DashboardDesign {
 	static StyleAddon getStyleAddon(final Dashboard dashboard, final int px, final int py, final int sx, final int sy) {
 		switch (dashboard.getColorScheme()) {
 		case COLORED:
-			return new StyleAddon("", null);
+			return new StyleAddon("", Optional.empty());
 		case SINGLE_COLOR:
 			return new StyleAddon(getCssSolidBackgroundColor(dashboard.getForegroundColorStart()),
-					dashboard.getForegroundColorStart());
+					Optional.of(dashboard.getForegroundColorStart()));
 		case TILED_VERTICAL_GRADIENT:
 			Color color = computeColor(dashboard, py, sy, getRows(dashboard));
-			return new StyleAddon(getCssSolidBackgroundColor(color), color);
+			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));
 		case TILED_HORIZONTAL_GRADIENT:
 			color = computeColor(dashboard, px, sx, dashboard.getColumns());
-			return new StyleAddon(getCssSolidBackgroundColor(color), color);
+			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));
 		case VERTICAL_GRADIENT:
 			Color[] colors = computeColors(dashboard, py, sy, getRows(dashboard));
 			return new StyleAddon(getCssGradientBackgroundColor("bottom", colors[0], colors[1]),
-					computeColor(dashboard, py, sy, getRows(dashboard)));
+					Optional.of(computeColor(dashboard, py, sy, getRows(dashboard))));
 		case HORIZONTAL_GRADIENT:
 			colors = computeColors(dashboard, px, sx, dashboard.getColumns());
 			return new StyleAddon(getCssGradientBackgroundColor("right", colors[0], colors[1]),
-					computeColor(dashboard, px, sx, dashboard.getColumns()));
+					Optional.of(computeColor(dashboard, px, sx, dashboard.getColumns())));
 		default:
 			throw new RuntimeException("Unknown color scheme: " + dashboard.getColorScheme());
 		}
@@ -70,7 +69,7 @@ public final class DashboardDesign {
 
 		final StyleAddon addon
 				= getStyleAddon(dashboard, widget.getPosX(), widget.getPosY(), widget.getSizeX(), widget.getSizeY());
-		if (Optional.ofNullable(addon.getBackgroundColor())
+		if (addon.getBackgroundColor()
 				.map(Color::shouldUseWhiteFontColor)
 				.orElseGet(() -> widget.getBackgroundColor().shouldUseWhiteFontColor())) {
 			return "light-foreground";
@@ -120,16 +119,14 @@ public final class DashboardDesign {
 	public static class StyleAddon {
 		private final String css;
 
-		@Nullable
-		private final Color backgroundColor;
+		private final Optional<Color> backgroundColor;
 
-		public StyleAddon(final String css, @Nullable final Color backgroundColor) {
+		public StyleAddon(final String css, final Optional<Color> backgroundColor) {
 			this.css = css;
 			this.backgroundColor = backgroundColor;
 		}
 
-		@Nullable
-		public Color getBackgroundColor() {
+		public Optional<Color> getBackgroundColor() {
 			return backgroundColor;
 		}
 

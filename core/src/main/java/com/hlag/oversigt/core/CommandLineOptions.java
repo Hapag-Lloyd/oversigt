@@ -4,6 +4,8 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,16 +17,14 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
 import de.larssh.utils.Nullables;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class CommandLineOptions {
-	@Nullable
-	public static CommandLineOptions parse(final String[] args) {
+	public static Optional<CommandLineOptions> parse(final String[] args) {
 		final CommandLineOptions options = new CommandLineOptions();
 		final CmdLineParser parser = new CmdLineParser(options);
 		try {
 			parser.parseArgument(args);
-			return options;
+			return Optional.of(options);
 		} catch (final CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
@@ -34,7 +34,7 @@ public final class CommandLineOptions {
 			// print the list of available options
 			parser.printUsage(System.err);
 			System.err.println();
-			return null;
+			return Optional.empty();
 		}
 	}
 
@@ -85,10 +85,9 @@ public final class CommandLineOptions {
 		}
 	}
 
-	@Nullable
 	private String get(final Method method) {
 		try {
-			return Nullables.map(method.invoke(this), Object::toString);
+			return Objects.requireNonNull(Nullables.map(method.invoke(this), Object::toString));
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

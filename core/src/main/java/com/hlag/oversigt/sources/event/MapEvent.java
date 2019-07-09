@@ -25,12 +25,15 @@ public class MapEvent extends OversigtEvent {
 		private final double lat;
 
 		@Nullable
+		@javax.annotation.Nullable
 		private final String fill;
 
 		@Nullable
+		@javax.annotation.Nullable
 		private final String stroke;
 
 		@Nullable
+		@javax.annotation.Nullable
 		private final Double size;
 
 		public Point(final String id, final double longitude, final double latitue) {
