@@ -403,47 +403,55 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
-		final Object acceptHeader = exchange.getRequestHeaders().get(Headers.ACCEPT);
-		final String acceptHeaderString = acceptHeader != null ? acceptHeader.toString() : "html";
-		final boolean searchHtml = acceptHeaderString.toLowerCase().contains("html");
+		final boolean searchHtml = Optional.ofNullable(exchange.getRequestHeaders().get(Headers.ACCEPT))
+				.map(Object::toString)
+				.map(String::toLowerCase)
+				.map(s -> s.contains("html"))
+				.orElse(true);
 
-		if (searchHtml) {
-			final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
-			if ("favicon.ico".equals(dashboardId)) {
-				// XXX add a proper favicon handler
-				HttpUtils.notFound(exchange);
-				return;
-			}
-			// check if the URI is correct... otherwise redirect to proper dashboard URI
-			final String correctUri = "/" + dashboardId;
-			if (correctUri.equals(exchange.getRequestURI())) {
-				final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
-				if (dashboard.isPresent() && dashboard.get().isEnabled()) {
-					final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
-							map("title",
-									dashboard.get().getTitle(),
-									"columns",
-									dashboard.get().getColumns(),
-									"backgroundColor",
-									dashboard.get().getBackgroundColor().getHexColor(),
-									"computedTileWidth",
-									dashboard.get().getComputedTileWidth(),
-									"computedTileHeight",
-									dashboard.get().getComputedTileHeight(),
-									"widgets",
-									dashboard.get().getWidgets()));
-					exchange.getResponseSender().send(html);
-				} else {
-					// redirect to config page in order to create new dashboard
-					redirect(exchange, "/" + dashboardId + "/create", false, true);
-					// TODO change to angular ui screen
-				}
-			} else {
-				redirect(exchange, correctUri, true, true);
-			}
-		} else {
+		// Check if request wants to download some asset of a widget
+		if (!searchHtml) {
 			redirect(exchange, "/assets" + exchange.getRequestURI(), false, true);
+			return;
 		}
+
+		// check whether to serve a favicon
+		final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
+		if ("favicon.ico".equals(dashboardId)) {
+			// XXX add a proper favicon handler
+			HttpUtils.notFound(exchange);
+			return;
+		}
+
+		// check if the URI is correct... otherwise redirect to proper dashboard URI
+		final String correctUri = "/" + dashboardId;
+		if (!correctUri.equals(exchange.getRequestURI())) {
+			redirect(exchange, correctUri, true, true);
+			return;
+		}
+
+		// check if dashboard is present and enabled
+		final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
+		if (!dashboard.isPresent() || !dashboard.get().isEnabled()) {
+			redirect(exchange, "/" + dashboardId + "/create", false, true);
+			return;
+		}
+
+		// actually serve the dashboard
+		final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
+				map("title",
+						dashboard.get().getTitle(),
+						"columns",
+						dashboard.get().getColumns(),
+						"backgroundColor",
+						dashboard.get().getBackgroundColor().getHexColor(),
+						"computedTileWidth",
+						dashboard.get().getComputedTileWidth(),
+						"computedTileHeight",
+						dashboard.get().getComputedTileHeight(),
+						"widgets",
+						dashboard.get().getWidgets()));
+		exchange.getResponseSender().send(html);
 	}
 
 	private String processTemplate(final String templateName, final Object model)
