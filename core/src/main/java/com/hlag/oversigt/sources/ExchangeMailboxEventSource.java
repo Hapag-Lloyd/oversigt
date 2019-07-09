@@ -1,11 +1,11 @@
 package com.hlag.oversigt.sources;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import com.hlag.oversigt.connect.exchange.Mail;
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -120,7 +120,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	}
 
 	private HlBarChartEvent createEvent(final List<Mail> mails) {
-		final Set<CategoryInfo> categoryInfos = createCategoryInfos();
+		final Collection<CategoryInfo> categoryInfos = createCategoryInfos();
 		for (final Mail mail : mails) {
 			final List<String> categories = mail.getCategories();
 			categories.forEach(category -> increaseNumbers(mail, categoryInfos, Optional.of(category)));
@@ -131,7 +131,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		return createEvent(categoryInfos, mails.size());
 	}
 
-	private HlBarChartEvent createEvent(final Set<CategoryInfo> categoryInfos, final int noOfMails) {
+	private HlBarChartEvent createEvent(final Collection<CategoryInfo> categoryInfos, final int noOfMails) {
 		final List<Category> categories = new ArrayList<>();
 		final int maxNumberOfMails = Math.max(3, getMaxNumberOfMails(categoryInfos));
 		for (final CategoryInfo info : categoryInfos) {
@@ -149,8 +149,9 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		return new HlBarChartEvent(categories, Integer.toString(noOfMails));
 	}
 
-	private Set<CategoryInfo> createCategoryInfos() {
-		final Set<CategoryInfo> infos = new LinkedHashSet<>();
+	private Collection<CategoryInfo> createCategoryInfos() {
+		// TODO better implementation... it's not clear, what this is about
+		final Collection<CategoryInfo> infos = new LinkedHashSet<>();
 		infos.add(new CategoryInfo(getDefaultDisplayOption()));
 		for (final DisplayOption option : getDisplayOptions()) {
 			infos.add(new CategoryInfo(option));
@@ -172,7 +173,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 				Math.min(originalColor.getBlue() + 10, 255));
 	}
 
-	private int getMaxNumberOfMails(final Set<CategoryInfo> categoryInfos) {
+	private int getMaxNumberOfMails(final Collection<CategoryInfo> categoryInfos) {
 		int max = 0;
 		for (final CategoryInfo info : categoryInfos) {
 			if (info.total > max) {
@@ -182,7 +183,9 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		return max;
 	}
 
-	private void increaseNumbers(final Mail mail, final Set<CategoryInfo> infos, final Optional<String> categoryName) {
+	private void increaseNumbers(final Mail mail,
+			final Collection<CategoryInfo> infos,
+			final Optional<String> categoryName) {
 		CategoryInfo info = null;
 		if (categoryName.isPresent()) {
 			try {

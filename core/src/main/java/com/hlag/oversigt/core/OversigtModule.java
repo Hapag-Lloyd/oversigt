@@ -1,8 +1,8 @@
 package com.hlag.oversigt.core;
 
 import static com.hlag.oversigt.core.Oversigt.APPLICATION_CONFIG;
-import static com.hlag.oversigt.util.JsonUtils.deserializer;
-import static com.hlag.oversigt.util.JsonUtils.serializer;
+import static com.hlag.oversigt.util.TypeUtils.deserializer;
+import static com.hlag.oversigt.util.TypeUtils.serializer;
 
 import java.io.IOException;
 import java.net.URL;

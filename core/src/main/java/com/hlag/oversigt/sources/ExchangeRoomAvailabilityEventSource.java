@@ -139,30 +139,8 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			this.items = items;
 		}
 
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + items.hashCode();
-			return result;
-		}
-
-		@Override
-		public boolean equals(@Nullable final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final RoomAvailabilityListEvent other = (RoomAvailabilityListEvent) obj;
-			if (!items.equals(other.items)) {
-				return false;
-			}
-			return true;
+		public List<RoomAvailabilityItem> getItems() {
+			return items;
 		}
 	}
 
@@ -191,44 +169,6 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			this.until = until;
 			status = (free ? "Free" : "Busy")
 					+ (!until.isPresent() ? " Today" : " until " + formatter.format(until.get()));
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + clazz.hashCode();
-			result = prime * result + name.hashCode();
-			result = prime * result + number.hashCode();
-			result = prime * result + status.hashCode();
-			return result;
-		}
-
-		@Override
-		public boolean equals(@Nullable final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final RoomAvailabilityItem other = (RoomAvailabilityItem) obj;
-			if (!clazz.equals(other.clazz)) {
-				return false;
-			}
-			if (!name.equals(other.name)) {
-				return false;
-			}
-			if (!number.equals(other.number)) {
-				return false;
-			}
-			if (!status.equals(other.status)) {
-				return false;
-			}
-			return true;
 		}
 
 		@Override

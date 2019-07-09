@@ -77,7 +77,7 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 			final Method getter,
 			final Method setter,
 			final Class<?> clazz,
-			final JsonHint hint,
+			@Nullable final JsonHint hint,
 			final boolean json,
 			@Nullable final String jsonSchema) {
 		this.name = name;

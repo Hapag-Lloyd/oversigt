@@ -942,6 +942,7 @@ public class DashboardController {
 		final Method getter = descriptor.getReadMethod();
 		final Method setter = descriptor.getWriteMethod();
 		final Class<?> clazz = descriptor.getPropertyType();
+		@Nullable
 		JsonHint hint = descriptor.getReadMethod().getAnnotation(JsonHint.class);
 		if (hint == null) {
 			hint = descriptor.getWriteMethod().getAnnotation(JsonHint.class);
@@ -971,7 +972,7 @@ public class DashboardController {
 				clazz,
 				hint,
 				json,
-				json ? this.json.toJsonSchema(clazz, hint) : null);
+				json ? this.json.toJsonSchema(clazz, Optional.ofNullable(hint)) : null);
 
 		collectAllowedValues(clazz).forEach(esProperty::addAllowedValue);
 		return esProperty;

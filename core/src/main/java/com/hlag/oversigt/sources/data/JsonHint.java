@@ -4,8 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Optional;
 
 @Target(value = { ElementType.TYPE, ElementType.FIELD, ElementType.METHOD })
 @Retention(value = RetentionPolicy.RUNTIME)
@@ -19,19 +18,17 @@ public @interface JsonHint {
 		GRID,
 		TABLE("table"),
 		TABS("tabs");
-		@Nullable
-		private final String value;
+		private final Optional<String> value;
 
 		ArrayStyle() {
-			value = null;
+			value = Optional.empty();
 		}
 
 		ArrayStyle(final String value) {
-			this.value = value;
+			this.value = Optional.of(value);
 		}
 
-		@Nullable
-		public String value() {
+		public Optional<String> value() {
 			return value;
 		}
 	}

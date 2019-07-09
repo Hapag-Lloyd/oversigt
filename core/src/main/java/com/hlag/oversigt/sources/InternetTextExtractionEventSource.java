@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -108,8 +110,10 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	}
 
 	public static class ValueExtraction {
+		@NotNull
 		private final String condition;
 
+		@NotNull
 		private final String format;
 
 		public ValueExtraction(final String condition, final String format) {

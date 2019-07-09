@@ -88,8 +88,10 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 
 	@JsonHint(arrayStyle = ArrayStyle.TABS, headerTemplate = "Mapping {{i1}}")
 	public static class TypeMapping {
+		@NotNull
 		private final String field;
 
+		@NotNull
 		private final String value;
 
 		@NotNull

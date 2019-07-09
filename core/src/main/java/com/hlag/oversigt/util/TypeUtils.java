@@ -33,9 +33,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.Strings;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Binder;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -47,6 +57,45 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class TypeUtils {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
+
+	private TypeUtils() {
+		throw new UnsupportedOperationException();
+	}
+
+	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
+		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
+	}
+
+	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
+		return new StdSerializer<T>(clazz) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void serialize(@Nullable final T value,
+					@Nullable final JsonGenerator gen,
+					@SuppressWarnings("unused") @Nullable final SerializerProvider provider) throws IOException {
+				Objects.requireNonNull(gen).writeString(converter.apply(value));
+			}
+		};
+	}
+
+	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
+		return (json, type, context) -> converter.apply(json.getAsString());
+	}
+
+	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,
+			final ThrowingFunction<String, T> converter) {
+		return new StdDeserializer<T>(clazz) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public T deserialize(@Nullable final JsonParser p,
+					@SuppressWarnings("unused") @Nullable final DeserializationContext ctxt)
+					throws IOException, JsonProcessingException {
+				return converter.apply(Objects.requireNonNull(p).getValueAsString());
+			}
+		};
+	}
 
 	public static boolean isOfType(final Class<?> typeToCheck, final Class<?> typeToCheckAgainst) {
 		return typeToCheckAgainst.isAssignableFrom(typeToCheck)
@@ -425,10 +474,6 @@ public final class TypeUtils {
 
 	private static final Comparator<Method> CLASS_DEPTH_COMPARATOR
 			= (a, b) -> -Integer.compare(getClassDepth(a.getReturnType()), getClassDepth(b.getReturnType()));
-
-	private TypeUtils() {
-		throw new UnsupportedOperationException();
-	}
 
 	private static String getName(@Nullable final Method method) {
 		if (method == null) {

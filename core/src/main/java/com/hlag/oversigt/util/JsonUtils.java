@@ -2,7 +2,6 @@ package com.hlag.oversigt.util;
 
 import static com.hlag.oversigt.util.Utils.map;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -18,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -28,23 +26,14 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -52,41 +41,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 @Singleton
 public class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
-
-	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
-		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
-	}
-
-	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
-		return new StdSerializer<T>(clazz) {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void serialize(@Nullable final T value,
-					@Nullable final JsonGenerator gen,
-					@SuppressWarnings("unused") @Nullable final SerializerProvider provider) throws IOException {
-				Objects.requireNonNull(gen).writeString(converter.apply(value));
-			}
-		};
-	}
-
-	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
-		return (json, type, context) -> converter.apply(json.getAsString());
-	}
-
-	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,
-			final ThrowingFunction<String, T> converter) {
-		return new StdDeserializer<T>(clazz) {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public T deserialize(@Nullable final JsonParser p,
-					@SuppressWarnings("unused") @Nullable final DeserializationContext ctxt)
-					throws IOException, JsonProcessingException {
-				return converter.apply(Objects.requireNonNull(p).getValueAsString());
-			}
-		};
-	}
 
 	@Inject
 	private Gson gson;
@@ -164,11 +118,11 @@ public class JsonUtils {
 	}
 
 	public String toJsonSchema(final Class<?> clazz) {
-		return toJsonSchema(clazz, null);
+		return toJsonSchema(clazz, Optional.empty());
 	}
 
 	@SuppressWarnings("unchecked")
-	public String toJsonSchema(final Class<?> clazz, @Nullable final JsonHint hint) {
+	public String toJsonSchema(final Class<?> clazz, final Optional<JsonHint> hint) {
 		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
@@ -220,11 +174,11 @@ public class JsonUtils {
 				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", maps)));
 	}
 
-	private static Map<String, Object> toJsonSchemaFromType(final Type type, @Nullable final JsonHint hint) {
+	private static Map<String, Object> toJsonSchemaFromType(final Type type, final Optional<JsonHint> hint) {
 		if (type instanceof Class) {
-			JsonHint jsonHint = hint;
+			Optional<JsonHint> jsonHint = hint;
 			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
-				jsonHint = ((Class<?>) type).getAnnotation(JsonHint.class);
+				jsonHint = Optional.of(((Class<?>) type).getAnnotation(JsonHint.class));
 			}
 			return toJsonSchemaFromClass((Class<?>) type, jsonHint);
 		} else if (type instanceof ParameterizedType) {
@@ -241,28 +195,28 @@ public class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz, @Nullable final JsonHint hint) {
-		JsonHint jsonHint = hint;
+	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz, final Optional<JsonHint> hint) {
+		Optional<JsonHint> jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
 		} else if (clazz == boolean.class || clazz == Boolean.class) {
 			return map("type", "boolean");
 		} else if (clazz == int.class || clazz == Integer.class) {
-			return makeNumber(true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			return makeNumber(true, Optional.of(Integer.MIN_VALUE), Optional.of(Integer.MAX_VALUE));
 		} else if (clazz == long.class || clazz == Long.class) {
-			return makeNumber(true, Long.MIN_VALUE, Long.MAX_VALUE);
+			return makeNumber(true, Optional.of(Long.MIN_VALUE), Optional.of(Long.MAX_VALUE));
 		} else if (clazz == double.class || clazz == Double.class) {
-			return makeNumber(true, Double.MIN_VALUE, Double.MAX_VALUE);
+			return makeNumber(true, Optional.of(Double.MIN_VALUE), Optional.of(Double.MAX_VALUE));
 		} else if (clazz == float.class || clazz == Float.class) {
-			return makeNumber(true, Float.MIN_VALUE, Float.MAX_VALUE);
+			return makeNumber(true, Optional.of(Float.MIN_VALUE), Optional.of(Float.MAX_VALUE));
 		} else if (clazz == byte.class || clazz == Byte.class) {
-			return makeNumber(true, Byte.MIN_VALUE, Byte.MAX_VALUE);
+			return makeNumber(true, Optional.of(Byte.MIN_VALUE), Optional.of(Byte.MAX_VALUE));
 		} else if (clazz == short.class || clazz == Short.class) {
-			return makeNumber(true, Short.MIN_VALUE, Short.MAX_VALUE);
+			return makeNumber(true, Optional.of(Short.MIN_VALUE), Optional.of(Short.MAX_VALUE));
 		} else if (clazz == char.class || clazz == Character.class) {
-			return makeNumber(true, Character.MIN_VALUE, Character.MAX_VALUE);
+			return makeNumber(true, Optional.of(Character.MIN_VALUE), Optional.of(Character.MAX_VALUE));
 		} else if (clazz == BigDecimal.class) {
-			return makeNumber(false, null, null);
+			return makeNumber(false, Optional.empty(), Optional.empty());
 		} else if (Enum.class.isAssignableFrom(clazz)) {
 			final List<Map<String, Object>> abc = Arrays.stream(clazz.getEnumConstants())
 					.map(e -> map("value", ((Enum<?>) e).name(), "title", e.toString()))
@@ -282,17 +236,17 @@ public class JsonUtils {
 			final Map<String, Object> map = map("type",
 					"array",
 					"items",
-					toJsonSchemaFromType(componentType, null),
+					toJsonSchemaFromType(componentType, Optional.empty()),
 					"additionalItems",
 					false);
 			if (Set.class.isAssignableFrom(clazz)) {
 				map.put("unique", true);
 			}
 			if (componentType instanceof Class && ((Class<?>) componentType).isAnnotationPresent(JsonHint.class)) {
-				jsonHint = ((Class<?>) componentType).getAnnotation(JsonHint.class);
+				jsonHint = Optional.of(((Class<?>) componentType).getAnnotation(JsonHint.class));
 			}
-			if (jsonHint != null && jsonHint.arrayStyle().value() != null) {
-				map.put("format", jsonHint.arrayStyle().value());
+			if (jsonHint.isPresent() && jsonHint.get().arrayStyle().value().isPresent()) {
+				map.put("format", jsonHint.map(JsonHint::arrayStyle).flatMap(ArrayStyle::value).get());
 			} else {
 				final Map<String, Object> items = (Map<String, Object>) map.get("items");
 				if (items.containsKey("properties") && ((Map<?, ?>) items.get("properties")).size() <= 3) {
@@ -314,9 +268,9 @@ public class JsonUtils {
 					.collect(Collectors.toList());
 			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
 			for (final Field field : fields) {
-				JsonHint fieldHint = null;
+				Optional<JsonHint> fieldHint = Optional.empty();
 				if (field.isAnnotationPresent(JsonHint.class)) {
-					fieldHint = field.getAnnotation(JsonHint.class);
+					fieldHint = Optional.of(field.getAnnotation(JsonHint.class));
 				}
 				final Map<String, Object> map = JsonUtils.toJsonSchemaFromClass(field.getType(), fieldHint);
 				map.put("title", makeFirstCharacterCapital(field.getName()));
@@ -335,19 +289,17 @@ public class JsonUtils {
 					false);
 
 			if (clazz.isAnnotationPresent(JsonHint.class)) {
-				jsonHint = clazz.getAnnotation(JsonHint.class);
+				jsonHint = Optional.of(clazz.getAnnotation(JsonHint.class));
 			}
-			if (jsonHint != null) {
-				if (!Strings.isNullOrEmpty(jsonHint.headerTemplate())) {
-					map.put("headerTemplate", jsonHint.headerTemplate());
-				}
+			if (jsonHint.isPresent() && !Strings.isNullOrEmpty(jsonHint.get().headerTemplate())) {
+				map.put("headerTemplate", jsonHint.get().headerTemplate());
 			}
 			return map;
 		}
 	}
 
 	private static boolean isRequired(final Field field) {
-		if (field.isAnnotationPresent(Nullable.class)) {
+		if (field.isAnnotationPresent(javax.annotation.Nullable.class)) {
 			return false;
 		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {
 			return field.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class).required();
@@ -357,15 +309,11 @@ public class JsonUtils {
 	}
 
 	private static Map<String, Object> makeNumber(final boolean wholeNumbers,
-			@Nullable final Object min,
-			@Nullable final Object max) {
+			final Optional<Object> min,
+			final Optional<Object> max) {
 		final Map<String, Object> map = map("type", "number");
-		if (min != null) {
-			map.put("minimum", min);
-		}
-		if (max != null) {
-			map.put("maximum", max);
-		}
+		min.ifPresent(v -> map.put("minimum", v));
+		max.ifPresent(v -> map.put("maximum", v));
 		if (wholeNumbers) {
 			map.put("multipleOf", 1.0);
 		}

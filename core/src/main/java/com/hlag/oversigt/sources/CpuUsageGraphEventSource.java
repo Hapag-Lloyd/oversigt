@@ -127,6 +127,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	@JsonHint(headerTemplate = "{{ self.name }}", arrayStyle = ArrayStyle.TABS)
 	private static final class Server implements JsonBasedData {
+		@NotNull
 		private String name = "DisplayName";
 
 		@NotNull
