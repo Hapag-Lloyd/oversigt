@@ -64,7 +64,9 @@ import org.springframework.beans.BeanUtils;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -74,6 +76,7 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.JsonBasedData;
@@ -136,6 +139,9 @@ public class DashboardController {
 
 	@Inject
 	private SerializablePropertyController spController;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
 
 	// Dashboards
 	private final Map<String, Dashboard> dashboards = Collections.synchronizedMap(new HashMap<>());
@@ -440,7 +446,7 @@ public class DashboardController {
 			if (!hasStopped) {
 				stopInstance(origInstance.getId());
 			}
-			startInstance(origInstance.getId());
+			startInstance(origInstance.getId(), false);
 			reloadDashboardsWithEventSourceInstance(origInstance);
 		}
 	}
@@ -573,10 +579,10 @@ public class DashboardController {
 				.filter(i -> i.getDescriptor().getServiceClass().isPresent())
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
-				.forEach(this::startInstance);
+				.forEach(id -> startInstance(id, false));
 	}
 
-	public void startInstance(final String id) {
+	public void startInstance(final String id, final boolean automaticallyStarted) {
 		final EventSourceInstance instance = getEventSourceInstance(id);
 
 		if (!instance.isEnabled()) {
@@ -599,10 +605,23 @@ public class DashboardController {
 
 			if (service.isPresent()) {
 				// start service
-				LOGGER.info("Starting event source: " + id + " (" + instance.getName() + ")");
-				setService(instance, service.get());
+				LOGGER.info("Starting event source: "
+						+ id
+						+ " ("
+						+ instance.getName()
+						+ "). Automatically: "
+						+ automaticallyStarted);
+				// TODO better error handling for IllegalStateExceptions
 				service.get().startAsync();
 				service.get().awaitRunning();
+				setService(instance, service.get());
+				service.get().addListener(new Listener() {
+					@Override
+					public void stopping(@SuppressWarnings("unused") @Nullable final State from) {
+						unsetService(instance);
+					}
+				}, MoreExecutors.directExecutor());
+				statisticsManager.getEventSourceStatistics(id).setAutomaticallyStarted(automaticallyStarted);
 				LOGGER.info("Started event source: " + id + " (" + instance.getName() + ")");
 			} else {
 				throw new RuntimeException("Service could not be started."); // TODO
@@ -671,7 +690,7 @@ public class DashboardController {
 	public void restartInstance(final String id, final boolean wait) {
 		final ForkJoinTask<?> task = ForkJoinPool.commonPool().submit(() -> {
 			stopInstance(id);
-			startInstance(id);
+			startInstance(id, false);
 		});
 		if (wait) {
 			task.join();

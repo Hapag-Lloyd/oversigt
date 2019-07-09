@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
 
 /**
@@ -67,6 +68,10 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 		return collector.orElseThrow(() -> new RuntimeException("The statistics collector has not been created."));
 	}
 
+	private EventSourceStatistics getEventSourceStatistics() {
+		return statisticsManager.getEventSourceStatistics(getEventId());
+	}
+
 	/**
 	 * Executes one iteration of
 	 * {@link com.google.common.util.concurrent.AbstractScheduledService} Sends
@@ -112,7 +117,10 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 			removeLastEvent();
 
 			// count failures
-			if (numberOfFailedRuns.incrementAndGet() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
+			if (getEventSourceStatistics().isAutomticallyStarted()) {
+				logWarn(getLogger(), "Nightly restart resulted in error. Stopping again.");
+				stopAsync();
+			} else if (numberOfFailedRuns.get() > ALLOWED_NUMBER_OF_FAILED_CALLS) {
 				logWarn(getLogger(),
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
 						numberOfFailedRuns.get(),

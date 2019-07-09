@@ -6,10 +6,10 @@
 }
 
 .not-running {
-  text-decoration: line-through;
+  background-color: rgb(235,235,235);
 }
 
 .not-enabled {
-  background-color: rgb(235,235,235);
+  text-decoration: line-through;
 }
 

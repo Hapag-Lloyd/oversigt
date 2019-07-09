@@ -203,6 +203,14 @@ public final class Utils {
 				.intValue();
 	}
 
+	public static void sleep(final long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (final InterruptedException e) {
+			throw new RuntimeException("Cannot sleep anymore", e);
+		}
+	}
+
 	/**
 	 * Collector that allows parallelized calculation of a jobs hash code based upon
 	 * {@link Objects#hashCode()}.

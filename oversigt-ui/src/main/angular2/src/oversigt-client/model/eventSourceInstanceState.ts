@@ -12,12 +12,13 @@
 import { RunStatistic } from './runStatistic';
 
 
-export interface EventSourceInstanceState { 
+export interface EventSourceInstanceState {
     id?: string;
     serviceClass?: string;
     createdBy?: string;
     lastChangedBy?: string;
     running?: boolean;
+    automaticallyStarted?: boolean;
     statistics?: Array<RunStatistic>;
     lastSuccessfulRun?: RunStatistic;
     lastRun?: RunStatistic;

@@ -98,7 +98,7 @@ public class EventSourceStatusResource {
 					value = "Whether the event source instance shall be running or not") final boolean running) {
 		try {
 			if (running) {
-				controller.startInstance(instanceId);
+				controller.startInstance(instanceId, false);
 			} else {
 				controller.stopInstance(instanceId);
 			}
@@ -123,6 +123,7 @@ public class EventSourceStatusResource {
 					instance.getCreatedBy(),
 					instance.getLastChangeBy(),
 					controller.isRunning(instance),
+					stats.isAutomticallyStarted(),
 					stats.getLastRuns(),
 					stats.getLastRun(),
 					stats.getLastSuccessfulRun(),
@@ -140,6 +141,8 @@ public class EventSourceStatusResource {
 
 		private final boolean running;
 
+		private final boolean automaticallyStarted;
+
 		private final List<RunStatistic> statistics;
 
 		private final Optional<RunStatistic> lastRun;
@@ -153,6 +156,7 @@ public class EventSourceStatusResource {
 				final String createdBy,
 				final String lastChangedBy,
 				final boolean running,
+				final boolean automaticallyStarted,
 				final List<RunStatistic> statistics,
 				final Optional<RunStatistic> lastRun,
 				final Optional<RunStatistic> lastSuccessfulRun,
@@ -162,6 +166,7 @@ public class EventSourceStatusResource {
 			this.createdBy = createdBy;
 			this.lastChangedBy = lastChangedBy;
 			this.running = running;
+			this.automaticallyStarted = automaticallyStarted;
 			this.statistics = statistics;
 			this.lastRun = lastRun;
 			this.lastSuccessfulRun = lastSuccessfulRun;
@@ -186,6 +191,10 @@ public class EventSourceStatusResource {
 
 		public boolean isRunning() {
 			return running;
+		}
+
+		public boolean isAutomaticallyStarted() {
+			return automaticallyStarted;
 		}
 
 		public List<RunStatistic> getStatistics() {

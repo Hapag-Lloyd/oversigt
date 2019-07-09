@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +45,18 @@ public class EventSourceStatisticsManager {
 
 		private final List<RunStatistic> lastRuns = new ArrayList<>();
 
+		private final AtomicBoolean automticallyStarted = new AtomicBoolean(false);
+
 		private EventSourceStatistics() {
 			// hide constructor and nothing to initialize
+		}
+
+		public boolean isAutomticallyStarted() {
+			return automticallyStarted.get();
+		}
+
+		public void setAutomaticallyStarted(final boolean automaticallyStarted) {
+			automticallyStarted.set(automaticallyStarted);
 		}
 
 		public synchronized Optional<RunStatistic> getLastFailedRun() {
@@ -88,6 +99,8 @@ public class EventSourceStatisticsManager {
 
 		private final boolean success;
 
+		private final boolean automaticallyStarted;
+
 		private final Optional<String> message;
 
 		private final Optional<Throwable> throwable;
@@ -97,12 +110,14 @@ public class EventSourceStatisticsManager {
 		private RunStatistic(final ZonedDateTime startTime,
 				final Duration duration,
 				final boolean success,
+				final boolean automaticallyStarted,
 				final Optional<String> message,
 				final Optional<Throwable> throwable,
 				final List<Action> actions) {
 			this.startTime = startTime;
 			this.duration = duration;
 			this.success = success;
+			this.automaticallyStarted = automaticallyStarted;
 			this.message = message;
 			this.throwable = throwable;
 			this.actions = Collections.unmodifiableList(actions);
@@ -131,6 +146,10 @@ public class EventSourceStatisticsManager {
 
 		public boolean isSuccess() {
 			return success;
+		}
+
+		public boolean isAutomaticallyStarted() {
+			return automaticallyStarted;
 		}
 
 		public List<Action> getActions() {
@@ -173,12 +192,15 @@ public class EventSourceStatisticsManager {
 	public static final class StatisticsCollector {
 		private final EventSourceStatistics eventSourceStatistics;
 
+		private final boolean automaticallyStarted;
+
 		private final ZonedDateTime startTime;
 
 		private final List<Action> actions = new ArrayList<>();
 
 		private StatisticsCollector(final EventSourceStatistics eventSourceStatistics) {
 			this.eventSourceStatistics = eventSourceStatistics;
+			automaticallyStarted = eventSourceStatistics.isAutomticallyStarted();
 			startTime = ZonedDateTime.now();
 		}
 
@@ -210,7 +232,8 @@ public class EventSourceStatisticsManager {
 				final Optional<String> message,
 				final Optional<Throwable> throwable) {
 			final Duration duration = Duration.between(startTime, ZonedDateTime.now());
-			final RunStatistic stats = new RunStatistic(startTime, duration, success, message, throwable, actions);
+			final RunStatistic stats
+					= new RunStatistic(startTime, duration, success, automaticallyStarted, message, throwable, actions);
 			eventSourceStatistics.addExecution(stats);
 			LOGGER.info(String.format("Execution duration: %s %s",
 					Utils.formatDuration(stats.getDuration()),
