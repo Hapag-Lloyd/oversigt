@@ -21,6 +21,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -60,7 +61,6 @@ import com.hlag.oversigt.web.api.NoChangeLog;
 import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
 import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -86,11 +86,11 @@ public class EventSourceInstanceResource {
 	@Inject
 	private EventSourceStatisticsManager statisticsManager;
 
-	@Nullable
+	@edu.umd.cs.findbugs.annotations.Nullable
 	@Context
 	private UriInfo injectedUriInfo;
 
-	@Nullable
+	@edu.umd.cs.findbugs.annotations.Nullable
 	@Context
 	private SecurityContext injectedSecurityContext;
 
