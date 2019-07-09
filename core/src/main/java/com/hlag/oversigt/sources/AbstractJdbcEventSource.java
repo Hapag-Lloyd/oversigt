@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -134,21 +135,28 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	protected abstract Optional<T> produceEventFromData();
 
-	public <X> List<X> readFromDatabase(final Connection connection,
+	protected <X> List<X> readFromDatabase(final Connection connection,
 			final ResultSetFunction<X> readOneLine,
 			final String sql,
 			final Object... parameters) throws SQLException {
+		return readFromDatabase(connection, readOneLine, Optional.of(getStatisticsCollector()), sql, parameters);
+	}
 
+	public static <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final Optional<StatisticsCollector> statisticsCollector, // TODO this parameter needs to be required
+			final String sql,
+			final Object... parameters) throws SQLException {
 		final long time = System.currentTimeMillis();
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
 			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			final StartedAction action = getStatisticsCollector().startAction("SQL-Query", sql);
+			final Optional<StartedAction> action = statisticsCollector.map(c -> c.startAction("SQL-Query", sql));
 			try {
 				return readFromDatabase(stmt, readOneLine);
 			} finally {
-				action.done();
+				action.ifPresent(StartedAction::done);
 			}
 		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
