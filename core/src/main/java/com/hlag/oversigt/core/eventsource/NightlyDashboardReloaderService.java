@@ -1,15 +1,11 @@
 package com.hlag.oversigt.core.eventsource;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -24,7 +20,7 @@ import com.hlag.oversigt.sources.event.ReloadEvent;
  * @author neumaol
  */
 @Singleton
-public class NightlyDashboardReloaderService extends AbstractScheduledService {
+public class NightlyDashboardReloaderService extends NightlyService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(NightlyDashboardReloaderService.class);
 
 	public static String getEventId() {
@@ -61,16 +57,6 @@ public class NightlyDashboardReloaderService extends AbstractScheduledService {
 	private void sendEvent(final OversigtEvent event) {
 		event.setId(getEventId());
 		eventBus.post(event);
-	}
-
-	@Override
-	protected final Scheduler scheduler() {
-		final LocalDateTime tomorrowMidnight
-				= LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).plusDays(1);
-		final Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();
-		return Scheduler.newFixedDelaySchedule(durationUntilMidnight.getSeconds(),
-				Duration.ofDays(1).getSeconds(),
-				TimeUnit.SECONDS);
 	}
 
 	@Override

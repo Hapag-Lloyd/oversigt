@@ -2,15 +2,11 @@ package com.hlag.oversigt.core.eventsource;
 
 import static com.hlag.oversigt.util.Utils.not;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.util.Utils;
 
 /**
  * Service restarting erroneous event sources once a day.
@@ -18,7 +14,7 @@ import com.hlag.oversigt.model.EventSourceInstance;
  * @author neumaol
  */
 @Singleton
-public class NightlyEventSourceRestarterService extends AbstractScheduledService {
+public class NightlyEventSourceRestarterService extends NightlyService {
 	@Inject
 	private DashboardController dashboardController;
 
@@ -38,17 +34,8 @@ public class NightlyEventSourceRestarterService extends AbstractScheduledService
 				.filter(not(dashboardController::isRunning))
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
+				.peek(x -> Utils.sleep((long) (10000 * Math.random())))
 				.forEach(id -> dashboardController.startInstance(id, true));
-	}
-
-	@Override
-	protected final Scheduler scheduler() {
-		final LocalDateTime tomorrowMidnight
-				= LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).plusDays(1);
-		final Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();
-		return Scheduler.newFixedDelaySchedule(durationUntilMidnight.getSeconds(),
-				Duration.ofDays(1).getSeconds(),
-				TimeUnit.SECONDS);
 	}
 
 	@Override

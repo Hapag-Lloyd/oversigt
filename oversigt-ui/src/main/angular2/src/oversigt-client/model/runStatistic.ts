@@ -12,10 +12,11 @@
 import { Action } from './action';
 
 
-export interface RunStatistic { 
+export interface RunStatistic {
     startTime?: Date;
     duration?: string;
     success?: boolean;
+    automaticallyStarted?: boolean;
     message?: string;
     actions?: Array<Action>;
     throwableStackTrace?: string;
