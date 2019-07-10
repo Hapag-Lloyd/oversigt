@@ -67,8 +67,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.Builder;
-import lombok.Getter;
 
 @Api(tags = { "Dashboard" })
 @Path("/dashboards")
@@ -107,7 +105,7 @@ public class DashboardResource {
 				.stream()
 				.map(dashboardController::getDashboard)
 				.map(Optional::get)
-				.map(DashboardInfo::fromDashboard)
+				.map(DashboardInfo::new)
 				.collect(toList())).build();
 	}
 
@@ -377,15 +375,18 @@ public class DashboardResource {
 		return ok().build();
 	}
 
-	@Getter
-	@Builder
 	public static class DashboardInfo {
-		public static DashboardInfo fromDashboard(final Dashboard dashboard) {
-			return builder().id(dashboard.getId()).title(dashboard.getTitle()).build();
+		public DashboardInfo(final Dashboard dashboard) {
+			this(dashboard.getId(), dashboard.getTitle(), dashboard.isEnabled());
 		}
 
-		public static DashboardInfo fromDashboard(final Optional<Dashboard> dashboard) {
-			return fromDashboard(dashboard.get());
+		public DashboardInfo(@NotNull @NotEmpty @NotBlank final String id,
+				@NotNull @NotEmpty @NotBlank final String title,
+				@NotNull final boolean enabled) {
+			super();
+			this.id = id;
+			this.title = title;
+			this.enabled = enabled;
 		}
 
 		@NotNull
@@ -397,6 +398,28 @@ public class DashboardResource {
 		@NotEmpty
 		@NotBlank
 		private String title;
+
+		@NotNull
+		private boolean enabled;
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		public String getId() {
+			return id;
+		}
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		public String getTitle() {
+			return title;
+		}
+
+		@NotNull
+		public boolean isEnabled() {
+			return enabled;
+		}
 	}
 
 	public static class WidgetPosition {
