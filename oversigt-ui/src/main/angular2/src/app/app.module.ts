@@ -43,7 +43,8 @@ import { AuthGuard } from './guards/auth.guard';
 import { PrettyPrintPipe } from './pipes/prettyprint.pipe';
 import { FilterEventitemPipe } from './pipes/filter-eventitem.pipe';
 import { FilterForRolePipe } from './pipes/filter-for-role.pipe';
-import { HasRoleDirective } from './directives/role-based.directive';
+import { HasRoleDirective } from './directives/hasRole.directive';
+import { NotHasRoleDirective } from "./directives/notHasRole.directive";
 
 const appRoutes: Routes = [
   { path: 'login',                            component: LoginComponent, },
@@ -117,6 +118,7 @@ export function initializeApiConfiguration(): Configuration {
     ConfigDashboardWidgetAddComponent,
     ConfigListChildcomponentsComponent,
     HasRoleDirective,
+    NotHasRoleDirective,
     ConfigServerConfigurationComponent,
     ConfigDashboardsCreateComponent,
   ],

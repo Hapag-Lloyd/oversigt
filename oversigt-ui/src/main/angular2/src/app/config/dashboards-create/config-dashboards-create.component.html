@@ -1,32 +1,51 @@
-<app-header [title]="dashboardId"></app-header>
+<app-header [title]="'Create dashboard: ' + dashboardId"></app-header>
 
-<div class="clr-row">
-  <div class="clr-col-12 clr-col-sm-12 clr-col-md-8 clr-col-lg-6 clr-col-xl-5 info">
-    <div class="card">
-      <div class="card-header">
-          Create Dashboard {{dashboardId}} here
+<div class="card">
+  <div class="card-header">
+    Dashboard <span *ngIf="dashboard === null" class="label">{{dashboardId}}</span><span
+      *ngIf="dashboard !== null">"{{dashboard.title}}"</span> <span *ngIf="dashboard === null">does not exist</span>
+    <span *ngIf="dashboard !== null">is not enabled</span>
+  </div>
+  <div *ngIf="dashboard === null" class="card-block">
+    <div>
+      The dashboard with ID <span class="label">{{dashboardId}}</span> doesn't exist yet. That's why you see this page.
+      <div> *appHasRole="'server.admin'">
+        You may create it right now.
       </div>
-      <div class="card-block">
-        some block
-      </div>
-    </div>
-    <div *appHasRole="'server.admin'" class="card">
-      <div class="card-header">
-          Dashboard Rights
-      </div>
-      <div class="card-block">
-        another block
+      <div *appNotHasRole="'server.admin'">
+        You may request this dashboard right here.
       </div>
     </div>
   </div>
-  <div class="clr-col-12 clr-col-sm-12 clr-col-md-12 clr-col-lg-9 clr-col-xl-7 info">
-    <div class="card">
-      <div class="card-header">
-          Widgets
+  <div *ngIf="dashboard === null" class="card-block">
+    <button *appHasRole="'server.admin'" [clrLoading]="creatingDashboardState" (click)="createDashboard()"
+      class="btn btn-primary">Create dashboard</button>
+    <button *appNotHasRole="'server.admin'" [clrLoading]="requestingDashboardState" (click)="requestDashboard()"
+      class="btn btn-primary">Request dashboard</button>
+  </div>
+
+  <div *ngIf="dashboard !== null" class="card-block">
+    <div *ngIf="dashboard !== null && !dashboard.enabled">
+      The dashboard with ID <span class="label">{{dashboardId}}</span> exists but it is not enabled yet. A server administrator should have a look at this dashboard to enable it.
+      <div *ngIf="dashboard.owners.length === 0">
+        The dashboard has no owner. Please contact a server administrator if you want to have access to this
+        dashboard.
       </div>
-      <div class="card-block">
-        another block
+      <div *ngIf="dashboard.owners.length === 1">
+        The owner of this dashboard is <span class="label">{{dashboard.owners[0] | lowercase}}</span>.
+      </div>
+      <div *ngIf="dashboard.owners.length > 1">
+        The owners of this dashboard are:
+        <ul>
+          <li *ngFor="let owner of dashboard.owners"><span class="label">{{owner | lowercase}}</span></li>
+        </ul>
       </div>
     </div>
   </div>
+  <ng-container *appHasRole="'server.admin'">
+    <div *ngIf="dashboard !== null" class="card-block">
+      <button [clrLoading]="enablingDashboardState" (click)="enableDashboard()"
+        class="btn btn-success">Enable dashboard</button>
+    </div>
+  </ng-container>
 </div>
