@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ComponentRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ComponentRef } from '@angular/core';
 import { DashboardService, Dashboard, DashboardWidgetService, SystemService, WidgetShortInfo } from 'src/oversigt-client';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { DashboardService } from 'src/oversigt-client';
 
 @Component({
   selector: 'app-config-dashboards-create',
@@ -14,6 +15,7 @@ export class ConfigDashboardsCreateComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private dashboardService: DashboardService,
   ) { }
 
   ngOnInit() {
