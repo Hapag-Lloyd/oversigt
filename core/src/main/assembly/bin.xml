@@ -2,31 +2,51 @@
 	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
-
 	<id>bin</id>
 	<baseDirectory>/</baseDirectory>
+
 	<formats>
 		<format>zip</format>
-		<!-- <format>tar</format> -->
 	</formats>
+
 	<fileSets>
-		<!-- Add application binaries to ZIP file -->
+		<!-- Folder for Addons -->
+		<fileSet>
+			<directory>${project.basedir}/addons</directory>
+			<outputDirectory>addons</outputDirectory>
+			<includes>
+				<include>README.md</include>
+			</includes>
+		</fileSet>
+
+		<!-- Core JAR -->
 		<fileSet>
 			<directory>${project.build.directory}</directory>
 			<outputDirectory>bin</outputDirectory>
 			<includes>
-				<include>*application.jar</include>
+				<include>oversigt-core-*-application.jar</include>
 			</includes>
 		</fileSet>
-		<!-- Add dependencies to ZIP file -->
+
+		<!-- Folder for User Data -->
+		<fileSet>
+			<directory>${project.basedir}/data</directory>
+			<outputDirectory>data</outputDirectory>
+			<includes>
+				<include>README.md</include>
+			</includes>
+		</fileSet>
+
+		<!-- Core Dependencies -->
 		<fileSet>
 			<directory>${project.build.directory}/dependency</directory>
 			<outputDirectory>lib</outputDirectory>
 			<includes>
-				<include>*.jar</include>
+				<include>README.jar</include>
 			</includes>
 		</fileSet>
-		<!-- Add classpath list to dependencies -->
+
+		<!-- Core Classpath -->
 		<fileSet>
 			<directory>${project.build.directory}</directory>
 			<outputDirectory>lib</outputDirectory>
@@ -34,23 +54,32 @@
 				<include>classpath</include>
 			</includes>
 		</fileSet>
-		<!-- Put a launcher to the ZIP file so everybody can start the application -->
+
+		<!-- Folder for Custom Libraries -->
 		<fileSet>
-			<directory>${project.build.directory}</directory>
-			<outputDirectory></outputDirectory>
+			<directory>${project.basedir}/lib-user</directory>
+			<outputDirectory>lib-user</outputDirectory>
 			<includes>
-				<include>*launcher.jar</include>
+				<include>README.md</include>
 			</includes>
 		</fileSet>
+
+		<!-- Folder for Logs -->
 		<fileSet>
-			<directory>${project.basedir}/src/launcher/resources</directory>
-			<outputDirectory></outputDirectory>
+			<directory>${project.basedir}/log</directory>
+			<outputDirectory>log</outputDirectory>
 			<includes>
-				<include>start.sh</include>
-				<include>stop.sh</include>
+				<include>README.md</include>
 			</includes>
 		</fileSet>
-		<!-- Add a simple starter -->
+
+		<!-- Folder for Resources -->
+		<fileSet>
+			<directory>${project.basedir}/src/main/resources</directory>
+			<outputDirectory>res</outputDirectory>
+		</fileSet>
+
+		<!-- Launch scripts -->
 		<fileSet>
 			<directory>${project.basedir}/src/main/starter</directory>
 			<outputDirectory></outputDirectory>
@@ -58,43 +87,6 @@
 				<include>run.bat</include>
 				<include>run.sh</include>
 			</includes>
-		</fileSet>
-		<!-- Add all needed resources -->
-		<fileSet>
-			<directory>${project.basedir}/src/main/resources</directory>
-			<outputDirectory>res</outputDirectory>
-		</fileSet>
-		<!-- Prepare a directory for user data -->
-		<fileSet>
-			<directory>.</directory>
-			<outputDirectory>data</outputDirectory>
-			<excludes>
-				<exclude>*/**</exclude>
-			</excludes>
-		</fileSet>
-		<!-- Prepare a directory for user JARs -->
-		<fileSet>
-			<directory>${project.basedir}/lib-user</directory>
-			<outputDirectory>lib-user</outputDirectory>
-			<includes>
-				<include>*.md</include>
-			</includes>
-		</fileSet>
-		<!-- Create an empty directory for addons -->
-		<fileSet>
-			<directory>${project.basedir}/addons</directory>
-			<outputDirectory>addons</outputDirectory>
-			<includes>
-				<include>*.md</include>
-			</includes>
-		</fileSet>
-		<!-- Prepare a directory for log files -->
-		<fileSet>
-			<directory>.</directory>
-			<outputDirectory>log</outputDirectory>
-			<excludes>
-				<exclude>*/**</exclude>
-			</excludes>
 		</fileSet>
 	</fileSets>
 </assembly>
