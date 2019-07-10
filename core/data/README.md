@@ -1,3 +1,2 @@
-# data
-
+# Oversigt Data
 This folder contains persisted data.
