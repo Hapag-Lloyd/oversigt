@@ -109,12 +109,9 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 				.plusDays(1)
 				.atStartOfDay(getZoneId());
 		final List<Appointment> appointments;
-		final StartedAction action
-				= getStatisticsCollector().startAction("Exchange read appointments", from + " - " + until);
-		try {
+		try (StartedAction action
+				= getStatisticsCollector().startAction("Exchange read appointments", from + " - " + until)) {
 			appointments = getExchangeClient().loadAppointments(from, until);
-		} finally {
-			action.done();
 		}
 		for (final Appointment appointment : appointments) {
 			addAppointment(event, appointment);
