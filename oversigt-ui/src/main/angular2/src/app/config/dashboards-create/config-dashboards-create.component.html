@@ -18,9 +18,9 @@
     </div>
   </div>
   <div *ngIf="dashboard === null" class="card-block">
-    <button *appHasRole="'server.admin'" [clrLoading]="creatingDashboardState" (click)="createDashboard()"
+    <button *appHasRole="'server.admin'" [clrLoading]="creatingDashboardState" (click)="createDashboard(true)"
       class="btn btn-primary">Create dashboard</button>
-    <button *appNotHasRole="'server.admin'" [clrLoading]="requestingDashboardState" (click)="requestDashboard()"
+    <button *appNotHasRole="'server.admin'" [clrLoading]="creatingDashboardState" (click)="createDashboard(false)"
       class="btn btn-primary">Request dashboard</button>
   </div>
 

@@ -5,6 +5,7 @@ import { DashboardService, Dashboard } from 'src/oversigt-client';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { getLinkForDashboard } from 'src/app/app.component';
 import { ClrLoadingState } from '@clr/angular';
+import { UserService } from 'src/app/services/user-service.service';
 
 @Component({
   selector: 'app-config-dashboards-create',
@@ -18,7 +19,6 @@ export class ConfigDashboardsCreateComponent implements OnInit {
   dashboard: Dashboard = null;
 
   creatingDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
-  requestingDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
   enablingDashboardState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   constructor(
@@ -26,6 +26,7 @@ export class ConfigDashboardsCreateComponent implements OnInit {
     private router: Router,
     private dashboardService: DashboardService,
     private errorHandlerService: ErrorHandlerService,
+    private userService: UserService,
   ) { }
 
   ngOnInit() {
@@ -55,15 +56,29 @@ export class ConfigDashboardsCreateComponent implements OnInit {
     );
   }
 
-  createDashboard(): void {
-    // nothing
-  }
-
-  requestDashboard(): void {
-    // nothing
+  createDashboard(enabled: boolean): void {
+    this.creatingDashboardState = ClrLoadingState.LOADING;
+    this.dashboardService.createDashboard(this.dashboardId, this.userService.getUserId(), enabled).subscribe(
+      ok => {
+        this.creatingDashboardState = ClrLoadingState.SUCCESS;
+        this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
+      },
+      this.errorHandlerService.createErrorHandler('Creating dashboard', () => {
+        this.creatingDashboardState = ClrLoadingState.ERROR;
+      })
+    );
   }
 
   enableDashboard(): void {
-    // nothing
+    this.enablingDashboardState = ClrLoadingState.LOADING;
+    this.dashboardService.updateDashboardPartially(this.dashboardId, {enabled: true}).subscribe(
+      ok => {
+        this.enablingDashboardState = ClrLoadingState.SUCCESS;
+        this.router.navigateByUrl(getLinkForDashboard(this.dashboardId));
+      },
+      this.errorHandlerService.createErrorHandler('Updating dashboard', () => {
+        this.enablingDashboardState = ClrLoadingState.ERROR;
+      })
+    );
   }
 }

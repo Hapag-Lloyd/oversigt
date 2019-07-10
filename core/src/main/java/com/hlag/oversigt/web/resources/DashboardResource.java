@@ -141,6 +141,8 @@ public class DashboardResource {
 				.entity(createdDashboard.get())
 				.type(MediaType.APPLICATION_JSON_TYPE)
 				.build();
+
+		// TODO write a mail to server admins if the dashboard needs to be enabled
 	}
 
 	@GET
