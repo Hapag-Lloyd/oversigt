@@ -618,7 +618,11 @@ public class DashboardController {
 				service.get().addListener(new Listener() {
 					@Override
 					public void stopping(@SuppressWarnings("unused") @Nullable final State from) {
-						unsetService(instance);
+						if (service.get() instanceof ScheduledEventSource) {
+							if (((ScheduledEventSource<?>) service.get()).isStoppedBecauseOfError()) {
+								unsetService(instance);
+							}
+						}
 					}
 				}, MoreExecutors.directExecutor());
 				statisticsManager.getEventSourceStatistics(id).setAutomaticallyStarted(automaticallyStarted);

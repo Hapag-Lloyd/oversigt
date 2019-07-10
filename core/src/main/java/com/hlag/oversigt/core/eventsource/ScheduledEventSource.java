@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -58,6 +59,12 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 
 	private final AtomicInteger numberOfFailedRuns = new AtomicInteger(0);
 
+	private final AtomicBoolean stoppedBecauseOfError = new AtomicBoolean(false);
+
+	public boolean isStoppedBecauseOfError() {
+		return stoppedBecauseOfError.get();
+	}
+
 	protected String getEventId() {
 		return eventId;
 	}
@@ -80,6 +87,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	@Override
 	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected final void runOneIteration() {
+		stoppedBecauseOfError.set(false);
 		logTrace(getLogger(), "Run one iteration");
 
 		try {
@@ -125,9 +133,11 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 						"Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.",
 						numberOfFailedRuns.get(),
 						ALLOWED_NUMBER_OF_FAILED_CALLS);
+				stoppedBecauseOfError.set(true);
 				stopAsync();
 			} else if (!(e instanceof Exception)) /* Throwable is some kind of Error or similar - stop immediately */ {
 				logError(getLogger(), "Error occurred. Stopping service immediately.");
+				stoppedBecauseOfError.set(true);
 				stopAsync();
 			}
 		}

@@ -113,11 +113,6 @@
 			<version>1.0.0.Final</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jboss.spec.javax.servlet</groupId>
-			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
-			<version>1.0.0.Final</version>
-		</dependency>
-		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
 			<version>${undertow.version}</version>
@@ -409,7 +404,7 @@
 		<dependency>
 			<groupId>org.jboss.xnio</groupId>
 			<artifactId>xnio-api</artifactId>
-			<version>3.7.2.Final</version>
+			<version>3.3.8.Final</version>
 		</dependency>
 	</dependencies>
 

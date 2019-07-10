@@ -100,12 +100,9 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	@Override
 	protected Optional<HlBarChartEvent> produceExchangeEvent() throws Exception {
-		final StartedAction action = getStatisticsCollector().startAction("Exchange read mails", getFolderName());
 		final List<Mail> mails;
-		try {
+		try (StartedAction action = getStatisticsCollector().startAction("Exchange read mails", getFolderName())) {
 			mails = getExchangeClient().loadMails(getFolderName());
-		} finally {
-			action.done();
 		}
 		return Optional.of(createEvent(mails));
 	}

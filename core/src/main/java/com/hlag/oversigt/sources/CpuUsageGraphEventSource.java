@@ -71,8 +71,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	private int getCpuUsage(final Server server) {
 		final int usage;
-		final StartedAction action = getStatisticsCollector().startAction("Retreive CPU usage", server.hostname);
-		try {
+		try (StartedAction action = getStatisticsCollector().startAction("Retreive CPU usage", server.hostname)) {
 			switch (server.operatingSystem) {
 			case Linux:
 			case Aix:
@@ -84,8 +83,6 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 			default:
 				throw new RuntimeException("Unknown operating system: " + server.operatingSystem.name());
 			}
-		} finally {
-			action.done();
 		}
 		Utils.logInfo(getSpecialLogger(), "%s: %s", server.hostname, usage);
 		return usage;

@@ -77,11 +77,8 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		final List<Issue> issues;
 		try {
 			final JiraClient client = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials());
-			final StartedAction action = getStatisticsCollector().startAction("JIRA query", getQuery());
-			try {
+			try (StartedAction action = getStatisticsCollector().startAction("JIRA query", getQuery())) {
 				issues = client.search(getQuery());
-			} finally {
-				action.done();
 			}
 		} catch (final JiraClientException | TimeoutException e) {
 			return handleException(e);

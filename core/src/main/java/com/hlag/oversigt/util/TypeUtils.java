@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -214,7 +215,22 @@ public final class TypeUtils {
 				.map(Field::getName);
 	}
 
+	/**
+	 * Inspects the given value and returns a {@link Map} containing all members
+	 * with their values. If the given object is an {@link Optional} it will be
+	 * unwrapped - if the {@link Optional} is empty an empty {@link Map} will be
+	 * returned.
+	 *
+	 * @param object the object to inspect
+	 * @return a map containing all members of the given object
+	 */
 	public static Map<String, Object> toMemberMap(final Object object) {
+		if (object instanceof Optional) {
+			if (!((Optional<?>) object).isPresent()) {
+				return new HashMap<>();
+			}
+			return toMemberMap(((Optional<?>) object).get());
+		}
 		try {
 			return Stream.of(Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors())
 					.filter(i -> i.getReadMethod() != null)
