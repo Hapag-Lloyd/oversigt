@@ -240,7 +240,7 @@ public class EventSourceStatisticsManager {
 					stats.getActions()));
 		}
 
-		public final class StartedAction {
+		public final class StartedAction implements AutoCloseable {
 			private final long actionStartTime;
 
 			private final String name;
@@ -256,6 +256,11 @@ public class EventSourceStatisticsManager {
 			public void done() {
 				final long actionEndTime = System.currentTimeMillis();
 				addAction(name, detail, Duration.ofMillis(actionEndTime - actionStartTime));
+			}
+
+			@Override
+			public void close() {
+				done();
 			}
 		}
 	}
