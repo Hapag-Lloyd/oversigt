@@ -433,7 +433,7 @@ public class OversigtServer extends AbstractIdleService {
 		// check if dashboard is present and enabled
 		final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
 		if (!dashboard.isPresent() || !dashboard.get().isEnabled()) {
-			redirect(exchange, "/" + dashboardId + "/create", false, true);
+			redirect(exchange, "/config/dashboards/create/" + dashboardId, false, true);
 			return;
 		}
 

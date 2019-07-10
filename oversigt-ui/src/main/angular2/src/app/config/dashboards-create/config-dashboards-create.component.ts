@@ -20,6 +20,7 @@ export class ConfigDashboardsCreateComponent implements OnInit {
     this.subscriptions.push(this.route.url.subscribe(_ => {
       this.initComponent();
     }));
+    this.initComponent();
   }
 
   private initComponent(): void {
