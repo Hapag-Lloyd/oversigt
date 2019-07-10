@@ -160,14 +160,13 @@ public class DashboardResource {
 	@NoChangeLog
 	@PermitAll
 	public Response readDashboard(@Context final SecurityContext secu, @PathParam("dashboardId") final String id) {
-		final Optional<Map<String, Object>> dashboard
-				= Optional.ofNullable(dashboardController.getDashboard(id)).map(TypeUtils::toMemberMap);
+		final Optional<Dashboard> dashboard = dashboardController.getDashboard(id);
 		if (!dashboard.isPresent()) {
 			return notFound("A dashboard with id '" + id + "' does not exist.");
 		}
 
-		final Map<String, Object> dashboardMap
-				= dashboard.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
+		final Map<String, Object> dashboardMap = dashboard.map(TypeUtils::toMemberMap)
+				.orElseThrow(() -> new RuntimeException("The dashboard is not present."));
 		if (secu.getUserPrincipal() == null) {
 			dashboardMap.remove("owner");
 			dashboardMap.remove("editors");
