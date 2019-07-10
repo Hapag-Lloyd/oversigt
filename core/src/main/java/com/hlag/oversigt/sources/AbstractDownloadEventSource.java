@@ -221,17 +221,15 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	private <R> R read(final URLConnection inputConnection,
 			final ThrowingBiFunction<URLConnection, InputStream, R> inputStreamConsumer) throws IOException {
-		final StartedAction action
-				= getStatisticsCollector().startAction("Download", inputConnection.getURL().toExternalForm());
 		final URLConnection connectionToRead = handleRedirects(inputConnection);
-		try (InputStream in = connectionToRead.getInputStream()) {
+		try (StartedAction action
+				= getStatisticsCollector().startAction("Download", inputConnection.getURL().toExternalForm());
+				InputStream in = connectionToRead.getInputStream()) {
 			return inputStreamConsumer.apply(connectionToRead, in);
 		} catch (final IOException e) {
 			throw e;
 		} catch (final Exception e) {
 			throw new RuntimeException("Error while reading data from connection.", e);
-		} finally {
-			action.done();
 		}
 	}
 
