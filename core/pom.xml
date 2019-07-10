@@ -400,12 +400,6 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.xnio</groupId>
-			<artifactId>xnio-api</artifactId>
-			<version>3.3.8.Final</version>
-		</dependency>
 	</dependencies>
 
 	<repositories>
@@ -448,6 +442,10 @@
 						<!-- analyze-only -->
 						<id>default</id>
 						<configuration>
+							<ignoredUsedUndeclaredDependencies>
+								<!-- OversigtServer: io.undertow.server.HttpServerExchange#getConnection() -->
+								<ignoredUsedUndeclaredDependency>org.jboss.xnio:xnio-api:jar:</ignoredUsedUndeclaredDependency>
+							</ignoredUsedUndeclaredDependencies>
 							<usedDependencies>
 								<!-- REST API -->
 								<usedDependency>javax.el:javax.el-api</usedDependency>
