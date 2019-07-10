@@ -45,12 +45,9 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	protected Optional<RoomAvailabilityListEvent> produceExchangeEvent() throws Exception {
 		final ZonedDateTime now = ZonedDateTime.now(getZoneId());
 		final Map<Room, List<Meeting>> meetings;
-		final StartedAction action = getStatisticsCollector().startAction("Exchange read meetings",
-				Arrays.asList(getRooms()).stream().map(Object::toString).collect(joining(", ")));
-		try {
+		try (StartedAction action = getStatisticsCollector().startAction("Exchange read meetings",
+				Arrays.asList(getRooms()).stream().map(Object::toString).collect(joining(", ")))) {
 			meetings = getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());
-		} finally {
-			action.done();
 		}
 
 		final List<RoomAvailabilityItem> unsortedItems = meetings.entrySet()

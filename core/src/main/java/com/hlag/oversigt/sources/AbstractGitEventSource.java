@@ -101,11 +101,8 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 	}
 
 	private synchronized Stream<RevCommit> streamLog() throws GitAPIException, IOException {
-		final StartedAction action = getStatisticsCollector().startAction("GIT fetch", getRepositoryUrl());
-		try {
+		try (StartedAction action = getStatisticsCollector().startAction("GIT fetch", getRepositoryUrl())) {
 			fetch();
-		} finally {
-			action.done();
 		}
 		return StreamSupport.stream(getGit().log().all().call().spliterator(), true)
 				.filter(isCommitAfter(getEarliestPointToTakeIntoAccount()));

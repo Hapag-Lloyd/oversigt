@@ -41,11 +41,8 @@ public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoCol
 	@Override
 	protected Optional<TwoColumnListEvent<String>> produceExchangeEvent() throws Exception {
 		final List<Task> tasks;
-		final StartedAction action = getStatisticsCollector().startAction("Exchange read tasks", "");
-		try {
+		try (StartedAction action = getStatisticsCollector().startAction("Exchange read tasks", "")) {
 			tasks = getExchangeClient().loadTasks();
-		} finally {
-			action.done();
 		}
 		final TwoColumnListEvent<String> event = createEvent(tasks);
 		return Optional.of(event);
