@@ -4,10 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ClrLoadingState } from '@clr/angular';
-import { getLinkForDashboards } from 'src/app/app.component';
+import { getLinkForDashboards, getLinkForDashboardCreation } from 'src/app/app.component';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ConfigDashboardWidgetComponent } from '../dashboards-widget/config-dashboards-widget.component';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
+import { UserService } from 'src/app/services/user-service.service';
 
 @Component({
   selector: 'app-config-dashboards-edit',
@@ -48,6 +49,7 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
     private systemService: SystemService,
     private notification: NotificationService,
     private errorHandler: ErrorHandlerService,
+    private userService: UserService,
   ) {
     const isUserIdValid = (control: FormControl) => {
       return new Promise(resolve => {
@@ -116,6 +118,10 @@ export class ConfigDashboardsEditComponent implements OnInit, OnDestroy {
   }
 
   private setDashboard(dashboard: Dashboard, updateOwnersAndEditors: boolean): void {
+    if (!this.userService.hasRole('server.admin') && !dashboard.enabled) {
+      this.router.navigateByUrl(getLinkForDashboardCreation(dashboard.id));
+      return;
+    }
     this.dashboard = dashboard;
     this.dashboardTitle = dashboard.title;
     this.foregroundColors = [dashboard.foregroundColorStart, dashboard.foregroundColorEnd];

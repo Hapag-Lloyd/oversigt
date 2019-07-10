@@ -16,7 +16,7 @@
     <div class="list-group-item content">
       <!-- FIXME: if search-filter is not empty and but role-filter removes all lines the 'empty-message' will not be displayed -->
       <!--  *appHasRole="'dashboard.' + dashboard.id + '.editor'" -->
-      <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
+      <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a> <span *ngIf="!dashboard.enabled">(disabled)</span>
     </div>
   </ng-container>
   <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
