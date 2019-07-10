@@ -87,6 +87,7 @@ public abstract class ScheduledEventSource<T extends OversigtEvent> extends Abst
 	@Override
 	@SuppressWarnings("checkstyle:XIllegalCatchDefault")
 	protected final void runOneIteration() {
+		stoppedBecauseOfError.set(false);
 		logTrace(getLogger(), "Run one iteration");
 
 		try {
