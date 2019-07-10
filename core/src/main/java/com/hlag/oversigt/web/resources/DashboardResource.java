@@ -385,7 +385,6 @@ public class DashboardResource {
 		public DashboardInfo(@NotNull @NotEmpty @NotBlank final String id,
 				@NotNull @NotEmpty @NotBlank final String title,
 				@NotNull final boolean enabled) {
-			super();
 			this.id = id;
 			this.title = title;
 			this.enabled = enabled;
