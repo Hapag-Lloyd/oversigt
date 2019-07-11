@@ -22,11 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.DispatcherType;
@@ -58,16 +60,12 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
-import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.web.DashboardCreationHandler;
-import com.hlag.oversigt.web.HttpServerExchangeHandler;
-import com.hlag.oversigt.web.LoginHandler;
-import com.hlag.oversigt.web.WelcomeHandler;
+import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
 
@@ -89,9 +87,6 @@ import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.server.handlers.sse.ServerSentEventHandler;
-import io.undertow.server.session.SessionAttachmentHandler;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -115,8 +110,6 @@ import ro.isdc.wro.http.ConfigurableWroFilter;
 public class OversigtServer extends AbstractIdleService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtServer.class);
 
-	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
-
 	public static final String MAPPING_API = "/api/v1";
 
 	private final List<HttpListenerConfiguration> listeners;
@@ -131,30 +124,13 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final Configuration templateConfiguration;
 
-	private final WelcomeHandler welcomeHandler;
-
-	private final LoginHandler loginHandler;
-
-	// private final DashboardConfigurationHandler dashboardConfigurationHandler;
-	private final DashboardCreationHandler dashboardCreationHandler;
-
-	// private final EventSourceConfigurationHandler
-	// eventSourceConfigurationHandler;
 	private final DashboardController dashboardController;
 
 	private final Application restApiApplication;
 
-	private final HttpServerExchangeHandler exchangeHandler;
-
 	private final Path[] addonFolders;
 
 	private final String[] widgetsPaths;
-
-	@Inject
-	private SessionManager sessionManager;
-
-	@Inject
-	private SessionConfig sessionConfig;
 
 	@Inject
 	@Named("startEventSources")
@@ -183,13 +159,7 @@ public class OversigtServer extends AbstractIdleService {
 			final EventBus eventBus,
 			final EventSender sender,
 			final Configuration templateConfiguration,
-			final WelcomeHandler welcomeHandler,
-			final LoginHandler loginHandler,
-			// DashboardConfigurationHandler dashboardConfigurationHandler,
-			final DashboardCreationHandler dashboardCreationHandler,
-			// EventSourceConfigurationHandler eventSourceConfigurationHandler,
 			final DashboardController dashboardController,
-			final HttpServerExchangeHandler exchangeHandler,
 			final Application restApiApplication,
 			@Named("addonFolders") final Path[] addonFolders,
 			@Named("widgetsPaths") final String[] widgetsPaths) {
@@ -197,13 +167,7 @@ public class OversigtServer extends AbstractIdleService {
 		this.eventBus = eventBus;
 		this.sender = sender;
 		this.templateConfiguration = templateConfiguration;
-		this.welcomeHandler = welcomeHandler;
-		this.loginHandler = loginHandler;
-		// this.dashboardConfigurationHandler = dashboardConfigurationHandler;
-		this.dashboardCreationHandler = dashboardCreationHandler;
-		// this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
 		this.dashboardController = dashboardController;
-		this.exchangeHandler = exchangeHandler;
 		this.restApiApplication = restApiApplication;
 		this.addonFolders = addonFolders;
 		this.widgetsPaths = widgetsPaths;
@@ -254,12 +218,6 @@ public class OversigtServer extends AbstractIdleService {
 			}
 		});
 
-		// final HttpHandler securedEventSourceConfigurationHandler =
-		// withLogin(eventSourceConfigurationHandler);
-		final HttpHandler securedDashboardCreationHandler = withLogin(dashboardCreationHandler);
-		// final HttpHandler securedDashboardConfigurationHandler =
-		// withLogin(dashboardConfigurationHandler);
-
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers.routing()
 				// dashboard handling
@@ -273,23 +231,11 @@ public class OversigtServer extends AbstractIdleService {
 				.post("/{dashboard}/config", this::redirectToConfigPage)
 				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)
 				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)
-				.get("/{dashboard}/create", securedDashboardCreationHandler)
-				.post("/{dashboard}/create", securedDashboardCreationHandler)
-				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)
-				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)
-				// server configuration
-				// .get("/config", securedEventSourceConfigurationHandler)
-				// .post("/config", securedEventSourceConfigurationHandler)
-				// .get("/config/{page}", securedEventSourceConfigurationHandler)
-				// .post("/config/{page}", securedEventSourceConfigurationHandler)
 				// JSON Schema output
-				.get("/schema/{class}", withLogin(this::serveJsonSchema))
-				// session handling
-				.get("/logout", withSession(this::doLogout))
+				.get("/schema/{class}", this::serveJsonSchema)
 				// default handler
 				.get("/", this::redirectToWelcomePage)
-				.get("/welcome", welcomeHandler)
-				.get("/welcome/{page}", welcomeHandler);
+				.get("/welcome", this::serveWelcomePage);
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers.path(routingHandler)
@@ -343,14 +289,6 @@ public class OversigtServer extends AbstractIdleService {
 		LOGGER.info("StartUp finished");
 	}
 
-	private HttpHandler withLogin(final HttpHandler handler) {
-		return withSession(Handlers.predicate(exchangeHandler::hasSession, handler, loginHandler));
-	}
-
-	private HttpHandler withSession(final HttpHandler handler) {
-		return new SessionAttachmentHandler(handler, sessionManager, sessionConfig);
-	}
-
 	private void redirectToConfigPage(final HttpServerExchange exchange) {
 		final List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
 		if ("config".equals(parts.get(1))) {
@@ -360,32 +298,17 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
-	private void doLogout(final HttpServerExchange exchange) {
-		final Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
-		if (principal.isPresent()) {
-			exchangeHandler.getSession(exchange).ifPresent(s -> s.invalidate(exchange));
-			CHANGE_LOGGER.info("User logged out: "
-					+ principal.orElseThrow(() -> new RuntimeException("The principal is not present.")).getUsername());
-			HttpUtils.redirect(exchange, "/config", false, true);
-		} else {
-			HttpUtils.internalServerError(exchange);
-		}
-	}
-
 	private void serveJsonSchema(final HttpServerExchange exchange) {
-		final String className = exchange.getQueryParameters().get("class").poll();
-		try {
-			final Class<?> clazz = Class.forName(className);
-			if (SerializableProperty.class.isAssignableFrom(clazz)) {
-				exchange.setStatusCode(StatusCodes.OK);
-				exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-				exchange.getResponseSender()
-						.send(ByteBuffer.wrap(json.toJsonSchema(clazz).getBytes(StandardCharsets.UTF_8)));
-				exchange.endExchange();
-			} else {
-				HttpUtils.notFound(exchange);
-			}
-		} catch (@SuppressWarnings("unused") final Exception ignore) {
+		final Optional<String> jsonSchema = Optional.ofNullable(exchange.getQueryParameters().get("class").poll())
+				.flatMap(TypeUtils::getClassForName)
+				.filter(SerializableProperty.class::isAssignableFrom)
+				.map(json::toJsonSchema);
+
+		if (jsonSchema.isPresent()) {
+			exchange.setStatusCode(StatusCodes.OK);
+			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+			exchange.getResponseSender().send(ByteBuffer.wrap(jsonSchema.get().getBytes(StandardCharsets.UTF_8)));
+		} else {
 			HttpUtils.notFound(exchange);
 		}
 	}
@@ -403,47 +326,70 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
-		final Object acceptHeader = exchange.getRequestHeaders().get(Headers.ACCEPT);
-		final String acceptHeaderString = acceptHeader != null ? acceptHeader.toString() : "html";
-		final boolean searchHtml = acceptHeaderString.toLowerCase().contains("html");
+		final boolean searchHtml = Optional.ofNullable(exchange.getRequestHeaders().get(Headers.ACCEPT))
+				.map(Object::toString)
+				.map(String::toLowerCase)
+				.map(s -> s.contains("html"))
+				.orElse(true);
 
-		if (searchHtml) {
-			final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
-			if ("favicon.ico".equals(dashboardId)) {
-				// XXX add a proper favicon handler
-				HttpUtils.notFound(exchange);
-				return;
-			}
-			// check if the URI is correct... otherwise redirect to proper dashboard URI
-			final String correctUri = "/" + dashboardId;
-			if (correctUri.equals(exchange.getRequestURI())) {
-				final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
-				if (dashboard.isPresent() && dashboard.get().isEnabled()) {
-					final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
-							map("title",
-									dashboard.get().getTitle(),
-									"columns",
-									dashboard.get().getColumns(),
-									"backgroundColor",
-									dashboard.get().getBackgroundColor().getHexColor(),
-									"computedTileWidth",
-									dashboard.get().getComputedTileWidth(),
-									"computedTileHeight",
-									dashboard.get().getComputedTileHeight(),
-									"widgets",
-									dashboard.get().getWidgets()));
-					exchange.getResponseSender().send(html);
-				} else {
-					// redirect to config page in order to create new dashboard
-					redirect(exchange, "/" + dashboardId + "/create", false, true);
-					// TODO change to angular ui screen
-				}
-			} else {
-				redirect(exchange, correctUri, true, true);
-			}
-		} else {
+		// Check if request wants to download some asset of a widget
+		if (!searchHtml) {
 			redirect(exchange, "/assets" + exchange.getRequestURI(), false, true);
+			return;
 		}
+
+		// check whether to serve a favicon
+		final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
+		if ("favicon.ico".equals(dashboardId)) {
+			// XXX add a proper favicon handler
+			HttpUtils.notFound(exchange);
+			return;
+		}
+
+		// check if the URI is correct... otherwise redirect to proper dashboard URI
+		final String correctUri = "/" + dashboardId;
+		if (!correctUri.equals(exchange.getRequestURI())) {
+			redirect(exchange, correctUri, true, true);
+			return;
+		}
+
+		// check if dashboard is present and enabled
+		final Optional<Dashboard> dashboard = dashboardController.getDashboard(dashboardId);
+		if (!dashboard.isPresent() || !dashboard.get().isEnabled()) {
+			redirect(exchange, "/config/dashboards/create/" + dashboardId, false, true);
+			return;
+		}
+
+		// actually serve the dashboard
+		final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
+				map("title",
+						dashboard.get().getTitle(),
+						"columns",
+						dashboard.get().getColumns(),
+						"backgroundColor",
+						dashboard.get().getBackgroundColor().getHexColor(),
+						"computedTileWidth",
+						dashboard.get().getComputedTileWidth(),
+						"computedTileHeight",
+						dashboard.get().getComputedTileHeight(),
+						"widgets",
+						dashboard.get().getWidgets()));
+		exchange.getResponseSender().send(html);
+	}
+
+	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
+		final String html = processTemplate("/views/layout/root/page_welcome.ftl.html",
+				map("title",
+						"Welcome",
+						"dashboards",
+						dashboardController.getDashboardIds()
+								.stream()
+								.map(dashboardController::getDashboard)
+								.map(Optional::get)
+								.filter(Dashboard::isEnabled)
+								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
+								.collect(Collectors.toList())));
+		exchange.getResponseSender().send(html);
 	}
 
 	private String processTemplate(final String templateName, final Object model)

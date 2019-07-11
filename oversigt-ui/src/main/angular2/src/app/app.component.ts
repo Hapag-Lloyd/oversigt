@@ -51,6 +51,10 @@ export function getLinkForDashboard(dashboardId: string): string {
   return getLinkForDashboards() + '/' + dashboardId;
 }
 
+export function getLinkForDashboardCreation(dashboardId: string): string {
+  return getLinkForDashboards() + '/create/' + dashboardId;
+}
+
 export function getLinkForDashboardWidget(dashboardId: string, widgetId: number): string {
   return getLinkForDashboard(dashboardId) + '/' + String(widgetId);
 }

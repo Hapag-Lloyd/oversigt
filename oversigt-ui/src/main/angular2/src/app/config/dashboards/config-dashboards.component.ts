@@ -42,7 +42,10 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
   private loadDashboards(): void {
     this.ds.listDashboardIds().subscribe(
       list => {
-        this.dashboards = list.sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1);
+        const isAdmin = this.userService.hasRole('server.admin');
+        this.dashboards = list
+              .filter(d => isAdmin || d.enabled)
+              .sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1);
       },
       this.errorHandler.createErrorHandler('Reading dashboards'));
   }

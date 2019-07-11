@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (typeof isLoggedIn === 'boolean') {
       if (!isLoggedIn) {
         this.userService.requestedUrl = state.url;
-        this.router.navigateByUrl('/login');
+        this.router.navigateByUrl('/login', {skipLocationChange: true});
         return false;
       }
       return true;
@@ -27,7 +27,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       return new Promise((resolve, reject) => {
         isLoggedIn.subscribe(ok => {
           if (!ok) {
-            this.router.navigateByUrl('/login');
+            this.router.navigateByUrl('/login', {skipLocationChange: true});
           }
           resolve(ok);
         });

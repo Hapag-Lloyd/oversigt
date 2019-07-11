@@ -14,6 +14,8 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -101,18 +103,19 @@ public class Dashboard {
 		this.enabled = enabled;
 	}
 
-	public Dashboard(final String id,
-			final String title,
-			final boolean enabled,
-			final int screenWidth,
-			final int screenHeight,
-			final int columns,
-			final Color backgroundColor,
-			final DashboardColorScheme colorScheme,
-			final Color foregroundColorStart,
-			final Color foregroundColorEnd,
-			final Collection<String> owners,
-			final Collection<String> editors) {
+	@JsonCreator(mode = Mode.PROPERTIES)
+	public Dashboard(@JsonProperty("id") final String id,
+			@JsonProperty("title") final String title,
+			@JsonProperty("enabled") final boolean enabled,
+			@JsonProperty("screenWidth") final int screenWidth,
+			@JsonProperty("screenHeight") final int screenHeight,
+			@JsonProperty("columns") final int columns,
+			@JsonProperty("backgroundColor") final Color backgroundColor,
+			@JsonProperty("colorScheme") final DashboardColorScheme colorScheme,
+			@JsonProperty("foregroundColorStart") final Color foregroundColorStart,
+			@JsonProperty("foregroundColorEnd") final Color foregroundColorEnd,
+			@JsonProperty("owners") final Collection<String> owners,
+			@JsonProperty("editors") final Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;

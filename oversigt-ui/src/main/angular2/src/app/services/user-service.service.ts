@@ -197,6 +197,7 @@ export class UserService {
     this.token = data.token;
     this.name = data.displayName;
     this.roles = data.roles;
+    this.userid = data.userId;
 
     const authorization = 'Bearer ' + data.token;
     this.configuration.apiKeys['Authorization'] = authorization;

@@ -231,7 +231,7 @@ public class EventSourceInstanceResource {
 					.stream()
 					.map(controller::getDashboard)
 					.map(Optional::get)
-					.map(DashboardInfo::fromDashboard)
+					.map(DashboardInfo::new)
 					.collect(toList())).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance '" + instanceId + "' does not exist.");
@@ -408,9 +408,8 @@ public class EventSourceInstanceResource {
 					.flatMap(RunStatistic::getThrowable)
 					.map(x -> true)
 					.orElse(false);
-			usedBy = new ArrayList<>(controller.getDashboardsWhereEventSourceIsUsed(instance)
-					.map(DashboardInfo::fromDashboard)
-					.collect(toList()));
+			usedBy = new ArrayList<>(
+					controller.getDashboardsWhereEventSourceIsUsed(instance).map(DashboardInfo::new).collect(toList()));
 		}
 	}
 

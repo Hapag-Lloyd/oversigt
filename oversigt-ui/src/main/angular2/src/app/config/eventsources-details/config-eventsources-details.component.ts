@@ -142,9 +142,7 @@ export class ConfigEventsourcesDetailsComponent implements OnInit, OnDestroy {
   }
 
   deleteDataItem(name: string): void {
-    console.log('Remove', name, this.parsedInstanceDetails.dataItems[name]);
     delete this.parsedInstanceDetails.dataItems[name];
-    console.log(this.parsedInstanceDetails.dataItems[name]);
   }
 
   private parseInstanceDetails(details: EventSourceInstanceDetails): ParsedEventSourceInstanceDetails {
