@@ -98,6 +98,10 @@ public class EventSourceInstanceResource {
 	@Context
 	private SecurityContext injectedSecurityContext;
 
+	public EventSourceInstanceResource() {
+		// required by checkstyle
+	}
+
 	private SecurityContext getSecurityContext() {
 		return Objects.requireNonNull(injectedSecurityContext);
 	}

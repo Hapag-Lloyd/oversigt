@@ -522,7 +522,6 @@ public class SystemResource {
 		}
 
 		public SearchResult(final String title, final String id, final String type, final String subtype) {
-			super();
 			this.title = title;
 			this.id = id;
 			this.type = type;

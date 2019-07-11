@@ -332,7 +332,6 @@ public class DashboardWidgetResource {
 				@NotNull @PositiveOrZero final int posY,
 				@NotNull @Min(1) @Positive final int sizeX,
 				@NotNull @Min(1) @Positive final int sizeY) {
-			super();
 			this.id = id;
 			this.name = name;
 			this.view = view;
