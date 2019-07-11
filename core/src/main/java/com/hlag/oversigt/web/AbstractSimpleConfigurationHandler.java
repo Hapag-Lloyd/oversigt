@@ -10,7 +10,6 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +21,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,7 @@ import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.security.Roles;
 import com.hlag.oversigt.util.HttpUtils;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.undertow.server.HttpHandler;
@@ -75,7 +76,8 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 			final String content = readContentString(filename);
 			final Matcher matcher = CONFIG_LAYOUT_PATTERN.matcher(content);
 			if (matcher.find()) {
-				return new ConfigPatternInfo(matcher.group(1), Strings.emptyToNull(matcher.group(2)));
+				return new ConfigPatternInfo(matcher.group(1),
+						Optional.ofNullable(Strings.emptyToNull(matcher.group(2))));
 			}
 			return new ConfigPatternInfo(filename);
 		} catch (final Exception e) {
@@ -94,7 +96,7 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 	private static String readContentString(final String urlPath) throws IOException {
 		final URL url = Resources.getResource(urlPath);
 		Preconditions.checkNotNull(url, "Unable to read bytes: %s", urlPath);
-		return new String(Files.readAllBytes(Paths.get(urlPath)), StandardCharsets.UTF_8);
+		return IOUtils.toString(url, StandardCharsets.UTF_8);
 	}
 
 	@Inject
@@ -130,12 +132,8 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 		return new HashMap<>();
 	}
 
-	private Map<String, Object> getExtendedModel(final HttpServerExchange exchange, final String page) {
-		// TODO make not nullable
-		Map<String, Object> model = Optional.ofNullable(getModel(exchange, page)).orElse(new HashMap<>());
-		if (model == null) {
-			model = new HashMap<>();
-		}
+	private Map<String, Object> getExtendedModel(final HttpServerExchange exchange, final Optional<String> page) {
+		final Map<String, Object> model = page.map(p -> getModel(exchange, p)).orElse(new HashMap<>());
 		final Optional<Principal> principal = getExchangeHelper().getPrincipal(exchange);
 		model.putAll(map("principal",
 				principal.orElse(null),
@@ -146,7 +144,7 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 						.map(e -> map("link", e.getKey(), "name", e.getValue().title))
 						.toArray(),
 				"activeMenuItem",
-				page,
+				page.orElse(null),
 				"formUrl",
 				"?"));
 		return model;
@@ -177,7 +175,8 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 	}
 
 	@Override
-	public void handleRequest(final HttpServerExchange exchange) throws Exception {
+	public void handleRequest(@Nullable final HttpServerExchange exchange) throws Exception {
+		Objects.requireNonNull(exchange);
 		try {
 			if (GET.equals(exchange.getRequestMethod())) {
 				getExchangeHelper().doNonBlocking(this::handleRequestGet, exchange);
@@ -189,16 +188,12 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 		}
 	}
 
-	protected String getPreferredInitialPage() {
-		return null;
+	protected Optional<String> getPreferredInitialPage() {
+		return Optional.empty();
 	}
 
 	private String getInitialPage(final Collection<String> availablePages) {
-		final String preferred = getPreferredInitialPage();
-		if (preferred != null && availablePages.contains(preferred)) {
-			return preferred;
-		}
-		return availablePages.iterator().next();
+		return getPreferredInitialPage().filter(availablePages::contains).orElse(availablePages.iterator().next());
 	}
 
 	protected String getTemplateName(@SuppressWarnings("unused") final HttpServerExchange exchange, final PageInfo pi) {
@@ -211,8 +206,8 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 	}
 
 	private void handleRequestGet(final HttpServerExchange exchange) {
-		final String page = getExchangeHelper().query(exchange, "page").orElse(null);
-		if (Strings.isNullOrEmpty(page)) {
+		final Optional<String> page = getExchangeHelper().query(exchange, "page").map(Strings::emptyToNull);
+		if (!page.isPresent()) {
 			String url = exchange.getRequestURI();
 			while (url.endsWith("/")) {
 				url = url.substring(0, url.length() - 1);
@@ -221,35 +216,30 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 			HttpUtils.redirect(exchange, url, false, true);
 			return;
 		}
-		if (!Strings.isNullOrEmpty(page)) {
-			if (pages.containsKey(page)) {
-				final PageInfo pi = pages.get(page);
-				if (pi.needsPrincipal()
-						&& !getExchangeHelper().getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
-					forbidden(exchange);
-					return;
-				}
-				try {
-					final String templateFilename = getTemplateName(exchange, pi);
-					final Template template = templateConfiguration.getTemplate(templateFilename);
-					final StringWriter writer = new StringWriter();
-					template.process(getExtendedModel(exchange, page), writer);
-					final String content = writer.toString();
-					exchange.setStatusCode(StatusCodes.OK);
-					exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, getContentType(exchange, pi));
-					exchange.getResponseSender().send(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
-					exchange.endExchange();
-				} catch (final Exception e) {
-					getLogger().error("Unable to write page from template", e);
-					printException(exchange, e);
-					exchange.endExchange();
-				}
-			} else {
-				notFound(exchange, "Page '" + page + "' not found");
+		if (pages.containsKey(page.get())) {
+			final PageInfo pi = pages.get(page.get());
+			if (pi.needsPrincipal()
+					&& !getExchangeHelper().getPrincipal(exchange).map(pi::isAllowedFor).orElse(false)) {
+				forbidden(exchange);
+				return;
+			}
+			try {
+				final String templateFilename = getTemplateName(exchange, pi);
+				final Template template = templateConfiguration.getTemplate(templateFilename);
+				final StringWriter writer = new StringWriter();
+				template.process(getExtendedModel(exchange, page), writer);
+				final String content = writer.toString();
+				exchange.setStatusCode(StatusCodes.OK);
+				exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, getContentType(exchange, pi));
+				exchange.getResponseSender().send(ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8)));
+				exchange.endExchange();
+			} catch (final Exception e) {
+				getLogger().error("Unable to write page from template", e);
+				printException(exchange, e);
+				exchange.endExchange();
 			}
 		} else {
-			HttpUtils
-					.redirect(exchange, exchange.getRequestURI() + "/" + pages.keySet().iterator().next(), false, true);
+			notFound(exchange, "Page '" + page.get() + "' not found");
 		}
 	}
 
@@ -260,31 +250,27 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 
 		private final String title;
 
-		private final Role neededRole;
+		private final Optional<Role> neededRole;
 
 		PageInfo(final String name, final String filename, final String title, final Optional<String> neededRole) {
-			this(name, filename, title, neededRole.flatMap(Roles::fromString).map(Roles::getRole).orElse(null));
-		}
-
-		PageInfo(final String name, final String filename, final String title, final Role neededRole) {
 			this.name = Objects.requireNonNull(name);
 			this.filename = Objects.requireNonNull(filename);
 			this.title = Objects.requireNonNull(title);
-			this.neededRole = neededRole;
+			this.neededRole = neededRole.flatMap(Roles::fromString).map(Roles::getRole);
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + (filename == null ? 0 : filename.hashCode());
-			result = prime * result + (name == null ? 0 : name.hashCode());
-			result = prime * result + (title == null ? 0 : title.hashCode());
+			result = prime * result + filename.hashCode();
+			result = prime * result + name.hashCode();
+			result = prime * result + title.hashCode();
 			return result;
 		}
 
 		@Override
-		public boolean equals(final Object other) {
+		public boolean equals(@Nullable final Object other) {
 			if (other instanceof PageInfo) {
 				final PageInfo that = (PageInfo) other;
 				return name.equals(that.name) && filename.equals(that.filename) && title.equals(that.title);
@@ -293,8 +279,8 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 		}
 
 		@Override
-		public int compareTo(final PageInfo that) {
-			return filename.compareTo(that.filename);
+		public int compareTo(@Nullable final PageInfo that) {
+			return filename.compareTo(Optional.ofNullable(that).map(pi -> pi.filename).orElse(""));
 		}
 
 		public String getName() {
@@ -302,11 +288,11 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 		}
 
 		public boolean isAllowedFor(final Principal principal) {
-			return !needsPrincipal() || principal != null && principal.hasRole(neededRole);
+			return !needsPrincipal() || neededRole.map(principal::hasRole).orElse(false);
 		}
 
 		public boolean needsPrincipal() {
-			return neededRole != null;
+			return neededRole.isPresent();
 		}
 	}
 
@@ -320,9 +306,9 @@ public class AbstractSimpleConfigurationHandler implements HttpHandler {
 			neededRole = Optional.empty();
 		}
 
-		ConfigPatternInfo(final String filename, final String neededRole) {
+		ConfigPatternInfo(final String filename, final Optional<String> neededRole) {
 			this.filename = filename;
-			this.neededRole = Optional.of(neededRole);
+			this.neededRole = neededRole;
 		}
 
 		public String getFilename() {

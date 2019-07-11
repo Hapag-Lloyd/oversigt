@@ -3,6 +3,7 @@ package com.hlag.oversigt.web;
 import static com.hlag.oversigt.util.Utils.map;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,7 +36,7 @@ public class WelcomeHandler extends AbstractSimpleConfigurationHandler {
 							.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 							.collect(Collectors.toList()));
 		default:
-			return null;
+			return new HashMap<>();
 		}
 	}
 

@@ -91,21 +91,4 @@ public final class HttpServerExchangeHelper {
 	public Optional<Principal> getPrincipal(final HttpServerExchange exchange) {
 		return getSession(exchange).map(session -> (Principal) session.getAttribute("PRINCIPAL"));
 	}
-
-	public boolean hasSession(final HttpServerExchange exchange) {
-		return getSession(exchange).isPresent();
-	}
-
-	Session getOrCreateSession(final HttpServerExchange exchange) {
-		// To retrieve the SessionManager use the attachmentKey
-		final SessionManager sm = exchange.getAttachment(SessionManager.ATTACHMENT_KEY);
-		// same goes to SessionConfig
-		final SessionConfig sessionConfig = exchange.getAttachment(SessionConfig.ATTACHMENT_KEY);
-
-		Session session = sm.getSession(exchange, sessionConfig);
-		if (session == null) {
-			session = sm.createSession(exchange, sessionConfig);
-		}
-		return session;
-	}
 }
