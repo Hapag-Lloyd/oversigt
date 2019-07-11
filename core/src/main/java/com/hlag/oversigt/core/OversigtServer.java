@@ -22,11 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.DispatcherType;
@@ -64,7 +66,6 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
-import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
 
@@ -123,8 +124,6 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final Configuration templateConfiguration;
 
-	private final WelcomeHandler welcomeHandler;
-
 	private final DashboardController dashboardController;
 
 	private final Application restApiApplication;
@@ -160,7 +159,6 @@ public class OversigtServer extends AbstractIdleService {
 			final EventBus eventBus,
 			final EventSender sender,
 			final Configuration templateConfiguration,
-			final WelcomeHandler welcomeHandler,
 			final DashboardController dashboardController,
 			final Application restApiApplication,
 			@Named("addonFolders") final Path[] addonFolders,
@@ -169,7 +167,6 @@ public class OversigtServer extends AbstractIdleService {
 		this.eventBus = eventBus;
 		this.sender = sender;
 		this.templateConfiguration = templateConfiguration;
-		this.welcomeHandler = welcomeHandler;
 		this.dashboardController = dashboardController;
 		this.restApiApplication = restApiApplication;
 		this.addonFolders = addonFolders;
@@ -238,8 +235,7 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/schema/{class}", this::serveJsonSchema)
 				// default handler
 				.get("/", this::redirectToWelcomePage)
-				.get("/welcome", welcomeHandler)
-				.get("/welcome/{page}", welcomeHandler);
+				.get("/welcome", this::serveWelcomePage);
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers.path(routingHandler)
@@ -378,6 +374,21 @@ public class OversigtServer extends AbstractIdleService {
 						dashboard.get().getComputedTileHeight(),
 						"widgets",
 						dashboard.get().getWidgets()));
+		exchange.getResponseSender().send(html);
+	}
+
+	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
+		final String html = processTemplate("/views/layout/root/page_welcome.ftl.html",
+				map("title",
+						"Welcome",
+						"dashboards",
+						dashboardController.getDashboardIds()
+								.stream()
+								.map(dashboardController::getDashboard)
+								.map(Optional::get)
+								.filter(Dashboard::isEnabled)
+								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
+								.collect(Collectors.toList())));
 		exchange.getResponseSender().send(html);
 	}
 

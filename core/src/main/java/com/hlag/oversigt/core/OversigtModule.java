@@ -66,8 +66,6 @@ import com.hlag.oversigt.util.MailSender;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.text.TextProcessor;
 import com.hlag.oversigt.validate.UserId;
-import com.hlag.oversigt.web.HttpServerExchangeHelper;
-import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiApplication;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
 import com.jayway.jsonpath.Option;
@@ -126,9 +124,7 @@ class OversigtModule extends AbstractModule {
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
-		binder().bind(WelcomeHandler.class);
 		binder().bind(EventSourceStatisticsManager.class);
-		binder().bind(HttpServerExchangeHelper.class);
 		binder().bind(EventSender.class);
 		binder().bind(JsonUtils.class);
 		binder().bind(RoleProvider.class);
