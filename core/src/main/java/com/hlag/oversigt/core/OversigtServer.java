@@ -290,15 +290,15 @@ public class OversigtServer extends AbstractIdleService {
 		nightlyDashboardReloader.awaitTerminated();
 		nightlyEventSourceRestarter.stopAsync();
 		nightlyEventSourceRestarter.awaitTerminated();
-	
+
 		/* stop all event source instances */
 		LOGGER.info("Stopping event sources");
 		dashboardController.stopAllInstances();
-	
+
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");
 		getServerSentEventHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
-	
+
 		/* stop the server */
 		LOGGER.info("Stopping web server");
 		server.ifPresent(Undertow::stop);

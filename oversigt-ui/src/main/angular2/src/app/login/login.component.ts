@@ -12,6 +12,7 @@ export class LoginComponent implements OnInit {
   username = '';
   password = '';
   loginButtonEnabled = true;
+  loginFailed = false;
 
   constructor(
     private message: NotificationService,
@@ -20,6 +21,7 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.loginFailed = false;
   }
 
   doLogin() {
@@ -41,6 +43,7 @@ export class LoginComponent implements OnInit {
         this.router.navigateByUrl(requestedUrl, {replaceUrl: true});
       }, () => {
         this.loginButtonEnabled = true;
+        this.loginFailed = true;
       }
     );
   }
