@@ -45,11 +45,11 @@
 	</ciManagement>
 
 	<properties>
-		<spotbugs.skip>true</spotbugs.skip>
-		<pmd.skip>true</pmd.skip>
-
-		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
 		<compilerArgument>-parameters</compilerArgument>
+
+		<pmd.skip>true</pmd.skip>
+		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
+		<spotbugs.excludeFilterFile>${project.basedir}/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
 		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 
 		<freemarker.version>2.3.28</freemarker.version>
