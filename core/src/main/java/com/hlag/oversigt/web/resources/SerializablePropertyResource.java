@@ -47,7 +47,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.Builder;
 
 @Api(tags = { "SerializableValue" })
 @Path("/serializable-values")
@@ -75,10 +74,8 @@ public class SerializablePropertyResource {
 	public List<SerializablePropertyDescription> listPropertyTypes() {
 		return spController.getClasses()
 				.stream()
-				.map(c -> SerializablePropertyDescription.builder()
-						.name(c.getSimpleName())
-						.description(spController.getDescription(c.getSimpleName()))
-						.build())
+				.map(c -> new SerializablePropertyDescription(c.getSimpleName(),
+						spController.getDescription(c.getSimpleName())))
 				.collect(Collectors.toList());
 	}
 
@@ -295,11 +292,15 @@ public class SerializablePropertyResource {
 	 *
 	 * @author Olaf Neumann
 	 */
-	@Builder
 	public static class SerializablePropertyDescription {
 		private final String name;
 
 		private final String description;
+
+		public SerializablePropertyDescription(final String name, final String description) {
+			this.name = name;
+			this.description = description;
+		}
 
 		public String getName() {
 			return name;
