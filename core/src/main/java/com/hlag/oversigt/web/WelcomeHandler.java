@@ -10,16 +10,14 @@ import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.model.Dashboard;
-import com.hlag.oversigt.model.DashboardController;
 
 import io.undertow.server.HttpServerExchange;
 
 @Singleton
-public class WelcomeHandler extends AbstractConfigurationHandler {
+public class WelcomeHandler extends AbstractSimpleConfigurationHandler {
 	@Inject
-	public WelcomeHandler(final DashboardController dashboardController,
-			final HttpServerExchangeHandler exchangeHelper) {
-		super(dashboardController, exchangeHelper, "views/layout/root/", new String[] { "page_welcome.ftl.html" });
+	public WelcomeHandler() {
+		super("views/layout/root/", new String[] { "page_welcome.ftl.html" });
 	}
 
 	@Override

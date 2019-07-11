@@ -98,6 +98,14 @@ public final class TypeUtils {
 		};
 	}
 
+	public static Optional<Class<?>> getClassForName(final String name) {
+		try {
+			return Optional.of(Class.forName(name));
+		} catch (@SuppressWarnings("unused") final ClassNotFoundException e) {
+			return Optional.empty();
+		}
+	}
+
 	public static boolean isOfType(final Class<?> typeToCheck, final Class<?> typeToCheckAgainst) {
 		return typeToCheckAgainst.isAssignableFrom(typeToCheck)
 				|| typeToCheck.isArray() && isOfType(typeToCheck.getComponentType(), typeToCheckAgainst);

@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.google.inject.Singleton;
 import com.hlag.oversigt.security.Principal;
 
 import io.undertow.server.HttpHandler;
@@ -18,8 +19,9 @@ import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionManager;
 
-public class HttpServerExchangeHandler {
-	public HttpServerExchangeHandler() {
+@Singleton
+public final class HttpServerExchangeHelper {
+	public HttpServerExchangeHelper() {
 		// no fields to be initialized
 	}
 

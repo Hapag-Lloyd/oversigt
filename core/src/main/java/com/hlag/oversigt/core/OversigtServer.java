@@ -58,15 +58,12 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
-import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
-import com.hlag.oversigt.web.DashboardCreationHandler;
-import com.hlag.oversigt.web.HttpServerExchangeHandler;
-import com.hlag.oversigt.web.LoginHandler;
+import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.WelcomeHandler;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
@@ -89,9 +86,6 @@ import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.server.handlers.sse.ServerSentEventHandler;
-import io.undertow.server.session.SessionAttachmentHandler;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -115,8 +109,6 @@ import ro.isdc.wro.http.ConfigurableWroFilter;
 public class OversigtServer extends AbstractIdleService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtServer.class);
 
-	private static final Logger CHANGE_LOGGER = LoggerFactory.getLogger("change");
-
 	public static final String MAPPING_API = "/api/v1";
 
 	private final List<HttpListenerConfiguration> listeners;
@@ -133,28 +125,13 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final WelcomeHandler welcomeHandler;
 
-	private final LoginHandler loginHandler;
-
-	// private final DashboardConfigurationHandler dashboardConfigurationHandler;
-	private final DashboardCreationHandler dashboardCreationHandler;
-
-	// private final EventSourceConfigurationHandler
-	// eventSourceConfigurationHandler;
 	private final DashboardController dashboardController;
 
 	private final Application restApiApplication;
 
-	private final HttpServerExchangeHandler exchangeHandler;
-
 	private final Path[] addonFolders;
 
 	private final String[] widgetsPaths;
-
-	@Inject
-	private SessionManager sessionManager;
-
-	@Inject
-	private SessionConfig sessionConfig;
 
 	@Inject
 	@Named("startEventSources")
@@ -184,12 +161,7 @@ public class OversigtServer extends AbstractIdleService {
 			final EventSender sender,
 			final Configuration templateConfiguration,
 			final WelcomeHandler welcomeHandler,
-			final LoginHandler loginHandler,
-			// DashboardConfigurationHandler dashboardConfigurationHandler,
-			final DashboardCreationHandler dashboardCreationHandler,
-			// EventSourceConfigurationHandler eventSourceConfigurationHandler,
 			final DashboardController dashboardController,
-			final HttpServerExchangeHandler exchangeHandler,
 			final Application restApiApplication,
 			@Named("addonFolders") final Path[] addonFolders,
 			@Named("widgetsPaths") final String[] widgetsPaths) {
@@ -198,12 +170,7 @@ public class OversigtServer extends AbstractIdleService {
 		this.sender = sender;
 		this.templateConfiguration = templateConfiguration;
 		this.welcomeHandler = welcomeHandler;
-		this.loginHandler = loginHandler;
-		// this.dashboardConfigurationHandler = dashboardConfigurationHandler;
-		this.dashboardCreationHandler = dashboardCreationHandler;
-		// this.eventSourceConfigurationHandler = eventSourceConfigurationHandler;
 		this.dashboardController = dashboardController;
-		this.exchangeHandler = exchangeHandler;
 		this.restApiApplication = restApiApplication;
 		this.addonFolders = addonFolders;
 		this.widgetsPaths = widgetsPaths;
@@ -254,12 +221,6 @@ public class OversigtServer extends AbstractIdleService {
 			}
 		});
 
-		// final HttpHandler securedEventSourceConfigurationHandler =
-		// withLogin(eventSourceConfigurationHandler);
-		final HttpHandler securedDashboardCreationHandler = withLogin(dashboardCreationHandler);
-		// final HttpHandler securedDashboardConfigurationHandler =
-		// withLogin(dashboardConfigurationHandler);
-
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers.routing()
 				// dashboard handling
@@ -273,19 +234,8 @@ public class OversigtServer extends AbstractIdleService {
 				.post("/{dashboard}/config", this::redirectToConfigPage)
 				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)
 				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)
-				.get("/{dashboard}/create", securedDashboardCreationHandler)
-				.post("/{dashboard}/create", securedDashboardCreationHandler)
-				.get("/{dashboard}/create/{page}", securedDashboardCreationHandler)
-				.post("/{dashboard}/create/{page}", securedDashboardCreationHandler)
-				// server configuration
-				// .get("/config", securedEventSourceConfigurationHandler)
-				// .post("/config", securedEventSourceConfigurationHandler)
-				// .get("/config/{page}", securedEventSourceConfigurationHandler)
-				// .post("/config/{page}", securedEventSourceConfigurationHandler)
 				// JSON Schema output
-				.get("/schema/{class}", withLogin(this::serveJsonSchema))
-				// session handling
-				.get("/logout", withSession(this::doLogout))
+				.get("/schema/{class}", this::serveJsonSchema)
 				// default handler
 				.get("/", this::redirectToWelcomePage)
 				.get("/welcome", welcomeHandler)
@@ -343,14 +293,6 @@ public class OversigtServer extends AbstractIdleService {
 		LOGGER.info("StartUp finished");
 	}
 
-	private HttpHandler withLogin(final HttpHandler handler) {
-		return withSession(Handlers.predicate(exchangeHandler::hasSession, handler, loginHandler));
-	}
-
-	private HttpHandler withSession(final HttpHandler handler) {
-		return new SessionAttachmentHandler(handler, sessionManager, sessionConfig);
-	}
-
 	private void redirectToConfigPage(final HttpServerExchange exchange) {
 		final List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
 		if ("config".equals(parts.get(1))) {
@@ -360,32 +302,17 @@ public class OversigtServer extends AbstractIdleService {
 		}
 	}
 
-	private void doLogout(final HttpServerExchange exchange) {
-		final Optional<Principal> principal = exchangeHandler.getPrincipal(exchange);
-		if (principal.isPresent()) {
-			exchangeHandler.getSession(exchange).ifPresent(s -> s.invalidate(exchange));
-			CHANGE_LOGGER.info("User logged out: "
-					+ principal.orElseThrow(() -> new RuntimeException("The principal is not present.")).getUsername());
-			HttpUtils.redirect(exchange, "/config", false, true);
-		} else {
-			HttpUtils.internalServerError(exchange);
-		}
-	}
-
 	private void serveJsonSchema(final HttpServerExchange exchange) {
-		final String className = exchange.getQueryParameters().get("class").poll();
-		try {
-			final Class<?> clazz = Class.forName(className);
-			if (SerializableProperty.class.isAssignableFrom(clazz)) {
-				exchange.setStatusCode(StatusCodes.OK);
-				exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-				exchange.getResponseSender()
-						.send(ByteBuffer.wrap(json.toJsonSchema(clazz).getBytes(StandardCharsets.UTF_8)));
-				exchange.endExchange();
-			} else {
-				HttpUtils.notFound(exchange);
-			}
-		} catch (@SuppressWarnings("unused") final Exception ignore) {
+		final Optional<String> jsonSchema = Optional.ofNullable(exchange.getQueryParameters().get("class").poll())
+				.flatMap(TypeUtils::getClassForName)
+				.filter(SerializableProperty.class::isAssignableFrom)
+				.map(json::toJsonSchema);
+
+		if (jsonSchema.isPresent()) {
+			exchange.setStatusCode(StatusCodes.OK);
+			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+			exchange.getResponseSender().send(ByteBuffer.wrap(jsonSchema.get().getBytes(StandardCharsets.UTF_8)));
+		} else {
 			HttpUtils.notFound(exchange);
 		}
 	}
