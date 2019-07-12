@@ -1,0 +1,115 @@
+<#ftl output_format="HTML">
+<#import "../configurationItemEditor.ftl" as configEditor>
+
+<form method="POST" class="form-horizontal">
+	<!-- invisible default button -->
+	<button type="submit" name="action" value="updateWidget" style="position:absolute;left:-999px;top:-999px;height:0;width:0;">Save</button>
+	<!-- main form -->
+	<input type="hidden" name="widget.id" value="${widget.id}" />
+	<div class="panel panel-default">
+		<div class="panel-body">
+			<h3>${widget.name}<#if !widget.enabled> <small>disabled</small></#if></h3>
+			<#if !popup??>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Name</label>
+				<div class="col-sm-9">
+					<input class="form-control" type="text" name="widget.name" value="${widget.name}" />
+					<span class="help-block">The name of the widget. This is just for readability. The name will never be shown to the end user.</span>
+				</div>
+			</div>
+			</#if>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Title</label>
+				<div class="col-sm-9">
+					<input class="form-control" type="text" name="widget.title" value="${widget.title}" />
+					<span class="help-block">The title of the widget will be displayed in the dashboard.</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Type</label>
+				<div class="col-sm-9">
+					<#if !widget.eventSourceInstance.enabled><div class="input-group"></#if>
+						<input class="form-control" type="text" readonly="readonly" value="${widget.eventSourceInstance.name}" />
+					<#if !widget.eventSourceInstance.enabled>
+						<span class="input-group-addon" style="color:#a94442">disabled</span>
+					</div>
+					</#if>
+				</div>
+			</div>
+			<#if !popup??>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Position</label>
+				<div class="controls col-sm-9">
+					<div class="input-group">
+						<span class="input-group-addon">X</span>
+						<input class="form-control" type="number" name="widget.posx" value="${widget.posX}" min="1" max="${dashboard.columns}" />
+						<span class="input-group-addon" style="border-right: none">Y</span>
+						<input class="form-control" type="number" name="widget.posy" value="${widget.posY}" min="1" max="${dashboard.columns}" />
+					</div>
+				</div>
+				<div class="col-sm-9"></div>
+			</div>
+			</#if>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Size</label>
+				<div class="controls col-sm-9">
+					<div class="input-group">
+						<span class="input-group-addon">Width</span><input class="form-control col-sm-9" type="number" name="widget.sizex" value="${widget.sizeX}" min="1" max="${dashboard.columns}" /><span class="input-group-addon" style="border-right: none">Height</span>
+						<input class="form-control col-sm-9" type="number" name="widget.sizey" value="${widget.sizeY}" min="1" max="${dashboard.columns}" />
+					</div>
+				</div>
+			</div>
+			<#if !addColorCssToWidgets>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Background Color</label>
+				<div class="col-sm-9">
+					<input class="form-control" type="color" name="widget.backgroundColor" value="${widget.backgroundColor}" />
+					<span class="help-block">Sets the background color of the widget</span>
+				</div>
+			</div>
+			</#if>
+			<div class="form-group">
+				<label class="control-label col-sm-3">Inline CSS</label>
+				<div class="col-sm-9">
+					<input class="form-control" type="text" name="widget.style" value="${widget.style}" />
+					<span class="help-block">Stylesheets that will be included inline in the widget's HTML code when generating the dashboard</span>
+				</div>
+			</div>
+
+			<#list widget.eventSourceInstance.descriptor.dataItems as dataItem>
+				<#assign value = widget.eventSourceInstance.getPropertyValueString(dataItem)>
+				<#if !widget.eventSourceInstance.hasPropertyValue(dataItem)>
+					<#assign value = widget.getWidgetData(dataItem)!"">
+				</#if>
+				<@configEditor.configurationEditor
+					name                = widget.id+".data."+dataItem.name
+					id                  = widget.id+"__data__"+dataItem.name
+					label               = dataItem.displayName 
+					description         = (dataItem.description)!"" 
+					type                = dataItem.inputType 
+					hasEnableSwitch     = false
+					fixed               = widget.eventSourceInstance.hasPropertyValue(dataItem)
+					isEnabled           = true <!-- !widget.eventSource.getDataValue(dataId)??  -->
+					currentValue        = value 
+					allowedValues       = dataItem.allowedValues![] 
+					customValuesAllowed = dataItem.customValuesAllowed!false 
+					/>
+			</#list>
+			
+			
+			
+		</div>
+		<div class="panel-footer">
+			<button class="btn btn-danger" data-type="delete" type="submit" name="action" value="deleteWidget" onclick="javascript:return confirm('Do you really want to delete the widget \'${widget.title}\'?');">Delete</button>
+			<#if !widget.enabled>
+				<button class="btn btn-success" data-type="enable" type="submit" name="action" value="enableWidget">Enable</button>
+			<#else>
+				<button class="btn btn-warning" data-type="disable" type="submit" name="action" value="disableWidget">Disable</button>
+			</#if>
+			<span class="pull-right">
+				<!-- <button class="btn btn-default" data-type="exportImport" type="submit" name="action" value="exportWidgetConfiguration">Export Configuration</button>  -->
+				<button class="btn btn-primary" data-type="save" type="submit" name="action" value="updateWidget">Save</button>
+			</span>
+		</div>
+	</div>
+</form>
