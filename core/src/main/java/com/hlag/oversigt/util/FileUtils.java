@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
+import com.google.common.io.Resources;
 
 import de.larssh.utils.SneakyException;
 import de.larssh.utils.function.ThrowingConsumer;
@@ -77,6 +78,14 @@ public final class FileUtils {
 			throw new RuntimeException("Unable to interpret path: " + uri);
 		}
 		return Paths.get(uri);
+	}
+
+	public static Optional<URL> getResourceUrl(final String path) {
+		try {
+			return Optional.of(Resources.getResource(path));
+		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
+			return Optional.empty();
+		}
 	}
 
 	public static FileSystem getFileSystem(final URI uri) {

@@ -8,6 +8,7 @@ import static javax.ws.rs.core.Response.ok;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,9 +68,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Api(tags = { "EventSource" },
 		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
@@ -78,7 +76,13 @@ import lombok.NoArgsConstructor;
 public class EventSourceInstanceResource {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);
 
-	private static JsonUtils json = null;
+	@Inject
+	@edu.umd.cs.findbugs.annotations.Nullable
+	private static JsonUtils json;
+
+	private static JsonUtils getJson() {
+		return Objects.requireNonNull(json);
+	}
 
 	@Inject
 	private DashboardController controller;
@@ -94,9 +98,8 @@ public class EventSourceInstanceResource {
 	@Context
 	private SecurityContext injectedSecurityContext;
 
-	@Inject
-	public EventSourceInstanceResource(final JsonUtils jsonUtils) {
-		json = jsonUtils;
+	public EventSourceInstanceResource() {
+		// required by checkstyle
 	}
 
 	private SecurityContext getSecurityContext() {
@@ -116,13 +119,12 @@ public class EventSourceInstanceResource {
 	@JwtSecured
 	@ApiOperation(value = "List existing event source instances")
 	@NoChangeLog
-	public Response listInstances(
-			@QueryParam("containing") @ApiParam(required = false,
-					value = "Filter to reduce the number of listed instances") @Nullable final String containing,
+	public Response listInstances(@QueryParam("containing") @ApiParam(required = false,
+			value = "Filter to reduce the number of listed instances") @Nullable @edu.umd.cs.findbugs.annotations.Nullable final String containing,
 			@QueryParam("limit") @ApiParam(required = false,
-					value = "Maximum number of instances to be returned") @Nullable final Integer limit,
+					value = "Maximum number of instances to be returned") @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Integer limit,
 			@QueryParam("onlyStartable") @ApiParam(required = false,
-					value = "Only return instances that can be started") @Nullable final Boolean onlyStartable) {
+					value = "Only return instances that can be started") @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Boolean onlyStartable) {
 
 		Predicate<EventSourceInstance> containingFilter = i -> true;
 		Predicate<EventSourceInstance> startableFilter = i -> true;
@@ -266,7 +268,7 @@ public class EventSourceInstanceResource {
 		if (!instance.getDescriptor().getKey().getKey().equals(details.getEventSourceDescriptor())) {
 			return ErrorResponse.badRequest("The event source descriptor key does not match");
 		}
-		if (!instance.getDescriptor().isScheduledService() && details.frequency != null) {
+		if (!instance.getDescriptor().isScheduledService() && details.frequency != Duration.ZERO) {
 			return ErrorResponse.badRequest("The event source does not take a frequency");
 		}
 		final Set<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
@@ -354,7 +356,7 @@ public class EventSourceInstanceResource {
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
 					String string = getValue.apply(p);
 					if (p.isJson()) {
-						string = json.removePasswordsFromJson(string);
+						string = getJson().removePasswordsFromJson(string);
 					}
 					return string;
 				}));
@@ -375,25 +377,27 @@ public class EventSourceInstanceResource {
 				true);
 	}
 
-	@Getter
-	@NoArgsConstructor
 	public static class EventSourceInstanceInfo {
 		@NotBlank
-		private String id;
+		private String id = "";
 
 		@NotBlank
-		private String name;
+		private String name = "";
 
-		private boolean isService;
+		private boolean isService = false;
 
-		private boolean enabled;
+		private boolean enabled = false;
 
-		private boolean running;
+		private boolean running = false;
 
-		private boolean hasError;
+		private boolean hasError = false;
 
 		@NotNull
-		private List<@NotNull DashboardInfo> usedBy;
+		private List<@NotNull DashboardInfo> usedBy = new ArrayList<>();
+
+		public EventSourceInstanceInfo() {
+			// nothing to initialize
+		}
 
 		public EventSourceInstanceInfo(final DashboardController controller,
 				final EventSourceStatisticsManager statisticsManager,
@@ -411,11 +415,36 @@ public class EventSourceInstanceResource {
 			usedBy = new ArrayList<>(
 					controller.getDashboardsWhereEventSourceIsUsed(instance).map(DashboardInfo::new).collect(toList()));
 		}
+
+		public String getId() {
+			return id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public boolean isService() {
+			return isService;
+		}
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public boolean isRunning() {
+			return running;
+		}
+
+		public boolean isHasError() {
+			return hasError;
+		}
+
+		public List<DashboardInfo> getUsedBy() {
+			return usedBy;
+		}
 	}
 
-	@Getter
-	@NoArgsConstructor
-	@AllArgsConstructor
 	public static class EventSourceInstanceDetails {
 		@NotBlank
 		private String eventSourceDescriptor;
@@ -436,6 +465,32 @@ public class EventSourceInstanceResource {
 		@NotNull
 		private Map<@NotBlank String, @NotNull String> dataItems;
 
+		public EventSourceInstanceDetails() {
+			eventSourceDescriptor = "";
+			id = "";
+			name = "";
+			enabled = false;
+			frequency = Duration.ZERO;
+			properties = new HashMap<>();
+			dataItems = new HashMap<>();
+		}
+
+		public EventSourceInstanceDetails(@NotBlank final String eventSourceDescriptor,
+				@NotBlank final String id,
+				@NotBlank final String name,
+				final boolean enabled,
+				final Duration frequency,
+				@NotNull final Map<@NotBlank String, @NotNull String> properties,
+				@NotNull final Map<@NotBlank String, @NotNull String> dataItems) {
+			this.eventSourceDescriptor = eventSourceDescriptor;
+			this.id = id;
+			this.name = name;
+			this.enabled = enabled;
+			this.frequency = frequency;
+			this.properties = properties;
+			this.dataItems = dataItems;
+		}
+
 		public EventSourceInstanceDetails(final EventSourceInstance instance) {
 			this(instance.getDescriptor().getKey().getKey(),
 					instance.getId(),
@@ -445,13 +500,53 @@ public class EventSourceInstanceResource {
 					getPropertyMap(instance),
 					getDataItemMap(instance));
 		}
+
+		public String getEventSourceDescriptor() {
+			return eventSourceDescriptor;
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public Duration getFrequency() {
+			return frequency;
+		}
+
+		public Map<String, String> getProperties() {
+			return properties;
+		}
+
+		public Map<String, String> getDataItems() {
+			return dataItems;
+		}
 	}
 
-	@Getter
-	@AllArgsConstructor
 	public static class FullEventSourceInstanceInfo {
-		private EventSourceInstanceDetails instanceDetails;
+		private final EventSourceInstanceDetails instanceDetails;
 
-		private EventSourceInstanceState instanceState;
+		private final EventSourceInstanceState instanceState;
+
+		public FullEventSourceInstanceInfo(final EventSourceInstanceDetails instanceDetails,
+				final EventSourceInstanceState instanceState) {
+			this.instanceDetails = instanceDetails;
+			this.instanceState = instanceState;
+		}
+
+		public EventSourceInstanceDetails getInstanceDetails() {
+			return instanceDetails;
+		}
+
+		public EventSourceInstanceState getInstanceState() {
+			return instanceState;
+		}
 	}
 }

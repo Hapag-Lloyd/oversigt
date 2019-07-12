@@ -4,6 +4,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -55,10 +56,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Api(tags = { "Dashboard-Widget" })
 @Path("/dashboards/{dashboardId}/widgets")
@@ -137,7 +134,7 @@ public class DashboardWidgetResource {
 				.stream()
 				.filter(filterName)
 				.filter(filterSecu)
-				.map(WidgetShortInfo::fromWidget)
+				.map(WidgetShortInfo::new)
 				.toArray()).build();
 	}
 
@@ -315,19 +312,34 @@ public class DashboardWidgetResource {
 		return ok().build();
 	}
 
-	@Builder
-	@Getter
 	public static class WidgetShortInfo {
-		public static WidgetShortInfo fromWidget(final Widget widget) {
-			return builder().id(widget.getId())
-					.name(widget.getName())
-					.view(widget.getView())
-					.enabled(widget.isEnabled())
-					.posX(widget.getPosX())
-					.posY(widget.getPosY())
-					.sizeX(widget.getSizeX())
-					.sizeY(widget.getSizeY())
-					.build();
+		public WidgetShortInfo(final Widget widget) {
+			this(widget.getId(),
+					widget.getName(),
+					widget.getView(),
+					widget.isEnabled(),
+					widget.getPosX(),
+					widget.getPosY(),
+					widget.getSizeX(),
+					widget.getSizeY());
+		}
+
+		public WidgetShortInfo(@NotNull @Positive final int id,
+				@NotBlank @NotNull final String name,
+				final String view,
+				final boolean enabled,
+				@NotNull @PositiveOrZero final int posX,
+				@NotNull @PositiveOrZero final int posY,
+				@NotNull @Min(1) @Positive final int sizeX,
+				@NotNull @Min(1) @Positive final int sizeY) {
+			this.id = id;
+			this.name = name;
+			this.view = view;
+			this.enabled = enabled;
+			this.posX = posX;
+			this.posY = posY;
+			this.sizeX = sizeX;
+			this.sizeY = sizeY;
 		}
 
 		@NotNull
@@ -359,64 +371,119 @@ public class DashboardWidgetResource {
 		@Min(1)
 		@Positive
 		private final int sizeY;
+
+		/**
+		 * @return the id
+		 */
+		public int getId() {
+			return id;
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @return the view
+		 */
+		public String getView() {
+			return view;
+		}
+
+		/**
+		 * @return the enabled
+		 */
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		/**
+		 * @return the posX
+		 */
+		public int getPosX() {
+			return posX;
+		}
+
+		/**
+		 * @return the posY
+		 */
+		public int getPosY() {
+			return posY;
+		}
+
+		/**
+		 * @return the sizeX
+		 */
+		public int getSizeX() {
+			return sizeX;
+		}
+
+		/**
+		 * @return the sizeY
+		 */
+		public int getSizeY() {
+			return sizeY;
+		}
 	}
 
-	@NoArgsConstructor
-	@Getter
-	@Setter
 	public static class WidgetDetails {
 		@NotNull
 		@Positive
-		private int id;
+		private int id = 0;
 
 		@NotBlank
 		@NotNull
-		private String eventSourceInstanceId;
+		private String eventSourceInstanceId = "";
 
 		@NotNull
-		private String type;
-
-		@NotBlank
-		@NotNull
-		private String title;
+		private String type = "";
 
 		@NotBlank
 		@NotNull
-		private String name;
+		private String title = "";
+
+		@NotBlank
+		@NotNull
+		private String name = "";
 
 		@NotNull
 		@NotBlank
-		private String view;
+		private String view = "";
 
 		@NotNull
-		private boolean enabled;
+		private boolean enabled = false;
 
 		@NotNull
 		@PositiveOrZero
-		private int posX;
+		private int posX = 0;
 
 		@NotNull
 		@PositiveOrZero
-		private int posY;
+		private int posY = 0;
 
 		@NotNull
 		@Min(1)
 		@Positive
-		private int sizeX;
+		private int sizeX = 1;
 
 		@NotNull
 		@Min(1)
 		@Positive
-		private int sizeY;
+		private int sizeY = 1;
 
 		@NotNull
-		private Color backgroundColor;
+		private Color backgroundColor = Color.BLACK;
 
 		@NotNull
-		private String style;
+		private String style = "";
 
 		@NotNull
-		private Map<@NotBlank String, @NotBlank String> data;
+		private Map<@NotBlank String, @NotBlank String> data = new HashMap<>();
+
+		WidgetDetails() {}
 
 		WidgetDetails(final Widget widget, final boolean showAllDatas) {
 			this(widget.getId(),
@@ -467,6 +534,104 @@ public class DashboardWidgetResource {
 			this.backgroundColor = backgroundColor;
 			this.style = style;
 			this.data = new LinkedHashMap<>(data);
+		}
+
+		/**
+		 * @return the id
+		 */
+		public int getId() {
+			return id;
+		}
+
+		/**
+		 * @return the eventSourceInstanceId
+		 */
+		public String getEventSourceInstanceId() {
+			return eventSourceInstanceId;
+		}
+
+		/**
+		 * @return the type
+		 */
+		public String getType() {
+			return type;
+		}
+
+		/**
+		 * @return the title
+		 */
+		public String getTitle() {
+			return title;
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @return the view
+		 */
+		public String getView() {
+			return view;
+		}
+
+		/**
+		 * @return the enabled
+		 */
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		/**
+		 * @return the posX
+		 */
+		public int getPosX() {
+			return posX;
+		}
+
+		/**
+		 * @return the posY
+		 */
+		public int getPosY() {
+			return posY;
+		}
+
+		/**
+		 * @return the sizeX
+		 */
+		public int getSizeX() {
+			return sizeX;
+		}
+
+		/**
+		 * @return the sizeY
+		 */
+		public int getSizeY() {
+			return sizeY;
+		}
+
+		/**
+		 * @return the backgroundColor
+		 */
+		public Color getBackgroundColor() {
+			return backgroundColor;
+		}
+
+		/**
+		 * @return the style
+		 */
+		public String getStyle() {
+			return style;
+		}
+
+		/**
+		 * @return the data
+		 */
+		public Map<String, String> getData() {
+			return data;
 		}
 	}
 }

@@ -68,6 +68,7 @@ import com.hlag.oversigt.util.text.TextProcessor;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiApplication;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
+import com.hlag.oversigt.web.resources.EventSourceInstanceResource;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
@@ -121,6 +122,8 @@ class OversigtModule extends AbstractModule {
 		binder().requestStaticInjection(JiraConfigurationProvider.class);
 		// TextProcessor
 		binder().requestStaticInjection(TextProcessor.class);
+		// TODO JSON for API stuff
+		binder().requestStaticInjection(EventSourceInstanceResource.class);
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);

@@ -119,7 +119,7 @@ public class EventSourceStatusResource {
 				final EventSourceInstance instance) {
 			final EventSourceStatistics stats = statisticsManager.getEventSourceStatistics(instance.getId());
 			return new EventSourceInstanceState(instance.getId(),
-					instance.getDescriptor().getServiceClassName(),
+					Optional.ofNullable(instance.getDescriptor().getServiceClassName()),
 					instance.getCreatedBy(),
 					instance.getLastChangeBy(),
 					controller.isRunning(instance),
@@ -133,7 +133,7 @@ public class EventSourceStatusResource {
 		@NotBlank
 		private final String id;
 
-		private final String serviceClass;
+		private final Optional<String> serviceClass;
 
 		private final String createdBy;
 
@@ -152,7 +152,7 @@ public class EventSourceStatusResource {
 		private final Optional<RunStatistic> lastFailedRun;
 
 		public EventSourceInstanceState(@NotBlank final String id,
-				final String serviceClass,
+				final Optional<String> serviceClass,
 				final String createdBy,
 				final String lastChangedBy,
 				final boolean running,
@@ -177,7 +177,7 @@ public class EventSourceStatusResource {
 			return id;
 		}
 
-		public String getServiceClass() {
+		public Optional<String> getServiceClass() {
 			return serviceClass;
 		}
 

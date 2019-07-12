@@ -19,7 +19,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotBlank;
@@ -73,7 +72,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import lombok.Builder;
 
 @Api(tags = { "System" })
 @Path("/system")
@@ -221,7 +219,7 @@ public class SystemResource {
 			value = "Whether to filter the logger infos") final boolean onlyConfigured) {
 		Predicate<LoggerInfo> filter = l -> true;
 		if (onlyConfigured) {
-			filter = l -> l.level != null;
+			filter = l -> l.level.isPresent();
 		}
 		return getLoggerStream().map(LoggerInfo::new).filter(filter).collect(Collectors.toList());
 	}
@@ -368,7 +366,7 @@ public class SystemResource {
 	@NoChangeLog
 	public Response searchAllObjects(@QueryParam("query") @ApiParam(value = "Text to search for",
 			required = true) final String rawSearchString) {
-		if (rawSearchString == null || rawSearchString.trim().length() == 0) {
+		if (Strings.nullToEmpty(rawSearchString).trim().length() == 0) {
 			return ErrorResponse.badRequest("The search text must not be empty.");
 		}
 
@@ -385,14 +383,14 @@ public class SystemResource {
 				.map(Optional::get)
 				.filter(d -> d.getTitle().toLowerCase().contains(searchString)
 						|| d.getId().toLowerCase().contains(searchString))
-				.map(d -> SearchResult.builder().title(d.getTitle()).id(d.getId()).type("dashboard").build())
+				.map(d -> new SearchResult(d.getTitle(), d.getId(), "dashboard"))
 				.collect(toList()));
 
 		// search for event sources
 		results.addAll(dashboardController.getEventSourceInstances()
 				.stream()
 				.filter(EventSourceInstance.createFilter(searchString))
-				.map(i -> SearchResult.builder().title(i.getName()).id(i.getId()).type("event-source").build())
+				.map(i -> new SearchResult(i.getName(), i.getId(), "event-source"))
 				.collect(toList()));
 
 		// search for properties
@@ -406,19 +404,17 @@ public class SystemResource {
 						.map(Object::toString)
 						.map(String::toLowerCase)
 						.anyMatch(s -> s.contains(searchString)))
-				.map(p -> SearchResult.builder()
-						.title(p.getName())
-						.id(Integer.toString(p.getId()))
-						.type("serializable-property")
-						.subtype(p.getClass().getSimpleName())
-						.build())
+				.map(p -> new SearchResult(p.getName(),
+						Integer.toString(p.getId()),
+						"serializable-property",
+						p.getClass().getSimpleName()))
 				.collect(Collectors.toList());
 
 		// search for loggers
 		results.addAll(getLoggerStream().map(Logger::getName)
 				.map(String::toLowerCase)
 				.filter(name -> name.contains(searchString))
-				.map(name -> SearchResult.builder().title(name).id(name).type("logger").build())
+				.map(name -> new SearchResult(name, name, "logger"))
 				.collect(toList()));
 
 		return ok(results).build();
@@ -427,13 +423,13 @@ public class SystemResource {
 	public static class LoggerInfo {
 		private final String name;
 
-		private final Level level;
+		private final Optional<Level> level;
 
 		private final Level effectiveLevel;
 
 		public LoggerInfo(final Logger logger) {
 			name = logger.getName();
-			level = logger.getLevel();
+			level = Optional.ofNullable(logger.getLevel());
 			effectiveLevel = logger.getEffectiveLevel();
 		}
 
@@ -442,7 +438,7 @@ public class SystemResource {
 		}
 
 		public String getLevel() {
-			return Optional.ofNullable(level).map(Object::toString).orElse(null);
+			return level.map(Object::toString).orElse(null);
 		}
 
 		public String getEffectiveLevel() {
@@ -508,7 +504,6 @@ public class SystemResource {
 		}
 	}
 
-	@Builder
 	@JsonInclude(content = Include.NON_NULL)
 	public static class SearchResult {
 		private final String title;
@@ -517,8 +512,21 @@ public class SystemResource {
 
 		private final String type;
 
-		@Nullable
-		private final String subtype;
+		private final Optional<String> subtype;
+
+		public SearchResult(final String title, final String id, final String type) {
+			this.title = title;
+			this.id = id;
+			this.type = type;
+			subtype = Optional.empty();
+		}
+
+		public SearchResult(final String title, final String id, final String type, final String subtype) {
+			this.title = title;
+			this.id = id;
+			this.type = type;
+			this.subtype = Optional.of(subtype);
+		}
 
 		public String getTitle() {
 			return title;
@@ -532,7 +540,7 @@ public class SystemResource {
 			return type;
 		}
 
-		public String getSubtype() {
+		public Optional<String> getSubtype() {
 			return subtype;
 		}
 	}

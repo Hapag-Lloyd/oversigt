@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -42,10 +43,8 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Splitter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -226,16 +225,10 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/views/{widget}", this::serveWidget)
 				// get events from outside
 				.post("/widgets/{widget}", this::handleForeignEvents)
-				// dashboard configuration
-				.get("/{dashboard}/config", this::redirectToConfigPage)
-				.post("/{dashboard}/config", this::redirectToConfigPage)
-				.get("/{dashboard}/config/{page}", this::redirectToConfigPage)
-				.post("/{dashboard}/config/{page}", this::redirectToConfigPage)
 				// JSON Schema output
 				.get("/schema/{class}", this::serveJsonSchema)
 				// default handler
-				.get("/", this::redirectToWelcomePage)
-				.get("/welcome", this::serveWelcomePage);
+				.get("/", this::serveWelcomePage);
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers.path(routingHandler)
@@ -289,13 +282,26 @@ public class OversigtServer extends AbstractIdleService {
 		LOGGER.info("StartUp finished");
 	}
 
-	private void redirectToConfigPage(final HttpServerExchange exchange) {
-		final List<String> parts = Splitter.on('/').omitEmptyStrings().splitToList(exchange.getRequestPath());
-		if ("config".equals(parts.get(1))) {
-			HttpUtils.redirect(exchange, "/config/dashboards/" + parts.get(0), false, true);
-		} else {
-			HttpUtils.badRequest(exchange);
-		}
+	@Override
+	protected void shutDown() throws Exception {
+		/* stop the service for nightly reloading */
+		LOGGER.info("Stopping nightly services");
+		nightlyDashboardReloader.stopAsync();
+		nightlyDashboardReloader.awaitTerminated();
+		nightlyEventSourceRestarter.stopAsync();
+		nightlyEventSourceRestarter.awaitTerminated();
+
+		/* stop all event source instances */
+		LOGGER.info("Stopping event sources");
+		dashboardController.stopAllInstances();
+
+		/* close connections */
+		LOGGER.info("Shutting down server sent event connections");
+		getServerSentEventHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
+
+		/* stop the server */
+		LOGGER.info("Stopping web server");
+		server.ifPresent(Undertow::stop);
 	}
 
 	private void serveJsonSchema(final HttpServerExchange exchange) {
@@ -311,10 +317,6 @@ public class OversigtServer extends AbstractIdleService {
 		} else {
 			HttpUtils.notFound(exchange);
 		}
-	}
-
-	private void redirectToWelcomePage(final HttpServerExchange exchange) {
-		HttpUtils.redirect(exchange, "/welcome", false, true);
 	}
 
 	private void serveWidget(final HttpServerExchange exchange) {
@@ -392,7 +394,7 @@ public class OversigtServer extends AbstractIdleService {
 		exchange.getResponseSender().send(html);
 	}
 
-	private String processTemplate(final String templateName, final Object model)
+	private String processTemplate(final String templateName, final Map<String, Object> model)
 			throws IOException, TemplateException {
 		final StringWriter out = new StringWriter();
 		templateConfiguration.getTemplate(templateName).process(model, out);
@@ -419,14 +421,6 @@ public class OversigtServer extends AbstractIdleService {
 		return Handlers.resource(new AssetsClassPathResourceManager("statics", widgetsPaths));
 	}
 
-	private static Optional<URL> getResourceUrl(final String path) {
-		try {
-			return Optional.of(Resources.getResource(path));
-		} catch (@SuppressWarnings("unused") final IllegalArgumentException ignore) {
-			return Optional.empty();
-		}
-	}
-
 	@SuppressWarnings("resource")
 	private HttpHandler createSwaggerUiHandler() {
 		return Handlers.resource(new ClassPathResourceManager("swagger/swagger-ui/3.8.0"));
@@ -440,10 +434,10 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		// find all files belonging to the UI
-		final List<String> otherFiles = new ArrayList<>();
+		final List<String> otherFilesNames = new ArrayList<>();
 		final Path parent = indexHtml.getParent();
 		try (Stream<Path> paths = Files.list(parent)) {
-			otherFiles.addAll(paths.filter(path -> !path.getFileName().toString().toLowerCase().endsWith(".txt"))
+			otherFilesNames.addAll(paths.filter(path -> !path.getFileName().toString().toLowerCase().endsWith(".txt"))
 					.map(path -> path.getFileName().toString())
 					.filter(name -> !name.equals("index.html"))
 					.collect(toList()));
@@ -462,9 +456,9 @@ public class OversigtServer extends AbstractIdleService {
 				fileToServe = basePath.resolve("index.html");
 			}
 
-			// if index.html has been requested -> push other files
+			// HTTP/2.0 -> if index.html has been requested -> push other files
 			if (fileToServe.getFileName().toString().equals("index.html")) {
-				for (final String filename : otherFiles) {
+				for (final String filename : otherFilesNames) {
 					exchange.getConnection().pushResource(filename, new HttpString("GET"), new HeaderMap());
 				}
 			}
@@ -556,28 +550,6 @@ public class OversigtServer extends AbstractIdleService {
 				.addServlet(resteasyServlet);
 	}
 
-	@Override
-	protected void shutDown() throws Exception {
-		/* stop the service for nightly reloading */
-		LOGGER.info("Stopping nightly services");
-		nightlyDashboardReloader.stopAsync();
-		nightlyDashboardReloader.awaitTerminated();
-		nightlyEventSourceRestarter.stopAsync();
-		nightlyEventSourceRestarter.awaitTerminated();
-
-		/* stop all event source instances */
-		LOGGER.info("Stopping event sources");
-		dashboardController.stopAllInstances();
-
-		/* close connections */
-		LOGGER.info("Shutting down server sent event connections");
-		getServerSentEventHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
-
-		/* stop the server */
-		LOGGER.info("Stopping web server");
-		server.ifPresent(Undertow::stop);
-	}
-
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
 		final Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
@@ -585,7 +557,7 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final class OversigtServerListener extends Listener {
 		private OversigtServerListener() {
-			// no fileds to be initialized
+			// no fields to be initialized
 		}
 
 		@Override
@@ -626,7 +598,7 @@ public class OversigtServer extends AbstractIdleService {
 				final String end = realPath.substring("statics/widgets/".length());
 				return Arrays.stream(widgetsPaths)
 						.map(s -> s + end)
-						.map(OversigtServer::getResourceUrl)
+						.map(FileUtils::getResourceUrl)
 						.filter(Optional::isPresent)
 						.map(Optional::get)
 						.findFirst()
