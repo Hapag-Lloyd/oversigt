@@ -65,6 +65,8 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.util.Wro4jExecutor2.CustomWroConfiguration;
+import com.hlag.oversigt.util.Wro4jExecutor2.WroGroupContent;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
 
@@ -492,6 +494,10 @@ public class OversigtServer extends AbstractIdleService {
 	 * @return Static resources handler
 	 */
 	private HttpHandler createAggregationHandler() throws ServletException {
+		final CustomWroConfiguration wroConfig = injector.getInstance(CustomWroConfiguration.class);
+		final WroGroupContent content = new WroGroupContent();
+		content.addFiltered(FileUtils.streamResourcesFromClasspath(), wroConfig);
+
 		final DeploymentInfo deploymentInfo = Servlets.deployment()
 				.setClassLoader(OversigtServer.class.getClassLoader())
 				.setContextPath("/")
@@ -499,7 +505,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addFilterUrlMapping("wro4j", "/*", DispatcherType.REQUEST)
 				.addFilter(Servlets.filter("wro4j", ConfigurableWroFilter.class, () -> {
 					final ConfigurableWroFilter filter = new ConfigurableWroFilter();
-					filter.setWroManagerFactory(new WroManagerFactory());
+					filter.setWroManagerFactory(new WroManagerFactory(content));
 					return new ImmediateInstanceHandle<>(filter);
 				}));
 		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);

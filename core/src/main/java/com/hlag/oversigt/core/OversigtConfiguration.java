@@ -30,14 +30,10 @@ import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.SSLConfiguration;
+import com.hlag.oversigt.util.Wro4jExecutor2.CustomWroConfiguration;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.undertow.server.session.InMemorySessionManager;
-import io.undertow.server.session.SecureRandomSessionIdGenerator;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionCookieConfig;
-import io.undertow.server.session.SessionManager;
 
 /**
  * Events and event sources configuration
@@ -81,12 +77,16 @@ public class OversigtConfiguration {
 	@Nullable
 	private JiraConfiguration jira;
 
+	private CustomWroConfiguration wroConfiguration = new CustomWroConfiguration();
+
 	public OversigtConfiguration() {
 		// no fields to be initialized manually, some will be injected
 	}
 
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
+
+		binder.bind(CustomWroConfiguration.class).toInstance(wroConfiguration);
 
 		bind(binder, "hostname", Objects.requireNonNull(hostname, "hostname"));
 		binder.bind(SignatureAlgorithm.class).toInstance(api.jwtAlgorithm);
@@ -156,8 +156,6 @@ public class OversigtConfiguration {
 		if (admins.isEmpty()) {
 			LOGGER.warn("No server admins configured. Please check configuration security.serverAdmins");
 		}
-		binder.bind(SessionManager.class).toProvider(() -> provideSessionManager(security.session)).asEagerSingleton();
-		binder.bind(SessionConfig.class).toInstance(security.session.cookieConfig);
 	}
 
 	private static void bindNamedArray(final Binder binder,
@@ -179,16 +177,6 @@ public class OversigtConfiguration {
 						.map(converter)
 						.collect(Collectors.toList())
 						.toArray(createArray(targetClass.getComponentType(), 0)));
-	}
-
-	private SessionManager provideSessionManager(final SessionConfiguration sc) {
-		final InMemorySessionManager sm = new InMemorySessionManager(new SecureRandomSessionIdGenerator(),
-				"SESSION_MANAGER",
-				sc.maxCount,
-				sc.expireOldestUnusedSessionOnMax,
-				sc.statisticsEnabled);
-		sm.setDefaultSessionTimeout(sc.timeout * 60);
-		return sm;
 	}
 
 	public static class HttpListenerConfiguration {
@@ -372,26 +360,7 @@ public class OversigtConfiguration {
 		@Nullable
 		private LdapConfiguration ldap;
 
-		private SessionConfiguration session = new SessionConfiguration();
-
 		private SecurityConfiguration() {
-			// no fields to be initialized
-		}
-	}
-
-	private static final class SessionConfiguration {
-		private int timeout = 30;
-
-		private int maxCount = -1;
-
-		private boolean expireOldestUnusedSessionOnMax = false;
-
-		private boolean statisticsEnabled = true;
-
-		@Nullable
-		private SessionCookieConfig cookieConfig;
-
-		private SessionConfiguration() {
 			// no fields to be initialized
 		}
 	}

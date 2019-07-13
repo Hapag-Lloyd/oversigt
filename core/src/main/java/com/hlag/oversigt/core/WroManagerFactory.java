@@ -1,7 +1,5 @@
 package com.hlag.oversigt.core;
 
-import static com.google.common.io.Resources.getResource;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -11,13 +9,14 @@ import java.util.Properties;
 
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
+import com.hlag.oversigt.util.Wro4jExecutor2.WroGroupContent;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import ro.isdc.wro.extensions.processor.css.RubySassCssProcessor;
 import ro.isdc.wro.extensions.processor.js.CoffeeScriptProcessor;
 import ro.isdc.wro.manager.factory.ConfigurableWroManagerFactory;
+import ro.isdc.wro.model.WroModel;
 import ro.isdc.wro.model.factory.WroModelFactory;
-import ro.isdc.wro.model.factory.XmlModelFactory;
 import ro.isdc.wro.model.resource.Resource;
 import ro.isdc.wro.model.resource.processor.decorator.ProcessorDecorator;
 import ro.isdc.wro.model.resource.processor.factory.ProcessorsFactory;
@@ -33,8 +32,10 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	private static final String COFFEE_FILENAME = ".coffee";
 
-	WroManagerFactory() {
-		// no fields to be initialized
+	private final WroGroupContent content;
+
+	WroManagerFactory(final WroGroupContent content) {
+		this.content = content;
 	}
 
 	@Override
@@ -60,10 +61,18 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	@Override
 	protected WroModelFactory newModelFactory() {
-		return new XmlModelFactory() {
+		return new WroModelFactory() {
+
 			@Override
-			protected InputStream getModelResourceAsStream() throws IOException {
-				return Resources.asByteSource(getResource("wro.xml")).openStream();
+			public WroModel create() {
+				final WroModel model = new WroModel();
+				model.addGroup(content.toGroup("application"));
+				return model;
+			}
+
+			@Override
+			public void destroy() {
+				// nothing to do
 			}
 		};
 	}
