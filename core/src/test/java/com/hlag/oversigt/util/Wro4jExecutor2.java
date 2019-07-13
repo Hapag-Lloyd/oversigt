@@ -3,28 +3,16 @@
  */
 package com.hlag.oversigt.util;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -58,21 +46,10 @@ import ro.isdc.wro.model.resource.locator.factory.UriLocatorFactory;
  * Defines most common properties used by wro4j build-time solution
  * infrastructure.
  *
- * @author Alex Objelean
+ * @author Olaf Neumann
  */
 public class Wro4jExecutor2 {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Wro4jExecutor2.class);
-
-	private static final String XML_TEMPLATE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-			+ "<groups xmlns=\"http://www.isdc.ro/wro\">\n"
-			+ "    <group name=\"{{groupName}}\">\n"
-			+ "        <js>classpath:statics/widgets/{{viewName}}/**.js</js>\n"
-			+ "        <js>classpath:statics/widgets/{{viewName}}/**.coffee</js>\n"
-			+ "        <css>classpath:statics/widgets/{{viewName}}/**.scss</css>\n"
-			+
-			// " <css>classpath:statics/widgets/{{viewName}}/**.css</css>\n" +
-			"    </group>\n"
-			+ "</groups>\n";
 
 	private static final String GROUP = "group";
 
@@ -188,52 +165,4 @@ public class Wro4jExecutor2 {
 		}
 	}
 
-	public static final class WroGroupContent {
-		private final Map<ResourceType, Collection<URI>> paths = new HashMap<>();
-
-		public WroGroupContent() {
-			// nothing to do
-		}
-
-		private List<Pattern> createMatchers(final List<String> patterns) {
-			return patterns.stream().map(FileUtils::toRegex).map(Pattern::compile).collect(toList());
-		}
-
-		public void addFiltered(final Stream<Path> paths, final CustomWroConfiguration config) {
-			final Map<ResourceType, Collection<URI>> abc = new HashMap<>();
-			abc.put(ResourceType.JS, new ArrayList<>());
-			abc.put(ResourceType.CSS, new ArrayList<>());
-			final List<Pattern> jsMatchers = createMatchers(config.types.get(ResourceType.JS));
-			final List<Pattern> cssMatchers = createMatchers(config.types.get(ResourceType.CSS));
-
-			paths.forEach(path -> {
-				final String pathString = path.toAbsolutePath().toString();
-				if (jsMatchers.stream().anyMatch(m -> m.matcher(pathString).find())) {
-					abc.get(ResourceType.JS).add(path.toUri());
-				} else if (cssMatchers.stream().anyMatch(m -> m.matcher(pathString).find())) {
-					abc.get(ResourceType.CSS).add(path.toUri());
-				}
-			});
-			this.paths.putAll(abc);
-		}
-
-		// public void addPaths(final ResourceType type, final Collection<Path> paths) {
-		// this.paths.computeIfAbsent(type, x -> new ArrayList<>()).addAll(paths);
-		// }
-
-		public Group toGroup(final String name) {
-			final Group group = new Group(name);
-			group.setResources(Arrays.stream(ResourceType.values())
-					.flatMap(type -> paths.get(type)
-							.stream()
-							.map(path -> path.toString())
-							.map(uri -> Resource.create(uri, type)))
-					.collect(toList()));
-			return group;
-		}
-	}
-
-	public static final class CustomWroConfiguration {
-		private Map<ResourceType, List<String>> types = new HashMap<>();
-	}
 }

@@ -21,7 +21,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.io.Resources;
 import com.google.inject.Singleton;
 import com.hlag.oversigt.util.Wro4jExecutor;
-import com.hlag.oversigt.util.Wro4jExecutor2;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.NoChangeLog;
 
@@ -88,7 +87,7 @@ public class ViewResource {
 	@NoChangeLog
 	public Response readJavascript(@PathParam("viewId") @NotNull @NotBlank final String viewId) {
 		// if (doesViewExist(viewId)) {
-		final Wro4jExecutor2 executor = new Wro4jExecutor2();
+		final Wro4jExecutor executor = new Wro4jExecutor(getName(viewId), true);
 		final Optional<String> out = executor.execute(ResourceType.JS);
 		if (out.isPresent()) {
 			return Response.ok(out.get(), "application/javascript").build();

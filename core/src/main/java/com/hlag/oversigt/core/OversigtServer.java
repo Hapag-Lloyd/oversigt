@@ -53,6 +53,8 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.core.WroManagerFactory.WroGroupContent;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -65,8 +67,6 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
-import com.hlag.oversigt.util.Wro4jExecutor2.CustomWroConfiguration;
-import com.hlag.oversigt.util.Wro4jExecutor2.WroGroupContent;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
 

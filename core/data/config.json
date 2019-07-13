@@ -86,25 +86,23 @@
 				"statics/dashing/batman.js",
 				"statics/dashing/*.js",
 				"statics/dashing/*.coffee",
-				"statics/hlag/**.js",
-				"statics/bootstrap/js/bootstrap.min.js",
 				"statics/moment/moment.js",
 				"statics/moment/moment-timezone-with-data.js",
 				"statics/moment/moment-locale-en-gb.js",
 				"statics/moment/moment-locale-de.js",
+				"statics/assets/javascripts/**.js",
+				"statics/assets/javascripts/dashing.gridster.coffee",
 				"statics/widgets/**.coffee",
 				"statics/widgets/**.js",
-				"statics/assets/javascripts/**.js",
-				"statics/assets/javascripts/dashing.gridster.coffee"
+				"statics/hlag/**.js",
+				"statics/assets/javascripts/application.coffee"
 			],
 			"CSS": [
-				"statics/hlag/**.scss",
-				"statics/bootstrap/css/bootstrap.min.css",
-				"statics/bootstrap/css/bootstrap-theme.min.css",
+				"statics/assets/stylesheets/*.css",
+				"statics/assets/stylesheets/application.scss",
 				"statics/widgets/**.css",
 				"statics/widgets/**.scss",
-				"statics/assets/stylesheets/*.css",
-				"statics/assets/stylesheets/application.scss"
+				"statics/hlag/**.scss"
 			]
 		}
 	}

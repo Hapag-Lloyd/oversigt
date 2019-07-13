@@ -24,13 +24,13 @@ import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.LdapAuthenticator;
 import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.SSLConfiguration;
-import com.hlag.oversigt.util.Wro4jExecutor2.CustomWroConfiguration;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jsonwebtoken.SignatureAlgorithm;
