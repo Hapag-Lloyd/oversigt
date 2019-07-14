@@ -76,7 +76,7 @@ public class OversigtConfiguration {
 	@Nullable
 	private JiraConfiguration jira;
 
-	private CustomWroConfiguration wroConfiguration = new CustomWroConfiguration();
+	private CustomWroConfiguration wro = new CustomWroConfiguration();
 
 	public OversigtConfiguration() {
 		// no fields to be initialized manually, some will be injected
@@ -85,7 +85,7 @@ public class OversigtConfiguration {
 	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
 		bind(binder, "debug", debug || debugFallback);
 
-		binder.bind(CustomWroConfiguration.class).toInstance(wroConfiguration);
+		binder.bind(CustomWroConfiguration.class).toInstance(wro);
 
 		bind(binder, "hostname", Objects.requireNonNull(hostname, "hostname"));
 		binder.bind(SignatureAlgorithm.class).toInstance(api.jwtAlgorithm);

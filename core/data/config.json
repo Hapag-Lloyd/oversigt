@@ -79,7 +79,7 @@
 	"jira": {
 		"socketTimeout": 120
 	},
-	"wroConfiguration": {
+	"wro": {
 		"types": {
 			"JS": [
 				"statics/dashing/jquery.js",
