@@ -37,6 +37,7 @@ import com.hlag.oversigt.util.Utils.OperatingSystemType;
 
 import de.larssh.utils.SneakyException;
 import de.larssh.utils.function.ThrowingConsumer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public final class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
@@ -223,6 +224,7 @@ public final class FileUtils {
 	 *      "https://github.com/rtyley/globs-for-java/blob/master/src/main/java/com/madgag/globs/openjdk/Globs.java">OpenJDK</a>
 	 */
 	@SuppressWarnings({ "checkstyle:DescendantToken", "checkstyle:InnerAssignment" })
+	@SuppressFBWarnings(value = "CC_CYCLOMATIC_COMPLEXITY", justification = "copied from OpenJDK as is")
 	private static String toRegexPattern(final String globPattern, final boolean isDos) {
 		boolean inGroup = false;
 		// final StringBuilder regex = new StringBuilder("^");
