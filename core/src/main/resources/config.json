@@ -7,11 +7,11 @@
 		},
 		{
 			"port": 443,
-			"ssl": {
-				"keystore": "ssl_keystore.jks",
+			"tls": {
+				"keystore": "tls/keystore.jks",
 				"keystorePassword": "oversigt",
 				"keystoreEntryPassword": "oversigt",
-				"truststore": "ssl_truststore.jks",
+				"truststore": "tls/truststore.jks",
 				"truststorePassword": "oversigt"
 			}
 		}

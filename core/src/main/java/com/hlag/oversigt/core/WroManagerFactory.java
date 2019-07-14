@@ -3,7 +3,6 @@ package com.hlag.oversigt.core;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
@@ -21,8 +20,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.google.common.io.CharStreams;
-import com.google.common.io.Resources;
 import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.Utils;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import ro.isdc.wro.extensions.processor.css.RubySassCssProcessor;
@@ -95,12 +94,15 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 	@Override
 	protected Properties newConfigProperties() {
 		final Properties properties = new Properties();
-		try (InputStream is = Resources.asByteSource(Resources.getResource("wro.properties")).openStream()) {
-			properties.load(is);
-		} catch (final IOException e) {
-			throw new RuntimeException("Unable to load wro configuration", e);
-		}
-
+		properties.putAll(Utils.map(//
+				"minimizeEnabled",
+				"false", //
+				"disableCache",
+				"true", //
+				"gzipResources",
+				"false", //
+				"parallelPreprocessing",
+				"true"));
 		return properties;
 	}
 

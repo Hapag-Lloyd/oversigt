@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
@@ -30,7 +29,7 @@ import com.hlag.oversigt.security.LdapAuthenticator;
 import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
-import com.hlag.oversigt.util.SSLUtils.SSLConfiguration;
+import com.hlag.oversigt.util.SSLUtils.TLSConfiguration;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -69,7 +68,7 @@ public class OversigtConfiguration {
 
 	private String templateNumberFormat = "0";
 
-	private List<HttpListenerConfiguration> listeners = Lists.newArrayList(new HttpListenerConfiguration());
+	private List<HttpListenerConfiguration> listeners = new ArrayList<>(Arrays.asList(new HttpListenerConfiguration()));
 
 	@Nullable
 	private EventSourceConfiguration eventSources;
@@ -184,8 +183,7 @@ public class OversigtConfiguration {
 
 		private int port = 80;
 
-		@Nullable
-		private SSLConfiguration ssl = null;
+		private Optional<TLSConfiguration> tls = Optional.empty();
 
 		public HttpListenerConfiguration() {
 			// no fields to be initialized
@@ -199,13 +197,12 @@ public class OversigtConfiguration {
 			return port;
 		}
 
-		@Nullable
-		public SSLConfiguration getSSLConfiguration() {
-			return ssl;
+		public TLSConfiguration getTLSConfiguration() {
+			return tls.get();
 		}
 
-		public boolean isSsl() {
-			return ssl != null;
+		public boolean isTls() {
+			return tls.isPresent();
 		}
 	}
 

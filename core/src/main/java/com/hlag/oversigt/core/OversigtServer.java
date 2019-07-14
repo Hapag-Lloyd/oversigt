@@ -254,13 +254,13 @@ public class OversigtServer extends AbstractIdleService {
 
 		final Builder builder = Undertow.builder();
 		listeners.stream()
-				.filter(not(HttpListenerConfiguration::isSsl))
+				.filter(not(HttpListenerConfiguration::isTls))
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
 		listeners.stream()
-				.filter(HttpListenerConfiguration::isSsl)
+				.filter(HttpListenerConfiguration::isTls)
 				.forEach(c -> builder.addHttpsListener(c.getPort(),
 						c.getIp(),
-						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
+						Objects.requireNonNull(c.getTLSConfiguration()).createSSLContext()));
 		final Undertow server = builder.setHandler(accessHandler).build();
 		this.server = Optional.of(server);
 
@@ -365,7 +365,7 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		// actually serve the dashboard
-		final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
+		final String html = processTemplate("/web-templates/layout/dashboard/instance.ftl.html",
 				map("title",
 						dashboard.get().getTitle(),
 						"columns",
@@ -382,7 +382,7 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
-		final String html = processTemplate("/views/layout/root/page_welcome.ftl.html",
+		final String html = processTemplate("/web-templates/layout/root/page_welcome.ftl.html",
 				map("title",
 						"Welcome",
 						"dashboards",

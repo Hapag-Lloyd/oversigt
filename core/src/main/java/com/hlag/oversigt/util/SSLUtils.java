@@ -30,7 +30,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class SSLUtils {
 	private SSLUtils() {}
 
-	public static SSLContext createSSLContext(final SSLConfiguration config) {
+	public static SSLContext createSSLContext(final TLSConfiguration config) {
 		try {
 			final KeyStore keyStore = loadKeyStore(Resources.getResource(config.keystore), config.keystorePassword);
 			final KeyStore trustStore
@@ -113,7 +113,7 @@ public final class SSLUtils {
 		return getSslContext(id).getSocketFactory();
 	}
 
-	public static class SSLConfiguration {
+	public static class TLSConfiguration {
 		private final String keystore;
 
 		private final String truststore;
@@ -124,7 +124,7 @@ public final class SSLUtils {
 
 		private final String keystoreEntryPassword;
 
-		public SSLConfiguration(final String keystore,
+		public TLSConfiguration(final String keystore,
 				final String truststore,
 				final String keystorePassword,
 				final String truststorePassword,
