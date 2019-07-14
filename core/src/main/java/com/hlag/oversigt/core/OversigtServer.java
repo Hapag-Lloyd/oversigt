@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -345,8 +347,10 @@ public class OversigtServer extends AbstractIdleService {
 		// check whether to serve a favicon
 		final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
 		if ("favicon.ico".equals(dashboardId)) {
-			// XXX add a proper favicon handler
-			HttpUtils.notFound(exchange);
+			exchange.getResponseHeaders().add(HttpString.tryFromString("Content-Type"), "image/x-icon");
+			exchange.getResponseSender()
+					.send(ByteBuffer.wrap(Files.readAllBytes(
+							Paths.get(Resources.getResource("statics/assets/images/favicon.ico").toURI()))));
 			return;
 		}
 

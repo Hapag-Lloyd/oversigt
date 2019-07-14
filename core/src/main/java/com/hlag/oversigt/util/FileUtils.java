@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
-import com.hlag.oversigt.util.OperatingSystemCheck.OperatingSystem;
+import com.hlag.oversigt.util.Utils.OperatingSystemType;
 
 import de.larssh.utils.SneakyException;
 import de.larssh.utils.function.ThrowingConsumer;
@@ -191,18 +191,18 @@ public final class FileUtils {
 		return Optional.of(filename.substring(lastIndex + 1));
 	}
 
-	private static final String regexMetaChars = ".^$+{[]|()";
+	private static final String REGEX_META_CHARS = ".^$+{[]|()";
 
-	private static final String globMetaChars = "\\*?[{";
+	private static final String GLOB_META_CHARS = "\\*?[{";
 
-	private static char EOL = 0; // TBD
+	private static final char EOL = 0; // TBD
 
 	private static boolean isRegexMeta(final char c) {
-		return regexMetaChars.indexOf(c) != -1;
+		return REGEX_META_CHARS.indexOf(c) != -1;
 	}
 
 	private static boolean isGlobMeta(final char c) {
-		return globMetaChars.indexOf(c) != -1;
+		return GLOB_META_CHARS.indexOf(c) != -1;
 	}
 
 	private static char next(final String glob, final int i) {
@@ -215,12 +215,18 @@ public final class FileUtils {
 	/**
 	 * Creates a regex pattern from the given glob expression.
 	 *
-	 * @throws PatternSyntaxException
+	 * @param globPattern the glob to turn into a regex
+	 * @param isDos       whether to use DOS/ windows specific syntax or not
+	 * @return the converted regex
+	 * @throws PatternSyntaxException if the given syntax has errors
+	 * @see <a href=
+	 *      "https://github.com/rtyley/globs-for-java/blob/master/src/main/java/com/madgag/globs/openjdk/Globs.java">OpenJDK</a>
 	 */
+	@SuppressWarnings({ "checkstyle:DescendantToken", "checkstyle:InnerAssignment" })
 	private static String toRegexPattern(final String globPattern, final boolean isDos) {
 		boolean inGroup = false;
 		// final StringBuilder regex = new StringBuilder("^");
-		final StringBuilder regex = new StringBuilder("");
+		final StringBuilder regex = new StringBuilder();
 
 		int i = 0;
 		while (i < globPattern.length()) {
@@ -254,17 +260,17 @@ public final class FileUtils {
 				if (next(globPattern, i) == '^') {
 					// escape the regex negation char if it appears
 					regex.append("\\^");
-					i++;
+					i += 1;
 				} else {
 					// negation
 					if (next(globPattern, i) == '!') {
 						regex.append('^');
-						i++;
+						i += 1;
 					}
 					// hyphen allowed at start
 					if (next(globPattern, i) == '-') {
 						regex.append('-');
-						i++;
+						i += 1;
 					}
 				}
 				boolean hasRangeStart = false;
@@ -332,7 +338,7 @@ public final class FileUtils {
 				if (next(globPattern, i) == '*') {
 					// crosses directory boundaries
 					regex.append(".*");
-					i++;
+					i += 1;
 				} else {
 					// within directory boundary
 					if (isDos) {
@@ -355,6 +361,7 @@ public final class FileUtils {
 					regex.append('\\');
 				}
 				regex.append(c);
+				break;
 			}
 		}
 
@@ -374,7 +381,7 @@ public final class FileUtils {
 	}
 
 	public static String toRegex(final String globPattern) {
-		if (OperatingSystemCheck.getOperatingSystemType() == OperatingSystem.Windows) {
+		if (Utils.getOperatingSystemType() == OperatingSystemType.Windows) {
 			return toWindowsRegexPattern(globPattern);
 		}
 		return toUnixRegexPattern(globPattern);

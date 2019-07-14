@@ -109,7 +109,7 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 	public static final class WroGroupContent {
 		private final Map<ResourceType, Collection<URI>> paths = new HashMap<>();
 
-		public WroGroupContent() {
+		WroGroupContent() {
 			// nothing to do
 		}
 
@@ -155,5 +155,9 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	public static final class CustomWroConfiguration {
 		private Map<ResourceType, List<String>> types = new HashMap<>();
+
+		CustomWroConfiguration() {
+			// nothing to do
+		}
 	}
 }
