@@ -42,6 +42,8 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonSerializer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -78,7 +80,6 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
-import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 
 /**
  * Main application configuration module. Configures server and all necessary
@@ -156,7 +157,6 @@ class OversigtModule extends AbstractModule {
 
 		// GSON
 		final Gson gson = new GsonBuilder()//
-				.registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory())
 				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
 				.registerTypeAdapter(Class.class, deserializer(Class::forName))
 				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
@@ -166,6 +166,11 @@ class OversigtModule extends AbstractModule {
 				.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
 				.registerTypeAdapter(LocalDate.class,
 						deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
+				// .registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory())
+				.registerTypeAdapter(Optional.class,
+						(JsonSerializer<Optional<?>>) (src, typeOfSrc, context) -> src.isPresent()
+								? context.serialize(src.get())
+								: JsonNull.INSTANCE)
 				.create();
 		binder().bind(Gson.class).toInstance(gson);
 

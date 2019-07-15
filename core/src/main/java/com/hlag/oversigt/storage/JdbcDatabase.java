@@ -513,7 +513,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				rs -> readColumnValues(rs, COLUMNS_WIDGET));
 		final List<Map<String, Object>> widgetDataMapList = loadValues(TABLE_WIDGET_DATA,
 				"*",
-				"WIDGET_ID",
+				Optional.of("WIDGET_ID"),
 				widgetInfoList.stream().map(m -> (Integer) m.get("ID")).collect(Collectors.toSet()),
 				COLUMNS_WIDGET_DATA);
 

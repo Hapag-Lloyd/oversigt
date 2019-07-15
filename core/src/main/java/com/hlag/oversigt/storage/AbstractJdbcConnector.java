@@ -209,14 +209,6 @@ public abstract class AbstractJdbcConnector implements Closeable {
 
 	protected List<Map<String, Object>> loadValues(final String table,
 			final String columnToRead,
-			final String columnToCheck,
-			final Object value,
-			final String[] columnNames) {
-		return loadValues(table, columnToRead, Optional.of(columnToCheck), new Object[] { value }, columnNames);
-	}
-
-	protected List<Map<String, Object>> loadValues(final String table,
-			final String columnToRead,
 			final Optional<String> columnToCheck,
 			final Collection<Object> values,
 			final String[] columnNames) {
@@ -232,7 +224,7 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			return load(table, columnToRead, columnToCheck, values[0], rs -> readColumnValues(rs, columnNames));
 		}
 		final String sql = getDialect()
-				.select(table, Lists.newArrayList("*"), columnToCheck, values.length == 0 ? values.length : -1);
+				.select(table, Lists.newArrayList("*"), columnToCheck, values.length == 0 ? -1 : values.length);
 		return load(sql, rs -> readColumnValues(rs, columnNames), values);
 	}
 

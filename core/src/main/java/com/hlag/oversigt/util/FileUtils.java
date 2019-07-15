@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,9 +33,11 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
+import com.hlag.oversigt.util.Utils.OperatingSystemType;
 
 import de.larssh.utils.SneakyException;
 import de.larssh.utils.function.ThrowingConsumer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public final class FileUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
@@ -187,6 +190,203 @@ public final class FileUtils {
 			return Optional.empty();
 		}
 		return Optional.of(filename.substring(lastIndex + 1));
+	}
+
+	private static final String REGEX_META_CHARS = ".^$+{[]|()";
+
+	private static final String GLOB_META_CHARS = "\\*?[{";
+
+	private static final char EOL = 0; // TBD
+
+	private static boolean isRegexMeta(final char c) {
+		return REGEX_META_CHARS.indexOf(c) != -1;
+	}
+
+	private static boolean isGlobMeta(final char c) {
+		return GLOB_META_CHARS.indexOf(c) != -1;
+	}
+
+	private static char next(final String glob, final int i) {
+		if (i < glob.length()) {
+			return glob.charAt(i);
+		}
+		return EOL;
+	}
+
+	/**
+	 * Creates a regex pattern from the given glob expression.
+	 *
+	 * @param globPattern the glob to turn into a regex
+	 * @param isDos       whether to use DOS/ windows specific syntax or not
+	 * @return the converted regex
+	 * @throws PatternSyntaxException if the given syntax has errors
+	 * @see <a href=
+	 *      "https://github.com/rtyley/globs-for-java/blob/master/src/main/java/com/madgag/globs/openjdk/Globs.java">OpenJDK</a>
+	 */
+	@SuppressWarnings({ "checkstyle:DescendantToken", "checkstyle:InnerAssignment" })
+	@SuppressFBWarnings(value = "CC_CYCLOMATIC_COMPLEXITY", justification = "copied from OpenJDK as is")
+	private static String toRegexPattern(final String globPattern, final boolean isDos) {
+		boolean inGroup = false;
+		// final StringBuilder regex = new StringBuilder("^");
+		final StringBuilder regex = new StringBuilder();
+
+		int i = 0;
+		while (i < globPattern.length()) {
+			char c = globPattern.charAt(i++);
+			switch (c) {
+			case '\\':
+				// escape special characters
+				if (i == globPattern.length()) {
+					throw new PatternSyntaxException("No character to escape", globPattern, i - 1);
+				}
+				final char next = globPattern.charAt(i++);
+				if (isGlobMeta(next) || isRegexMeta(next)) {
+					regex.append('\\');
+				}
+				regex.append(next);
+				break;
+			case '/':
+				if (isDos) {
+					regex.append("\\\\");
+				} else {
+					regex.append(c);
+				}
+				break;
+			case '[':
+				// don't match name separator in class
+				if (isDos) {
+					regex.append("[[^\\\\]&&[");
+				} else {
+					regex.append("[[^/]&&[");
+				}
+				if (next(globPattern, i) == '^') {
+					// escape the regex negation char if it appears
+					regex.append("\\^");
+					i += 1;
+				} else {
+					// negation
+					if (next(globPattern, i) == '!') {
+						regex.append('^');
+						i += 1;
+					}
+					// hyphen allowed at start
+					if (next(globPattern, i) == '-') {
+						regex.append('-');
+						i += 1;
+					}
+				}
+				boolean hasRangeStart = false;
+				char last = 0;
+				while (i < globPattern.length()) {
+					c = globPattern.charAt(i++);
+					if (c == ']') {
+						break;
+					}
+					if (c == '/' || isDos && c == '\\') {
+						throw new PatternSyntaxException("Explicit 'name separator' in class", globPattern, i - 1);
+					}
+					// TBD: how to specify ']' in a class?
+					if (c == '\\' || c == '[' || c == '&' && next(globPattern, i) == '&') {
+						// escape '\', '[' or "&&" for regex class
+						regex.append('\\');
+					}
+					regex.append(c);
+
+					if (c == '-') {
+						if (!hasRangeStart) {
+							throw new PatternSyntaxException("Invalid range", globPattern, i - 1);
+						}
+						if ((c = next(globPattern, i++)) == EOL || c == ']') {
+							break;
+						}
+						if (c < last) {
+							throw new PatternSyntaxException("Invalid range", globPattern, i - 3);
+						}
+						regex.append(c);
+						hasRangeStart = false;
+					} else {
+						hasRangeStart = true;
+						last = c;
+					}
+				}
+				if (c != ']') {
+					throw new PatternSyntaxException("Missing ']", globPattern, i - 1);
+				}
+				regex.append("]]");
+				break;
+			case '{':
+				if (inGroup) {
+					throw new PatternSyntaxException("Cannot nest groups", globPattern, i - 1);
+				}
+				regex.append("(?:(?:");
+				inGroup = true;
+				break;
+			case '}':
+				if (inGroup) {
+					regex.append("))");
+					inGroup = false;
+				} else {
+					regex.append('}');
+				}
+				break;
+			case ',':
+				if (inGroup) {
+					regex.append(")|(?:");
+				} else {
+					regex.append(',');
+				}
+				break;
+			case '*':
+				if (next(globPattern, i) == '*') {
+					// crosses directory boundaries
+					regex.append(".*");
+					i += 1;
+				} else {
+					// within directory boundary
+					if (isDos) {
+						regex.append("[^\\\\]*");
+					} else {
+						regex.append("[^/]*");
+					}
+				}
+				break;
+			case '?':
+				if (isDos) {
+					regex.append("[^\\\\]");
+				} else {
+					regex.append("[^/]");
+				}
+				break;
+
+			default:
+				if (isRegexMeta(c)) {
+					regex.append('\\');
+				}
+				regex.append(c);
+				break;
+			}
+		}
+
+		if (inGroup) {
+			throw new PatternSyntaxException("Missing '}", globPattern, i - 1);
+		}
+
+		return regex.append('$').toString();
+	}
+
+	public static String toUnixRegexPattern(final String globPattern) {
+		return toRegexPattern(globPattern, false);
+	}
+
+	public static String toWindowsRegexPattern(final String globPattern) {
+		return toRegexPattern(globPattern, true);
+	}
+
+	public static String toRegex(final String globPattern) {
+		if (Utils.getOperatingSystemType() == OperatingSystemType.Windows) {
+			return toWindowsRegexPattern(globPattern);
+		}
+		return toUnixRegexPattern(globPattern);
 	}
 
 	private FileUtils() {

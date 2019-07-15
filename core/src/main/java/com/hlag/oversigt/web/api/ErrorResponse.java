@@ -45,7 +45,7 @@ public final class ErrorResponse {
 	}
 
 	public static Response badRequest(final String message) {
-		return badRequest(message);
+		return createErrorResponse(Status.BAD_REQUEST, message);
 	}
 
 	public static Response badRequest(final UUID uuid, final String message, final Collection<String> errors) {

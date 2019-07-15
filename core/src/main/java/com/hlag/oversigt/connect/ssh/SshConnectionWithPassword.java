@@ -53,22 +53,22 @@ class SshConnectionWithPassword extends SshConnection {
 		}
 
 		@Override
-		public boolean promptPassphrase(@SuppressWarnings("unused") @Nullable final String arg0) {
+		public boolean promptPassphrase(@SuppressWarnings("unused") @Nullable final String prompt) {
 			return false;
 		}
 
 		@Override
-		public boolean promptPassword(@SuppressWarnings("unused") @Nullable final String arg0) {
+		public boolean promptPassword(@SuppressWarnings("unused") @Nullable final String prompt) {
 			return true;
 		}
 
 		@Override
-		public boolean promptYesNo(@SuppressWarnings("unused") @Nullable final String arg0) {
+		public boolean promptYesNo(@SuppressWarnings("unused") @Nullable final String promt) {
 			return false;
 		}
 
 		@Override
-		public void showMessage(@SuppressWarnings("unused") @Nullable final String arg0) {
+		public void showMessage(@SuppressWarnings("unused") @Nullable final String message) {
 			// there is no message
 		}
 	}

@@ -16,13 +16,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.TextEvent;
+import com.hlag.oversigt.util.JsonUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
@@ -53,7 +53,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 	private MultiResultBehaviour multiResultBehaviour = MultiResultBehaviour.Random;
 
 	@Inject
-	private Gson gson;
+	private JsonUtils json;
 
 	public InternetTextEventSource() {
 		// no fields to be initialized manually, some will be injected
@@ -80,7 +80,7 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		if (elements.isEmpty()) {
 			output = getDefaultValue();
 		} else if (hasStringFormat()) {
-			output = elements.stream().map(gson::toJson).map(this::useStringFormat).collect(Collectors.joining("\n"));
+			output = elements.stream().map(json::toJson).map(this::useStringFormat).collect(Collectors.joining("\n"));
 		} else {
 			output = getMultiResultBehaviour().extractElement(elements).toString();
 		}

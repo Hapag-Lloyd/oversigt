@@ -441,7 +441,6 @@ public class DashboardWidgetResource {
 		@NotNull
 		private String type = "";
 
-		@NotBlank
 		@NotNull
 		private String title = "";
 

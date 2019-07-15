@@ -120,7 +120,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	@Override
 	protected final Optional<T> produceEvent() throws EventSourceException {
-		if (lastDbAccessDateTime.map(LocalDateTime.now().minus(getDatabaseQueryInterval())::isAfter).orElse(false)) {
+		if (lastDbAccessDateTime.map(LocalDateTime.now().minus(getDatabaseQueryInterval())::isAfter).orElse(true)) {
 			try {
 				withConnection(this::gatherDatabaseInfo);
 				lastDbAccessDateTime = Optional.of(LocalDateTime.now());

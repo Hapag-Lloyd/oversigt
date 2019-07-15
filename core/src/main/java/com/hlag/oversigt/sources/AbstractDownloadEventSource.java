@@ -31,12 +31,9 @@ import java.util.regex.Pattern;
 import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -381,13 +378,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public LoginData[] getLoginDatas() {
 			return Optional.ofNullable(loginDatas).orElse(new LoginData[0]);
 		}
-
-		/** {@inheritDoc} */
-		@Override
-		public String toString() {
-			// return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
-			return new Gson().toJson(this);
-		}
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
@@ -408,12 +398,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 		public String getValue() {
 			return value;
 		}
-
-		/** {@inheritDoc} */
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
-		}
 	}
 
 	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "{{self.name}}")
@@ -433,12 +417,6 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		public String getValue() {
 			return value;
-		}
-
-		/** {@inheritDoc} */
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 

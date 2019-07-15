@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -53,6 +55,8 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.core.WroManagerFactory.WroGroupContent;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -252,13 +256,13 @@ public class OversigtServer extends AbstractIdleService {
 
 		final Builder builder = Undertow.builder();
 		listeners.stream()
-				.filter(not(HttpListenerConfiguration::isSsl))
+				.filter(not(HttpListenerConfiguration::isTls))
 				.forEach(c -> builder.addHttpListener(c.getPort(), c.getIp()));
 		listeners.stream()
-				.filter(HttpListenerConfiguration::isSsl)
+				.filter(HttpListenerConfiguration::isTls)
 				.forEach(c -> builder.addHttpsListener(c.getPort(),
 						c.getIp(),
-						Objects.requireNonNull(c.getSSLConfiguration()).createSSLContext()));
+						Objects.requireNonNull(c.getTLSConfiguration()).createSSLContext()));
 		final Undertow server = builder.setHandler(accessHandler).build();
 		this.server = Optional.of(server);
 
@@ -343,8 +347,10 @@ public class OversigtServer extends AbstractIdleService {
 		// check whether to serve a favicon
 		final String dashboardId = exchange.getQueryParameters().get("dashboard").poll();
 		if ("favicon.ico".equals(dashboardId)) {
-			// XXX add a proper favicon handler
-			HttpUtils.notFound(exchange);
+			exchange.getResponseHeaders().add(HttpString.tryFromString("Content-Type"), "image/x-icon");
+			exchange.getResponseSender()
+					.send(ByteBuffer.wrap(Files.readAllBytes(
+							Paths.get(Resources.getResource("statics/assets/images/favicon.ico").toURI()))));
 			return;
 		}
 
@@ -363,7 +369,7 @@ public class OversigtServer extends AbstractIdleService {
 		}
 
 		// actually serve the dashboard
-		final String html = processTemplate("/views/layout/dashboard/instance.ftl.html",
+		final String html = processTemplate("/web-templates/layout/dashboard/instance.ftl.html",
 				map("title",
 						dashboard.get().getTitle(),
 						"columns",
@@ -380,7 +386,7 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
-		final String html = processTemplate("/views/layout/root/page_welcome.ftl.html",
+		final String html = processTemplate("/web-templates/layout/root/page_welcome.ftl.html",
 				map("title",
 						"Welcome",
 						"dashboards",
@@ -492,6 +498,10 @@ public class OversigtServer extends AbstractIdleService {
 	 * @return Static resources handler
 	 */
 	private HttpHandler createAggregationHandler() throws ServletException {
+		final CustomWroConfiguration wroConfig = injector.getInstance(CustomWroConfiguration.class);
+		final WroGroupContent content = new WroGroupContent();
+		content.addFiltered(FileUtils.streamResourcesFromClasspath(), wroConfig);
+
 		final DeploymentInfo deploymentInfo = Servlets.deployment()
 				.setClassLoader(OversigtServer.class.getClassLoader())
 				.setContextPath("/")
@@ -499,7 +509,7 @@ public class OversigtServer extends AbstractIdleService {
 				.addFilterUrlMapping("wro4j", "/*", DispatcherType.REQUEST)
 				.addFilter(Servlets.filter("wro4j", ConfigurableWroFilter.class, () -> {
 					final ConfigurableWroFilter filter = new ConfigurableWroFilter();
-					filter.setWroManagerFactory(new WroManagerFactory());
+					filter.setWroManagerFactory(new WroManagerFactory(content));
 					return new ImmediateInstanceHandle<>(filter);
 				}));
 		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);

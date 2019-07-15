@@ -6,10 +6,15 @@
 	<suppress files="^.*$" checks="IllegalCatch" message="^Catching &apos;Exception&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="IllegalToken" message="^Using &apos;(break|continue)&apos; is not allowed\.$" />
 	<suppress files="^.*$" checks="SuppressWarnings" message="^The warning &apos;resource&apos; cannot be suppressed at this location\.$" />
+	<suppress files="^.*package-info\.java$" checks="MissingJavadocPackage" />
 
 	<!-- API method names -->
 	<suppress files="^(|.*[/\\])com[/\\]hlag[/\\]oversigt[/\\]web[/\\].*$" checks="MethodName" message="^Name 'doAction_[^']+' must match pattern '.*'\.$" />
 
 	<!-- Unit Tests -->
 	<suppress files="^(.*[/\\])?(src[/\\]test|generated-test-sources)[/\\].*$" checks="^.*(MethodName|MissingCtor).*$" />
+	
+	<!-- annotation handling -->
+	<!-- Array values of annotation should be set as arrays! -->
+	<suppress files="^.*$" checks="AnnotationUseStyle" message="^.*COMPACT_NO_ARRAY.*$" />
 </suppressions>
