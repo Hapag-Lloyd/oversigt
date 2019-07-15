@@ -268,9 +268,12 @@ public class EventSourceInstanceResource {
 		if (!instance.getDescriptor().getKey().getKey().equals(details.getEventSourceDescriptor())) {
 			return ErrorResponse.badRequest("The event source descriptor key does not match");
 		}
-		if (!instance.getDescriptor().isScheduledService() && details.frequency != Duration.ZERO) {
-			return ErrorResponse.badRequest("The event source does not take a frequency");
-		}
+		// TODO this needs to be checked when the UI is fixed
+		// if (!instance.getDescriptor().isScheduledService()&& details.frequency !=
+		// Duration.ZERO) {
+		// return ErrorResponse.badRequest("The event source does not take a
+		// frequency");
+		// }
 		final Set<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
 		unnessaccaryDataItems.removeAll(instance.getDescriptor()
 				.getDataItems()
