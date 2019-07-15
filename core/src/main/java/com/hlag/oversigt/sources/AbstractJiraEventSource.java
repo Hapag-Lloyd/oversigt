@@ -346,10 +346,12 @@ public abstract class AbstractJiraEventSource<T extends OversigtEvent> extends S
 		private static List<String> getUserNamesOfResponsiblePersons(final IssueField field) {
 			try {
 				final List<String> names = new ArrayList<>();
-				final JSONArray responsiblePersons = (JSONArray) field.getValue();
-				if (responsiblePersons != null) {
-					for (int i = 0; i < responsiblePersons.length(); i += 1) {
-						names.add(responsiblePersons.getJSONObject(i).getString("name"));
+				if (field.getValue() instanceof JSONArray) {
+					final JSONArray responsiblePersons = (JSONArray) field.getValue();
+					if (responsiblePersons != null) {
+						for (int i = 0; i < responsiblePersons.length(); i += 1) {
+							names.add(responsiblePersons.getJSONObject(i).getString("name"));
+						}
 					}
 				}
 				return names;

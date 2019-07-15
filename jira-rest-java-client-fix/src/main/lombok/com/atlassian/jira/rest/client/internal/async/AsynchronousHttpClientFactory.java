@@ -127,6 +127,9 @@ public class AsynchronousHttpClientFactory {
 			final Properties props = new Properties();
 			try (InputStream resourceAsStream = MavenUtils.class
 					.getResourceAsStream(String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId))) {
+				if (resourceAsStream == null) {
+					return UNKNOWN_VERSION;
+				}
 				props.load(resourceAsStream);
 				return props.getProperty("version", UNKNOWN_VERSION);
 			} catch (final IOException e) {
