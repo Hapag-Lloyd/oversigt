@@ -168,6 +168,48 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 					+ (!until.isPresent() ? " Today" : " until " + formatter.format(until.get()));
 		}
 
+		/**
+		 * @return the clazz
+		 */
+		public String getClazz() {
+			return clazz;
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @return the number
+		 */
+		public String getNumber() {
+			return number;
+		}
+
+		/**
+		 * @return the status
+		 */
+		public String getStatus() {
+			return status;
+		}
+
+		/**
+		 * @return the free
+		 */
+		public boolean isFree() {
+			return free;
+		}
+
+		/**
+		 * @return the until
+		 */
+		public Optional<LocalTime> getUntil() {
+			return until;
+		}
+
 		@Override
 		public String toString() {
 			return String.format("RoomAvailabilityItem [%s, %s, %s, %s]", clazz, name, number, status);
