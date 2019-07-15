@@ -313,7 +313,8 @@ public class SystemResource {
 
 		final List<OversigtEvent> eventList
 				= Arrays.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
-		return ok(json.toJson(eventList)).build();
+		final String json = this.json.toJson(eventList);
+		return ok(json).build();
 	}
 
 	@GET
