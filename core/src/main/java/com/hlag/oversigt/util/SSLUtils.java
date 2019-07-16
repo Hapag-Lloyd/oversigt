@@ -23,6 +23,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.io.Resources;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -124,11 +126,12 @@ public final class SSLUtils {
 
 		private final String keystoreEntryPassword;
 
-		public TLSConfiguration(final String keystore,
-				final String truststore,
-				final String keystorePassword,
-				final String truststorePassword,
-				final String keystoreEntryPassword) {
+		@JsonCreator
+		public TLSConfiguration(@JsonProperty("keystore") final String keystore,
+				@JsonProperty("truststore") final String truststore,
+				@JsonProperty("keystorePassword") final String keystorePassword,
+				@JsonProperty("truststorePassword") final String truststorePassword,
+				@JsonProperty("keystoreEntryPassword") final String keystoreEntryPassword) {
 			this.keystore = keystore;
 			this.truststore = truststore;
 			this.keystorePassword = keystorePassword;

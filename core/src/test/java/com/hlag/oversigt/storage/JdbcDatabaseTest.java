@@ -23,7 +23,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.io.Resources;
-import com.hlag.oversigt.util.JsonUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcDatabaseTest {
@@ -57,12 +56,8 @@ public class JdbcDatabaseTest {
 		final URL db = Resources.getResource(DATABASE_FILENAME);
 		dbLocation = tempFolder.map(dir -> dir.resolve(DATABASE_FILENAME));
 		Files.copy(Paths.get(db.toURI()), dbLocation.get());
-		database = Optional.of(new JdbcDatabase(new SqliteDialect(),
-				dbLocation.get().toAbsolutePath().toString(),
-				"",
-				"",
-				"",
-				new JsonUtils()/* TODO create an injected instance */));
+		database = Optional
+				.of(new JdbcDatabase(new SqliteDialect(), dbLocation.get().toAbsolutePath().toString(), "", "", ""));
 	}
 
 	@After

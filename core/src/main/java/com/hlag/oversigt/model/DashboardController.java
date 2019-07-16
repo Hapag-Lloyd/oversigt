@@ -126,9 +126,6 @@ public class DashboardController {
 	private Storage storage;
 
 	@Inject
-	private JsonUtils json;
-
-	@Inject
 	private Injector injector;
 
 	@Inject
@@ -523,9 +520,9 @@ public class DashboardController {
 							"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
 				}
 				// return Arrays.deepToString((Object[]) value);
-				return json.toJson(value);
+				return JsonUtils.toJson(value);
 			} else if (property.isJson() || TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {
-				return json.toJson(value);
+				return JsonUtils.toJson(value);
 			} else {
 				return value.toString();
 			}
@@ -849,7 +846,7 @@ public class DashboardController {
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}
 			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
-				final Object value = json.fromJson(string, type);
+				final Object value = JsonUtils.fromJson(string, type);
 				if (value != null) {
 					return value;
 				}
@@ -995,7 +992,7 @@ public class DashboardController {
 				clazz,
 				hint,
 				json,
-				json ? this.json.toJsonSchema(clazz, Optional.ofNullable(hint)) : null);
+				json ? JsonUtils.toJsonSchema(clazz, Optional.ofNullable(hint)) : null);
 
 		collectAllowedValues(clazz).forEach(esProperty::addAllowedValue);
 		return esProperty;

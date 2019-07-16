@@ -9,9 +9,7 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +27,8 @@ import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -40,10 +40,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonSerializer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -119,6 +115,8 @@ class OversigtModule extends AbstractModule {
 				.annotatedWith(Names.named("application-id"))
 				.toInstance(UUID.randomUUID().toString());
 
+		// JSON handling
+		binder().requestStaticInjection(JsonUtils.class);
 		// Jira
 		binder().requestStaticInjection(JiraConfigurationProvider.class);
 		// TextProcessor
@@ -130,7 +128,6 @@ class OversigtModule extends AbstractModule {
 		binder().bind(OversigtServer.class);
 		binder().bind(EventSourceStatisticsManager.class);
 		binder().bind(EventSender.class);
-		binder().bind(JsonUtils.class);
 		binder().bind(RoleProvider.class);
 		binder().bind(MailSender.class);
 
@@ -155,25 +152,6 @@ class OversigtModule extends AbstractModule {
 				.annotatedWith(Names.named("NightlyEventSourceRestarter"))
 				.to(NightlyEventSourceRestarterService.class);
 
-		// GSON
-		final Gson gson = new GsonBuilder()//
-				.registerTypeAdapter(Class.class, serializer(Class<?>::getName))
-				.registerTypeAdapter(Class.class, deserializer(Class::forName))
-				.registerTypeAdapter(Color.class, serializer(Color::getHexColor))
-				.registerTypeAdapter(Color.class, deserializer(Color::parse))
-				.registerTypeAdapter(Duration.class, serializer(Duration::toString))
-				.registerTypeAdapter(Duration.class, deserializer(Duration::parse))
-				.registerTypeAdapter(LocalDate.class, serializer(DateTimeFormatter.ISO_LOCAL_DATE::format))
-				.registerTypeAdapter(LocalDate.class,
-						deserializer(s -> LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE)))
-				// .registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory())
-				.registerTypeAdapter(Optional.class,
-						(JsonSerializer<Optional<?>>) (src, typeOfSrc, context) -> src.isPresent()
-								? context.serialize(src.get())
-								: JsonNull.INSTANCE)
-				.create();
-		binder().bind(Gson.class).toInstance(gson);
-
 		// Jackson for our API
 		final SimpleModule module = new SimpleModule("Oversigt-API");
 		module.addSerializer(Color.class, serializer(Color.class, Color::getHexColor));
@@ -188,7 +166,11 @@ class OversigtModule extends AbstractModule {
 		// InstantDeserializer and ZonedDateTimeSerializer are used directly
 		objectMapper.registerModule(new Jdk8Module());
 		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-		binder().bind(ObjectMapper.class).toInstance(objectMapper);
+		binder().bind(ObjectMapper.class).annotatedWith(Names.named("only-annotated")).toInstance(objectMapper);
+		final ObjectMapper allFieldsObjectMapper = objectMapper.copy();
+		allFieldsObjectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
+		allFieldsObjectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		binder().bind(ObjectMapper.class).annotatedWith(Names.named("all-fields")).toInstance(allFieldsObjectMapper);
 
 		// Object validation
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
@@ -208,7 +190,7 @@ class OversigtModule extends AbstractModule {
 		}
 
 		// binds properties
-		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, gson);
+		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, allFieldsObjectMapper);
 		binder().bind(OversigtConfiguration.class).toInstance(configuration);
 		options.ifPresent(checkedOptions -> {
 			configuration.bindProperties(binder(),
@@ -286,13 +268,14 @@ class OversigtModule extends AbstractModule {
 		return jsonpathConfiguration;
 	}
 
-	private OversigtConfiguration readConfiguration(final String resourceUrlString, final Gson gson) {
+	private OversigtConfiguration readConfiguration(final String resourceUrlString,
+			final ObjectMapper allFieldsObjectMapper) {
 		try {
 			final URL configUrl = Resources.getResource(resourceUrlString);
 			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);
 			LOGGER.info("Reading Oversigt configuration: " + configUrl);
 			final String configString = Resources.toString(configUrl, Charsets.UTF_8);
-			return gson.fromJson(configString, OversigtConfiguration.class);
+			return allFieldsObjectMapper.readValue(configString, OversigtConfiguration.class);
 		} catch (final IOException e) {
 			throw new IllegalStateException("Unable to read configuration", e);
 		}

@@ -7,6 +7,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 	private final ObjectMapper objectMapper;
 
 	@Inject
-	public JacksonConfig(final ObjectMapper objectMapper) {
+	public JacksonConfig(@Named("only-annotated") final ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 

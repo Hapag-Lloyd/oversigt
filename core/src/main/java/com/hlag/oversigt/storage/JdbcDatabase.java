@@ -81,17 +81,13 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	private final Connection connection;
 
-	private final JsonUtils json;
-
 	@Inject
 	public JdbcDatabase(final SqlDialect dialect,
 			@Named("databaseLocation") final String databaseLocation,
 			@Named("databaseName") final String schema,
 			@Named("databaseUsername") final String username,
-			@Named("databasePassword") final String password,
-			final JsonUtils json) {
+			@Named("databasePassword") final String password) {
 		sqlDialect = dialect;
-		this.json = json;
 		try {
 			LOGGER.info("Loading JDBC driver class: " + dialect.getDriverClassName());
 			Class.forName(dialect.getDriverClassName());
@@ -630,7 +626,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	}
 
 	private <T extends SerializableProperty> T mapToValue(final Class<T> clazz, final Map<String, Object> map) {
-		return Objects.requireNonNull(json.fromJson((String) map.get("JSON"), clazz), "Unable to create object");
+		return Objects.requireNonNull(JsonUtils.fromJson((String) map.get("JSON"), clazz), "Unable to create object");
 	}
 
 	@Override
@@ -650,7 +646,7 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	public void updateProperty(final SerializableProperty value) {
 		update(TABLE_VALUES,
 				map("ID", value.getId(), "CLASS", value.getClass().getName()),
-				map("NAME", value.getName(), "JSON", json.toJson(value)));
+				map("NAME", value.getName(), "JSON", JsonUtils.toJson(value)));
 	}
 
 	@Override

@@ -77,14 +77,6 @@ public class EventSourceInstanceResource {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);
 
 	@Inject
-	@edu.umd.cs.findbugs.annotations.Nullable
-	private static JsonUtils json;
-
-	private static JsonUtils getJson() {
-		return Objects.requireNonNull(json);
-	}
-
-	@Inject
 	private DashboardController controller;
 
 	@Inject
@@ -359,7 +351,7 @@ public class EventSourceInstanceResource {
 				.collect(Collectors.toMap(EventSourceProperty::getName, p -> {
 					String string = getValue.apply(p);
 					if (p.isJson()) {
-						string = getJson().removePasswordsFromJson(string);
+						string = JsonUtils.removePasswordsFromJson(string);
 					}
 					return string;
 				}));

@@ -32,6 +32,8 @@ import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.io.IOUtils;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.hlag.oversigt.core.event.OversigtEvent;
@@ -362,7 +364,9 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			pattern = "";
 		}
 
-		public InternetAddress(final String urlString, final String patternString) {
+		@JsonCreator
+		public InternetAddress(@JsonProperty("urlString") final String urlString,
+				@JsonProperty("pattern") final String patternString) {
 			address = urlString;
 			pattern = patternString;
 		}

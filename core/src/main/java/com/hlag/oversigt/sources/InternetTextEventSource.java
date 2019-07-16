@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.data.JsonHint;
@@ -52,9 +51,6 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 
 	private MultiResultBehaviour multiResultBehaviour = MultiResultBehaviour.Random;
 
-	@Inject
-	private JsonUtils json;
-
 	public InternetTextEventSource() {
 		// no fields to be initialized manually, some will be injected
 	}
@@ -80,7 +76,10 @@ public class InternetTextEventSource extends AbstractDownloadEventSource<TextEve
 		if (elements.isEmpty()) {
 			output = getDefaultValue();
 		} else if (hasStringFormat()) {
-			output = elements.stream().map(json::toJson).map(this::useStringFormat).collect(Collectors.joining("\n"));
+			output = elements.stream()
+					.map(JsonUtils::toJson)
+					.map(this::useStringFormat)
+					.collect(Collectors.joining("\n"));
 		} else {
 			output = getMultiResultBehaviour().extractElement(elements).toString();
 		}
