@@ -48,7 +48,7 @@ public final class JsonUtils {
 	// @Named("only-annotated")
 	// @Nullable
 	// private static ObjectMapper onlyAnnotatedObjectMapper;
-	
+
 	@Inject
 	@Nullable
 	private static Storage storage; // TODO remove this

@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -46,13 +47,15 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.ThrowingBiFunction;
 import com.hlag.oversigt.util.text.TextProcessor;
+import com.hlag.oversigt.util.text.TextProcessorProvider;
 
 import de.larssh.utils.text.StringConverters;
 
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
 
-	private static final TextProcessor TEXT_PROCESSOR = TextProcessor.create().registerDatetimeFunctions();
+	@Inject
+	private TextProcessorProvider textProcessorProvider;
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
 
@@ -72,6 +75,10 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 	public void setHttpProxy(final HttpProxy proxy) {
 		this.proxy = proxy;
+	}
+
+	private TextProcessor createTextProcessor() {
+		return textProcessorProvider.createTextProcessor().registerDatetimeFunctions();
 	}
 
 	private URLConnection createConnection(final String urlString,
@@ -137,6 +144,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	}
 
 	protected URLConnection createConnection(final List<InternetAddress> addresses) throws IOException {
+		final TextProcessor textProcessor = createTextProcessor();
 		final List<List<String>> replacements = new ArrayList<>();
 		Optional<URLConnection> connection = Optional.empty();
 		Optional<String> cookie = Optional.empty();
@@ -174,7 +182,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 			}
 			logDebug(getLogger(), "Connecting to URL: %s", url);
 			if (url != null) {
-				url = TEXT_PROCESSOR.process(url);
+				url = textProcessor.process(url);
 				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));
 				final Optional<Pattern> pattern = internetAddress.getPattern();
 				if (pattern.isPresent()) {

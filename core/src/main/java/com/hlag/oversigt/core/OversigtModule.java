@@ -63,7 +63,7 @@ import com.hlag.oversigt.storage.Storage;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.MailSender;
 import com.hlag.oversigt.util.TypeUtils;
-import com.hlag.oversigt.util.text.TextProcessor;
+import com.hlag.oversigt.util.text.TextProcessorProvider;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiApplication;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
@@ -117,8 +117,6 @@ class OversigtModule extends AbstractModule {
 
 		// JSON handling
 		binder().requestStaticInjection(JsonUtils.class);
-		// TextProcessor
-		binder().requestStaticInjection(TextProcessor.class);
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
@@ -126,6 +124,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(EventSender.class);
 		binder().bind(RoleProvider.class);
 		binder().bind(MailSender.class);
+		binder().bind(TextProcessorProvider.class);
 
 		// model
 		binder().bind(DashboardController.class);

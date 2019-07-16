@@ -10,30 +10,22 @@ import java.util.regex.Pattern;
 
 import javax.xml.datatype.DatatypeFactory;
 
-import com.google.inject.Inject;
 import com.jayway.jsonpath.Configuration;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
 			= Pattern.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
 
-	@Inject
-	@Nullable
-	private static Configuration jsonPathConfiguration;
-
-	@Inject
-	@Nullable
-	private static DatatypeFactory dataTypeFactory;
-
-	public static TextProcessor create() {
-		return new TextProcessor();
-	}
-
 	private final Map<String, Function<String, String>> processors = new HashMap<>();
 
-	private TextProcessor() {}
+	private final Configuration jsonPathConfiguration;
+
+	private final DatatypeFactory dataTypeFactory;
+
+	TextProcessor(final Configuration jsonPathConfiguration, final DatatypeFactory dataTypeFactory) {
+		this.jsonPathConfiguration = jsonPathConfiguration;
+		this.dataTypeFactory = dataTypeFactory;
+	}
 
 	public TextProcessor registerFunction(final String name, final Function<String, String> function) {
 		processors.put(name, function);

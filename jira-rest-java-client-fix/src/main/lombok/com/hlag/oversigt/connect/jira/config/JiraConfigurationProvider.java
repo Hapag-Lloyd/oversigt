@@ -36,7 +36,7 @@ public final class JiraConfigurationProvider {
 
 	/**
 	 * Sets the timeout to be used by jira requests
-	 * 
+	 *
 	 * @param timeoutInSeconds the timeout in seconds to be used for jira requests
 	 */
 	public static void setSocketTimeout(final int timeoutInSeconds) {
