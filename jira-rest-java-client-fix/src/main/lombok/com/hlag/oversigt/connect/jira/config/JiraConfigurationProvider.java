@@ -2,8 +2,6 @@ package com.hlag.oversigt.connect.jira.config;
 
 import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.experimental.UtilityClass;
@@ -23,8 +21,6 @@ public final class JiraConfigurationProvider {
 	 * The value of this field will be injected using Google Guice and is named
 	 * {@code jiraSocketTimeout}.
 	 */
-	@Inject
-	@Named("jiraSocketTimeout")
 	@SuppressWarnings("checkstyle:MagicNumber")
 	private static int socketTimeout = 60;
 
@@ -36,6 +32,15 @@ public final class JiraConfigurationProvider {
 	@SuppressFBWarnings(value = "MRC_METHOD_RETURNS_CONSTANT", justification = "socketTimeout is not really a constant")
 	public static int getSocketTimeout() {
 		return socketTimeout;
+	}
+
+	/**
+	 * Sets the timeout to be used by jira requests
+	 * 
+	 * @param timeoutInSeconds the timeout in seconds to be used for jira requests
+	 */
+	public static void setSocketTimeout(final int timeoutInSeconds) {
+		socketTimeout = timeoutInSeconds;
 	}
 
 	/**

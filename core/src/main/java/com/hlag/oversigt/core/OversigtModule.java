@@ -49,7 +49,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
@@ -68,7 +67,6 @@ import com.hlag.oversigt.util.text.TextProcessor;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiApplication;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
-import com.hlag.oversigt.web.resources.EventSourceInstanceResource;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
@@ -119,12 +117,8 @@ class OversigtModule extends AbstractModule {
 
 		// JSON handling
 		binder().requestStaticInjection(JsonUtils.class);
-		// Jira
-		binder().requestStaticInjection(JiraConfigurationProvider.class);
 		// TextProcessor
 		binder().requestStaticInjection(TextProcessor.class);
-		// TODO JSON for API stuff
-		binder().requestStaticInjection(EventSourceInstanceResource.class);
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
@@ -203,6 +197,9 @@ class OversigtModule extends AbstractModule {
 					checkedOptions.getLdapBindPasswordFallback());
 			Names.bindProperties(binder(), checkedOptions.getProperties());
 		});
+
+		// configure other stuff
+		configuration.applyConfiguration();
 	}
 
 	/**

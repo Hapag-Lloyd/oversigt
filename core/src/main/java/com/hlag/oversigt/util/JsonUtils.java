@@ -44,6 +44,15 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
 
+	// @Inject
+	// @Named("only-annotated")
+	// @Nullable
+	// private static ObjectMapper onlyAnnotatedObjectMapper;
+	
+	@Inject
+	@Nullable
+	private static Storage storage; // TODO remove this
+
 	@Inject
 	@Named("all-fields")
 	@Nullable
@@ -53,14 +62,6 @@ public final class JsonUtils {
 	// @Named("only-annotated")
 	// @Nullable
 	// private static ObjectMapper onlyAnnotatedObjectMapper;
-
-	@Inject
-	@Nullable
-	private static Storage storage; // TODO remove this
-
-	private JsonUtils() {
-		throw new RuntimeException("Do not create an instance.s");
-	}
 
 	private static ObjectMapper getAllFieldsJsonConverter() {
 		return Objects.requireNonNull(allFieldObjectMapper);
@@ -369,5 +370,9 @@ public final class JsonUtils {
 			return Optional.of("url");
 		}
 		return Optional.empty();
+	}
+
+	private JsonUtils() {
+		throw new RuntimeException("Do not create an instance.s");
 	}
 }

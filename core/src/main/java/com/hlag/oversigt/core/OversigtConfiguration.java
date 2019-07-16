@@ -23,6 +23,7 @@ import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.LdapAuthenticator;
@@ -73,8 +74,7 @@ public class OversigtConfiguration {
 	@Nullable
 	private EventSourceConfiguration eventSources;
 
-	@Nullable
-	private JiraConfiguration jira;
+	private JiraConfiguration jira = new JiraConfiguration();
 
 	private CustomWroConfiguration wro = new CustomWroConfiguration();
 
@@ -105,7 +105,6 @@ public class OversigtConfiguration {
 		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {
 			/* just type literal for generics detection */
 		}).annotatedWith(Names.named("listeners")).toInstance(listeners);
-		bind(binder, "jiraSocketTimeout", Objects.requireNonNull(jira, "").socketTimeout);
 		bindNamedArray(binder,
 				String[].class,
 				"additionalPackages",
@@ -176,6 +175,10 @@ public class OversigtConfiguration {
 						.map(converter)
 						.collect(Collectors.toList())
 						.toArray(createArray(targetClass.getComponentType(), 0)));
+	}
+
+	void applyConfiguration() {
+		JiraConfigurationProvider.setSocketTimeout(jira.socketTimeout);
 	}
 
 	public static class HttpListenerConfiguration {
