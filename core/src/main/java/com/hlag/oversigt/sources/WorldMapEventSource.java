@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.connect.db.DatabaseCache;
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -103,11 +105,12 @@ public class WorldMapEventSource extends AbstractCachingJdbcEventSource<Point, M
 		@NotNull
 		private final double size;
 
-		public TypeMapping(final String field,
-				final String value,
-				final Color fill,
-				final Color stroke,
-				final double size) {
+		@JsonCreator
+		public TypeMapping(@JsonProperty("field") final String field,
+				@JsonProperty("value") final String value,
+				@JsonProperty("fill") final Color fill,
+				@JsonProperty("stroke") final Color stroke,
+				@JsonProperty("size") final double size) {
 			this.field = field;
 			this.value = value;
 			this.fill = fill;

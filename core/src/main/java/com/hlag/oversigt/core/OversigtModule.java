@@ -9,7 +9,9 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -158,8 +160,11 @@ class OversigtModule extends AbstractModule {
 		module.addDeserializer(Color.class, deserializer(Color.class, Color::parse));
 		module.addSerializer(Duration.class, serializer(Duration.class, Duration::toString));
 		module.addDeserializer(Duration.class, deserializer(Duration.class, Duration::parse));
-		module.addDeserializer(ZonedDateTime.class, InstantDeserializer.ZONED_DATE_TIME);
 		module.addSerializer(ZonedDateTime.class, ZonedDateTimeSerializer.INSTANCE);
+		module.addDeserializer(ZonedDateTime.class, InstantDeserializer.ZONED_DATE_TIME);
+		module.addSerializer(LocalDate.class, serializer(LocalDate.class, DateTimeFormatter.ISO_DATE::format));
+		module.addDeserializer(LocalDate.class,
+				deserializer(LocalDate.class, s -> LocalDate.from(DateTimeFormatter.ISO_DATE.parse(s))));
 		final ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.registerModule(module);
 		// objectMapper.registerModule(new JavaTimeModule()); // instead the

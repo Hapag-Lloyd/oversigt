@@ -390,7 +390,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		private final String value;
 
-		public LoginData(final String name, final String value) {
+		@JsonCreator
+		public LoginData(@JsonProperty("name") final String name, @JsonProperty("value") final String value) {
 			this.name = name;
 			this.value = value;
 		}
@@ -410,7 +411,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		private final String value;
 
-		public HttpHeader(final String name, final String value) {
+		@JsonCreator
+		public HttpHeader(@JsonProperty("name") final String name, @JsonProperty("value") final String value) {
 			this.name = name;
 			this.value = value;
 		}

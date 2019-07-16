@@ -3,7 +3,9 @@ package com.hlag.oversigt.properties;
 import java.net.InetSocketAddress;
 import java.net.Proxy.Type;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
@@ -17,7 +19,11 @@ public class HttpProxy extends SerializableProperty {
 	@Member(icon = "ellipsis", size = 2)
 	private int port;
 
-	public HttpProxy(final int id, final String name, final String host, final int port) {
+	@JsonCreator
+	public HttpProxy(@JsonProperty("id") final int id,
+			@JsonProperty("name") final String name,
+			@JsonProperty("host") final String host,
+			@JsonProperty("port") final int port) {
 		super(id, name);
 		hostname = host;
 		this.port = port;

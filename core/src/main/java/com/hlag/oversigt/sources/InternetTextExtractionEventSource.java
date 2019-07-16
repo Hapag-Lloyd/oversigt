@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
@@ -116,7 +118,9 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		@NotNull
 		private final String format;
 
-		public ValueExtraction(final String condition, final String format) {
+		@JsonCreator
+		public ValueExtraction(@JsonProperty("condition") final String condition,
+				@JsonProperty("format") final String format) {
 			this.condition = condition;
 			this.format = format;
 		}
