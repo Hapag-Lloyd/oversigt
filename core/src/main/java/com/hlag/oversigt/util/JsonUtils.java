@@ -38,6 +38,8 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -63,6 +65,10 @@ public final class JsonUtils {
 	// @Nullable
 	// private static ObjectMapper onlyAnnotatedObjectMapper;
 
+	@Inject
+	@Nullable
+	private static Configuration jsonpathConfiguration;
+
 	private static ObjectMapper getAllFieldsJsonConverter() {
 		return Objects.requireNonNull(allFieldObjectMapper);
 	}
@@ -87,6 +93,10 @@ public final class JsonUtils {
 		} catch (final IOException e) {
 			throw new RuntimeException("Unable to parse JSON", e);
 		}
+	}
+
+	public static <T> T extractValueUsingJsonPath(final JsonPath jsonPath, final String json) {
+		return jsonPath.read(json, jsonpathConfiguration);
 	}
 
 	/**
