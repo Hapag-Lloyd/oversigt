@@ -59,15 +59,11 @@ public class EventSender {
 	private final Map<ServerSentEventConnection, Map<String, LocalDateTime>> sentEventTimestamps
 			= Collections.synchronizedMap(new WeakHashMap<>());
 
-	private final JsonUtils json;
-
 	private final Duration defaultEventLifetime;
 
 	@Inject
-	public EventSender(final JsonUtils json,
-			@Named("discardEventsAfter") final Duration discardEventsAfter,
+	public EventSender(@Named("discardEventsAfter") final Duration discardEventsAfter,
 			@Named("rateLimit") final long rateLimit) {
-		this.json = json;
 		defaultEventLifetime = discardEventsAfter;
 		this.rateLimit = rateLimit;
 
@@ -224,7 +220,7 @@ public class EventSender {
 		if (event instanceof JsonEvent) {
 			return ((JsonEvent) event).getJson();
 		}
-		return json.toJson(event);
+		return JsonUtils.toJson(event);
 	}
 
 	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {

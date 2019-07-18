@@ -3,6 +3,8 @@ package com.hlag.oversigt.properties;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
 /**
@@ -29,11 +31,12 @@ public class Credentials extends SerializableProperty {
 	@Member(icon = "cloud", size = 2, mayBeEmpty = true)
 	private String domain;
 
-	public Credentials(final int id,
-			final String name,
-			final String username,
-			final String password,
-			final String domain) {
+	@JsonCreator
+	public Credentials(@JsonProperty("id") final int id,
+			@JsonProperty("name") final String name,
+			@JsonProperty("username") final String username,
+			@JsonProperty("password") final String password,
+			@JsonProperty("domain") final String domain) {
 		super(id, name);
 		this.domain = domain;
 		this.username = username;

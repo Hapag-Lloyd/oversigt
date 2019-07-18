@@ -14,19 +14,25 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
-import com.hlag.oversigt.util.text.TextProcessor;
+import com.hlag.oversigt.util.text.TextProcessorProvider;
 
 @EventSource(displayName = "Internet Extraction Text",
 		description = "Shows text extracted from (one or more) URL",
 		view = "List",
 		hiddenDataItems = "updated-at-message")
 public class InternetTextExtractionEventSource extends AbstractDownloadEventSource<TwoColumnListEvent<String>> {
+	@Inject
+	private TextProcessorProvider textProcessorProvider;
+
 	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("", "$[*].name") };
 
 	private Summarization summarization = Summarization.ConcatenationWithLineBreak;
@@ -69,8 +75,8 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 
 	private String processValueExtractions(final String downloadedContent) {
 		Object value = Arrays.stream(getValueExtractions())
-				.filter(ve -> ve.filter(downloadedContent))
-				.map(ve -> ve.process(downloadedContent))
+				.filter(ve -> filter(ve, downloadedContent))
+				.map(ve -> process(ve, downloadedContent))
 				.collect(getSummarization().getCollector());
 		if (value instanceof Optional) {
 			final Optional<?> optional = (Optional<?>) value;
@@ -109,6 +115,38 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		summarization = summaization;
 	}
 
+	private boolean filter(final ValueExtraction valueExtraction, final String downloadedContent) {
+		final String result = textProcessorProvider.createTextProcessor()
+				.registerDatetimeFunctions()
+				.registerJsonPathFunction(downloadedContent)
+				.registerRegularExpressionFunction(downloadedContent)
+				.process(valueExtraction.condition)
+				.trim();
+		try {
+			if (Boolean.parseBoolean(result)) {
+				return true;
+			}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			/* ignore */
+		}
+		try {
+			if (Long.parseLong(result) > 0L) {
+				return true;
+			}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			// ignore invalid user input
+		}
+		return false;
+	}
+
+	private String process(final ValueExtraction valueExtraction, final String downloadedContent) {
+		return textProcessorProvider.createTextProcessor()
+				.registerDatetimeFunctions()
+				.registerJsonPathFunction(downloadedContent)
+				.registerRegularExpressionFunction(downloadedContent)
+				.process(valueExtraction.format);
+	}
+
 	public static class ValueExtraction {
 		@NotNull
 		private final String condition;
@@ -116,7 +154,9 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		@NotNull
 		private final String format;
 
-		public ValueExtraction(final String condition, final String format) {
+		@JsonCreator
+		public ValueExtraction(@JsonProperty("condition") final String condition,
+				@JsonProperty("format") final String format) {
 			this.condition = condition;
 			this.format = format;
 		}
@@ -127,38 +167,6 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 
 		public String getFormat() {
 			return format;
-		}
-
-		boolean filter(final String downloadedContent) {
-			final String result = TextProcessor.create()
-					.registerDatetimeFunctions()
-					.registerJsonPathFunction(downloadedContent)
-					.registerRegularExpressionFunction(downloadedContent)
-					.process(condition)
-					.trim();
-			try {
-				if (Boolean.parseBoolean(result)) {
-					return true;
-				}
-			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				/* ignore */
-			}
-			try {
-				if (Long.parseLong(result) > 0L) {
-					return true;
-				}
-			} catch (@SuppressWarnings("unused") final Exception ignore) {
-				// ignore invalid user input
-			}
-			return false;
-		}
-
-		String process(final String downloadedContent) {
-			return TextProcessor.create()
-					.registerDatetimeFunctions()
-					.registerJsonPathFunction(downloadedContent)
-					.registerRegularExpressionFunction(downloadedContent)
-					.process(format);
 		}
 	}
 

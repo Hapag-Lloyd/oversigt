@@ -3,6 +3,8 @@ package com.hlag.oversigt.properties;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
 import de.larssh.utils.SneakyException;
@@ -14,7 +16,10 @@ public class ServerConnection extends SerializableProperty {
 	@Member(icon = "cloud", size = 6)
 	private String url;
 
-	public ServerConnection(final int id, final String name, final String url) {
+	@JsonCreator
+	public ServerConnection(@JsonProperty("id") final int id,
+			@JsonProperty("name") final String name,
+			@JsonProperty("url") final String url) {
 		super(id, name);
 		this.url = url;
 	}

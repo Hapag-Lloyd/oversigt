@@ -58,13 +58,6 @@
 			<artifactId>fugue</artifactId>
 			<version>4.7.2</version>
 		</dependency>
-
-		<!-- Dependency Injection -->
-		<dependency>
-			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-			<version>4.2.2</version>
-		</dependency>
 	</dependencies>
 
 	<repositories>

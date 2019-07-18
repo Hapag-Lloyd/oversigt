@@ -13,6 +13,8 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
@@ -338,7 +340,9 @@ public class TimelineEventSource extends AbstractExchangeEventSource<TimelineEve
 		@NotNull
 		private String correctName = "Correct Name";
 
-		private HolidayNameCorrection(final String apiName, final String correctName) {
+		@JsonCreator
+		private HolidayNameCorrection(@JsonProperty("apiName") final String apiName,
+				@JsonProperty("correctName") final String correctName) {
 			this.apiName = apiName;
 			this.correctName = correctName;
 		}

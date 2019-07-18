@@ -155,9 +155,6 @@ public class OversigtServer extends AbstractIdleService {
 	private Injector injector;
 
 	@Inject
-	private JsonUtils json;
-
-	@Inject
 	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners,
 			final EventBus eventBus,
 			final EventSender sender,
@@ -312,7 +309,7 @@ public class OversigtServer extends AbstractIdleService {
 		final Optional<String> jsonSchema = Optional.ofNullable(exchange.getQueryParameters().get("class").poll())
 				.flatMap(TypeUtils::getClassForName)
 				.filter(SerializableProperty.class::isAssignableFrom)
-				.map(json::toJsonSchema);
+				.map(JsonUtils::toJsonSchema);
 
 		if (jsonSchema.isPresent()) {
 			exchange.setStatusCode(StatusCodes.OK);

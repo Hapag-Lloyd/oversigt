@@ -100,9 +100,6 @@ public class SystemResource {
 	private OversigtConfiguration configuration;
 
 	@Inject
-	private JsonUtils json;
-
-	@Inject
 	public SystemResource(@Named("Shutdown") final Runnable shutdown) {
 		shutdownRunnable = shutdown;
 	}
@@ -138,7 +135,7 @@ public class SystemResource {
 			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response readConfiguration() {
-		final String configJson = json.removeKeysFromJson(json.toJson(configuration), s -> {
+		final String configJson = JsonUtils.removeKeysFromJson(JsonUtils.toJson(configuration), s -> {
 			final String key = s.toLowerCase();
 			return !(key.contains("password") || key.contains("secret"));
 		});
@@ -313,7 +310,7 @@ public class SystemResource {
 
 		final List<OversigtEvent> eventList
 				= Arrays.asList(event.orElseThrow(() -> new RuntimeException("The event is not present")));
-		final String json = this.json.toJson(eventList);
+		final String json = JsonUtils.toJson(eventList);
 		return ok(json).build();
 	}
 

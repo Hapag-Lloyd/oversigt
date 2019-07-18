@@ -33,15 +33,6 @@
 			"uidAttribute": "",
 			"bindUser": "",
 			"bindPassword": ""
-		},
-		"session": {
-			"timeout": 30,
-			"maxCount": -1,
-			"expireOldestUnusedSessionOnMax": false,
-			"statisticsEnabled": true,
-			"cookieConfig": {
-				
-			}
 		}
 	},
 	"mail": {

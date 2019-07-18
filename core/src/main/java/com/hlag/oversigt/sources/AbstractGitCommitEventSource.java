@@ -14,6 +14,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.data.JsonHint;
@@ -76,7 +78,8 @@ public abstract class AbstractGitCommitEventSource<E extends OversigtEvent> exte
 
 		private final String mapTo;
 
-		public NameMapping(final String name, final String mapTo) {
+		@JsonCreator
+		public NameMapping(@JsonProperty("name") final String name, @JsonProperty("mapTo") final String mapTo) {
 			this.name = name;
 			this.mapTo = mapTo;
 		}

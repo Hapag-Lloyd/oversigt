@@ -44,9 +44,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.Strings;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
 import com.google.inject.Binder;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
@@ -63,10 +60,6 @@ public final class TypeUtils {
 		throw new UnsupportedOperationException();
 	}
 
-	public static <T> JsonSerializer<T> serializer(final ThrowingFunction<T, String> converter) {
-		return (object, type, context) -> new JsonPrimitive(converter.apply(object));
-	}
-
 	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
 		return new StdSerializer<T>(clazz) {
 			private static final long serialVersionUID = 1L;
@@ -78,10 +71,6 @@ public final class TypeUtils {
 				Objects.requireNonNull(gen).writeString(converter.apply(value));
 			}
 		};
-	}
-
-	public static <T> JsonDeserializer<T> deserializer(final ThrowingFunction<String, T> converter) {
-		return (json, type, context) -> converter.apply(json.getAsString());
 	}
 
 	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,

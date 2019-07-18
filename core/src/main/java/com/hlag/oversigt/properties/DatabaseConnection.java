@@ -1,5 +1,7 @@
 package com.hlag.oversigt.properties;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
 
 @Description("A connection to a database. This defines which JDBC driver will be used and where the database is located.")
@@ -12,7 +14,11 @@ public class DatabaseConnection extends SerializableProperty {
 	@Member(icon = "cloud", size = 4)
 	private String jdbcUrl;
 
-	public DatabaseConnection(final int id, final String name, final String driverClassName, final String jdbcUrl) {
+	@JsonCreator
+	public DatabaseConnection(@JsonProperty("id") final int id,
+			@JsonProperty("name") final String name,
+			@JsonProperty("driverClassName") final String driverClassName,
+			@JsonProperty("jdbcUrl") final String jdbcUrl) {
 		super(id, name);
 		this.driverClassName = driverClassName;
 		this.jdbcUrl = jdbcUrl;

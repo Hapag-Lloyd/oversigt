@@ -2,6 +2,7 @@ package com.hlag.oversigt.util;
 
 import static com.hlag.oversigt.util.Utils.map;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -26,40 +28,75 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-@Singleton
-public class JsonUtils {
+public final class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
 
-	@Inject
-	private Gson gson;
+	// @Inject
+	// @Named("only-annotated")
+	// @Nullable
+	// private static ObjectMapper onlyAnnotatedObjectMapper;
 
 	@Inject
-	private Storage storage; // TODO remove this
+	@Nullable
+	private static Storage storage; // TODO remove this
 
-	public JsonUtils() {
-		// no fields to be initialized manually, some will be injected
+	@Inject
+	@Named("all-fields")
+	@Nullable
+	private static ObjectMapper allFieldObjectMapper;
+
+	// @Inject
+	// @Named("only-annotated")
+	// @Nullable
+	// private static ObjectMapper onlyAnnotatedObjectMapper;
+
+	@Inject
+	@Nullable
+	private static Configuration jsonpathConfiguration;
+
+	private static ObjectMapper getAllFieldsJsonConverter() {
+		return Objects.requireNonNull(allFieldObjectMapper);
 	}
 
-	public String toJson(final Object object) {
-		return gson.toJson(object);
+	// private static ObjectMapper getOnlyAnnotatedJsonConverter() {
+	// return Objects.requireNonNull(onlyAnnotatedObjectMapper);
+	// }
+
+	public static String toJson(final Object object) {
+		try {
+			return getAllFieldsJsonConverter().writeValueAsString(object);
+		} catch (final JsonProcessingException e) {
+			throw new RuntimeException("Unable to convert object to JSON", e);
+		}
 	}
 
 	@Nullable
-	public <T> T fromJson(final String json, final Type type) {
+	public static <T> T fromJson(final String json, final Class<T> type) {
 		// fromJson can return null!!
-		return gson.fromJson(json, type);
+		try {
+			return getAllFieldsJsonConverter().readValue(json, type);
+		} catch (final IOException e) {
+			throw new RuntimeException("Unable to parse JSON", e);
+		}
+	}
+
+	public static <T> T extractValueUsingJsonPath(final JsonPath jsonPath, final String json) {
+		return jsonPath.read(json, jsonpathConfiguration);
 	}
 
 	/**
@@ -71,8 +108,8 @@ public class JsonUtils {
 	 *               removed.
 	 * @return the stripped JSON
 	 */
-	public String removeKeysFromJson(final String json, final Predicate<String> filter) {
-		return toJson(removeKeys(gson.fromJson(json, Object.class), filter));
+	public static String removeKeysFromJson(final String json, final Predicate<String> filter) {
+		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)), filter));
 	}
 
 	/**
@@ -82,12 +119,12 @@ public class JsonUtils {
 	 * @param string the JSON to work on
 	 * @return the JSON without keys containing "password" (not case sensitive)
 	 */
-	public String removePasswordsFromJson(final String string) {
+	public static String removePasswordsFromJson(final String string) {
 		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Object removeKeys(final Object json, final Predicate<String> filter) {
+	private static Object removeKeys(final Object json, final Predicate<String> filter) {
 		if (json instanceof Collection) {
 			removeKeys((Collection<?>) json, filter);
 		} else if (json instanceof Map) {
@@ -101,13 +138,13 @@ public class JsonUtils {
 		return json;
 	}
 
-	private void removeKeys(final Collection<?> json, final Predicate<String> filter) {
+	private static void removeKeys(final Collection<?> json, final Predicate<String> filter) {
 		for (final Object e : json) {
 			removeKeys(e, filter);
 		}
 	}
 
-	private void removeKeys(final Map<String, Object> json, final Predicate<String> filter) {
+	private static void removeKeys(final Map<String, Object> json, final Predicate<String> filter) {
 		for (final Entry<String, Object> e : json.entrySet()) {
 			if (!filter.test(e.getKey())) {
 				e.setValue(null);
@@ -117,12 +154,12 @@ public class JsonUtils {
 		}
 	}
 
-	public String toJsonSchema(final Class<?> clazz) {
+	public static String toJsonSchema(final Class<?> clazz) {
 		return toJsonSchema(clazz, Optional.empty());
 	}
 
 	@SuppressWarnings("unchecked")
-	public String toJsonSchema(final Class<?> clazz, final Optional<JsonHint> hint) {
+	public static String toJsonSchema(final Class<?> clazz, final Optional<JsonHint> hint) {
 		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
@@ -142,11 +179,11 @@ public class JsonUtils {
 					clazz.getSimpleName());
 			schema.putAll(toJsonSchemaFromType(clazz, hint));
 		}
-		return gson.toJson(schema);
+		return toJson(schema);
 	}
 
-	private Map<String, Object> toJsonSchemaFromProperty(final Class<? extends SerializableProperty> clazz) {
-		final List<? extends SerializableProperty> props = storage.listProperties(clazz);
+	private static Map<String, Object> toJsonSchemaFromProperty(final Class<? extends SerializableProperty> clazz) {
+		final List<? extends SerializableProperty> props = Objects.requireNonNull(storage).listProperties(clazz);
 		final List<String> names
 				= new ArrayList<>(props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
 		final List<Integer> ids
@@ -343,5 +380,9 @@ public class JsonUtils {
 			return Optional.of("url");
 		}
 		return Optional.empty();
+	}
+
+	private JsonUtils() {
+		throw new RuntimeException("Do not create an instance.s");
 	}
 }
