@@ -18,6 +18,9 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
   dashboards: DashboardInfo[] = [];
   dashboardFilter = '';
 
+  createDashboardModelOpen = false;
+  newDashboardName = '';
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -57,6 +60,7 @@ export class ConfigDashboardsComponent implements OnInit, OnDestroy {
     }
     this.ds.createDashboard(id, this.userService.getUserId(), this.userService.hasRole('server.admin')).subscribe(
       (dashboard: Dashboard) => {
+        this.userService.reloadRoles();
         this.notification.success('Dashboard "' + dashboard.id + '" has been created.');
         this.router.navigateByUrl(getLinkForDashboard(dashboard.id));
       },

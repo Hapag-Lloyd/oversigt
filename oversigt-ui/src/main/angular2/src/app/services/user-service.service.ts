@@ -110,6 +110,15 @@ export class UserService {
     });
   }
 
+  reloadRoles(): void {
+    this.authentication.getRoles().subscribe(
+      authData => {
+        this.setAuthData(authData);
+      },
+      this.errorHandler.createErrorHandler('Reload roles')
+    );
+  }
+
   getName(): string {
     return this.name;
   }

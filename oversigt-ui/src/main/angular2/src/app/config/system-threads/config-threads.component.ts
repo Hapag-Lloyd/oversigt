@@ -12,14 +12,6 @@ export class ThreadInfoComposite {
   }
 }
 
-const THREAD_STATE_COLOR = {
-  'NEW': 'lightgreen',
-  'RUNNABLE': 'green',
-  'BLOCKED': 'blue',
-  'WAITING': 'lightgrey',
-  'TIMED_WAITING': 'grey',
-  'TERMINATED': 'red',
-};
 const THREAD_STATE_VALUES = ['RUNNABLE', 'BLOCKED', 'NEW', 'WAITING', 'TIMED_WAITING', 'TERMINATED'];
 
 @Component({
@@ -30,7 +22,6 @@ const THREAD_STATE_VALUES = ['RUNNABLE', 'BLOCKED', 'NEW', 'WAITING', 'TIMED_WAI
 export class ConfigThreadsComponent implements OnInit {
   threadInfos: ThreadInfoComposite[] = [];
   filter = '';
-  threadStateColor = THREAD_STATE_COLOR;
 
   constructor(
     private ss: SystemService,
@@ -68,7 +59,7 @@ export class ConfigThreadsComponent implements OnInit {
 
   isEventSourceThread(com: ThreadInfoComposite): boolean {
     const name = com.threadInfo.name;
-    return name.includes('[eventID=') && !name.startsWith('NightlyReloaderService');
+    return name.includes('[eventID=') && !name.startsWith('NightlyDashboardReloaderService');
   }
 
   getEventSourceId(com: ThreadInfoComposite): string {
