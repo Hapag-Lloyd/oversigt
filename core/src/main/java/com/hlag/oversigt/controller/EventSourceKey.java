@@ -1,4 +1,4 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 import static com.hlag.oversigt.util.ClassRenameDetector.detectComplexRename;
 import static com.hlag.oversigt.util.ClassRenameDetector.detectPackageMove;

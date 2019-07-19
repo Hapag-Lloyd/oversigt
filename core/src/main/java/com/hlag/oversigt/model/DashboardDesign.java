@@ -4,6 +4,7 @@ import static com.hlag.oversigt.properties.Color.smooth;
 
 import java.util.Optional;
 
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.properties.Color;
 
 import de.larssh.utils.Finals;

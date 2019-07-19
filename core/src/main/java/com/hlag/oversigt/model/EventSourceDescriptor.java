@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
+import com.hlag.oversigt.controller.EventSourceKey;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
@@ -53,7 +54,8 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 
 	private boolean standAlone = false;
 
-	EventSourceDescriptor(@NotNull final EventSourceKey key,
+	// TODO make non-public
+	public EventSourceDescriptor(@NotNull final EventSourceKey key,
 			@NotNull final String displayName,
 			@Nullable final String description,
 			@NotBlank final String view,
@@ -62,7 +64,8 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		this.standAlone = standAlone;
 	}
 
-	EventSourceDescriptor(@NotNull final EventSourceKey key,
+	// TODO make non-public
+	public EventSourceDescriptor(@NotNull final EventSourceKey key,
 			@NotBlank final String displayName,
 			@Nullable final String description,
 			@NotBlank final String view,
@@ -140,15 +143,21 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return Collections.unmodifiableSet(dataItemsToHide);
 	}
 
-	void addProperty(@NotNull final EventSourceProperty property) {
+	// TODO make non-public
+	@Deprecated
+	public void addProperty(@NotNull final EventSourceProperty property) {
 		properties.add(Objects.requireNonNull(property, "Property must not be null"));
 	}
 
-	void addDataItem(@NotNull final EventSourceProperty dataItem) {
+	// TODO make non-public
+	@Deprecated
+	public void addDataItem(@NotNull final EventSourceProperty dataItem) {
 		dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
 	}
 
-	void addDataItemToHide(@NotBlank final String itemName) {
+	// TODO make non-public
+	@Deprecated
+	public void addDataItemToHide(@NotBlank final String itemName) {
 		dataItemsToHide
 				.add(Objects.requireNonNull(Strings.emptyToNull(itemName), "Item name must not be null or empty"));
 	}
@@ -161,7 +170,8 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return dataItems.stream().filter(p -> name.equals(p.getName())).findAny().get();
 	}
 
-	boolean isStandAlone() {
+	// TODO make non-public
+	public boolean isStandAlone() {
 		return standAlone;
 	}
 

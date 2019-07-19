@@ -20,7 +20,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hlag.oversigt.model.EventSourceKey;
+import com.hlag.oversigt.controller.EventSourceKey;
 
 import info.debatty.java.stringsimilarity.Levenshtein;
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance;

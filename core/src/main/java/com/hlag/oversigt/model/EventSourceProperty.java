@@ -51,7 +51,8 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	private final Optional<String> jsonSchema;
 
-	EventSourceProperty(@NotBlank final String name,
+	// TODO make non-public
+	public EventSourceProperty(@NotBlank final String name,
 			@NotBlank final String displayName,
 			@Nullable final String description,
 			final String inputType,
@@ -69,7 +70,8 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		jsonSchema = Optional.empty();
 	}
 
-	EventSourceProperty(@NotBlank final String name,
+	// TODO make non-public
+	public EventSourceProperty(@NotBlank final String name,
 			@NotBlank final String displayName,
 			@Nullable final String description,
 			final String inputType,
@@ -93,7 +95,8 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		this.jsonSchema = Optional.ofNullable(jsonSchema);
 	}
 
-	void addAllowedValue(@NotNull final String value, final String title) {
+	// TODO make non-public
+	public void addAllowedValue(@NotNull final String value, final String title) {
 		allowedValues.put(value,
 				Optionals.ofNonEmpty(title).orElseGet(() -> WordUtils.capitalizeFully(value.replace('_', ' '))));
 	}

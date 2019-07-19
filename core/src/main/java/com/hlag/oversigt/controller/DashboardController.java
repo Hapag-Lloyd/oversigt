@@ -1,4 +1,4 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 import static com.hlag.oversigt.util.Utils.not;
 import static java.util.Arrays.stream;
@@ -79,6 +79,12 @@ import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.EventSourceNameGenerator;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
@@ -114,7 +120,7 @@ public class DashboardController {
 		EventSourceKey.setEventSourceRenamer(this::updateEventSourceClasses);
 	}
 
-	static DashboardController getInstance() {
+	public static DashboardController getInstance() {
 		final DashboardController checkedInstance = instance;
 		if (checkedInstance == null) {
 			throw new RuntimeException("Instance has not been initialized yet.");
@@ -165,7 +171,7 @@ public class DashboardController {
 		return Optional.ofNullable(dashboards.get(id));
 	}
 
-	Dashboard getDashboard(final Widget widget) {
+	public Dashboard getDashboard(final Widget widget) {
 		return dashboards.values()
 				.stream()
 				.filter(d -> d.getWidgets().stream().mapToInt(Widget::getId).anyMatch(i -> i == widget.getId()))
@@ -510,7 +516,8 @@ public class DashboardController {
 	}
 
 	// TODO better handling for optionals in values!!
-	String getValueString(final EventSourceProperty property, final Object value) {
+	// TODO make non-public
+	public String getValueString(final EventSourceProperty property, final Object value) {
 		try {
 			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {
 				return spController.toString((SerializableProperty) value);

@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Role;

@@ -256,7 +256,8 @@ public class Dashboard {
 		return getWidgets().stream().filter(w -> w.getId() == id).findFirst().get();
 	}
 
-	Collection<Widget> getModifiableWidgets() {
+	// TODO make non-public
+	public Collection<Widget> getModifiableWidgets() {
 		return widgets;
 	}
 

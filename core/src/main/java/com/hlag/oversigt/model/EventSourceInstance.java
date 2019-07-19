@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hlag.oversigt.controller.DashboardController;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -54,7 +55,8 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return descriptor;
 	}
 
-	Object getPropertyValue(final EventSourceProperty property) {
+	// TODO make non-public
+	public Object getPropertyValue(final EventSourceProperty property) {
 		return propertyValues.get(property);
 	}
 
@@ -94,7 +96,8 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		this.enabled = enabled;
 	}
 
-	void setProperty(final EventSourceProperty property, final Object value) {
+	// TODO make non-public
+	public void setProperty(final EventSourceProperty property, final Object value) {
 		Objects.requireNonNull(value, "The value of a property must not be null");
 		if (!property.getClazz().isPresent()
 				&& !property.isCustomValuesAllowed()

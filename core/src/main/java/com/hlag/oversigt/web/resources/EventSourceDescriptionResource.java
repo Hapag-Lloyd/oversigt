@@ -15,10 +15,10 @@ import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
 import com.hlag.oversigt.model.EventSourceDescriptor;
-import com.hlag.oversigt.model.EventSourceKey;
-import com.hlag.oversigt.model.InvalidKeyException;
 import com.hlag.oversigt.util.ImageUtil;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;

@@ -4,7 +4,7 @@ import static com.hlag.oversigt.util.Utils.not;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.util.Utils;
 

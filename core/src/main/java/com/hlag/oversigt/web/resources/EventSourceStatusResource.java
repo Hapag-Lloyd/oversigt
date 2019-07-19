@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;

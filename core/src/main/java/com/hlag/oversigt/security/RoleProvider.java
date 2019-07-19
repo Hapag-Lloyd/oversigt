@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.storage.Storage;
 
 @Singleton
