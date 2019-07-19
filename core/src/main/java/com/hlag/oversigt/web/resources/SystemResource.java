@@ -45,6 +45,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.Oversigt;
 import com.hlag.oversigt.core.OversigtConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
@@ -92,6 +93,9 @@ public class SystemResource {
 
 	@Inject
 	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceInstanceController eventSourceInstanceController;
 
 	@Inject
 	private SerializablePropertyController spController;
@@ -385,7 +389,7 @@ public class SystemResource {
 				.collect(toList()));
 
 		// search for event sources
-		results.addAll(dashboardController.getEventSourceInstances()
+		results.addAll(eventSourceInstanceController.getEventSourceInstances()
 				.stream()
 				.filter(EventSourceInstance.createFilter(searchString))
 				.map(i -> new SearchResult(i.getName(), i.getId(), "event-source"))

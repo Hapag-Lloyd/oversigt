@@ -50,6 +50,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
@@ -127,6 +129,8 @@ class OversigtModule extends AbstractModule {
 		binder().bind(TextProcessorProvider.class);
 
 		// model
+		binder().bind(EventSourceDescriptorController.class);
+		binder().bind(EventSourceInstanceController.class);
 		binder().bind(DashboardController.class);
 		binder().bind(EventSourceNameGenerator.class);
 		binder().bind(SerializablePropertyController.class);

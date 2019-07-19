@@ -58,7 +58,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 		throw new RuntimeException("Unknown widget id: " + widget);
 	}
 
-	public static EventSourceKey getKey(final String key) {
+	public static EventSourceKey fromKeyString(final String key) {
 		if (!KEYS.containsKey(key)) {
 			final String type = getType(key);
 			final String subKey = getSubKey(key);
@@ -77,9 +77,11 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 		return KEYS.get(key);
 	}
 
-	@NotNull
-	public String getKey() {
-		return key;
+	public static EventSourceKey fromClassOrView(final Optional<String> className, final String viewName) {
+		final String key = className.isPresent()
+				? EventSourceKey.PREFIX_CLASS + className.get().toString()
+				: EventSourceKey.PREFIX_WIDGET + viewName;
+		return fromKeyString(key);
 	}
 
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
@@ -114,6 +116,11 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	@NotNull
 	public String getDisplayName() {
 		return displayName;
+	}
+
+	@NotNull
+	public String getKey() {
+		return key;
 	}
 
 	private static String getType(final String key) {

@@ -55,6 +55,8 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
 import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.core.WroManagerFactory.WroGroupContent;
@@ -117,17 +119,27 @@ public class OversigtServer extends AbstractIdleService {
 
 	private final List<HttpListenerConfiguration> listeners;
 
-	private final EventBus eventBus;
+	@Inject
+	private EventBus eventBus;
 
 	private Optional<ServerSentEventHandler> sseHandler = Optional.empty();
 
 	private Optional<Undertow> server = Optional.empty();
 
+	@Inject
 	private EventSender sender;
 
-	private final Configuration templateConfiguration;
+	@Inject
+	private Configuration templateConfiguration;
 
-	private final DashboardController dashboardController;
+	@Inject
+	private EventSourceDescriptorController descriptorController;
+
+	@Inject
+	private EventSourceInstanceController instanceController;
+
+	@Inject
+	private DashboardController dashboardController;
 
 	private final Application restApiApplication;
 
@@ -156,18 +168,10 @@ public class OversigtServer extends AbstractIdleService {
 
 	@Inject
 	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners,
-			final EventBus eventBus,
-			final EventSender sender,
-			final Configuration templateConfiguration,
-			final DashboardController dashboardController,
 			final Application restApiApplication,
 			@Named("addonFolders") final Path[] addonFolders,
 			@Named("widgetsPaths") final String[] widgetsPaths) {
 		this.listeners = listeners;
-		this.eventBus = eventBus;
-		this.sender = sender;
-		this.templateConfiguration = templateConfiguration;
-		this.dashboardController = dashboardController;
 		this.restApiApplication = restApiApplication;
 		this.addonFolders = addonFolders;
 		this.widgetsPaths = widgetsPaths;
@@ -187,12 +191,16 @@ public class OversigtServer extends AbstractIdleService {
 
 	@Override
 	protected void startUp() throws Exception {
+		startServer();
+	}
+
+	private void startServer() throws ServletException, IOException {
 		LOGGER.info("Loading event source descriptors");
-		dashboardController.loadEventSourceDescriptors(Arrays.asList(MotivationEventSource.class.getPackage()),
+		descriptorController.loadEventSourceDescriptors(Arrays.asList(MotivationEventSource.class.getPackage()),
 				Arrays.asList(addonFolders),
 				Arrays.asList(widgetsPaths));
 		LOGGER.info("Loading event source instances");
-		dashboardController.loadEventSourceInstances();
+		instanceController.loadEventSourceInstances();
 		LOGGER.info("Loading dashboards");
 		dashboardController.loadDashboards();
 
@@ -277,7 +285,7 @@ public class OversigtServer extends AbstractIdleService {
 		nightlyEventSourceRestarter.startAsync();
 		if (startEventSources) {
 			LOGGER.info("Starting event source instances");
-			dashboardController.startAllInstances();
+			instanceController.startAllInstances();
 		}
 
 		LOGGER.info("StartUp finished");
@@ -294,7 +302,7 @@ public class OversigtServer extends AbstractIdleService {
 
 		/* stop all event source instances */
 		LOGGER.info("Stopping event sources");
-		dashboardController.stopAllInstances();
+		instanceController.stopAllInstances();
 
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");

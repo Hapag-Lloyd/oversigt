@@ -26,6 +26,7 @@ import java.util.stream.Stream.Builder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
@@ -273,6 +274,10 @@ public final class Utils {
 		} else {
 			return OperatingSystemType.Other;
 		}
+	}
+
+	public static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {
+		BeanUtils.copyProperties(source, target, ignoreProperties);
 	}
 
 	private Utils() {
