@@ -223,9 +223,9 @@ public class OversigtServer extends AbstractIdleService {
 				// dashboard handling
 				.get("/{dashboard}", this::serveDashboard)
 				.get("/events", getServerSentEventHandler())
+				.post("/events", exchange -> exchange.dispatch(this::handleForeignEvents))
 				.get("/views/{widget}", this::serveWidget)
 				// get events from outside
-				.post("/widgets/{widget}", this::handleForeignEvents)
 				// JSON Schema output
 				.get("/schema/{class}", this::serveJsonSchema)
 				// default handler
@@ -405,17 +405,20 @@ public class OversigtServer extends AbstractIdleService {
 	}
 
 	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+		exchange.startBlocking();
+
+		// read JSON
 		final String encoding = exchange.getRequestCharset();
 		final Charset charset = Charset.forName(encoding);
-
-		final String widgetId = exchange.getQueryParameters().get("widget").poll();
 		final String json = IOUtils.toString(exchange.getInputStream(), charset);
+		@SuppressWarnings("unchecked")
+		final Map<String, Object> jsonMap = Objects.requireNonNull(JsonUtils.fromJson(json, Map.class));
 
 		// XXX check if event is OK
 		// - does this widget exist?
 		// - is JSON well formed for this widget?
 
-		final JsonEvent event = new JsonEvent(widgetId, json);
+		final JsonEvent event = new JsonEvent(jsonMap.get("id").toString(), json);
 		eventBus.post(event);
 	}
 
