@@ -341,10 +341,12 @@ public class DashboardController {
 	 *         dashboards containing widgets that use this event source instance
 	 */
 	public Set<String> deleteEventSourceInstance(final String eventSourceId) {
+		// TODO rename method
 		return deleteEventSourceInstance(eventSourceId, false);
 	}
 
 	public Set<String> deleteEventSourceInstance(final String eventSourceId, final boolean force) {
+		// TODO rename method
 		final List<Widget> widgetsToDelete = dashboards.values()
 				.stream()
 				.flatMap(d -> d.getWidgets().stream())

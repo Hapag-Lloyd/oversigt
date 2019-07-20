@@ -32,15 +32,6 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 
 	private final Optional<String> description;
 
-	@NotNull
-	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
-
-	@NotNull
-	private final Set<@NotNull EventSourceProperty> dataItems = new TreeSet<>();
-
-	@JsonIgnore
-	private final Set<@NotBlank String> dataItemsToHide = new TreeSet<>();
-
 	@NotBlank
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
@@ -52,7 +43,16 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	@JsonIgnore
 	private final Class<? extends Module> moduleClass;
 
-	private boolean standAlone = false;
+	private final boolean standAlone;
+
+	@NotNull
+	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
+
+	@NotNull
+	private final Set<@NotNull EventSourceProperty> dataItems = new TreeSet<>();
+
+	@JsonIgnore
+	private final Set<@NotBlank String> dataItemsToHide = new TreeSet<>();
 
 	// TODO make non-public
 	public EventSourceDescriptor(@NotNull final EventSourceKey key,
@@ -60,8 +60,14 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 			@Nullable final String description,
 			@NotBlank final String view,
 			final boolean standAlone) {
-		this(key, displayName, description, view, null, null, NOP.class);
-		this.standAlone = standAlone;
+		this(key,
+				displayName,
+				Optional.ofNullable(Strings.emptyToNull(description)),
+				view,
+				Optional.empty(),
+				Optional.empty(),
+				NOP.class,
+				standAlone);
 	}
 
 	// TODO make non-public
@@ -72,13 +78,33 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 			@Nullable final Class<? extends Service> serviceClass,
 			@Nullable final Class<? extends OversigtEvent> eventClass,
 			final Class<? extends Module> moduleClass) {
+		this(key,
+				displayName,
+				Optional.ofNullable(Strings.emptyToNull(description)),
+				view,
+				Optional.ofNullable(serviceClass),
+				Optional.ofNullable(eventClass),
+				moduleClass,
+				false);
+	}
+
+	private EventSourceDescriptor(@NotNull final EventSourceKey key,
+			@NotBlank @NotNull final String displayName,
+			final Optional<String> description,
+			@NotBlank final String view,
+			final Optional<Class<? extends Service>> serviceClass,
+			final Optional<Class<? extends OversigtEvent>> eventClass,
+			final Class<? extends Module> moduleClass,
+			final boolean standAlone) {
+		super();
 		this.key = key;
 		this.displayName = displayName;
-		this.description = Optional.ofNullable(Strings.emptyToNull(description));
+		this.description = description;
 		this.view = view;
-		this.serviceClass = Optional.ofNullable(serviceClass);
-		this.eventClass = Optional.ofNullable(eventClass);
+		this.serviceClass = serviceClass;
+		this.eventClass = eventClass;
 		this.moduleClass = moduleClass;
+		this.standAlone = standAlone;
 	}
 
 	public EventSourceKey getKey() {
@@ -144,19 +170,16 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 	}
 
 	// TODO make non-public
-	@Deprecated
 	public void addProperty(@NotNull final EventSourceProperty property) {
 		properties.add(Objects.requireNonNull(property, "Property must not be null"));
 	}
 
 	// TODO make non-public
-	@Deprecated
 	public void addDataItem(@NotNull final EventSourceProperty dataItem) {
 		dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
 	}
 
 	// TODO make non-public
-	@Deprecated
 	public void addDataItemToHide(@NotBlank final String itemName) {
 		dataItemsToHide
 				.add(Objects.requireNonNull(Strings.emptyToNull(itemName), "Item name must not be null or empty"));
