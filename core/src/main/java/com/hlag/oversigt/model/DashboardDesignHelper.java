@@ -7,12 +7,8 @@ import java.util.Optional;
 import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.properties.Color;
 
-import de.larssh.utils.Finals;
-
-public final class DashboardDesign {
-	static final int TILE_DISTANCE = Finals.constant(6);
-
-	static int getRows(final Dashboard dashboard) {
+public final class DashboardDesignHelper {
+	private static int getRows(final Dashboard dashboard) {
 		return dashboard.getScreenHeight() / dashboard.getComputedTileHeight();
 	}
 
@@ -20,7 +16,11 @@ public final class DashboardDesign {
 		return dashboard.getColorScheme() != DashboardColorScheme.COLORED;
 	}
 
-	static StyleAddon getStyleAddon(final Dashboard dashboard, final int px, final int py, final int sx, final int sy) {
+	private static StyleAddon getStyleAddon(final Dashboard dashboard,
+			final int px,
+			final int py,
+			final int sx,
+			final int sy) {
 		switch (dashboard.getColorScheme()) {
 		case COLORED:
 			return new StyleAddon("", Optional.empty());
@@ -113,7 +113,7 @@ public final class DashboardDesign {
 						(position - 1 + size) / (double) total) };
 	}
 
-	private DashboardDesign() {
+	private DashboardDesignHelper() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -231,7 +231,8 @@ public class Widget implements Comparable<Widget> {
 	@Deprecated
 	@JsonIgnore
 	public String getDisplayClass() {
-		return DashboardDesign.getDisplayClass(this);
+		// this method is used by the Dashboard template
+		return DashboardDesignHelper.getDisplayClass(this);
 	}
 
 	/**
@@ -244,7 +245,8 @@ public class Widget implements Comparable<Widget> {
 	@Deprecated
 	@JsonIgnore
 	public String getDisplayStyle() {
-		return DashboardDesign.getDisplayStyle(this);
+		// this method is used by the Dashboard template
+		return DashboardDesignHelper.getDisplayStyle(this);
 	}
 
 	/** {@inheritDoc} */

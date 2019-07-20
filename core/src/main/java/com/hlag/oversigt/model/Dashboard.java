@@ -1,6 +1,7 @@
 package com.hlag.oversigt.model;
 
-import java.util.Arrays;
+import static com.hlag.oversigt.util.Utils.sortedSet;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -21,20 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
-import de.larssh.utils.Finals;
-
 public class Dashboard {
-	private static Set<String> newSet(final String... items) {
-		return newSet(Arrays.asList(items));
-	}
-
-	private static Set<String> newSet(final Collection<String> items) {
-		final Set<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-		set.addAll(items);
-		return Collections.synchronizedSet(set);
-	}
-
-	static final int TILE_DISTANCE = Finals.constant(6);
+	private static final int TILE_DISTANCE = /* Finals.constant(6) */ 6;
 
 	@NotNull
 	@NotBlank
@@ -87,11 +76,11 @@ public class Dashboard {
 
 	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private Set<@NotBlank /* TODO @UserId */ String> owners = newSet();
+	private Set<@NotBlank /* TODO @UserId */ String> owners = sortedSet();
 
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private Set<@NotBlank /* TODO @UserId */ String> editors = newSet();
+	private Set<@NotBlank /* TODO @UserId */ String> editors = sortedSet();
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
@@ -231,7 +220,7 @@ public class Dashboard {
 	}
 
 	public void setOwners(final Collection<String> owners) {
-		this.owners = newSet(owners);
+		this.owners = sortedSet(owners);
 	}
 
 	public Collection<String> getEditors() {
@@ -239,7 +228,7 @@ public class Dashboard {
 	}
 
 	public void setEditors(final Collection<String> editors) {
-		this.editors = newSet(editors);
+		this.editors = sortedSet(editors);
 	}
 
 	public boolean isEditor(final String username) {
