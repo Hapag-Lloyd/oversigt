@@ -122,6 +122,7 @@ class OversigtModule extends AbstractModule {
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
+		binder().bind(HttpHandlers.class);
 		binder().bind(EventSourceStatisticsManager.class);
 		binder().bind(EventSender.class);
 		binder().bind(RoleProvider.class);

@@ -1,5 +1,7 @@
 package com.hlag.oversigt.web.api;
 
+import static com.hlag.oversigt.core.HttpHandlers.MAPPING_API;
+
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -7,7 +9,6 @@ import java.util.UUID;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.OversigtServer;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 
@@ -43,7 +44,7 @@ public class ApiAuthenticationUtils {
 			final Authenticator authenticator,
 			final SignatureAlgorithm signatureAlgorithm,
 			@Named("api.ttl") final long ttl) {
-		issuer = hostname + OversigtServer.MAPPING_API;
+		issuer = hostname + MAPPING_API;
 		apiSecret = Base64.getDecoder().decode(apiSecretBase64);
 		this.signatureAlgorithm = signatureAlgorithm;
 		apiTtl = ttl;

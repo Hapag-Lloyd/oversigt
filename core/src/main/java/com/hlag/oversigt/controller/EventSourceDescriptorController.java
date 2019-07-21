@@ -48,8 +48,10 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -58,6 +60,7 @@ import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceProperty;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
@@ -75,6 +78,9 @@ public class EventSourceDescriptorController {
 
 	private static final Package CORE_EVENT_SOURCE_PACKAGE = ScheduledEventSource.class.getPackage();
 
+	// TODO make this constant configurable
+	private static final Collection<Package> PACKAGES_TO_SCAN = Arrays.asList(MotivationEventSource.class.getPackage());
+
 	private static final Collection<String> RESERVED_DATA_BINDINGS = Arrays.asList("title");
 
 	// Event Sources
@@ -82,9 +88,18 @@ public class EventSourceDescriptorController {
 	// synchronization needed
 	private final Collection<EventSourceDescriptor> eventSourceDescriptors = new HashSet<>();
 
-	public void loadEventSourceDescriptors(final Collection<Package> packagesToScan,
-			final Collection<Path> addonFolders,
-			final Collection<String> widgetsPaths) {
+	private final Collection<Path> addonFolders;
+
+	private final Collection<String> widgetsPaths;
+
+	@Inject
+	public EventSourceDescriptorController(@Named("addonFolders") final Path[] addonFolders,
+			@Named("widgetsPaths") final String[] widgetsPaths) {
+		this.addonFolders = Arrays.asList(addonFolders);
+		this.widgetsPaths = Arrays.asList(widgetsPaths);
+	}
+
+	public void loadEventSourceDescriptors() {
 		// load event sources without class
 		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
 		final List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
@@ -92,8 +107,8 @@ public class EventSourceDescriptorController {
 
 		// load event sources from classes
 		LOGGER.info("Scanning packages for EventSources: {} ",
-				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
-		final List<EventSourceDescriptor.Builder> descriptorsFromClasses = packagesToScan.stream()
+				PACKAGES_TO_SCAN.stream().map(Package::getName).collect(joining(", ")));
+		final List<EventSourceDescriptor.Builder> descriptorsFromClasses = PACKAGES_TO_SCAN.stream()
 				.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
 				.map(this::loadEventSourceFromClass)
 				.collect(toList());

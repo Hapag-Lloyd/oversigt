@@ -1,5 +1,7 @@
 package com.hlag.oversigt.web.api;
 
+import static com.hlag.oversigt.core.HttpHandlers.MAPPING_API;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
@@ -18,7 +20,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.OversigtServer;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.web.resources.Authentication;
 
@@ -48,7 +49,7 @@ public class ApiApplication extends Application {
 		beanConfig.setSchemes(new String[] { url.getProtocol() });
 		beanConfig.setHost(url.getHost()
 				+ (url.getPort() != -1 && url.getPort() != url.getDefaultPort() ? ":" + url.getPort() : ""));
-		beanConfig.setBasePath(OversigtServer.MAPPING_API);
+		beanConfig.setBasePath(MAPPING_API);
 		beanConfig.setResourcePackage(
 				Authentication.class.getPackage().getName() + "," + Api.class.getPackage().getName());
 		beanConfig.setScan(true);
