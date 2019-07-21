@@ -42,7 +42,6 @@ import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
-import com.hlag.oversigt.model.EventSourceNameGenerator;
 import com.hlag.oversigt.model.EventSourceProperty;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.security.Principal;

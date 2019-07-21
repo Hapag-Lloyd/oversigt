@@ -1,4 +1,4 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 import java.util.Set;
 import java.util.TreeSet;
@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.storage.Storage;
 
 @Singleton
@@ -19,7 +20,7 @@ public class EventSourceNameGenerator {
 		// no fields to be initialized manually, some will be injected
 	}
 
-	public String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
+	String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
 		// create base name
 		String basename = descriptor//
 				.getServiceClass()

@@ -68,7 +68,6 @@ import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Collectors;
 import de.larssh.utils.function.ThrowingFunction;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public class EventSourceDescriptorController {
@@ -86,10 +85,15 @@ public class EventSourceDescriptorController {
 	public void loadEventSourceDescriptors(final Collection<Package> packagesToScan,
 			final Collection<Path> addonFolders,
 			final Collection<String> widgetsPaths) {
+		// load event sources without class
+		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
+		final List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
+		LOGGER.info("Loaded {} EventSources", descriptorsFromResources.size());
+
 		// load event sources from classes
 		LOGGER.info("Scanning packages for EventSources: {} ",
 				packagesToScan.stream().map(Package::getName).collect(joining(", ")));
-		final List<EventSourceDescriptor> descriptorsFromClasses = packagesToScan.stream()
+		final List<EventSourceDescriptor.Builder> descriptorsFromClasses = packagesToScan.stream()
 				.flatMap(p -> TypeUtils.findClasses(p, Service.class, EventSource.class))
 				.map(this::loadEventSourceFromClass)
 				.collect(toList());
@@ -113,20 +117,15 @@ public class EventSourceDescriptorController {
 		@SuppressWarnings("resource")
 		final ClassLoader addonClassLoader
 				= URLClassLoader.newInstance(jarFileUrls, ClassLoader.getSystemClassLoader());
-		final List<EventSourceDescriptor> descriptorsFromAddons
+		final List<EventSourceDescriptor.Builder> descriptorsFromAddons
 				= TypeUtils.findClasses(addonClassLoader, classNamesToLoad, Service.class, EventSource.class)
 						.map(this::loadEventSourceFromClass)
 						.collect(toList());
 		LOGGER.info("Loaded {} EventSources", descriptorsFromAddons.size());
 
-		final List<EventSourceDescriptor> descriptorsJavaBased = new ArrayList<>();
+		final List<EventSourceDescriptor.Builder> descriptorsJavaBased = new ArrayList<>();
 		descriptorsJavaBased.addAll(descriptorsFromClasses);
 		descriptorsJavaBased.addAll(descriptorsFromAddons);
-
-		// load event sources without class
-		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
-		final List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
-		LOGGER.info("Loaded {} EventSources", descriptorsFromResources.size());
 
 		// add properties from views into class' event sources
 		final List<EventSourceDescriptor> standAloneDescriptorsFromFileSystem
@@ -134,7 +133,7 @@ public class EventSourceDescriptorController {
 
 		LOGGER.debug("Available view ids: {}",
 				descriptorsFromResources.stream().map(EventSourceDescriptor::getView).sorted().collect(joining(", ")));
-		for (final EventSourceDescriptor dfc : descriptorsJavaBased) {
+		for (final EventSourceDescriptor.Builder dfc : descriptorsJavaBased) {
 			final EventSourceDescriptor descriptorForView = descriptorsFromResources.stream()
 					.filter(d -> d.getView().equals(dfc.getView()))
 					.findAny()
@@ -147,7 +146,8 @@ public class EventSourceDescriptorController {
 
 		// Done
 		eventSourceDescriptors.clear();
-		eventSourceDescriptors.addAll(descriptorsJavaBased);
+		eventSourceDescriptors
+				.addAll(descriptorsJavaBased.stream().map(EventSourceDescriptor.Builder::build).collect(toList()));
 		eventSourceDescriptors.addAll(standAloneDescriptorsFromFileSystem);
 	}
 
@@ -167,7 +167,7 @@ public class EventSourceDescriptorController {
 		return eventSourceDescriptors.stream().filter(d -> d.getKey().equals(key)).findAny().get();
 	}
 
-	private EventSourceDescriptor loadEventSourceFromClass(final Class<? extends Service> serviceClass) {
+	private EventSourceDescriptor.Builder loadEventSourceFromClass(final Class<? extends Service> serviceClass) {
 		final EventSource eventSourceAnnotation = Objects.requireNonNull(serviceClass.getAnnotation(EventSource.class));
 
 		// collect easy event source information
@@ -177,8 +177,13 @@ public class EventSourceDescriptorController {
 		final String view = Objects.requireNonNull(eventSourceAnnotation.view());
 		final Class<? extends OversigtEvent> eventClass = Objects.requireNonNull(getEventClass(serviceClass));
 		final Class<? extends Module> moduleClass = eventSourceAnnotation.explicitConfiguration();
-		final EventSourceDescriptor descriptor
-				= new EventSourceDescriptor(key, displayName, description, view, serviceClass, eventClass, moduleClass);
+		final EventSourceDescriptor.Builder builder = new EventSourceDescriptor.Builder(key,
+				displayName,
+				description,
+				view,
+				serviceClass,
+				eventClass,
+				moduleClass);
 
 		// Find fields of the event
 		final Set<String> eventFields = TypeUtils.getMembers(eventClass)
@@ -190,12 +195,12 @@ public class EventSourceDescriptorController {
 				.filter(not(Strings::isNullOrEmpty))
 				.filter(not(eventFields::contains))
 				.map(this::createDummyEventSourceProperty)
-				.forEach(descriptor::addDataItem);
+				.forEach(builder::addDataItem);
 
 		// list data items to be hidden from view
 		Stream.of(eventSourceAnnotation.hiddenDataItems())
 				.filter(not(Strings::isNullOrEmpty))
-				.forEach(descriptor::addDataItemToHide);
+				.forEach(builder::addDataItemToHide);
 
 		// find class properties
 		final BeanInfo beanInfo;
@@ -219,13 +224,13 @@ public class EventSourceDescriptorController {
 						|| p.getWriteMethod().isAnnotationPresent(Property.class))
 				// convert into our own structure
 				.map(this::createEventSourceProperty)
-				.forEach(descriptor::addProperty);
+				.forEach(builder::addProperty);
 
-		return descriptor;
+		return builder;
 	}
 
 	private EventSourceProperty createDummyEventSourceProperty(final String name) {
-		return new EventSourceProperty(name, name, null, "text", true);
+		return new EventSourceProperty(name, name, "", "text", true, Collections.emptyMap());
 	}
 
 	private EventSourceProperty createEventSourceProperty(final PropertyDescriptor descriptor) {
@@ -241,71 +246,76 @@ public class EventSourceDescriptorController {
 		}
 
 		// find Property annotation
-		Property property = descriptor.getReadMethod().getAnnotation(Property.class);
-		if (property == null) {
-			property = descriptor.getWriteMethod().getAnnotation(Property.class);
-		}
+		final Property property = Utils.getOne(//
+				descriptor.getReadMethod().getAnnotation(Property.class),
+				descriptor.getWriteMethod().getAnnotation(Property.class));
 
 		final String name = descriptor.getName();
 		final String displayName = property.name();
-		@Nullable
-		final String description = Strings.emptyToNull(property.description());
+		final String description = Strings.nullToEmpty(property.description());
 		final boolean customValuesAllowed = false;
 		final Method getter = descriptor.getReadMethod();
 		final Method setter = descriptor.getWriteMethod();
 		final Class<?> clazz = descriptor.getPropertyType();
-		@Nullable
-		JsonHint hint = descriptor.getReadMethod().getAnnotation(JsonHint.class);
-		if (hint == null) {
-			hint = descriptor.getWriteMethod().getAnnotation(JsonHint.class);
-		}
-		if (hint == null) {
-			Class<?> tmpClass = clazz;
-			while (tmpClass.isArray()) {
-				tmpClass = tmpClass.getComponentType();
-			}
-			hint = tmpClass.getAnnotation(JsonHint.class);
-		}
+		final Optional<JsonHint> hint = findJsonHint(descriptor);
 		final boolean json = !UiUtils.hasDedicatedEditor(clazz);
 
 		final String inputType = getType(name,
 				Optional.ofNullable(Strings.emptyToNull(property.type())),
-				Optional.of(descriptor.getPropertyType()),
+				Optional.of(clazz),
 				json,
 				Collections.emptyList());
+		final Map<String, String> allowedValues = collectAllowedValues(clazz);
 
 		final EventSourceProperty esProperty = new EventSourceProperty(name,
 				displayName,
 				description,
 				inputType,
 				customValuesAllowed,
+				allowedValues,
 				getter,
 				setter,
 				clazz,
 				hint,
 				json,
-				json ? JsonUtils.toJsonSchema(clazz, Optional.ofNullable(hint)) : null);
+				json ? Optional.of(JsonUtils.toJsonSchema(clazz, hint)) : Optional.empty());
 
-		collectAllowedValues(clazz).forEach(esProperty::addAllowedValue);
 		return esProperty;
+	}
+
+	private Optional<JsonHint> findJsonHint(final PropertyDescriptor descriptor) {
+		Optional<JsonHint> hint = Optional.ofNullable(descriptor.getReadMethod().getAnnotation(JsonHint.class));
+		if (hint.isPresent()) {
+			return hint;
+		}
+		hint = Optional.ofNullable(descriptor.getWriteMethod().getAnnotation(JsonHint.class));
+		if (hint.isPresent()) {
+			return hint;
+		}
+		Class<?> tmpClass = descriptor.getPropertyType();
+		while (tmpClass.isArray()) {
+			tmpClass = tmpClass.getComponentType();
+		}
+		return Optional.ofNullable(tmpClass.getAnnotation(JsonHint.class));
 	}
 
 	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
 		final String displayName = properties.getProperty("dataItem." + name + ".title", name);
-		@Nullable
-		final String description = properties.getProperty("dataItem." + name + ".description");
+		final String description = Strings.nullToEmpty(properties.getProperty("dataItem." + name + ".description"));
 		final String inputType = properties.getProperty("dataItem." + name + ".type", "text");
 		final boolean customValuesAllowed
 				= Boolean.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
-		final List<String> allowedValues = new ArrayList<>();
-		allowedValues.addAll(StringUtils.list(properties.getProperty("dataItem." + name + ".values")));
+		final Map<String, String> allowedValues
+				= StringUtils.list(properties.getProperty("dataItem." + name + ".values"))
+						.stream()
+						.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));
 
 		final EventSourceProperty property = new EventSourceProperty(name,
 				displayName,
 				description,
-				getType(displayName, Optional.of(inputType), Optional.empty(), false, allowedValues),
-				customValuesAllowed);
-		allowedValues.forEach(v -> property.addAllowedValue(v, v));
+				getType(displayName, Optional.of(inputType), Optional.empty(), false, allowedValues.keySet()),
+				customValuesAllowed,
+				allowedValues);
 		return property;
 	}
 
@@ -413,7 +423,7 @@ public class EventSourceDescriptorController {
 		final String name = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, folder.getFileName().toString());
 		String displayName = name;
 		final EventSourceKey key = EventSourceKey.createKeyFromWidget(name, name);
-		String description = null;
+		Optional<String> description = Optional.empty();
 
 		// other info
 		final boolean standAlone;
@@ -436,18 +446,13 @@ public class EventSourceDescriptorController {
 				displayName = newName;
 			}
 
-			description = properties.getProperty("description");
+			description = Optional.ofNullable(properties.getProperty("description"));
 		} else {
 			standAlone = true;
 		}
 
-		// check if we should continue
-		// final boolean available = standAlone;// && !isViewUsedByClass.test(name);
-		// if (!available) {
-		// return null;
-		// }
-		final EventSourceDescriptor descriptor
-				= new EventSourceDescriptor(key, displayName, description, name, standAlone);
+		final EventSourceDescriptor.Builder builder
+				= new EventSourceDescriptor.Builder(key, displayName, description, name, standAlone);
 
 		// Load data items
 		final Set<String> dataItems = new HashSet<>();
@@ -457,9 +462,9 @@ public class EventSourceDescriptorController {
 		dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
 		dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
 
-		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(descriptor::addDataItem);
+		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(builder::addDataItem);
 
-		return descriptor;
+		return builder.build();
 	}
 
 	private static void addDataItemsFromHtml(final Collection<String> dataItems, final Path folder) throws IOException {

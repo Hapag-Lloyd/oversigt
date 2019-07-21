@@ -47,9 +47,8 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	private final Optional<String> jsonSchema;
 
-	// TODO make non-public
-	public EventSourceProperty(@NotBlank final String name,
-			@NotBlank final String displayName,
+	public EventSourceProperty(final String name,
+			final String displayName,
 			final String description,
 			final String inputType,
 			final boolean customValuesAllowed,
@@ -68,9 +67,8 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		jsonSchema = Optional.empty();
 	}
 
-	// TODO make non-public
-	public EventSourceProperty(@NotBlank final String name,
-			@NotBlank final String displayName,
+	public EventSourceProperty(final String name,
+			final String displayName,
 			final String description,
 			final String inputType,
 			final boolean customValuesAllowed,

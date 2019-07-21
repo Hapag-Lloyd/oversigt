@@ -191,6 +191,16 @@ public final class Utils {
 		return Collections.synchronizedSet(set);
 	}
 
+	public static <T> T getOne(@Nullable final T one, @Nullable final T two) {
+		if (one != null) {
+			return Objects.requireNonNull(one);
+		} else if (two != null) {
+			return Objects.requireNonNull(two);
+		} else {
+			throw new NullPointerException("Both values are null.");
+		}
+	}
+
 	public static String notNullOrEmpty(@Nullable final String stringToCheck, final String errorMessage) {
 		if (requireNonNull(stringToCheck, errorMessage).isEmpty()) {
 			throw new IllegalArgumentException(errorMessage);
