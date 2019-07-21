@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +56,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.DashboardDesignHelper;
 import com.hlag.oversigt.controller.EventSourceDescriptorController;
 import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
@@ -64,6 +66,7 @@ import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.MotivationEventSource;
 import com.hlag.oversigt.util.ClassPathResourceManager;
@@ -386,7 +389,11 @@ public class OversigtServer extends AbstractIdleService {
 						"computedTileHeight",
 						dashboard.get().getComputedTileHeight(),
 						"widgets",
-						dashboard.get().getWidgets()));
+						dashboard.get().getWidgets(),
+						"getWidgetDisplayStyle",
+						(Function<Widget, String>) DashboardDesignHelper::getDisplayStyle,
+						"getWidgetDisplayClass",
+						(Function<Widget, String>) DashboardDesignHelper::getDisplayClass));
 		exchange.getResponseSender().send(html);
 	}
 

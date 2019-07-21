@@ -1,10 +1,12 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 import static com.hlag.oversigt.properties.Color.smooth;
 
 import java.util.Optional;
 
-import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardColorScheme;
+import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.Color;
 
 public final class DashboardDesignHelper {
@@ -62,7 +64,7 @@ public final class DashboardDesignHelper {
 				+ ");";
 	}
 
-	static String getDisplayClass(final Widget widget) {
+	public static String getDisplayClass(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
 		if (!isAddColorCssToWidgets(dashboard)) {
 			return "";
@@ -78,7 +80,7 @@ public final class DashboardDesignHelper {
 		return "dark-foreground";
 	}
 
-	static String getDisplayStyle(final Widget widget) {
+	public static String getDisplayStyle(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
 		final StringBuilder sb = new StringBuilder();
 		sb.append(widget.getStyle());

@@ -221,34 +221,6 @@ public class Widget implements Comparable<Widget> {
 		return COMPARE.compare(this, that);
 	}
 
-	/**
-	 * Returns the widgets css class attribute merged with class information based
-	 * on other attributes.
-	 *
-	 * @return css classes
-	 * @deprecated use {@link DashboardDesign#getDisplayClass(Widget)} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayClass() {
-		// this method is used by the Dashboard template
-		return DashboardDesignHelper.getDisplayClass(this);
-	}
-
-	/**
-	 * Returns the widgets css style attribute merged with style information based
-	 * on other attributes.
-	 *
-	 * @return css styles
-	 * @deprecated use {@link DashboardDesign#getDisplayStyle(Widget)} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayStyle() {
-		// this method is used by the Dashboard template
-		return DashboardDesignHelper.getDisplayStyle(this);
-	}
-
 	/** {@inheritDoc} */
 	@Override
 	public String toString() {
