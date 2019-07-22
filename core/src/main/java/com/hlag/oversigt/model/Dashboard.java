@@ -246,6 +246,7 @@ public class Dashboard {
 	}
 
 	// TODO make non-public
+	@JsonIgnore
 	public Collection<Widget> getModifiableWidgets() {
 		return widgets;
 	}

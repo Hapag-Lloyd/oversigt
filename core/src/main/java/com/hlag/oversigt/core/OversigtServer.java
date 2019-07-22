@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
-import com.hlag.oversigt.controller.EventSourceDescriptorController;
 import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
@@ -36,7 +35,6 @@ import io.undertow.Undertow.Builder;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
-import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
@@ -70,9 +68,6 @@ public class OversigtServer extends AbstractIdleService {
 
 	@Inject
 	private HttpHandlers handlers;
-
-	@Inject
-	private EventSourceDescriptorController descriptorController;
 
 	@Inject
 	private EventSourceInstanceController instanceController;
@@ -115,12 +110,8 @@ public class OversigtServer extends AbstractIdleService {
 
 	@Override
 	protected void startUp() throws Exception {
-		LOGGER.info("Loading event source descriptors");
-		descriptorController.loadEventSourceDescriptors();
-		LOGGER.info("Loading event source instances");
-		instanceController.loadEventSourceInstances();
-		LOGGER.info("Loading dashboards");
-		dashboardController.loadDashboards();
+		LOGGER.info("Initializing controllers");
+		dashboardController.initialize();
 
 		LOGGER.info("Configuring web server");
 		sseHandler = Optional.of(Handlers.serverSentEvents((connection, lastEventId) -> {
@@ -147,15 +138,17 @@ public class OversigtServer extends AbstractIdleService {
 		// Create Handlers for dynamic content
 		final RoutingHandler routingHandler = Handlers.routing()
 				// dashboard handling
-				.get("/{dashboard}", handlers::serveDashboard)
+				.get("/{dashboard}", handlers.createDashboardHandler())
+				// send events to dashboards
 				.get("/events", getServerSentEventHandler())
-				.post("/events", new BlockingHandler(handlers::handleForeignEvents))
-				.get("/views/{widget}", handlers::serveWidget)
 				// get events from outside
+				.post("/events", handlers.createForeignEventHandler())
+				// get widget details
+				.get("/views/{widget}", handlers.createWidgetHandler())
 				// JSON Schema output
-				.get("/schema/{class}", handlers::serveJsonSchema)
+				.get("/schema/{class}", handlers.createJsonSchemaHandler())
 				// default handler
-				.get("/", handlers::serveWelcomePage);
+				.get("/", handlers.createWelcomePageHandler());
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers.path(routingHandler)

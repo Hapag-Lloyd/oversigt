@@ -99,7 +99,8 @@ public class EventSourceDescriptorController {
 		this.widgetsPaths = Arrays.asList(widgetsPaths);
 	}
 
-	public void loadEventSourceDescriptors() {
+	public void initialize() {
+		LOGGER.info("Loading event source descriptors");
 		// load event sources without class
 		LOGGER.info("Scanning resources paths for EventSources: {}", widgetsPaths.stream().collect(joining(", ")));
 		final List<EventSourceDescriptor> descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);
@@ -248,6 +249,22 @@ public class EventSourceDescriptorController {
 		return new EventSourceProperty(name, name, "", "text", true, Collections.emptyMap());
 	}
 
+	private Optional<JsonHint> findJsonHint(final PropertyDescriptor descriptor) {
+		Optional<JsonHint> hint = Optional.ofNullable(descriptor.getReadMethod().getAnnotation(JsonHint.class));
+		if (hint.isPresent()) {
+			return hint;
+		}
+		hint = Optional.ofNullable(descriptor.getWriteMethod().getAnnotation(JsonHint.class));
+		if (hint.isPresent()) {
+			return hint;
+		}
+		Class<?> tmpClass = descriptor.getPropertyType();
+		while (tmpClass.isArray()) {
+			tmpClass = tmpClass.getComponentType();
+		}
+		return Optional.ofNullable(tmpClass.getAnnotation(JsonHint.class));
+	}
+
 	private EventSourceProperty createEventSourceProperty(final PropertyDescriptor descriptor) {
 		if (descriptor.getReadMethod().getAnnotation(Property.class) != null
 				&& descriptor.getWriteMethod().getAnnotation(Property.class) != null) {
@@ -296,22 +313,6 @@ public class EventSourceDescriptorController {
 				json ? Optional.of(JsonUtils.toJsonSchema(clazz, hint)) : Optional.empty());
 
 		return esProperty;
-	}
-
-	private Optional<JsonHint> findJsonHint(final PropertyDescriptor descriptor) {
-		Optional<JsonHint> hint = Optional.ofNullable(descriptor.getReadMethod().getAnnotation(JsonHint.class));
-		if (hint.isPresent()) {
-			return hint;
-		}
-		hint = Optional.ofNullable(descriptor.getWriteMethod().getAnnotation(JsonHint.class));
-		if (hint.isPresent()) {
-			return hint;
-		}
-		Class<?> tmpClass = descriptor.getPropertyType();
-		while (tmpClass.isArray()) {
-			tmpClass = tmpClass.getComponentType();
-		}
-		return Optional.ofNullable(tmpClass.getAnnotation(JsonHint.class));
 	}
 
 	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {

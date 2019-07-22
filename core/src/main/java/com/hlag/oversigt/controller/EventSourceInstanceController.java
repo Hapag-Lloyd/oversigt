@@ -77,6 +77,10 @@ public class EventSourceInstanceController {
 
 	private List<Consumer<EventSourceInstance>> eventSourceInstanceUpdatedEventHandlers = new ArrayList<>();
 
+	public EventSourceInstanceController() {
+		// nothing to do
+	}
+
 	public void registerEventSourceInstanceUpdatedEventHandler(final Consumer<EventSourceInstance> eventHandler) {
 		eventSourceInstanceUpdatedEventHandlers.add(eventHandler);
 	}
@@ -161,7 +165,9 @@ public class EventSourceInstanceController {
 		}
 	}
 
-	public void loadEventSourceInstances() {
+	public void initialize() {
+		descriptorController.initialize();
+		LOGGER.info("Loading event source instances");
 		storage.getEventSourcesIds().stream().map(this::loadEventSourceInstance).forEach(this::unsetService);
 	}
 

@@ -102,7 +102,9 @@ public class DashboardController {
 				.get();
 	}
 
-	public void loadDashboards() {
+	public void initialize() {
+		eventSourceInstanceController.initialize();
+		LOGGER.info("Loading dashboards");
 		dashboards.clear();
 		dashboards.putAll(storage.loadDashboards()
 				.stream()

@@ -25,7 +25,7 @@ import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
+public final class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
 	@NotNull
 	private final EventSourceKey key;
 

@@ -36,6 +36,8 @@ import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.cdi.CdiInjectorFactory;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
@@ -64,6 +66,7 @@ import freemarker.template.TemplateException;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -77,6 +80,7 @@ import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
 
 public class HttpHandlers {
+	private static final Logger LOGGER = LoggerFactory.getLogger(HttpHandlers.class);
 
 	public static final String MAPPING_API = "/api/v1";
 
@@ -99,7 +103,15 @@ public class HttpHandlers {
 	@Inject
 	private Application restApiApplication;
 
-	void serveDashboard(final HttpServerExchange exchange) throws Exception {
+	public HttpHandlers() {
+		// nothing to do
+	}
+
+	HttpHandler createDashboardHandler() {
+		return this::serveDashboard;
+	}
+
+	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
 		final boolean searchHtml = Optional.ofNullable(exchange.getRequestHeaders().get(Headers.ACCEPT))
 				.map(Object::toString)
 				.map(String::toLowerCase)
@@ -157,7 +169,11 @@ public class HttpHandlers {
 		exchange.getResponseSender().send(html);
 	}
 
-	void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
+	HttpHandler createWelcomePageHandler() {
+		return this::serveWelcomePage;
+	}
+
+	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
 		final String html = processTemplate("/web-templates/layout/root/page_welcome.ftl.html",
 				map("title",
 						"Welcome",
@@ -179,7 +195,11 @@ public class HttpHandlers {
 		return out.toString();
 	}
 
-	void serveJsonSchema(final HttpServerExchange exchange) {
+	HttpHandler createJsonSchemaHandler() {
+		return this::serveJsonSchema;
+	}
+
+	private void serveJsonSchema(final HttpServerExchange exchange) {
 		final Optional<String> jsonSchema = Optional.ofNullable(exchange.getQueryParameters().get("class").poll())
 				.flatMap(TypeUtils::getClassForName)
 				.filter(SerializableProperty.class::isAssignableFrom)
@@ -194,7 +214,11 @@ public class HttpHandlers {
 		}
 	}
 
-	void serveWidget(final HttpServerExchange exchange) {
+	HttpHandler createWidgetHandler() {
+		return this::serveWidget;
+	}
+
+	private void serveWidget(final HttpServerExchange exchange) {
 		exchange.setStatusCode(StatusCodes.SEE_OTHER);
 		final String widgetName = exchange.getQueryParameters().get("widget").getFirst();
 		exchange.getResponseHeaders()
@@ -202,7 +226,15 @@ public class HttpHandlers {
 		exchange.endExchange();
 	}
 
-	void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+	HttpHandler createForeignEventHandler() {
+		return new BlockingHandler(this::handleForeignEvents);
+	}
+
+	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+		LOGGER.info("Incoming foreign event."); // TODO improve logging
+
+		// TODO check authentication
+
 		// read JSON
 		final String encoding = exchange.getRequestCharset();
 		final Charset charset = Charset.forName(encoding);
