@@ -1,6 +1,18 @@
 POST http://localhost/events
 Content-Type: application/json
+Authorization: Basic user1 password
 
 {
-    "some": "json"
+  "id": "InternetTextExtractionEventSource__29564046_93de_4e59_aa14_84f0e6ced05d",
+  "updatedAt": 1563829462,
+  "moreinfo": null,
+  "title": null,
+  "items": [
+    {
+      "label": "delectus aut autem2",
+      "value": "",
+      "labelStyle": "",
+      "valueStyle": ""
+    }
+  ]
 }

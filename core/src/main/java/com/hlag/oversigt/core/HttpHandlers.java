@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
@@ -71,6 +72,14 @@ import de.larssh.utils.Nullables;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import io.undertow.Handlers;
+import io.undertow.security.api.AuthenticationMechanism;
+import io.undertow.security.api.AuthenticationMode;
+import io.undertow.security.handlers.AuthenticationCallHandler;
+import io.undertow.security.handlers.AuthenticationConstraintHandler;
+import io.undertow.security.handlers.AuthenticationMechanismsHandler;
+import io.undertow.security.handlers.SecurityInitialHandler;
+import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.BlockingHandler;
@@ -108,6 +117,9 @@ public class HttpHandlers {
 
 	@Inject
 	private EventSourceInstanceController instanceController;
+
+	@Inject
+	private IdentityManager identityManager;
 
 	@Inject
 	@Named("widgetsPaths")
@@ -260,19 +272,19 @@ public class HttpHandlers {
 	}
 
 	HttpHandler createForeignEventHandler() {
-		return new BlockingHandler(this::handleForeignEvents);
+		return addSecurity(new BlockingHandler(this::handleForeignEvents), identityManager);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
-		LOGGER.info("Incoming foreign event."); // TODO improve logging
-
-		// TODO check authentication
+		LOGGER.info("Incoming foreign event. From: "
+				+ exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal().getName());
 
 		// read JSON
 		final String encoding = exchange.getRequestCharset();
 		final Charset charset = Charset.forName(encoding);
 		final String json = IOUtils.toString(exchange.getInputStream(), charset);
+		LOGGER.trace("JSON from outside: " + json);
 		final Map<String, Object> jsonMap;
 
 		// parse JSON
@@ -286,24 +298,25 @@ public class HttpHandlers {
 
 		// check JSON
 		if (!jsonMap.containsKey("id")) {
+			LOGGER.warn("Request does not contain an ID.");
 			HttpUtils.badRequest(exchange);
 			return;
 		}
 		final String id = jsonMap.get("id").toString();
 		try {
 			instanceController.getEventSourceInstance(id);
+			// TODO check if JSON fits event definition
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			LOGGER.warn("Event source instance '{}' does not exist.", id);
 			HttpUtils.badRequest(exchange);
 			return;
 		}
 
-		// XXX check if event is OK
-		// - does this widget exist?
-		// - is JSON well formed for this widget?
-
-		final JsonEvent event = new JsonEvent(jsonMap.get("id").toString(), json);
+		LOGGER.info("Posting event for: " + id);
+		final JsonEvent event = new JsonEvent(id, json);
 		eventBus.post(event);
+		exchange.setStatusCode(StatusCodes.NO_CONTENT);
+		exchange.endExchange();
 	}
 
 	@SuppressWarnings("resource")
@@ -447,6 +460,17 @@ public class HttpHandlers {
 	private <T> InstanceFactory<T> createInstanceFactory(final Class<T> clazz) {
 		final Injector injector = this.injector.createChildInjector(binder -> binder.bind(clazz));
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
+	}
+
+	private static HttpHandler addSecurity(final HttpHandler toWrap, final IdentityManager identityManager) {
+		HttpHandler handler = toWrap;
+		handler = new AuthenticationCallHandler(handler);
+		handler = new AuthenticationConstraintHandler(handler);
+		final List<AuthenticationMechanism> mechanisms
+				= Collections.singletonList(new BasicAuthenticationMechanism("Oversigt"));
+		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
+		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
+		return handler;
 	}
 
 	private static final class AssetsClassPathResourceManager extends ClassPathResourceManager {

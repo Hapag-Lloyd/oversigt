@@ -59,6 +59,7 @@ import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
 import com.hlag.oversigt.core.eventsource.NightlyEventSourceRestarterService;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.OversigtIdentityManager;
 import com.hlag.oversigt.security.RoleProvider;
 import com.hlag.oversigt.storage.JdbcDatabase;
 import com.hlag.oversigt.storage.Storage;
@@ -78,6 +79,7 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
+import io.undertow.security.idm.IdentityManager;
 
 /**
  * Main application configuration module. Configures server and all necessary
@@ -140,6 +142,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Storage.class).to(JdbcDatabase.class);
 
 		// REST API
+		binder().bind(IdentityManager.class).to(OversigtIdentityManager.class);
 		binder().bind(Application.class).to(ApiApplication.class);
 		binder().bind(ApiAuthenticationUtils.class);
 
