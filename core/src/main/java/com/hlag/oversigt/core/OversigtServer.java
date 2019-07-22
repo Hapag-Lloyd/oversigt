@@ -1,11 +1,9 @@
 package com.hlag.oversigt.core;
 
-import static com.hlag.oversigt.core.event.EventSender.DASHBOARD_KEY;
 import static com.hlag.oversigt.util.Utils.not;
 
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,7 +39,6 @@ import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
-import io.undertow.server.handlers.sse.ServerSentEventHandler;
 
 /**
  * HTTP Server Controller. Bootstraps server and specifies all needed mappings
@@ -54,12 +51,12 @@ import io.undertow.server.handlers.sse.ServerSentEventHandler;
 public class OversigtServer extends AbstractIdleService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtServer.class);
 
-	private final List<HttpListenerConfiguration> listeners;
+	@Inject
+	@Named("listeners")
+	private List<HttpListenerConfiguration> listeners;
 
 	@Inject
 	private EventBus eventBus;
-
-	private Optional<ServerSentEventHandler> sseHandler = Optional.empty();
 
 	private Optional<Undertow> server = Optional.empty();
 
@@ -88,40 +85,21 @@ public class OversigtServer extends AbstractIdleService {
 	private Service nightlyEventSourceRestarter;
 
 	@Inject
-	@Named("debug")
-	private boolean debug;
+	public OversigtServer() {
+		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());
+	}
 
-	@Inject
-	public OversigtServer(@Named("listeners") final List<HttpListenerConfiguration> listeners) {
-		this.listeners = listeners;
-
+	@Override
+	protected void startUp() throws Exception {
 		// Configure listeners
 		if (listeners.isEmpty()) {
 			throw new RuntimeException("No http listeners configured.");
 		}
 
-		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());
-	}
-
-	private ServerSentEventHandler getServerSentEventHandler() {
-		return sseHandler
-				.orElseThrow(() -> new RuntimeException("The ServerSentEventHandler has not been initialized."));
-	}
-
-	@Override
-	protected void startUp() throws Exception {
 		LOGGER.info("Initializing controllers");
 		dashboardController.initialize();
 
 		LOGGER.info("Configuring web server");
-		sseHandler = Optional.of(Handlers.serverSentEvents((connection, lastEventId) -> {
-			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))
-					.map(Deque::getFirst)
-					.flatMap(dashboardController::getDashboard)
-					.ifPresent(db -> connection.putAttachment(DASHBOARD_KEY, db));
-			eventBus.post(connection);
-		}));
-
 		eventBus.register(new Consumer<OversigtEvent>() {
 			@Subscribe
 			@Override
@@ -129,8 +107,8 @@ public class OversigtServer extends AbstractIdleService {
 				if (event == null) {
 					return;
 				}
-				getServerSentEventHandler().getConnections()
-						.stream()
+				handlers.getServerSentEventsHandler()
+						.getConnections()
 						.forEach(connection -> sender.sendEventToConnection(event, connection));
 			}
 		});
@@ -140,7 +118,7 @@ public class OversigtServer extends AbstractIdleService {
 				// dashboard handling
 				.get("/{dashboard}", handlers.createDashboardHandler())
 				// send events to dashboards
-				.get("/events", getServerSentEventHandler())
+				.get("/events", handlers.getServerSentEventsHandler())
 				// get events from outside
 				.post("/events", handlers.createForeignEventHandler())
 				// get widget details
@@ -217,7 +195,7 @@ public class OversigtServer extends AbstractIdleService {
 
 		/* close connections */
 		LOGGER.info("Shutting down server sent event connections");
-		getServerSentEventHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
+		handlers.getServerSentEventsHandler().getConnections().forEach(ServerSentEventConnection::shutdown);
 
 		/* stop the server */
 		LOGGER.info("Stopping web server");

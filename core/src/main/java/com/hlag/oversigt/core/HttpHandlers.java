@@ -1,5 +1,6 @@
 package com.hlag.oversigt.core;
 
+import static com.hlag.oversigt.core.event.EventSender.DASHBOARD_KEY;
 import static com.hlag.oversigt.util.HttpUtils.redirect;
 import static com.hlag.oversigt.util.StringUtils.substringBefore;
 import static com.hlag.oversigt.util.Utils.map;
@@ -20,11 +21,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +46,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.controller.DashboardDesignHelper;
@@ -60,6 +64,7 @@ import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.api.ApiBootstrapListener;
 import com.hlag.oversigt.web.ui.OversigtUiHelper;
 
+import de.larssh.utils.Finals;
 import de.larssh.utils.Nullables;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
@@ -67,6 +72,8 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.BlockingHandler;
+import io.undertow.server.handlers.sse.ServerSentEventConnection;
+import io.undertow.server.handlers.sse.ServerSentEventHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -79,6 +86,7 @@ import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
 import ro.isdc.wro.http.ConfigurableWroFilter;
 
+@Singleton
 public class HttpHandlers {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpHandlers.class);
 
@@ -105,6 +113,26 @@ public class HttpHandlers {
 
 	public HttpHandlers() {
 		// nothing to do
+	}
+
+	private final Supplier<ServerSentEventHandler> serverSentEventHandlerSupplier
+			= Finals.lazy(this::createServerSentEventHandler);
+
+	ServerSentEventHandler getServerSentEventsHandler() {
+		return serverSentEventHandlerSupplier.get();
+	}
+
+	private ServerSentEventHandler createServerSentEventHandler() {
+		return Handlers.serverSentEvents(this::handleNewServerSentEventsConnection);
+	}
+
+	private void handleNewServerSentEventsConnection(final ServerSentEventConnection connection,
+			@SuppressWarnings("unused") final String lastEventId) {
+		Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
+				.map(Deque::getFirst)
+				.flatMap(dashboardController::getDashboard)
+				.ifPresent(dashboard -> connection.putAttachment(DASHBOARD_KEY, dashboard));
+		eventBus.post(connection);
 	}
 
 	HttpHandler createDashboardHandler() {
