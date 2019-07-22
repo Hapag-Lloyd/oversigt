@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -50,6 +51,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.controller.DashboardDesignHelper;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.core.WroManagerFactory.WroGroupContent;
 import com.hlag.oversigt.core.event.JsonEvent;
@@ -103,6 +105,9 @@ public class HttpHandlers {
 
 	@Inject
 	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceInstanceController instanceController;
 
 	@Inject
 	@Named("widgetsPaths")
@@ -258,6 +263,7 @@ public class HttpHandlers {
 		return new BlockingHandler(this::handleForeignEvents);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
 		LOGGER.info("Incoming foreign event."); // TODO improve logging
 
@@ -267,8 +273,30 @@ public class HttpHandlers {
 		final String encoding = exchange.getRequestCharset();
 		final Charset charset = Charset.forName(encoding);
 		final String json = IOUtils.toString(exchange.getInputStream(), charset);
-		@SuppressWarnings("unchecked")
-		final Map<String, Object> jsonMap = Objects.requireNonNull(JsonUtils.fromJson(json, Map.class));
+		final Map<String, Object> jsonMap;
+
+		// parse JSON
+		try {
+			jsonMap = Objects.requireNonNull(JsonUtils.fromJson(json, Map.class));
+		} catch (final Exception e) {
+			LOGGER.error("Unable to parse JSON for foreign event: " + json, e);
+			HttpUtils.badRequest(exchange);
+			return;
+		}
+
+		// check JSON
+		if (!jsonMap.containsKey("id")) {
+			HttpUtils.badRequest(exchange);
+			return;
+		}
+		final String id = jsonMap.get("id").toString();
+		try {
+			instanceController.getEventSourceInstance(id);
+		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
+			LOGGER.warn("Event source instance '{}' does not exist.", id);
+			HttpUtils.badRequest(exchange);
+			return;
+		}
 
 		// XXX check if event is OK
 		// - does this widget exist?
