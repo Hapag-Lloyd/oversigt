@@ -126,6 +126,10 @@ public class HttpHandlers {
 	private String[] widgetsPaths;
 
 	@Inject
+	@Named("foreignEvents.needAuthentication")
+	private boolean foreignEventsNeedAuthentication;
+
+	@Inject
 	private Application restApiApplication;
 
 	public HttpHandlers() {
@@ -272,7 +276,11 @@ public class HttpHandlers {
 	}
 
 	HttpHandler createForeignEventHandler() {
-		return addSecurity(new BlockingHandler(this::handleForeignEvents), identityManager);
+		final BlockingHandler handler = new BlockingHandler(this::handleForeignEvents);
+		if (foreignEventsNeedAuthentication) {
+			return addSecurity(handler, identityManager);
+		}
+		return handler;
 	}
 
 	@SuppressWarnings("unchecked")

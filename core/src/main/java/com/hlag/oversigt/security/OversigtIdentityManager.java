@@ -24,7 +24,9 @@ public class OversigtIdentityManager implements IdentityManager {
 	@Inject
 	private Authenticator authenticator;
 
-	// standard constructors
+	OversigtIdentityManager() {
+		// nothing to do
+	}
 
 	@Override
 	@Nullable

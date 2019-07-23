@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +44,10 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Singleton
 public class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
+
+	private static final TypeLiteral<Map<String, String>> MAP_TYPE
+			= new TypeLiteral<Map<String, String>>() { /* just type literal for generics detection */
+			};
 
 	private static void bind(final Binder binder, final String name, final Object value) {
 		binder.bindConstant()
@@ -118,6 +123,9 @@ public class OversigtConfiguration {
 				String[].class,
 				"widgetsPaths",
 				Arrays.asList(Objects.requireNonNull(eventSources, "").widgetsPaths));
+		// foreign events
+		bind(binder, "foreignEvents.enabled", security.foreignEvents.enabled);
+		bind(binder, "foreignEvents.needAuthentication", security.foreignEvents.needAuthentication);
 
 		// Mail Settings
 		bind(binder, "mailSenderHost", Objects.requireNonNull(mail.hostname, "mail.hostname"));
@@ -140,10 +148,8 @@ public class OversigtConfiguration {
 				boundAuthenticator = true;
 			}
 		}
-		if (!boundAuthenticator && security.users != null) {
-			binder.bind(new TypeLiteral<Map<String, String>>() { /* just type literal for generics detection */
-
-			}).annotatedWith(Names.named("UsernamesAndPasswords")).toInstance(security.users);
+		if (!boundAuthenticator && !security.users.isEmpty()) {
+			binder.bind(MAP_TYPE).annotatedWith(Names.named("UsernamesAndPasswords")).toInstance(security.users);
 			binder.bind(Authenticator.class).to(MapAuthenticator.class);
 			boundAuthenticator = true;
 		}
@@ -354,14 +360,25 @@ public class OversigtConfiguration {
 		@Nullable
 		private List<String> serverAdmins;
 
-		@Nullable
-		private Map<String, String> users;
+		private Map<String, String> users = new HashMap<>();
 
 		@Nullable
 		private LdapConfiguration ldap;
 
+		private ForeignEventsConfiguration foreignEvents = new ForeignEventsConfiguration();
+
 		private SecurityConfiguration() {
 			// no fields to be initialized
+		}
+	}
+
+	private static final class ForeignEventsConfiguration {
+		private boolean enabled = false;
+
+		private boolean needAuthentication = true;
+
+		private ForeignEventsConfiguration() {
+			// nothing to do
 		}
 	}
 }

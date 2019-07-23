@@ -85,6 +85,10 @@ public class OversigtServer extends AbstractIdleService {
 	private Service nightlyEventSourceRestarter;
 
 	@Inject
+	@Named("foreignEvents.enabled")
+	private boolean foreignEventsEnabled;
+
+	@Inject
 	public OversigtServer() {
 		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());
 	}
@@ -119,14 +123,16 @@ public class OversigtServer extends AbstractIdleService {
 				.get("/{dashboard}", handlers.createDashboardHandler())
 				// send events to dashboards
 				.get("/events", handlers.getServerSentEventsHandler())
-				// get events from outside
-				.post("/events", handlers.createForeignEventHandler())
 				// get widget details
 				.get("/views/{widget}", handlers.createWidgetHandler())
 				// JSON Schema output
 				.get("/schema/{class}", handlers.createJsonSchemaHandler())
 				// default handler
 				.get("/", handlers.createWelcomePageHandler());
+		if (foreignEventsEnabled) {
+			// get events from outside
+			routingHandler.post("/events", handlers.createForeignEventHandler());
+		}
 
 		// Create Handlers for static content
 		final HttpHandler rootHandler = Handlers.path(routingHandler)
@@ -143,6 +149,7 @@ public class OversigtServer extends AbstractIdleService {
 						.setNext(rootHandler);
 
 		final Logger accessLogger = LoggerFactory.getLogger("access");
+
 		final AccessLogHandler accessHandler = new AccessLogHandler(encodingHandler,
 				message -> accessLogger.info(message),
 				"combined",

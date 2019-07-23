@@ -33,6 +33,10 @@
 			"uidAttribute": "",
 			"bindUser": "",
 			"bindPassword": ""
+		},
+		"foreignEvents": {
+			"enabled": true,
+			"needAuthentication": true
 		}
 	},
 	"mail": {
