@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.eventbus.EventBus;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.core.event.OversigtEvent;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.sources.event.ReloadEvent;
 
 /**

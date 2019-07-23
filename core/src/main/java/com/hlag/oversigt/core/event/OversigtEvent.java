@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hlag.oversigt.util.JsonUtils;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	@Nullable
 	private String id = null;
 
-	private long updatedAt;
+	private final long updatedAt = Instant.now().getEpochSecond();
 
 	@Nullable
 	private String moreinfo = null;
@@ -43,7 +44,7 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	private String title;
 
 	public OversigtEvent() {
-		updatedAt = Instant.now().getEpochSecond();
+		// nothing to do
 	}
 
 	@Nullable
@@ -137,5 +138,9 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 		} else {
 			return Objects.requireNonNull(id).compareTo(that.id);
 		}
+	}
+
+	public String toJson() {
+		return JsonUtils.toJson(this);
 	}
 }

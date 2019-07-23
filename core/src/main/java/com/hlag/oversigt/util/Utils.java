@@ -6,6 +6,7 @@ import static java.util.function.Function.identity;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -26,6 +28,7 @@ import java.util.stream.Stream.Builder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
@@ -178,6 +181,16 @@ public final class Utils {
 		return values;
 	}
 
+	public static Set<String> sortedAndSynchronizedSet(final String... items) {
+		return sortedAndSynchronizedSet(Arrays.asList(items));
+	}
+
+	public static Set<String> sortedAndSynchronizedSet(final Collection<String> items) {
+		final Set<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		set.addAll(items);
+		return Collections.synchronizedSet(set);
+	}
+
 	public static String notNullOrEmpty(@Nullable final String stringToCheck, final String errorMessage) {
 		if (requireNonNull(stringToCheck, errorMessage).isEmpty()) {
 			throw new IllegalArgumentException(errorMessage);
@@ -273,6 +286,10 @@ public final class Utils {
 		} else {
 			return OperatingSystemType.Other;
 		}
+	}
+
+	public static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {
+		BeanUtils.copyProperties(source, target, ignoreProperties);
 	}
 
 	private Utils() {

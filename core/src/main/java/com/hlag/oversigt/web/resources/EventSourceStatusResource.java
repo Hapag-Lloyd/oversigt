@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
@@ -46,7 +46,7 @@ public class EventSourceStatusResource {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceStatusResource.class);
 
 	@Inject
-	private DashboardController controller;
+	private EventSourceInstanceController controller;
 
 	@Inject
 	private EventSourceStatisticsManager statisticsManager;
@@ -114,7 +114,7 @@ public class EventSourceStatusResource {
 	}
 
 	public static class EventSourceInstanceState {
-		public static EventSourceInstanceState fromInstance(final DashboardController controller,
+		public static EventSourceInstanceState fromInstance(final EventSourceInstanceController controller,
 				final EventSourceStatisticsManager statisticsManager,
 				final EventSourceInstance instance) {
 			final EventSourceStatistics stats = statisticsManager.getEventSourceStatistics(instance.getId());

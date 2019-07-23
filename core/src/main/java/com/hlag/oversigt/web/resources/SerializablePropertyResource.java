@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Role;
@@ -53,7 +53,7 @@ import io.swagger.annotations.Authorization;
 @Singleton
 public class SerializablePropertyResource {
 	@Inject
-	private DashboardController dController;
+	private EventSourceInstanceController esiController;
 
 	@Inject
 	private SerializablePropertyController spController;
@@ -229,7 +229,7 @@ public class SerializablePropertyResource {
 			}
 		}
 		spController.updateProperty(prop);
-		dController.restartInstancesUsingSerializableProperty(prop);
+		esiController.restartInstancesUsingSerializableProperty(prop);
 
 		return ok(toMapWithoutPassword(prop)).link(uri.getAbsolutePath() + "/" + prop.getId(), "self").build();
 	}

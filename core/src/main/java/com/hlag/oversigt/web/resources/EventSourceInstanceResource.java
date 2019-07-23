@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -44,14 +43,16 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceInstance;
-import com.hlag.oversigt.model.EventSourceKey;
 import com.hlag.oversigt.model.EventSourceProperty;
-import com.hlag.oversigt.model.InvalidKeyException;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Role;
 import com.hlag.oversigt.util.JsonUtils;
@@ -77,7 +78,13 @@ public class EventSourceInstanceResource {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);
 
 	@Inject
-	private DashboardController controller;
+	private EventSourceInstanceController eventSourceInstanceController;
+
+	@Inject
+	private EventSourceDescriptorController eventSourceDescriptorController;
+
+	@Inject
+	private DashboardController dashboardController;
 
 	@Inject
 	private EventSourceStatisticsManager statisticsManager;
@@ -130,11 +137,14 @@ public class EventSourceInstanceResource {
 			startableFilter = i -> i.getDescriptor().getEventClass() != null;
 		}
 
-		Stream<EventSourceInstanceInfo> stream = controller.getEventSourceInstances()
+		Stream<EventSourceInstanceInfo> stream = eventSourceInstanceController.getEventSourceInstances()
 				.stream()
 				.filter(containingFilter)
 				.filter(startableFilter)
-				.map(instance -> new EventSourceInstanceInfo(controller, statisticsManager, instance));
+				.map(instance -> new EventSourceInstanceInfo(eventSourceInstanceController,
+						dashboardController,
+						statisticsManager,
+						instance));
 		if (limit != null && limit > 0) {
 			stream = stream.limit(limit);
 		}
@@ -163,20 +173,20 @@ public class EventSourceInstanceResource {
 			value = "The key of the event source descriptor to be used") @NotBlank final String keyString) {
 		final EventSourceKey key;
 		try {
-			key = EventSourceKey.getKey(keyString);
+			key = EventSourceKey.fromKeyString(keyString);
 		} catch (@SuppressWarnings("unused") final InvalidKeyException e) {
 			return ErrorResponse.badRequest("The key '" + keyString + "' is invalid.");
 		}
 
 		final EventSourceDescriptor descriptor;
 		try {
-			descriptor = controller.getEventSourceDescriptor(key);
+			descriptor = eventSourceDescriptorController.getEventSourceDescriptor(key);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("No descriptor found for key: " + keyString);
 		}
 
-		final EventSourceInstance instance
-				= controller.createEventSourceInstance(descriptor, (Principal) getSecurityContext().getUserPrincipal());
+		final EventSourceInstance instance = eventSourceInstanceController.createEventSourceInstance(descriptor,
+				(Principal) getSecurityContext().getUserPrincipal());
 		return created(URI.create(getUriInfo().getAbsolutePath() + "/" + instance.getId()))
 				.entity(new EventSourceInstanceDetails(instance))
 				.build();
@@ -221,10 +231,8 @@ public class EventSourceInstanceResource {
 	@NoChangeLog
 	public Response readInstanceUsage(@PathParam("id") @NotBlank final String instanceId) {
 		try {
-			return ok(controller.getEventSourceInstanceUsage(instanceId)
+			return ok(dashboardController.findDashboardUsingEventSourceInstance(instanceId)
 					.stream()
-					.map(controller::getDashboard)
-					.map(Optional::get)
 					.map(DashboardInfo::new)
 					.collect(toList())).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
@@ -249,7 +257,7 @@ public class EventSourceInstanceResource {
 			final EventSourceInstanceDetails details) {
 		final EventSourceInstance instance;
 		try {
-			instance = controller.getEventSourceInstance(instanceId);
+			instance = eventSourceInstanceController.getEventSourceInstance(instanceId);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
@@ -304,7 +312,7 @@ public class EventSourceInstanceResource {
 			return ErrorResponse.badRequest("Invalid event source instance values", e);
 		}
 
-		controller.updateEventSourceInstance(newInstance);
+		eventSourceInstanceController.updateEventSourceInstance(newInstance);
 		return ok(getInstanceInfo(instanceId)).build();
 	}
 
@@ -326,7 +334,8 @@ public class EventSourceInstanceResource {
 					defaultValue = "false",
 					value = "true to also remove all widgets using this event source") final boolean force) {
 		try {
-			final Set<String> dashboardsPreventingDeletion = controller.deleteEventSourceInstance(instanceId, force);
+			final Set<String> dashboardsPreventingDeletion
+					= dashboardController.deleteEventSourceInstance(instanceId, force);
 			if (dashboardsPreventingDeletion.isEmpty()) {
 				return ok().build();
 			}
@@ -338,9 +347,9 @@ public class EventSourceInstanceResource {
 	}
 
 	FullEventSourceInstanceInfo getInstanceInfo(final String instanceId) {
-		final EventSourceInstance instance = controller.getEventSourceInstance(instanceId);
+		final EventSourceInstance instance = eventSourceInstanceController.getEventSourceInstance(instanceId);
 		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
-				EventSourceInstanceState.fromInstance(controller, statisticsManager, instance));
+				EventSourceInstanceState.fromInstance(eventSourceInstanceController, statisticsManager, instance));
 	}
 
 	static Map<String, String> getValueMap(final Stream<EventSourceProperty> propertyStream,
@@ -394,21 +403,23 @@ public class EventSourceInstanceResource {
 			// nothing to initialize
 		}
 
-		public EventSourceInstanceInfo(final DashboardController controller,
+		public EventSourceInstanceInfo(final EventSourceInstanceController eventSourceInstanceController,
+				final DashboardController dashboardController,
 				final EventSourceStatisticsManager statisticsManager,
 				final EventSourceInstance instance) {
 			id = instance.getId();
 			name = instance.getName();
 			isService = instance.getDescriptor().getServiceClass().isPresent();
 			enabled = instance.isEnabled();
-			running = controller.isRunning(instance);
+			running = eventSourceInstanceController.isRunning(instance);
 			hasError = statisticsManager.getEventSourceStatistics(instance.getId())
 					.getLastRun()
 					.flatMap(RunStatistic::getThrowable)
 					.map(x -> true)
 					.orElse(false);
-			usedBy = new ArrayList<>(
-					controller.getDashboardsWhereEventSourceIsUsed(instance).map(DashboardInfo::new).collect(toList()));
+			usedBy = new ArrayList<>(dashboardController.getDashboardsWhereEventSourceIsUsed(instance)
+					.map(DashboardInfo::new)
+					.collect(toList()));
 		}
 
 		public String getId() {

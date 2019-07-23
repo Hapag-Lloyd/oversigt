@@ -2,6 +2,7 @@ package com.hlag.oversigt.model;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -9,13 +10,9 @@ import java.util.Optional;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.text.WordUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Strings;
 import com.hlag.oversigt.sources.data.JsonHint;
 
-import de.larssh.utils.Optionals;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceProperty implements Comparable<EventSourceProperty> {
@@ -25,13 +22,12 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 	@NotBlank
 	private final String displayName;
 
-	@Nullable
 	private final String description;
 
 	@NotBlank
 	private final String inputType;
 
-	private final Map<@NotNull String, @NotNull String> allowedValues = new LinkedHashMap<>();
+	private final Map<@NotNull String, @NotNull String> allowedValues;
 
 	private final boolean customValuesAllowed;
 
@@ -51,16 +47,18 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 
 	private final Optional<String> jsonSchema;
 
-	EventSourceProperty(@NotBlank final String name,
-			@NotBlank final String displayName,
-			@Nullable final String description,
+	public EventSourceProperty(final String name,
+			final String displayName,
+			final String description,
 			final String inputType,
-			final boolean customValuesAllowed) {
+			final boolean customValuesAllowed,
+			final Map<String, String> allowedValues) {
 		this.name = name;
 		this.displayName = displayName;
-		this.description = Strings.emptyToNull(description);
+		this.description = description.trim();
 		this.inputType = inputType;
 		this.customValuesAllowed = customValuesAllowed;
+		this.allowedValues = Collections.unmodifiableMap(new LinkedHashMap<>(allowedValues));
 		getter = Optional.empty();
 		setter = Optional.empty();
 		clazz = Optional.empty();
@@ -69,33 +67,30 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		jsonSchema = Optional.empty();
 	}
 
-	EventSourceProperty(@NotBlank final String name,
-			@NotBlank final String displayName,
-			@Nullable final String description,
+	public EventSourceProperty(final String name,
+			final String displayName,
+			final String description,
 			final String inputType,
 			final boolean customValuesAllowed,
+			final Map<String, String> allowedValues,
 			final Method getter,
 			final Method setter,
 			final Class<?> clazz,
-			@Nullable final JsonHint hint,
+			final Optional<JsonHint> hint,
 			final boolean json,
-			@Nullable final String jsonSchema) {
+			final Optional<String> jsonSchema) {
 		this.name = name;
 		this.displayName = displayName;
-		this.description = Strings.emptyToNull(description);
+		this.description = description.trim();
 		this.inputType = inputType;
 		this.customValuesAllowed = customValuesAllowed;
+		this.allowedValues = Collections.unmodifiableMap(new LinkedHashMap<>(allowedValues));
 		this.getter = Optional.of(getter);
 		this.setter = Optional.of(setter);
 		this.clazz = Optional.of(clazz);
-		this.hint = Optional.ofNullable(hint);
+		this.hint = hint;
 		this.json = json;
-		this.jsonSchema = Optional.ofNullable(jsonSchema);
-	}
-
-	void addAllowedValue(@NotNull final String value, final String title) {
-		allowedValues.put(value,
-				Optionals.ofNonEmpty(title).orElseGet(() -> WordUtils.capitalizeFully(value.replace('_', ' '))));
+		this.jsonSchema = jsonSchema;
 	}
 
 	public String getName() {
@@ -106,7 +101,6 @@ public class EventSourceProperty implements Comparable<EventSourceProperty> {
 		return displayName;
 	}
 
-	@Nullable
 	public String getDescription() {
 		return description;
 	}

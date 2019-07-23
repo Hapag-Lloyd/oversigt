@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
@@ -44,11 +45,12 @@ import com.google.common.collect.EvictingQueue;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.Oversigt;
 import com.hlag.oversigt.core.OversigtConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
-import com.hlag.oversigt.model.DashboardController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.Authenticator;
@@ -92,6 +94,9 @@ public class SystemResource {
 
 	@Inject
 	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceInstanceController eventSourceInstanceController;
 
 	@Inject
 	private SerializablePropertyController spController;
@@ -299,7 +304,10 @@ public class SystemResource {
 					required = false) final String filter) {
 		final Collection<OversigtEvent> events = new ArrayList<>(eventSender.getCachedEvents());
 		if (Strings.isNullOrEmpty(filter)) {
-			return ok(events).build();
+			return ok(events.stream()
+					.map(OversigtEvent::toJson)
+					.map(json -> JsonUtils.fromJson(json, Map.class))
+					.collect(toList())).build();
 		}
 
 		final Optional<OversigtEvent> event
@@ -385,7 +393,7 @@ public class SystemResource {
 				.collect(toList()));
 
 		// search for event sources
-		results.addAll(dashboardController.getEventSourceInstances()
+		results.addAll(eventSourceInstanceController.getEventSourceInstances()
 				.stream()
 				.filter(EventSourceInstance.createFilter(searchString))
 				.map(i -> new SearchResult(i.getName(), i.getId(), "event-source"))

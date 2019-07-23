@@ -1,17 +1,16 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 import static com.hlag.oversigt.properties.Color.smooth;
 
 import java.util.Optional;
 
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardColorScheme;
+import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.Color;
 
-import de.larssh.utils.Finals;
-
-public final class DashboardDesign {
-	static final int TILE_DISTANCE = Finals.constant(6);
-
-	static int getRows(final Dashboard dashboard) {
+public final class DashboardDesignHelper {
+	private static int getRows(final Dashboard dashboard) {
 		return dashboard.getScreenHeight() / dashboard.getComputedTileHeight();
 	}
 
@@ -19,7 +18,11 @@ public final class DashboardDesign {
 		return dashboard.getColorScheme() != DashboardColorScheme.COLORED;
 	}
 
-	static StyleAddon getStyleAddon(final Dashboard dashboard, final int px, final int py, final int sx, final int sy) {
+	private static StyleAddon getStyleAddon(final Dashboard dashboard,
+			final int px,
+			final int py,
+			final int sx,
+			final int sy) {
 		switch (dashboard.getColorScheme()) {
 		case COLORED:
 			return new StyleAddon("", Optional.empty());
@@ -61,7 +64,7 @@ public final class DashboardDesign {
 				+ ");";
 	}
 
-	static String getDisplayClass(final Widget widget) {
+	public static String getDisplayClass(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
 		if (!isAddColorCssToWidgets(dashboard)) {
 			return "";
@@ -77,7 +80,7 @@ public final class DashboardDesign {
 		return "dark-foreground";
 	}
 
-	static String getDisplayStyle(final Widget widget) {
+	public static String getDisplayStyle(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
 		final StringBuilder sb = new StringBuilder();
 		sb.append(widget.getStyle());
@@ -112,7 +115,7 @@ public final class DashboardDesign {
 						(position - 1 + size) / (double) total) };
 	}
 
-	private DashboardDesign() {
+	private DashboardDesignHelper() {
 		throw new UnsupportedOperationException();
 	}
 

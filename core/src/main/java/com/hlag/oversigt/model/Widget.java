@@ -11,7 +11,9 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.Color;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -66,17 +68,18 @@ public class Widget implements Comparable<Widget> {
 		title = eventSourceInstance.getName();
 	}
 
-	public Widget(@NotNull final int id,
-			final EventSourceInstance eventSource,
-			@NotBlank final String title,
-			@NotBlank final String name,
-			@NotNull final boolean enabled,
-			@NotNull final int posX,
-			@NotNull final int posY,
-			@NotNull @Min(1) final int sizeX,
-			@NotNull @Min(1) final int sizeY,
-			@NotNull final Color backgroundColor,
-			final String style) {
+	@JsonCreator
+	public Widget(@JsonProperty("id") @NotNull final int id,
+			@JsonProperty("eventSource") final EventSourceInstance eventSource,
+			@JsonProperty("title") @NotBlank final String title,
+			@JsonProperty("name") @NotBlank final String name,
+			@JsonProperty("enabled") @NotNull final boolean enabled,
+			@JsonProperty("posX") @NotNull final int posX,
+			@JsonProperty("posY") @NotNull final int posY,
+			@JsonProperty("sizeX") @NotNull @Min(1) final int sizeX,
+			@JsonProperty("sizeY") @NotNull @Min(1) final int sizeY,
+			@JsonProperty("backgroundColor") @NotNull final Color backgroundColor,
+			@JsonProperty("style") final String style) {
 		this.id = id;
 		eventSourceInstance = eventSource;
 		this.title = title;
@@ -219,32 +222,6 @@ public class Widget implements Comparable<Widget> {
 	@Override
 	public int compareTo(@Nullable final Widget that) {
 		return COMPARE.compare(this, that);
-	}
-
-	/**
-	 * Returns the widgets css class attribute merged with class information based
-	 * on other attributes.
-	 *
-	 * @return css classes
-	 * @deprecated use {@link DashboardDesign#getDisplayClass(Widget)} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayClass() {
-		return DashboardDesign.getDisplayClass(this);
-	}
-
-	/**
-	 * Returns the widgets css style attribute merged with style information based
-	 * on other attributes.
-	 *
-	 * @return css styles
-	 * @deprecated use {@link DashboardDesign#getDisplayStyle(Widget)} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayStyle() {
-		return DashboardDesign.getDisplayStyle(this);
 	}
 
 	/** {@inheritDoc} */

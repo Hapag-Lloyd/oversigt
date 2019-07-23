@@ -4,7 +4,7 @@ import static com.hlag.oversigt.util.Utils.not;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.util.Utils;
 
@@ -16,7 +16,7 @@ import com.hlag.oversigt.util.Utils;
 @Singleton
 public class NightlyEventSourceRestarterService extends NightlyService {
 	@Inject
-	private DashboardController dashboardController;
+	private EventSourceInstanceController eventSourceInstanceController;
 
 	public NightlyEventSourceRestarterService() {
 		// no fields to be initialized manually, some will be injected
@@ -29,13 +29,13 @@ public class NightlyEventSourceRestarterService extends NightlyService {
 	 */
 	@Override
 	protected final void runOneIteration() {
-		dashboardController.getEventSourceInstances()
+		eventSourceInstanceController.getEventSourceInstances()
 				.stream()
-				.filter(not(dashboardController::isRunning))
+				.filter(not(eventSourceInstanceController::isRunning))
 				.filter(EventSourceInstance::isEnabled)
 				.map(EventSourceInstance::getId)
 				.peek(x -> Utils.sleep((long) (10000 * Math.random())))
-				.forEach(id -> dashboardController.startInstance(id, true));
+				.forEach(id -> eventSourceInstanceController.startInstance(id, true));
 	}
 
 	@Override

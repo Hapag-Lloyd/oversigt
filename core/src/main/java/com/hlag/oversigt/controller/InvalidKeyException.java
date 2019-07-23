@@ -1,4 +1,4 @@
-package com.hlag.oversigt.model;
+package com.hlag.oversigt.controller;
 
 public class InvalidKeyException extends RuntimeException {
 	private static final long serialVersionUID = -2378306089298534601L;

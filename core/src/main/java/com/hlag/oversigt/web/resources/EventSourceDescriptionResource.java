@@ -15,10 +15,10 @@ import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.model.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
 import com.hlag.oversigt.model.EventSourceDescriptor;
-import com.hlag.oversigt.model.EventSourceKey;
-import com.hlag.oversigt.model.InvalidKeyException;
 import com.hlag.oversigt.util.ImageUtil;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
@@ -41,7 +41,7 @@ public class EventSourceDescriptionResource {
 	}
 
 	@Inject
-	private DashboardController dashboardController;
+	private EventSourceDescriptorController eventSourceDescriptorController;
 
 	@GET
 	@Path("/")
@@ -54,9 +54,9 @@ public class EventSourceDescriptionResource {
 	@ApiOperation(value = "List available event sources")
 	@NoChangeLog
 	public Response listAvailableEventSources() {
-		return ok(dashboardController.getEventSourceKeys()
+		return ok(eventSourceDescriptorController.getEventSourceKeys()
 				.stream()
-				.map(dashboardController::getEventSourceDescriptor)
+				.map(eventSourceDescriptorController::getEventSourceDescriptor)
 				.map(EventSourceInfo::new)
 				.collect(Collectors.toList())).build();
 	}
@@ -76,7 +76,7 @@ public class EventSourceDescriptionResource {
 	public Response getEventSourceDetails(@PathParam("key") final String key) {
 		try {
 			final EventSourceDescriptor descriptor
-					= dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
+					= eventSourceDescriptorController.getEventSourceDescriptor(EventSourceKey.fromKeyString(key));
 			return ok(descriptor).build();
 		} catch (@SuppressWarnings("unused") final NoSuchElementException | InvalidKeyException ignore) {
 			return notFound("The event source descriptor does not exist.");

@@ -8,6 +8,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +45,20 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Singleton
 public class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
+
+	private static final TypeLiteral<Map<String, String>> MAP_OF_STRING_TO_STRING
+			= new TypeLiteral<Map<String, String>>() {
+				// just type literal for generics detection
+			};
+
+	private static final TypeLiteral<List<String>> LIST_OF_STRINGS = new TypeLiteral<List<String>>() {
+		// just type literal for generics detection
+	};
+
+	private static final TypeLiteral<List<HttpListenerConfiguration>> LIST_OF_HTTP_LISTENER_CONFIGURATION
+			= new TypeLiteral<List<HttpListenerConfiguration>>() {
+				// just type literal for generics detection
+			};
 
 	private static void bind(final Binder binder, final String name, final Object value) {
 		binder.bindConstant()
@@ -102,9 +118,7 @@ public class OversigtConfiguration {
 		bind(binder, "databaseUsername", Objects.requireNonNull(database.username, "database.username"));
 		bind(binder, "databasePassword", Objects.requireNonNull(database.password, "database.password"));
 		binder.bind(SqlDialect.class).to(database.sqlDialect);
-		binder.bind(new TypeLiteral<List<HttpListenerConfiguration>>() {
-			/* just type literal for generics detection */
-		}).annotatedWith(Names.named("listeners")).toInstance(listeners);
+		binder.bind(LIST_OF_HTTP_LISTENER_CONFIGURATION).annotatedWith(Names.named("listeners")).toInstance(listeners);
 		bindNamedArray(binder,
 				String[].class,
 				"additionalPackages",
@@ -118,6 +132,13 @@ public class OversigtConfiguration {
 				String[].class,
 				"widgetsPaths",
 				Arrays.asList(Objects.requireNonNull(eventSources, "").widgetsPaths));
+		// foreign events
+		bind(binder, "foreignEvents.enabled", security.foreignEvents.enabled);
+		bind(binder, "foreignEvents.needAuthentication", security.foreignEvents.needAuthentication);
+		bind(binder, "foreignEvents.apiKeyHeaderName", security.foreignEvents.apiKeyHeaderName);
+		binder.bind(LIST_OF_STRINGS)
+				.annotatedWith(Names.named("foreignEvents.allowedApiKeys"))
+				.toInstance(security.foreignEvents.allowedApiKeys);
 
 		// Mail Settings
 		bind(binder, "mailSenderHost", Objects.requireNonNull(mail.hostname, "mail.hostname"));
@@ -140,17 +161,15 @@ public class OversigtConfiguration {
 				boundAuthenticator = true;
 			}
 		}
-		if (!boundAuthenticator && security.users != null) {
-			binder.bind(new TypeLiteral<Map<String, String>>() { /* just type literal for generics detection */
-
-			}).annotatedWith(Names.named("UsernamesAndPasswords")).toInstance(security.users);
+		if (!boundAuthenticator && !security.users.isEmpty()) {
+			binder.bind(MAP_OF_STRING_TO_STRING)
+					.annotatedWith(Names.named("UsernamesAndPasswords"))
+					.toInstance(security.users);
 			binder.bind(Authenticator.class).to(MapAuthenticator.class);
 			boundAuthenticator = true;
 		}
 		final List<String> admins = Optional.ofNullable(security.serverAdmins).orElseGet(ArrayList::new);
-		binder.bind(new TypeLiteral<List<String>>() {
-			/* just type literal for generics detection */
-		}).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
+		binder.bind(LIST_OF_STRINGS).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
 		if (admins.isEmpty()) {
 			LOGGER.warn("No server admins configured. Please check configuration security.serverAdmins");
 		}
@@ -354,14 +373,29 @@ public class OversigtConfiguration {
 		@Nullable
 		private List<String> serverAdmins;
 
-		@Nullable
-		private Map<String, String> users;
+		private Map<String, String> users = new HashMap<>();
 
 		@Nullable
 		private LdapConfiguration ldap;
 
+		private ForeignEventsConfiguration foreignEvents = new ForeignEventsConfiguration();
+
 		private SecurityConfiguration() {
 			// no fields to be initialized
+		}
+	}
+
+	private static final class ForeignEventsConfiguration {
+		private boolean enabled = false;
+
+		private boolean needAuthentication = true;
+
+		private String apiKeyHeaderName = "x-oversigt-api-key";
+
+		private List<String> allowedApiKeys = Collections.emptyList();
+
+		private ForeignEventsConfiguration() {
+			// nothing to do
 		}
 	}
 }

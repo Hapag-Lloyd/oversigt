@@ -8,11 +8,11 @@
 			<#if widget.enabled>
 				<li data-id="${widget.id}" data-col="${widget.posX}" data-row="${widget.posY}" data-sizex="${widget.sizeX}" data-sizey="${widget.sizeY}">
 					<div
-						class="${widget.type} ${widget.displayClass}"
+						class="${widget.type} ${getWidgetDisplayClass.apply(widget)}"
 						data-id="${widget.eventSourceInstance.id}" 
 						data-view="${widget.view}"  
 						data-title="${widget.title}"
-						<#if widget.displayStyle != "">style="${widget.displayStyle}" </#if>
+						style="${getWidgetDisplayStyle.apply(widget)}"
 						<#list widget.eventSourceInstance.descriptor.dataItems as di>
 							<#if widget.hasWidgetDataForDashboard(di)>data-${di.name}="${widget.getWidgetDataForDashboard(di)}" </#if>
 						</#list>

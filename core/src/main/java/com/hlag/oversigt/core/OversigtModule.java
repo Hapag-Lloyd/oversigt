@@ -49,14 +49,17 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.controller.EventSourceNameGenerator;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
 import com.hlag.oversigt.core.eventsource.NightlyEventSourceRestarterService;
-import com.hlag.oversigt.model.DashboardController;
-import com.hlag.oversigt.model.EventSourceNameGenerator;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.OversigtIdentityManager;
 import com.hlag.oversigt.security.RoleProvider;
 import com.hlag.oversigt.storage.JdbcDatabase;
 import com.hlag.oversigt.storage.Storage;
@@ -76,6 +79,7 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.TemplateExceptionHandler;
+import io.undertow.security.idm.IdentityManager;
 
 /**
  * Main application configuration module. Configures server and all necessary
@@ -120,6 +124,7 @@ class OversigtModule extends AbstractModule {
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
+		binder().bind(HttpHandlers.class);
 		binder().bind(EventSourceStatisticsManager.class);
 		binder().bind(EventSender.class);
 		binder().bind(RoleProvider.class);
@@ -127,6 +132,8 @@ class OversigtModule extends AbstractModule {
 		binder().bind(TextProcessorProvider.class);
 
 		// model
+		binder().bind(EventSourceDescriptorController.class);
+		binder().bind(EventSourceInstanceController.class);
 		binder().bind(DashboardController.class);
 		binder().bind(EventSourceNameGenerator.class);
 		binder().bind(SerializablePropertyController.class);
@@ -135,6 +142,7 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Storage.class).to(JdbcDatabase.class);
 
 		// REST API
+		binder().bind(IdentityManager.class).to(OversigtIdentityManager.class);
 		binder().bind(Application.class).to(ApiApplication.class);
 		binder().bind(ApiAuthenticationUtils.class);
 
