@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,10 +75,12 @@ import freemarker.template.TemplateException;
 import io.undertow.Handlers;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
+import io.undertow.security.api.SecurityContext;
 import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.security.handlers.AuthenticationMechanismsHandler;
 import io.undertow.security.handlers.SecurityInitialHandler;
+import io.undertow.security.idm.Account;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
@@ -144,16 +147,13 @@ public class HttpHandlers {
 	}
 
 	private ServerSentEventHandler createServerSentEventHandler() {
-		return Handlers.serverSentEvents(this::handleNewServerSentEventsConnection);
-	}
-
-	private void handleNewServerSentEventsConnection(final ServerSentEventConnection connection,
-			@SuppressWarnings("unused") final String lastEventId) {
-		Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
-				.map(Deque::getFirst)
-				.flatMap(dashboardController::getDashboard)
-				.ifPresent(dashboard -> connection.putAttachment(DASHBOARD_KEY, dashboard));
-		eventBus.post(connection);
+		return Handlers.serverSentEvents((final ServerSentEventConnection connection, final String lastEventId) -> {
+			Optional.ofNullable(connection.getQueryParameters().get("dashboard"))//
+					.map(Deque::getFirst)
+					.flatMap(dashboardController::getDashboard)
+					.ifPresent(dashboard -> connection.putAttachment(DASHBOARD_KEY, dashboard));
+			eventBus.post(connection);
+		});
 	}
 
 	HttpHandler createDashboardHandler() {
@@ -285,8 +285,13 @@ public class HttpHandlers {
 
 	@SuppressWarnings("unchecked")
 	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
-		LOGGER.info("Incoming foreign event. From: "
-				+ exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal().getName());
+		final String name = Optional.of(exchange)
+				.map(HttpServerExchange::getSecurityContext)
+				.map(SecurityContext::getAuthenticatedAccount)
+				.map(Account::getPrincipal)
+				.map(Principal::getName)
+				.orElse("<unknown>");
+		LOGGER.info("Incoming foreign event. From: " + name);
 
 		// read JSON
 		final String encoding = exchange.getRequestCharset();
