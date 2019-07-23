@@ -1,14 +1,21 @@
 package com.hlag.oversigt.core.event;
 
-public class JsonEvent extends OversigtEvent {
-	private final String json;
+import java.util.Map;
+import java.util.Objects;
 
-	public JsonEvent(final String id, final String json) {
-		setId(id);
-		this.json = json;
+import com.hlag.oversigt.util.JsonUtils;
+
+public class JsonEvent extends OversigtEvent {
+	private final Map<String, Object> map;
+
+	@SuppressWarnings("unchecked")
+	public JsonEvent(final String json) {
+		map = Objects.requireNonNull(JsonUtils.fromJson(json, Map.class));
+		setId(Objects.requireNonNull((String) map.get("id")));
 	}
 
-	public String getJson() {
-		return json;
+	@Override
+	public String toJson() {
+		return JsonUtils.toJson(map);
 	}
 }

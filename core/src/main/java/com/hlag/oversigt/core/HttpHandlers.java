@@ -30,6 +30,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -131,6 +132,14 @@ public class HttpHandlers {
 	@Inject
 	@Named("foreignEvents.needAuthentication")
 	private boolean foreignEventsNeedAuthentication;
+
+	@Inject
+	@Named("foreignEvents.apiKeyHeaderName")
+	private String foreignEventsApiKeyHeaderName;
+
+	@Inject
+	@Named("foreignEvents.allowedApiKeys")
+	private List<String> foreignEventsAllowedApiKeys;
 
 	@Inject
 	private Application restApiApplication;
@@ -276,15 +285,21 @@ public class HttpHandlers {
 	}
 
 	HttpHandler createForeignEventHandler() {
-		final BlockingHandler handler = new BlockingHandler(this::handleForeignEvents);
+		HttpHandler handler = new BlockingHandler(this::handleForeignEvents);
 		if (foreignEventsNeedAuthentication) {
-			return addSecurity(handler, identityManager);
+			handler = addBasicAuthentication(handler, identityManager);
+		}
+		if (!foreignEventsAllowedApiKeys.isEmpty()) {
+			handler = addApiKeyAuthentication(handler,
+					foreignEventsApiKeyHeaderName,
+					foreignEventsAllowedApiKeys::contains);
 		}
 		return handler;
 	}
 
 	@SuppressWarnings("unchecked")
 	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+		// identify principal
 		final String name = Optional.of(exchange)
 				.map(HttpServerExchange::getSecurityContext)
 				.map(SecurityContext::getAuthenticatedAccount)
@@ -326,7 +341,7 @@ public class HttpHandlers {
 		}
 
 		LOGGER.info("Posting event for: " + id);
-		final JsonEvent event = new JsonEvent(id, json);
+		final JsonEvent event = new JsonEvent(json);
 		eventBus.post(event);
 		exchange.setStatusCode(StatusCodes.NO_CONTENT);
 		exchange.endExchange();
@@ -475,8 +490,8 @@ public class HttpHandlers {
 		return () -> new ImmediateInstanceHandle<>(injector.getInstance(clazz));
 	}
 
-	private static HttpHandler addSecurity(final HttpHandler toWrap, final IdentityManager identityManager) {
-		HttpHandler handler = toWrap;
+	private static HttpHandler addBasicAuthentication(final HttpHandler next, final IdentityManager identityManager) {
+		HttpHandler handler = next;
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms
@@ -484,6 +499,24 @@ public class HttpHandlers {
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
+	}
+
+	private static HttpHandler addApiKeyAuthentication(final HttpHandler next,
+			final String apiKeyHeaderName,
+			final Predicate<String> isApiKeyValid) {
+		return exchange -> {
+			final boolean apiKeyOk = Optional.of(exchange)
+					.map(HttpServerExchange::getRequestHeaders)
+					.map(hm -> hm.get(apiKeyHeaderName))
+					.map(hv -> hv.stream())
+					.orElse(Stream.empty())
+					.anyMatch(isApiKeyValid);
+			if (!apiKeyOk) {
+				HttpUtils.forbidden(exchange);
+				return;
+			}
+			next.handleRequest(exchange);
+		};
 	}
 
 	private static final class AssetsClassPathResourceManager extends ClassPathResourceManager {

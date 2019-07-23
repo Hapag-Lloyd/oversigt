@@ -30,7 +30,6 @@ import com.google.inject.name.Named;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.EventSourceInstance;
 import com.hlag.oversigt.model.Widget;
-import com.hlag.oversigt.util.JsonUtils;
 
 import io.undertow.server.handlers.sse.ServerSentEventConnection;
 import io.undertow.util.AttachmentKey;
@@ -182,7 +181,7 @@ public class EventSender {
 
 			// Send event
 			logDebug(LOGGER, "Sending event [%s]", event.getId());
-			final String json = toJson(event);
+			final String json = event.toJson();
 			connection.send(json);
 
 			// note when this connection got the last event of this ID
@@ -214,13 +213,6 @@ public class EventSender {
 		synchronized (cachedEvents) {
 			return new ArrayList<>(cachedEvents.values());
 		}
-	}
-
-	private String toJson(final OversigtEvent event) {
-		if (event instanceof JsonEvent) {
-			return ((JsonEvent) event).getJson();
-		}
-		return JsonUtils.toJson(event);
 	}
 
 	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {

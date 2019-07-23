@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
@@ -303,7 +304,10 @@ public class SystemResource {
 					required = false) final String filter) {
 		final Collection<OversigtEvent> events = new ArrayList<>(eventSender.getCachedEvents());
 		if (Strings.isNullOrEmpty(filter)) {
-			return ok(events).build();
+			return ok(events.stream()
+					.map(OversigtEvent::toJson)
+					.map(json -> JsonUtils.fromJson(json, Map.class))
+					.collect(toList())).build();
 		}
 
 		final Optional<OversigtEvent> event

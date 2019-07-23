@@ -36,7 +36,10 @@
 		},
 		"foreignEvents": {
 			"enabled": true,
-			"needAuthentication": true
+			"needAuthentication": true,
+			"allowedApiKeys": [
+				"7bcc2fd0-31f1-4c35-be8c-fe0b2b484053"
+			]
 		}
 	},
 	"mail": {
