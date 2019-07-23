@@ -1,6 +1,6 @@
 package com.hlag.oversigt.model;
 
-import static com.hlag.oversigt.util.Utils.sortedSet;
+import static com.hlag.oversigt.util.Utils.sortedAndSynchronizedSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
 
 public class Dashboard {
-	private static final int TILE_DISTANCE = /* Finals.constant(6) */ 6;
+	private static final int TILE_DISTANCE = 6;
 
 	@NotNull
 	@NotBlank
@@ -76,11 +76,11 @@ public class Dashboard {
 
 	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private Set<@NotBlank /* TODO @UserId */ String> owners = sortedSet();
+	private Set<@NotBlank /* TODO @UserId */ String> owners = sortedAndSynchronizedSet();
 
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private Set<@NotBlank /* TODO @UserId */ String> editors = sortedSet();
+	private Set<@NotBlank /* TODO @UserId */ String> editors = sortedAndSynchronizedSet();
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
@@ -220,7 +220,7 @@ public class Dashboard {
 	}
 
 	public void setOwners(final Collection<String> owners) {
-		this.owners = sortedSet(owners);
+		this.owners = sortedAndSynchronizedSet(owners);
 	}
 
 	public Collection<String> getEditors() {
@@ -228,7 +228,7 @@ public class Dashboard {
 	}
 
 	public void setEditors(final Collection<String> editors) {
-		this.editors = sortedSet(editors);
+		this.editors = sortedAndSynchronizedSet(editors);
 	}
 
 	public boolean isEditor(final String username) {

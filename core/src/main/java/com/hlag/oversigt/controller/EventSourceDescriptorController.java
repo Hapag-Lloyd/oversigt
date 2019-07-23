@@ -1,6 +1,7 @@
 package com.hlag.oversigt.controller;
 
 import static com.hlag.oversigt.util.Utils.not;
+import static com.hlag.oversigt.util.Utils.notNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -70,6 +71,7 @@ import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Collectors;
+import de.larssh.utils.Optionals;
 import de.larssh.utils.function.ThrowingFunction;
 
 @Singleton
@@ -278,9 +280,11 @@ public class EventSourceDescriptorController {
 		}
 
 		// find Property annotation
-		final Property property = Utils.getOne(//
-				descriptor.getReadMethod().getAnnotation(Property.class),
-				descriptor.getWriteMethod().getAnnotation(Property.class));
+		final Property property = Optionals
+				.getFirstValue(notNull(),
+						descriptor.getReadMethod().getAnnotation(Property.class),
+						descriptor.getWriteMethod().getAnnotation(Property.class))
+				.orElseThrow(() -> new NullPointerException("Both values are null."));
 
 		final String name = descriptor.getName();
 		final String displayName = property.name();

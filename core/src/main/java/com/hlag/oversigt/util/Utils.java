@@ -181,24 +181,14 @@ public final class Utils {
 		return values;
 	}
 
-	public static Set<String> sortedSet(final String... items) {
-		return sortedSet(Arrays.asList(items));
+	public static Set<String> sortedAndSynchronizedSet(final String... items) {
+		return sortedAndSynchronizedSet(Arrays.asList(items));
 	}
 
-	public static Set<String> sortedSet(final Collection<String> items) {
+	public static Set<String> sortedAndSynchronizedSet(final Collection<String> items) {
 		final Set<String> set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		set.addAll(items);
 		return Collections.synchronizedSet(set);
-	}
-
-	public static <T> T getOne(@Nullable final T one, @Nullable final T two) {
-		if (one != null) {
-			return Objects.requireNonNull(one);
-		} else if (two != null) {
-			return Objects.requireNonNull(two);
-		} else {
-			throw new NullPointerException("Both values are null.");
-		}
 	}
 
 	public static String notNullOrEmpty(@Nullable final String stringToCheck, final String errorMessage) {
