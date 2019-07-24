@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -176,6 +177,7 @@ class OversigtModule extends AbstractModule {
 		final ObjectMapper allFieldsObjectMapper = objectMapper.copy();
 		allFieldsObjectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
 		allFieldsObjectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		allFieldsObjectMapper.setSerializationInclusion(Include.NON_NULL);
 		binder().bind(ObjectMapper.class).annotatedWith(Names.named("all-fields")).toInstance(allFieldsObjectMapper);
 
 		// Object validation
