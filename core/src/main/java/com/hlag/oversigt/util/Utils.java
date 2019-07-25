@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -257,35 +256,6 @@ public final class Utils {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * types of Operating Systems
-	 */
-	public enum OperatingSystemType {
-		Windows,
-		MacOS,
-		Linux,
-		Other
-	}
-
-	/**
-	 * detect the operating system from the os.name System property and cache the
-	 * result
-	 *
-	 * @return the operating system detected
-	 */
-	public static OperatingSystemType getOperatingSystemType() {
-		final String osName = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
-		if (osName.indexOf("mac") >= 0 || osName.indexOf("darwin") >= 0) {
-			return OperatingSystemType.MacOS;
-		} else if (osName.indexOf("win") >= 0) {
-			return OperatingSystemType.Windows;
-		} else if (osName.indexOf("nux") >= 0) {
-			return OperatingSystemType.Linux;
-		} else {
-			return OperatingSystemType.Other;
-		}
 	}
 
 	public static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {

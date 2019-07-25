@@ -46,6 +46,8 @@
 
 	<properties>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
+
+		<exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -85,7 +87,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.4.0</version>
+				<version>${exec-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<?m2e ignore?>
