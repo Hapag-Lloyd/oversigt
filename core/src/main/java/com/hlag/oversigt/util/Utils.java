@@ -27,6 +27,7 @@ import java.util.stream.Stream.Builder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
