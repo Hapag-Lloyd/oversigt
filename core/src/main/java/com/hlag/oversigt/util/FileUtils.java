@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
-import com.hlag.oversigt.util.Utils.OperatingSystemType;
 
 import de.larssh.utils.SneakyException;
+import de.larssh.utils.SystemUtils;
 import de.larssh.utils.function.ThrowingConsumer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -383,7 +383,7 @@ public final class FileUtils {
 	}
 
 	public static String toRegex(final String globPattern) {
-		if (Utils.getOperatingSystemType() == OperatingSystemType.Windows) {
+		if (SystemUtils.isWindows()) {
 			return toWindowsRegexPattern(globPattern);
 		}
 		return toUnixRegexPattern(globPattern);
