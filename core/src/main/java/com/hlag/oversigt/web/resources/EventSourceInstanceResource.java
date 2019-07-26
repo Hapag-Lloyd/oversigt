@@ -255,17 +255,17 @@ public class EventSourceInstanceResource {
 	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
 	public Response updateInstance(@PathParam("id") @NotBlank final String instanceId,
 			final EventSourceInstanceDetails details) {
-		final EventSourceInstance instance;
+		final EventSourceInstance originalInstance;
 		try {
-			instance = eventSourceInstanceController.getEventSourceInstance(instanceId);
+			originalInstance = eventSourceInstanceController.getEventSourceInstance(instanceId);
 		} catch (@SuppressWarnings("unused") final NoSuchElementException e) {
 			return ErrorResponse.notFound("Event source instance does not exist.");
 		}
 
-		if (!instance.getId().equals(details.getId()) || !details.getId().equals(instanceId)) {
+		if (!originalInstance.getId().equals(details.getId()) || !details.getId().equals(instanceId)) {
 			return ErrorResponse.badRequest("The ID does not match");
 		}
-		if (!instance.getDescriptor().getKey().getKey().equals(details.getEventSourceDescriptor())) {
+		if (!originalInstance.getDescriptor().getKey().getKey().equals(details.getEventSourceDescriptor())) {
 			return ErrorResponse.badRequest("The event source descriptor key does not match");
 		}
 		// TODO this needs to be checked when the UI is fixed
@@ -275,7 +275,7 @@ public class EventSourceInstanceResource {
 		// frequency");
 		// }
 		final Set<String> unnessaccaryDataItems = new HashSet<>(details.dataItems.keySet());
-		unnessaccaryDataItems.removeAll(instance.getDescriptor()
+		unnessaccaryDataItems.removeAll(originalInstance.getDescriptor()
 				.getDataItems()
 				.stream()
 				.map(EventSourceProperty::getName)
@@ -286,20 +286,20 @@ public class EventSourceInstanceResource {
 
 		final EventSourceInstance newInstance;
 		try {
-			newInstance = new EventSourceInstance(instance.getDescriptor(),
-					instance.getId(),
+			newInstance = new EventSourceInstance(originalInstance.getDescriptor(),
+					originalInstance.getId(),
 					details.getName(),
 					details.isEnabled(),
 					details.getFrequency(),
-					instance.getCreatedBy(),
+					originalInstance.getCreatedBy(),
 					((Principal) getSecurityContext().getUserPrincipal()).getUsername());
-			// TODO how to handle passwords?
 			newInstance.setEnabled(details.isEnabled());
 			newInstance.setName(details.getName());
 			newInstance.setFrequency(details.getFrequency());
 			newInstance.getDescriptor()
 					.getProperties()
 					.forEach(p -> newInstance.setPropertyString(p, details.properties.get(p.getName())));
+			adoptPasswordsForProperties(newInstance, originalInstance);
 			newInstance.getDescriptor().getDataItems().forEach(p -> {
 				if (details.dataItems.containsKey(p.getName())) {
 					newInstance.setPropertyString(p, details.dataItems.get(p.getName()));
@@ -350,6 +350,24 @@ public class EventSourceInstanceResource {
 		final EventSourceInstance instance = eventSourceInstanceController.getEventSourceInstance(instanceId);
 		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),
 				EventSourceInstanceState.fromInstance(eventSourceInstanceController, statisticsManager, instance));
+	}
+
+	private static void adoptPasswordsForProperties(final EventSourceInstance instanceToChange,
+			final EventSourceInstance instanceToAdoptFrom) {
+		if (instanceToChange.getDescriptor() != instanceToAdoptFrom.getDescriptor()) {
+			throw new RuntimeException("Unable to adopt passwords from another type of event source.");
+		}
+
+		final EventSourceDescriptor descriptor = instanceToChange.getDescriptor();
+		for (final EventSourceProperty property : descriptor.getProperties()) {
+			if (property.isJson()) {
+				final String valueToAdopt = instanceToAdoptFrom.getPropertyValueString(property);
+				final String valueToChange = instanceToChange.getPropertyValueString(property);
+				final Object objectToAdopt = Objects.requireNonNull(JsonUtils.fromJson(valueToAdopt, Object.class));
+				final Object objectToChange = Objects.requireNonNull(JsonUtils.fromJson(valueToChange, Object.class));
+				// TODO adoptPasswords(mapToChange, mapToAdopt);
+			}
+		}
 	}
 
 	static Map<String, String> getValueMap(final Stream<EventSourceProperty> propertyStream,
