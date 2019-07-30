@@ -13,6 +13,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.Storage;
@@ -42,9 +43,11 @@ public final class Oversigt {
 	/**
 	 * The name of the file containing the application configuration
 	 */
-	static final String APPLICATION_CONFIG = Finals.constant("config.json");
+	static final String APPLICATION_CONFIG_FILE = Finals.constant("config.json");
 
-	private AtomicBoolean bootstrapped;
+	private AtomicBoolean bootstrapped = new AtomicBoolean(false);
+
+	private AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
 	private Injector injector;
 
@@ -52,7 +55,6 @@ public final class Oversigt {
 
 	private Oversigt(final Injector injector) {
 		this.injector = injector;
-		bootstrapped = new AtomicBoolean(false);
 		shutdownHook = new Thread(this::shutdown, "Oversigt-Shutdown-Hook");
 	}
 
@@ -62,7 +64,7 @@ public final class Oversigt {
 	 *
 	 * @return itself
 	 */
-	public Oversigt bootstrap() {
+	private Oversigt bootstrap() {
 		if (bootstrapped.compareAndSet(false, true)) {
 			final boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
 			// if (debug) {
@@ -89,27 +91,29 @@ public final class Oversigt {
 	/**
 	 * Shutdowns Oversigt. Permitted only for bootstrapped instance
 	 */
-	public void shutdown() {
-		if (bootstrapped.compareAndSet(true, false)) {
-			LOGGER.info("Shutting down Oversigt...");
+	private void shutdown() {
+		if (bootstrapped.get()) {
+			if (shuttingDown.compareAndSet(false, true)) {
+				LOGGER.info("Shutting down Oversigt...");
 
-			injector.getInstance(OversigtServer.class).stopAsync().awaitTerminated();
-			LOGGER.info("Stopping storage service");
-			close(Storage.class);
-			LOGGER.info("Stopping authenticator service");
-			close(Authenticator.class);
+				injector.getInstance(OversigtServer.class).stopAsync().awaitTerminated();
+				LOGGER.info("Stopping storage service");
+				close(Storage.class);
+				LOGGER.info("Stopping authenticator service");
+				close(Authenticator.class);
 
-			/*
-			 * shutdown method might be called by this hook. So, trying to remove hook which
-			 * is currently is progress causes error
-			 */
-			if (!shutdownHook.isAlive()) {
-				Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				/*
+				 * shutdown method might be called by this hook. So, trying to remove hook which
+				 * is currently is progress causes error
+				 */
+				if (!shutdownHook.isAlive()) {
+					Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				}
+				LOGGER.info("Oversigt has stopped.");
+
+				// Shutdown slf4j
+				((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
 			}
-			LOGGER.info("Oversigt has stopped.");
-
-			// Shutdown slf4j
-			((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
 		} else {
 			throw new IllegalStateException("Oversigt is not bootstrapped");
 		}
@@ -148,7 +152,7 @@ public final class Oversigt {
 		// bootstrap Oversigt
 		try {
 			LOGGER.info("Bootstrapping Oversigt");
-			Oversigt.builder().startOptions(options).build().bootstrap();
+			Oversigt.builder().startOptions(options.get()).build().bootstrap();
 		} catch (final Exception e) {
 			LOGGER.error("Oversigt cannot start", e);
 		}
@@ -175,7 +179,7 @@ public final class Oversigt {
 	 * Oversigt builder
 	 */
 	public static class Builder {
-		private Optional<CommandLineOptions> options = Optional.empty();
+		private CommandLineOptions options = new CommandLineOptions();
 
 		public Builder() {
 			// no fields to be initialized
@@ -187,7 +191,7 @@ public final class Oversigt {
 		 * @param options the options from the user
 		 * @return the created builder
 		 */
-		public Builder startOptions(final Optional<CommandLineOptions> options) {
+		public Builder startOptions(final CommandLineOptions options) {
 			this.options = options;
 			return this;
 		}
@@ -199,10 +203,18 @@ public final class Oversigt {
 		 */
 		public Oversigt build() {
 			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
-			final Injector createdInjector = Guice.createInjector(new OversigtModule(options,
-					() -> Optional.ofNullable(oversigt.get()).ifPresent(Oversigt::shutdown)));
+			final Injector injector = Guice.createInjector(//
+					binder -> binder.bind(Runnable.class)
+							.annotatedWith(Names.named("Shutdown"))
+							.toInstance(() -> oversigt.get().shutdown()),
+					options.createModule(),
+					new OversigtConfigurationModule(options.isDebugFallback(), options.getLdapBindPasswordFallback()),
+					new OversigtModule());
 
-			oversigt.set(new Oversigt(createdInjector));
+			JiraConfigurationProvider.setSocketTimeout(
+					injector.getBinding(Key.get(int.class, Names.named("jira.socketTimeout"))).getProvider().get());
+
+			oversigt.set(new Oversigt(injector));
 			return oversigt.get();
 		}
 	}

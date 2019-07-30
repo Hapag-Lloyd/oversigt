@@ -1,11 +1,8 @@
 package com.hlag.oversigt.core;
 
-import static com.hlag.oversigt.core.Oversigt.APPLICATION_CONFIG;
 import static com.hlag.oversigt.util.TypeUtils.deserializer;
 import static com.hlag.oversigt.util.TypeUtils.serializer;
 
-import java.io.IOException;
-import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.Duration;
@@ -13,7 +10,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,8 +22,6 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
 import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -38,10 +32,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
-import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
@@ -90,24 +81,12 @@ import io.undertow.security.idm.IdentityManager;
  * @author noxfireone
  */
 class OversigtModule extends AbstractModule {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtModule.class);
-
-	private final Runnable shutdownRunnable;
-
-	private final Optional<CommandLineOptions> options;
 
 	/**
 	 * Create a module to configure Guice for Oversigt creation
-	 *
-	 * @param options          command line options that are configured by the end
-	 *                         user
-	 * @param shutdownRunnable a runnable that will end the Oversigt application if
-	 *                         executed
-	 * @param extensions       list of modules that will additionally be loaded
 	 */
-	OversigtModule(final Optional<CommandLineOptions> options, final Runnable shutdownRunnable) {
-		this.shutdownRunnable = shutdownRunnable;
-		this.options = options;
+	OversigtModule() {
+		// nothing to do
 	}
 
 	/** {@inheritDoc} */
@@ -148,7 +127,6 @@ class OversigtModule extends AbstractModule {
 		binder().bind(ApiAuthenticationUtils.class);
 
 		// Bind needed variables
-		binder().bind(Runnable.class).annotatedWith(Names.named("Shutdown")).toInstance(shutdownRunnable);
 		binder().bind(Service.class)
 				.annotatedWith(Names.named("NightlyDashboardReloader"))
 				.to(NightlyDashboardReloaderService.class);
@@ -196,19 +174,6 @@ class OversigtModule extends AbstractModule {
 		} catch (final DatatypeConfigurationException e) {
 			throw new RuntimeException("Unable to create DatatypeFactory", e);
 		}
-
-		// binds properties
-		final OversigtConfiguration configuration = readConfiguration(APPLICATION_CONFIG, allFieldsObjectMapper);
-		binder().bind(OversigtConfiguration.class).toInstance(configuration);
-		options.ifPresent(checkedOptions -> {
-			configuration.bindProperties(binder(),
-					checkedOptions.isDebugFallback(),
-					checkedOptions.getLdapBindPasswordFallback());
-			Names.bindProperties(binder(), checkedOptions.getProperties());
-		});
-
-		// configure other stuff
-		configuration.applyConfiguration();
 	}
 
 	/**
@@ -277,19 +242,6 @@ class OversigtModule extends AbstractModule {
 			}
 		});
 		return jsonpathConfiguration;
-	}
-
-	private OversigtConfiguration readConfiguration(final String resourceUrlString,
-			final ObjectMapper allFieldsObjectMapper) {
-		try {
-			final URL configUrl = Resources.getResource(resourceUrlString);
-			Preconditions.checkState(configUrl != null, "Main application config [%s] not found", resourceUrlString);
-			LOGGER.info("Reading Oversigt configuration: " + configUrl);
-			final String configString = Resources.toString(configUrl, Charsets.UTF_8);
-			return allFieldsObjectMapper.readValue(configString, OversigtConfiguration.class);
-		} catch (final IOException e) {
-			throw new IllegalStateException("Unable to read configuration", e);
-		}
 	}
 
 	/**

@@ -16,6 +16,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import com.google.inject.Module;
+import com.google.inject.name.Names;
+
 import de.larssh.utils.Nullables;
 
 public final class CommandLineOptions {
@@ -38,7 +41,7 @@ public final class CommandLineOptions {
 		}
 	}
 
-	private CommandLineOptions() {}
+	CommandLineOptions() {}
 
 	@Option(name = "--startEventSources",
 			usage = "When starting the server also start all event sources",
@@ -96,5 +99,9 @@ public final class CommandLineOptions {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+	}
+
+	Module createModule() {
+		return binder -> Names.bindProperties(binder, getProperties());
 	}
 }

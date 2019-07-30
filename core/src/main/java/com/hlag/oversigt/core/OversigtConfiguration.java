@@ -1,35 +1,36 @@
 package com.hlag.oversigt.core;
 
-import static com.hlag.oversigt.util.TypeUtils.createArray;
+import static com.hlag.oversigt.util.TypeUtils.deserializer;
+import static com.hlag.oversigt.util.TypeUtils.serializer;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.inject.Binder;
+import com.google.common.io.Resources;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
-import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
-import com.hlag.oversigt.security.Authenticator;
-import com.hlag.oversigt.security.LdapAuthenticator;
-import com.hlag.oversigt.security.MapAuthenticator;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.TLSConfiguration;
@@ -46,38 +47,43 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
 
-	private static final TypeLiteral<Map<String, String>> MAP_OF_STRING_TO_STRING
-			= new TypeLiteral<Map<String, String>>() {
-				// just type literal for generics detection
-			};
+	private static ObjectMapper createObjectMapper() {
+		final SimpleModule module = new SimpleModule("Oversigt-API");
+		module.addSerializer(Duration.class, serializer(Duration.class, Duration::toString));
+		module.addDeserializer(Duration.class, deserializer(Duration.class, Duration::parse));
 
-	private static final TypeLiteral<List<String>> LIST_OF_STRINGS = new TypeLiteral<List<String>>() {
-		// just type literal for generics detection
-	};
+		final ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.registerModule(module);
+		objectMapper.registerModule(new Jdk8Module());
+		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		objectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
+		objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		return objectMapper;
+	}
 
-	private static final TypeLiteral<List<HttpListenerConfiguration>> LIST_OF_HTTP_LISTENER_CONFIGURATION
-			= new TypeLiteral<List<HttpListenerConfiguration>>() {
-				// just type literal for generics detection
-			};
-
-	private static void bind(final Binder binder, final String name, final Object value) {
-		binder.bindConstant()
-				.annotatedWith(Names.named(name))
-				.to(Objects.requireNonNull(value, "The value for '" + name + "' is null.").toString());
+	static OversigtConfiguration readConfiguration() {
+		try {
+			final URL configUrl = Resources.getResource(Oversigt.APPLICATION_CONFIG_FILE);
+			Preconditions.checkState(configUrl != null,
+					"Main application config [%s] not found",
+					Oversigt.APPLICATION_CONFIG_FILE);
+			LOGGER.info("Reading Oversigt configuration: " + configUrl);
+			final String configString = Resources.toString(configUrl, Charsets.UTF_8);
+			return createObjectMapper().readValue(configString, OversigtConfiguration.class);
+		} catch (final IOException e) {
+			throw new IllegalStateException("Unable to read configuration", e);
+		}
 	}
 
 	private boolean debug = false;
 
-	// TODO remove all nullables
-	@Nullable
-	private String hostname = null;
+	private Optional<String> hostname = Optional.empty();
 
 	private ApiConfiguration api = new ApiConfiguration();
 
 	private EventManagerConfiguration eventManager = new EventManagerConfiguration();
 
-	@Nullable
-	private DatabaseConfiguration database;
+	private Optional<DatabaseConfiguration> database = Optional.empty();
 
 	private SecurityConfiguration security = new SecurityConfiguration();
 
@@ -87,117 +93,63 @@ public class OversigtConfiguration {
 
 	private List<HttpListenerConfiguration> listeners = new ArrayList<>(Arrays.asList(new HttpListenerConfiguration()));
 
-	@Nullable
-	private EventSourceConfiguration eventSources;
+	private EventSourceConfiguration eventSources = new EventSourceConfiguration();
 
 	private JiraConfiguration jira = new JiraConfiguration();
 
 	private CustomWroConfiguration wro = new CustomWroConfiguration();
 
-	public OversigtConfiguration() {
-		// no fields to be initialized manually, some will be injected
+	@JsonCreator
+	private OversigtConfiguration() {
+		// fields will be filled by jackson
 	}
 
-	void bindProperties(final Binder binder, final boolean debugFallback, final String ldapBindPasswordFallback) {
-		bind(binder, "debug", debug || debugFallback);
-
-		binder.bind(CustomWroConfiguration.class).toInstance(wro);
-
-		bind(binder, "hostname", Objects.requireNonNull(hostname, "hostname"));
-		binder.bind(SignatureAlgorithm.class).toInstance(api.jwtAlgorithm);
-		bind(binder, "api.secret.base64", Objects.requireNonNull(api.jwtSecretBase64, "api.jwtSecretBase64"));
-		bind(binder, "api.ttl", api.jwtTimeToLive);
-		bind(binder, "rateLimit", eventManager.rateLimit);
-		binder.bind(Duration.class)
-				.annotatedWith(Names.named("discardEventsAfter"))
-				.toInstance(eventManager.discardEventsAfter);
-		bind(binder, "templateNumberFormat", templateNumberFormat);
-		final DatabaseConfiguration database = Objects.requireNonNull(this.database);
-		bind(binder, "databaseLocation", Objects.requireNonNull(database.location, "database.location"));
-		bind(binder, "databaseName", Objects.requireNonNull(database.name, "database.name"));
-		bind(binder, "databaseUsername", Objects.requireNonNull(database.username, "database.username"));
-		bind(binder, "databasePassword", Objects.requireNonNull(database.password, "database.password"));
-		binder.bind(SqlDialect.class).to(database.sqlDialect);
-		binder.bind(LIST_OF_HTTP_LISTENER_CONFIGURATION).annotatedWith(Names.named("listeners")).toInstance(listeners);
-		bindNamedArray(binder,
-				String[].class,
-				"additionalPackages",
-				Arrays.asList(Objects.requireNonNull(eventSources, "").packages));
-		bindNamedArray(binder,
-				Path[].class,
-				"addonFolders",
-				Paths::get,
-				Arrays.asList(Objects.requireNonNull(eventSources, "").addonFolders));
-		bindNamedArray(binder,
-				String[].class,
-				"widgetsPaths",
-				Arrays.asList(Objects.requireNonNull(eventSources, "").widgetsPaths));
-		// foreign events
-		bind(binder, "foreignEvents.enabled", security.foreignEvents.enabled);
-		bind(binder, "foreignEvents.needAuthentication", security.foreignEvents.needAuthentication);
-		bind(binder, "foreignEvents.apiKeyHeaderName", security.foreignEvents.apiKeyHeaderName);
-		binder.bind(LIST_OF_STRINGS)
-				.annotatedWith(Names.named("foreignEvents.allowedApiKeys"))
-				.toInstance(security.foreignEvents.allowedApiKeys);
-
-		// Mail Settings
-		bind(binder, "mailSenderHost", Objects.requireNonNull(mail.hostname, "mail.hostname"));
-		bind(binder, "mailSenderPort", mail.port);
-		bind(binder, "mailSenderStartTls", mail.startTls);
-		bind(binder, "mailSenderUsername", Objects.requireNonNull(mail.username, "mail.username"));
-		bind(binder, "mailSenderPassword", Objects.requireNonNull(mail.password, "mail.password"));
-		bind(binder, "mailSenderAddress", Objects.requireNonNull(mail.senderAddress, "mail.senderAddress"));
-
-		// Security
-		boolean boundAuthenticator = false;
-		final LdapConfiguration ldap = security.ldap;
-		if (ldap != null) {
-			if (!ldap.isBindPasswordSet()) {
-				ldap.setBindPassword(ldapBindPasswordFallback);
-			}
-			if (ldap.isBindPasswordSet()) {
-				binder.bind(LdapConfiguration.class).toInstance(security.ldap);
-				binder.bind(Authenticator.class).to(LdapAuthenticator.class);
-				boundAuthenticator = true;
-			}
-		}
-		if (!boundAuthenticator && !security.users.isEmpty()) {
-			binder.bind(MAP_OF_STRING_TO_STRING)
-					.annotatedWith(Names.named("UsernamesAndPasswords"))
-					.toInstance(security.users);
-			binder.bind(Authenticator.class).to(MapAuthenticator.class);
-			boundAuthenticator = true;
-		}
-		final List<String> admins = Optional.ofNullable(security.serverAdmins).orElseGet(ArrayList::new);
-		binder.bind(LIST_OF_STRINGS).annotatedWith(Names.named("serverAdmins")).toInstance(admins);
-		if (admins.isEmpty()) {
-			LOGGER.warn("No server admins configured. Please check configuration security.serverAdmins");
-		}
+	public boolean isDebug() {
+		return debug;
 	}
 
-	private static void bindNamedArray(final Binder binder,
-			final Class<String[]> targetClass,
-			final String name,
-			final Collection<String> inputs) {
-		bindNamedArray(binder, targetClass, name, Function.identity(), inputs);
+	public Optional<String> getHostname() {
+		return hostname;
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <T> void bindNamedArray(final Binder binder,
-			final Class<T[]> targetClass,
-			final String name,
-			final Function<String, T> converter,
-			final Collection<String> inputs) {
-		binder.bind(targetClass)
-				.annotatedWith(Names.named(name))
-				.toInstance((T[]) inputs.stream()
-						.map(converter)
-						.collect(Collectors.toList())
-						.toArray(createArray(targetClass.getComponentType(), 0)));
+	public ApiConfiguration getApi() {
+		return api;
 	}
 
-	void applyConfiguration() {
-		JiraConfigurationProvider.setSocketTimeout(jira.socketTimeout);
+	public EventManagerConfiguration getEventManager() {
+		return eventManager;
+	}
+
+	public DatabaseConfiguration getDatabase() {
+		return database.orElseThrow(() -> new RuntimeException("No database configuration supplied."));
+	}
+
+	public SecurityConfiguration getSecurity() {
+		return security;
+	}
+
+	public MailConfiguration getMail() {
+		return mail;
+	}
+
+	public String getTemplateNumberFormat() {
+		return templateNumberFormat;
+	}
+
+	public List<HttpListenerConfiguration> getListeners() {
+		return listeners;
+	}
+
+	public EventSourceConfiguration getEventSources() {
+		return eventSources;
+	}
+
+	public JiraConfiguration getJira() {
+		return jira;
+	}
+
+	public CustomWroConfiguration getWro() {
+		return wro;
 	}
 
 	public static class HttpListenerConfiguration {
@@ -228,20 +180,31 @@ public class OversigtConfiguration {
 		}
 	}
 
-	private static final class ApiConfiguration {
+	static final class ApiConfiguration {
 		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;
 
-		@Nullable
-		private String jwtSecretBase64 = null;
+		private Optional<String> jwtSecretBase64 = Optional.empty();
 
 		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours
 
 		private ApiConfiguration() {
 			// no fields to be initialized
 		}
+
+		public long getJwtTimeToLive() {
+			return jwtTimeToLive;
+		}
+
+		public String getJwtSecretBase64() {
+			return jwtSecretBase64.orElseThrow(() -> new RuntimeException("No JWT secret configured"));
+		}
+
+		public SignatureAlgorithm getJwtAlgorithm() {
+			return jwtAlgorithm;
+		}
 	}
 
-	private static final class EventManagerConfiguration {
+	static final class EventManagerConfiguration {
 		private long rateLimit = 10;
 
 		private Duration discardEventsAfter = Duration.ofHours(1);
@@ -249,26 +212,59 @@ public class OversigtConfiguration {
 		private EventManagerConfiguration() {
 			// no fields to be initialized
 		}
+
+		public long getRateLimit() {
+			return rateLimit;
+		}
+
+		public Duration getDiscardEventsAfter() {
+			return discardEventsAfter;
+		}
 	}
 
-	private static final class DatabaseConfiguration {
-		@Nullable
-		private Class<? extends SqlDialect> sqlDialect;
+	static final class DatabaseConfiguration {
+		private final Class<? extends SqlDialect> sqlDialect;
 
-		@Nullable
-		private String location;
+		private final String location;
 
-		@Nullable
-		private String name;
+		private final String name;
 
-		@Nullable
-		private String username;
+		private final String username;
 
-		@Nullable
-		private String password;
+		private final String password;
 
-		private DatabaseConfiguration() {
-			// no fields to be initialized
+		@JsonCreator
+		private DatabaseConfiguration(@JsonProperty("sqlDialect") final Class<? extends SqlDialect> sqlDialect,
+				@JsonProperty("location") final String location,
+				@JsonProperty("name") final String name,
+				@JsonProperty("username") final String username,
+				@JsonProperty("password") final String password) {
+			super();
+			this.sqlDialect = sqlDialect;
+			this.location = location;
+			this.name = name;
+			this.username = username;
+			this.password = password;
+		}
+
+		public Class<? extends SqlDialect> getSqlDialect() {
+			return sqlDialect;
+		}
+
+		public String getLocation() {
+			return location;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getUsername() {
+			return username;
+		}
+
+		public String getPassword() {
+			return password;
 		}
 	}
 
@@ -327,29 +323,49 @@ public class OversigtConfiguration {
 
 	}
 
-	private static final class MailConfiguration {
-		@Nullable
-		private String hostname;
+	static final class MailConfiguration {
+		private Optional<String> hostname = Optional.empty();
 
-		private int port;
+		private int port = 0;
 
-		private boolean startTls;
+		private boolean startTls = false;
 
-		@Nullable
-		private String username;
+		private Optional<String> username = Optional.empty();
 
-		@Nullable
-		private String password;
+		private Optional<String> password = Optional.empty();
 
-		@Nullable
-		private String senderAddress;
+		private Optional<String> senderAddress = Optional.empty();
 
 		private MailConfiguration() {
 			// no fields to be initialized
 		}
+
+		public Optional<String> getHostname() {
+			return hostname;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public boolean isStartTls() {
+			return startTls;
+		}
+
+		public Optional<String> getUsername() {
+			return username;
+		}
+
+		public Optional<String> getPassword() {
+			return password;
+		}
+
+		public String getSenderAddress() {
+			return senderAddress.orElseThrow(() -> new RuntimeException("No sender address configured"));
+		}
 	}
 
-	private static final class EventSourceConfiguration {
+	static final class EventSourceConfiguration {
 		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };
 
 		private String[] addonFolders = new String[0];
@@ -359,33 +375,64 @@ public class OversigtConfiguration {
 		private EventSourceConfiguration() {
 			// no fields to be initialized
 		}
+
+		public String[] getPackages() {
+			return packages;
+		}
+
+		public String[] getAddonFolders() {
+			return addonFolders;
+		}
+
+		public String[] getWidgetsPaths() {
+			return widgetsPaths;
+		}
+
 	}
 
-	private static final class JiraConfiguration {
+	static final class JiraConfiguration {
 		private int socketTimeout = 120;
 
 		private JiraConfiguration() {
 			// no fields to be initialized
 		}
+
+		public int getSocketTimeout() {
+			return socketTimeout;
+		}
 	}
 
-	private static final class SecurityConfiguration {
-		@Nullable
-		private List<String> serverAdmins;
+	static final class SecurityConfiguration {
+		private Optional<List<String>> serverAdmins = Optional.empty();
 
 		private Map<String, String> users = new HashMap<>();
 
-		@Nullable
-		private LdapConfiguration ldap;
+		private Optional<LdapConfiguration> ldap = Optional.empty();
 
 		private ForeignEventsConfiguration foreignEvents = new ForeignEventsConfiguration();
 
 		private SecurityConfiguration() {
 			// no fields to be initialized
 		}
+
+		public ForeignEventsConfiguration getForeignEvents() {
+			return foreignEvents;
+		}
+
+		public Optional<LdapConfiguration> getLdap() {
+			return ldap;
+		}
+
+		public Map<String, String> getUsers() {
+			return users;
+		}
+
+		public Optional<List<String>> getServerAdmins() {
+			return serverAdmins;
+		}
 	}
 
-	private static final class ForeignEventsConfiguration {
+	static final class ForeignEventsConfiguration {
 		private boolean enabled = false;
 
 		private boolean needAuthentication = true;
@@ -396,6 +443,22 @@ public class OversigtConfiguration {
 
 		private ForeignEventsConfiguration() {
 			// nothing to do
+		}
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public boolean isNeedAuthentication() {
+			return needAuthentication;
+		}
+
+		public String getApiKeyHeaderName() {
+			return apiKeyHeaderName;
+		}
+
+		public List<String> getAllowedApiKeys() {
+			return allowedApiKeys;
 		}
 	}
 }
