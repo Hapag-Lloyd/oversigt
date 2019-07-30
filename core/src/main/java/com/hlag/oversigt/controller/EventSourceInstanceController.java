@@ -91,23 +91,19 @@ public class EventSourceInstanceController {
 	}
 
 	@SuppressWarnings("unchecked")
-	// TODO make private
-	<S extends Service> Optional<S> getService(final EventSourceInstance instance) {
+	private <S extends Service> Optional<S> getService(final EventSourceInstance instance) {
 		return eventSourceInstancesLock.read(() -> Optional.ofNullable((S) eventSourceInstancesInternal.get(instance)));
 	}
 
-	// TODO make private
-	void setService(final EventSourceInstance instance, final Service service) {
+	private void setService(final EventSourceInstance instance, final Service service) {
 		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, service));
 	}
 
-	// TODO make private
-	void unsetService(final EventSourceInstance instance) {
+	private void unsetService(final EventSourceInstance instance) {
 		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, null));
 	}
 
-	// TODO make private
-	void removeEventSourceInstance(final EventSourceInstance instance) {
+	private void removeEventSourceInstance(final EventSourceInstance instance) {
 		eventSourceInstancesLock.write(() -> {
 			/*
 			 * This method is a work around because (why ever)

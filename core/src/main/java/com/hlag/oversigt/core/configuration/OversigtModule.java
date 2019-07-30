@@ -46,34 +46,30 @@ public class OversigtModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		// some interesting values
-		binder().bind(String.class)
-				.annotatedWith(Names.named("application-id"))
-				.toInstance(UUID.randomUUID().toString());
+		bind(String.class).annotatedWith(Names.named("application-id")).toInstance(UUID.randomUUID().toString());
 
 		// Add default constructors for explicit bindings
-		binder().bind(OversigtServer.class);
-		binder().bind(HttpHandlers.class);
-		binder().bind(EventSourceStatisticsManager.class);
-		binder().bind(EventSender.class);
-		binder().bind(RoleProvider.class);
-		binder().bind(MailSender.class);
+		bind(OversigtServer.class);
+		bind(HttpHandlers.class);
+		bind(EventSourceStatisticsManager.class);
+		bind(EventSender.class);
+		bind(RoleProvider.class);
+		bind(MailSender.class);
 
 		// model
-		binder().bind(EventSourceDescriptorController.class);
-		binder().bind(EventSourceInstanceController.class);
-		binder().bind(DashboardController.class);
-		binder().bind(EventSourceNameGenerator.class);
-		binder().bind(SerializablePropertyController.class);
+		bind(EventSourceDescriptorController.class);
+		bind(EventSourceInstanceController.class);
+		bind(DashboardController.class);
+		bind(EventSourceNameGenerator.class);
+		bind(SerializablePropertyController.class);
 
 		// database
-		binder().bind(Storage.class).to(JdbcDatabase.class);
+		bind(Storage.class).to(JdbcDatabase.class);
 
 		// Bind needed variables
-		binder().bind(Service.class)
-				.annotatedWith(Names.named("NightlyDashboardReloader"))
+		bind(Service.class).annotatedWith(Names.named("NightlyDashboardReloader"))
 				.to(NightlyDashboardReloaderService.class);
-		binder().bind(Service.class)
-				.annotatedWith(Names.named("NightlyEventSourceRestarter"))
+		bind(Service.class).annotatedWith(Names.named("NightlyEventSourceRestarter"))
 				.to(NightlyEventSourceRestarterService.class);
 	}
 

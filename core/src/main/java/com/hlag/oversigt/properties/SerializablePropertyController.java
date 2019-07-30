@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -83,35 +82,6 @@ public class SerializablePropertyController {
 				.orElse("");
 	}
 
-	/**
-	 * @return map of property names to list of classes
-	 * @deprecated Must no longer be used outside the oversigt internals.
-	 */
-	@Deprecated
-	public Map<String, List<? extends SerializableProperty>> getProperties() {
-		// TODO remove this method
-		// return namesToClasses.entrySet()
-		// .stream()
-		// .collect(Collectors.toMap(e -> e.getKey(), e ->
-		// storage.listProperties(e.getValue())));
-		return namesToClasses.entrySet()
-				.stream()
-				.collect(Collectors.toMap(e -> e.getKey(),
-						e -> streamProperties(e.getValue()).collect(Collectors.toList())));
-	}
-
-	/**
-	 * @return map of member names to collection of members
-	 * @deprecated Must no longer be used outside the oversigt internals.
-	 */
-	@Deprecated
-	public Map<String, Collection<SerializablePropertyMember>> getAllMembers() {
-		// TODO remove this method
-		return namesToClasses.entrySet()
-				.stream()
-				.collect(Collectors.toMap(Entry::getKey, c -> getMembers(c.getValue())));
-	}
-
 	public Collection<SerializablePropertyMember> getMembers(final Class<? extends SerializableProperty> clazz) {
 		return TypeUtils.getSerializablePropertyMembers(clazz);
 	}
@@ -125,16 +95,13 @@ public class SerializablePropertyController {
 			final Map<String, Object> parameters) {
 		return createProperty(clazz,
 				name,
-				getMembers(clazz).stream()
-						.filter(m -> !"name".equals(m.getName()))
-						.map(m -> {
-							try {
-								return m.createInstance((String) parameters.get(m.getName()));
-							} catch (final MemberMissingException e) {
-								throw new RuntimeException("Unknown member: " + m.getName(), e);
-							}
-						})
-						.collect(Collectors.toList()));
+				getMembers(clazz).stream().filter(m -> !"name".equals(m.getName())).map(m -> {
+					try {
+						return m.createInstance((String) parameters.get(m.getName()));
+					} catch (final MemberMissingException e) {
+						throw new RuntimeException("Unknown member: " + m.getName(), e);
+					}
+				}).collect(Collectors.toList()));
 	}
 
 	public <T extends SerializableProperty> T createProperty(final Class<T> clazz,

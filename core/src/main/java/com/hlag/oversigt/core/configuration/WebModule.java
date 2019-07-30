@@ -33,9 +33,9 @@ public class WebModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		// REST API
-		binder().bind(IdentityManager.class).to(OversigtIdentityManager.class);
-		binder().bind(Application.class).to(ApiApplication.class);
-		binder().bind(ApiAuthenticationUtils.class);
+		bind(IdentityManager.class).to(OversigtIdentityManager.class);
+		bind(Application.class).to(ApiApplication.class);
+		bind(ApiAuthenticationUtils.class);
 
 		// Object validation
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
@@ -45,8 +45,7 @@ public class WebModule extends AbstractModule {
 				.usingContext()
 				.constraintValidatorFactory(constraintValidatorFactory)
 				.getValidator();
-		binder().bind(Validator.class).toInstance(validator);
-
+		bind(Validator.class).toInstance(validator);
 	}
 
 	/**

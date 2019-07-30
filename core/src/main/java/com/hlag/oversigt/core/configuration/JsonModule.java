@@ -35,7 +35,7 @@ public class JsonModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		// JSON handling
-		binder().requestStaticInjection(JsonUtils.class);
+		requestStaticInjection(JsonUtils.class);
 
 		// Jackson for our API
 		final SimpleModule module = new SimpleModule("Oversigt-API");
@@ -49,17 +49,21 @@ public class JsonModule extends AbstractModule {
 		module.addDeserializer(LocalDate.class,
 				deserializer(LocalDate.class, s -> LocalDate.from(DateTimeFormatter.ISO_DATE.parse(s))));
 		final ObjectMapper objectMapper = new ObjectMapper();
+
+		// mapper
 		objectMapper.registerModule(module);
-		// objectMapper.registerModule(new JavaTimeModule()); // instead the
-		// InstantDeserializer and ZonedDateTimeSerializer are used directly
+		// instead the InstantDeserializer and ZonedDateTimeSerializer are used directly
+		// objectMapper.registerModule(new JavaTimeModule());
 		objectMapper.registerModule(new Jdk8Module());
 		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-		binder().bind(ObjectMapper.class).annotatedWith(Names.named("only-annotated")).toInstance(objectMapper);
+		bind(ObjectMapper.class).annotatedWith(Names.named("only-annotated")).toInstance(objectMapper);
+
+		// other mapper
 		final ObjectMapper allFieldsObjectMapper = objectMapper.copy();
 		allFieldsObjectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
 		allFieldsObjectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 		allFieldsObjectMapper.setSerializationInclusion(Include.NON_NULL);
-		binder().bind(ObjectMapper.class).annotatedWith(Names.named("all-fields")).toInstance(allFieldsObjectMapper);
+		bind(ObjectMapper.class).annotatedWith(Names.named("all-fields")).toInstance(allFieldsObjectMapper);
 	}
 
 	/**

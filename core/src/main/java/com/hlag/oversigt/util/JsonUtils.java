@@ -47,11 +47,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
 
-	// @Inject
-	// @Named("only-annotated")
-	// @Nullable
-	// private static ObjectMapper onlyAnnotatedObjectMapper;
-
 	private static final Predicate<String> PASSWORD_FILTER = s -> !s.toLowerCase().contains("password");
 
 	@Inject
@@ -63,11 +58,6 @@ public final class JsonUtils {
 	@Nullable
 	private static ObjectMapper allFieldObjectMapper;
 
-	// @Inject
-	// @Named("only-annotated")
-	// @Nullable
-	// private static ObjectMapper onlyAnnotatedObjectMapper;
-
 	@Inject
 	@Nullable
 	private static Configuration jsonpathConfiguration;
@@ -75,10 +65,6 @@ public final class JsonUtils {
 	private static ObjectMapper getAllFieldsJsonConverter() {
 		return Objects.requireNonNull(allFieldObjectMapper);
 	}
-
-	// private static ObjectMapper getOnlyAnnotatedJsonConverter() {
-	// return Objects.requireNonNull(onlyAnnotatedObjectMapper);
-	// }
 
 	public static String toJson(final Object object) {
 		try {
