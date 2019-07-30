@@ -45,7 +45,7 @@ import com.hlag.oversigt.properties.HttpProxy;
 import com.hlag.oversigt.sources.data.JsonHint;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
-import com.hlag.oversigt.util.ThrowingBiFunction;
+import com.hlag.oversigt.util.function.ThrowingBiFunction;
 import com.hlag.oversigt.util.text.TextProcessor;
 import com.hlag.oversigt.util.text.TextProcessorProvider;
 

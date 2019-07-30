@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -204,6 +205,7 @@ public final class Oversigt {
 		public Oversigt build() {
 			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
 			final Injector injector = Guice.createInjector(//
+					Binder::requireExplicitBindings,
 					binder -> binder.bind(Runnable.class)
 							.annotatedWith(Names.named("Shutdown"))
 							.toInstance(() -> oversigt.get().shutdown()),

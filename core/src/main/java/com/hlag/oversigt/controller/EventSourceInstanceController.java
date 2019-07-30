@@ -36,6 +36,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
 import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
@@ -253,7 +254,7 @@ public class EventSourceInstanceController {
 
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
-			return binder -> { /* empty by design */ };
+			return Modules.EMPTY_MODULE;
 		}
 		return TypeUtils.createInstance(moduleClass);
 	}

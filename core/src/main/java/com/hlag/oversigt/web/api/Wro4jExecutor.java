@@ -1,7 +1,7 @@
 /**
  * Copyright Alex Objelean
  */
-package com.hlag.oversigt.util;
+package com.hlag.oversigt.web.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

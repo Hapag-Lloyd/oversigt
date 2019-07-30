@@ -48,6 +48,7 @@ import com.google.inject.Binder;
 import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Member;
+import com.hlag.oversigt.util.function.ThrowingFunction;
 
 import de.larssh.utils.Nullables;
 import edu.umd.cs.findbugs.annotations.Nullable;

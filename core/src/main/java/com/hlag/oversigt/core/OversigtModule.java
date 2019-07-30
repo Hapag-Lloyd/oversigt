@@ -92,8 +92,6 @@ class OversigtModule extends AbstractModule {
 	/** {@inheritDoc} */
 	@Override
 	protected void configure() {
-		binder().requireExplicitBindings();
-
 		// some interesting values
 		binder().bind(String.class)
 				.annotatedWith(Names.named("application-id"))

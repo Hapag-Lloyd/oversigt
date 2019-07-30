@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hlag.oversigt.util.ThrowingFunction;
+import com.hlag.oversigt.util.function.ThrowingFunction;
 
 public abstract class DatabaseCache<T> {
 	public static <X> DatabaseCache<X> createCache(final ThrowingFunction<Connection, Collection<X>> readFunction) {

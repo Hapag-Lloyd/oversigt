@@ -31,12 +31,17 @@ public class JsonUtilsTest {
 				System.out.println(field);
 			}
 		}
+		// needed for static injection
+		// final Injector injector =
+		// Guice.createInjector(OversigtModuleTest.createOversigtModule());
+		// System.out.println(injector);
 	}
 
 	// TODO build tests
 
 	// @Test
 	// public void testToJson_1() {
+	// System.out.println("test");
 	// final String expected = "[]";
 	// final Object given = new String[0];
 	//
