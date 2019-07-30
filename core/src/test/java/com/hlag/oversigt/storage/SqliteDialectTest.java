@@ -1,12 +1,13 @@
 package com.hlag.oversigt.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.hlag.oversigt.storage.SqlDialect.ColumnOptions;
 import com.hlag.oversigt.storage.SqlDialect.ColumnType;
@@ -123,9 +124,13 @@ public class SqliteDialectTest {
 		assertThat(actual).isEqualToIgnoringWhitespace(expected);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void generateAlter_dropColumn() {
-		dialect.alterTableDropColumn("XYZ", "MNO");
+		final UnsupportedOperationException actual = assertThrows(UnsupportedOperationException.class, () -> {
+			dialect.alterTableDropColumn("XYZ", "MNO");
+		});
+
+		assertThat(actual).hasMessageContaining("not supported by SQLite");
 	}
 
 	@Test

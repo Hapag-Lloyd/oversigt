@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +51,8 @@ public final class JsonUtils {
 	// @Named("only-annotated")
 	// @Nullable
 	// private static ObjectMapper onlyAnnotatedObjectMapper;
+
+	private static final Predicate<String> PASSWORD_FILTER = s -> !s.toLowerCase().contains("password");
 
 	@Inject
 	@Nullable
@@ -109,7 +112,9 @@ public final class JsonUtils {
 	 * @return the stripped JSON
 	 */
 	public static String removeKeysFromJson(final String json, final Predicate<String> filter) {
-		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)), filter));
+		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)),
+				filter,
+				obj -> obj instanceof Double ? ((Double) obj).longValue() : obj));
 	}
 
 	/**
@@ -120,36 +125,42 @@ public final class JsonUtils {
 	 * @return the JSON without keys containing "password" (not case sensitive)
 	 */
 	public static String removePasswordsFromJson(final String string) {
-		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
+		return removeKeysFromJson(string, PASSWORD_FILTER);
+	}
+
+	public static <T> Map<String, T> removePasswords(final Map<String, T> map) {
+		removeKeys(map, PASSWORD_FILTER, Function.identity());
+		return map;
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Object removeKeys(final Object json, final Predicate<String> filter) {
-		if (json instanceof Collection) {
-			removeKeys((Collection<?>) json, filter);
-		} else if (json instanceof Map) {
-			removeKeys((Map<String, Object>) json, filter);
-		} else if (json instanceof Double) {
-			final long l = ((Double) json).longValue();
-			if ((double) l == (Double) json) {
-				return l;
-			}
+	private static Object removeKeys(final Object object,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		if (object instanceof Collection) {
+			removeKeys((Collection<?>) object, filter, customConverter);
+		} else if (object instanceof Map) {
+			removeKeys((Map<String, Object>) object, filter, customConverter);
 		}
-		return json;
+		return customConverter.apply(object);
 	}
 
-	private static void removeKeys(final Collection<?> json, final Predicate<String> filter) {
-		for (final Object e : json) {
-			removeKeys(e, filter);
+	private static void removeKeys(final Collection<?> collection,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		for (final Object e : collection) {
+			removeKeys(e, filter, customConverter);
 		}
 	}
 
-	private static void removeKeys(final Map<String, Object> json, final Predicate<String> filter) {
-		for (final Entry<String, Object> e : json.entrySet()) {
+	private static void removeKeys(final Map<String, Object> map,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		for (final Entry<String, Object> e : map.entrySet()) {
 			if (!filter.test(e.getKey())) {
 				e.setValue(null);
 			} else {
-				e.setValue(removeKeys(e.getValue(), filter));
+				e.setValue(removeKeys(e.getValue(), filter, customConverter));
 			}
 		}
 	}

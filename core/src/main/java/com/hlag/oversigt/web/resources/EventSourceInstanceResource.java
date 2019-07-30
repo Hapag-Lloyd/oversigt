@@ -1,6 +1,6 @@
 package com.hlag.oversigt.web.resources;
 
-import static com.hlag.oversigt.util.Utils.removePasswords;
+import static com.hlag.oversigt.util.JsonUtils.removePasswords;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
@@ -364,7 +364,7 @@ public class EventSourceInstanceResource {
 					}
 					return string;
 				}));
-		return removePasswords(map, "");
+		return removePasswords(map);
 	}
 
 	private static Map<String, String> getPropertyMap(final EventSourceInstance instance) {
