@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.configuration;
 
 import static com.hlag.oversigt.util.TypeUtils.deserializer;
 import static com.hlag.oversigt.util.TypeUtils.serializer;
@@ -30,7 +30,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.sources.AbstractDownloadEventSource;
 import com.hlag.oversigt.storage.SqlDialect;
 import com.hlag.oversigt.util.SSLUtils.TLSConfiguration;

@@ -15,6 +15,9 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
+import com.hlag.oversigt.core.configuration.JsonModule;
+import com.hlag.oversigt.core.configuration.OversigtConfigurationModule;
+import com.hlag.oversigt.core.configuration.OversigtModule;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.Storage;
@@ -44,7 +47,7 @@ public final class Oversigt {
 	/**
 	 * The name of the file containing the application configuration
 	 */
-	static final String APPLICATION_CONFIG_FILE = Finals.constant("config.json");
+	public static final String APPLICATION_CONFIG_FILE = Finals.constant("config.json");
 
 	private AtomicBoolean bootstrapped = new AtomicBoolean(false);
 
@@ -166,7 +169,7 @@ public final class Oversigt {
 	 * @param throwable the exception that occurred
 	 * @param context   the context in which the exception occurred
 	 */
-	static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
+	public static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Could not dispatch event");
 		if (context.getEvent() instanceof OversigtEvent) {
@@ -211,6 +214,7 @@ public final class Oversigt {
 							.toInstance(() -> oversigt.get().shutdown()),
 					options.createModule(),
 					new OversigtConfigurationModule(options.isDebugFallback(), options.getLdapBindPasswordFallback()),
+					new JsonModule(),
 					new OversigtModule());
 
 			JiraConfigurationProvider.setSocketTimeout(

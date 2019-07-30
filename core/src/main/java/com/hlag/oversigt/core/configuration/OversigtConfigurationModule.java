@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.configuration;
 
 import static com.hlag.oversigt.util.TypeUtils.createArray;
 
@@ -20,10 +20,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.binder.ConstantBindingBuilder;
 import com.google.inject.name.Names;
-import com.hlag.oversigt.core.OversigtConfiguration.DatabaseConfiguration;
-import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
-import com.hlag.oversigt.core.OversigtConfiguration.LdapConfiguration;
-import com.hlag.oversigt.core.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.DatabaseConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.LdapConfiguration;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.LdapAuthenticator;
 import com.hlag.oversigt.security.MapAuthenticator;
@@ -54,7 +54,7 @@ public class OversigtConfigurationModule extends AbstractModule {
 
 	private final String ldapBindPasswordFallback;
 
-	OversigtConfigurationModule(final boolean debugFallback, final String ldapBindPasswordFallback) {
+	public OversigtConfigurationModule(final boolean debugFallback, final String ldapBindPasswordFallback) {
 		config = OversigtConfiguration.readConfiguration();
 		this.debugFallback = debugFallback;
 		this.ldapBindPasswordFallback = ldapBindPasswordFallback;

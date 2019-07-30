@@ -1,16 +1,7 @@
-package com.hlag.oversigt.core;
-
-import static com.hlag.oversigt.util.TypeUtils.deserializer;
-import static com.hlag.oversigt.util.TypeUtils.serializer;
+package com.hlag.oversigt.core.configuration;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.EnumSet;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.validation.ConstraintValidator;
@@ -23,15 +14,6 @@ import javax.xml.datatype.DatatypeFactory;
 
 import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.deser.InstantDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -45,28 +27,24 @@ import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.controller.EventSourceDescriptorController;
 import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.controller.EventSourceNameGenerator;
+import com.hlag.oversigt.core.HttpHandlers;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.OversigtServer;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
 import com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService;
 import com.hlag.oversigt.core.eventsource.NightlyEventSourceRestarterService;
-import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.SerializablePropertyController;
 import com.hlag.oversigt.security.OversigtIdentityManager;
 import com.hlag.oversigt.security.RoleProvider;
 import com.hlag.oversigt.storage.JdbcDatabase;
 import com.hlag.oversigt.storage.Storage;
-import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.MailSender;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.util.text.TextProcessorProvider;
 import com.hlag.oversigt.validate.UserId;
 import com.hlag.oversigt.web.api.ApiApplication;
 import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.cache.ClassTemplateLoader;
@@ -80,12 +58,12 @@ import io.undertow.security.idm.IdentityManager;
  * @author avarabyeu
  * @author noxfireone
  */
-class OversigtModule extends AbstractModule {
+public class OversigtModule extends AbstractModule {
 
 	/**
 	 * Create a module to configure Guice for Oversigt creation
 	 */
-	OversigtModule() {
+	public OversigtModule() {
 		// nothing to do
 	}
 
@@ -96,9 +74,6 @@ class OversigtModule extends AbstractModule {
 		binder().bind(String.class)
 				.annotatedWith(Names.named("application-id"))
 				.toInstance(UUID.randomUUID().toString());
-
-		// JSON handling
-		binder().requestStaticInjection(JsonUtils.class);
 
 		// Add default constructors for explicit bindings
 		binder().bind(OversigtServer.class);
@@ -131,30 +106,6 @@ class OversigtModule extends AbstractModule {
 		binder().bind(Service.class)
 				.annotatedWith(Names.named("NightlyEventSourceRestarter"))
 				.to(NightlyEventSourceRestarterService.class);
-
-		// Jackson for our API
-		final SimpleModule module = new SimpleModule("Oversigt-API");
-		module.addSerializer(Color.class, serializer(Color.class, Color::getHexColor));
-		module.addDeserializer(Color.class, deserializer(Color.class, Color::parse));
-		module.addSerializer(Duration.class, serializer(Duration.class, Duration::toString));
-		module.addDeserializer(Duration.class, deserializer(Duration.class, Duration::parse));
-		module.addSerializer(ZonedDateTime.class, ZonedDateTimeSerializer.INSTANCE);
-		module.addDeserializer(ZonedDateTime.class, InstantDeserializer.ZONED_DATE_TIME);
-		module.addSerializer(LocalDate.class, serializer(LocalDate.class, DateTimeFormatter.ISO_DATE::format));
-		module.addDeserializer(LocalDate.class,
-				deserializer(LocalDate.class, s -> LocalDate.from(DateTimeFormatter.ISO_DATE.parse(s))));
-		final ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.registerModule(module);
-		// objectMapper.registerModule(new JavaTimeModule()); // instead the
-		// InstantDeserializer and ZonedDateTimeSerializer are used directly
-		objectMapper.registerModule(new Jdk8Module());
-		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-		binder().bind(ObjectMapper.class).annotatedWith(Names.named("only-annotated")).toInstance(objectMapper);
-		final ObjectMapper allFieldsObjectMapper = objectMapper.copy();
-		allFieldsObjectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
-		allFieldsObjectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-		allFieldsObjectMapper.setSerializationInclusion(Include.NON_NULL);
-		binder().bind(ObjectMapper.class).annotatedWith(Names.named("all-fields")).toInstance(allFieldsObjectMapper);
 
 		// Object validation
 		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());
@@ -208,38 +159,6 @@ class OversigtModule extends AbstractModule {
 		configuration.setNumberFormat(templateNumberFormat);
 		configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
 		return configuration;
-	}
-
-	/**
-	 * Create the configuration for the used JSONPath implementation
-	 *
-	 * @return the configuration
-	 */
-	@Singleton
-	@Provides
-	com.jayway.jsonpath.Configuration provideJsonpathConfiguration() {
-		final JsonProvider jsonProvider = new JacksonJsonProvider();
-		final MappingProvider mappingProvider = new JacksonMappingProvider();
-
-		final com.jayway.jsonpath.Configuration jsonpathConfiguration
-				= com.jayway.jsonpath.Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build();
-		com.jayway.jsonpath.Configuration.setDefaults(new com.jayway.jsonpath.Configuration.Defaults() {
-			@Override
-			public Set<Option> options() {
-				return EnumSet.noneOf(Option.class);
-			}
-
-			@Override
-			public MappingProvider mappingProvider() {
-				return mappingProvider;
-			}
-
-			@Override
-			public JsonProvider jsonProvider() {
-				return jsonProvider;
-			}
-		});
-		return jsonpathConfiguration;
 	}
 
 	/**
