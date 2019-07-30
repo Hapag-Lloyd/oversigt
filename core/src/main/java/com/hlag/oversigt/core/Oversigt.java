@@ -18,6 +18,7 @@ import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
 import com.hlag.oversigt.core.configuration.JsonModule;
 import com.hlag.oversigt.core.configuration.OversigtConfigurationModule;
 import com.hlag.oversigt.core.configuration.OversigtModule;
+import com.hlag.oversigt.core.configuration.WebModule;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.storage.Storage;
@@ -215,6 +216,7 @@ public final class Oversigt {
 					options.createModule(),
 					new OversigtConfigurationModule(options.isDebugFallback(), options.getLdapBindPasswordFallback()),
 					new JsonModule(),
+					new WebModule(),
 					new OversigtModule());
 
 			JiraConfigurationProvider.setSocketTimeout(

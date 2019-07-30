@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -27,10 +28,18 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 
 	private static final Pattern PATTERN_DATETIME_COMPLETE = Pattern.compile("^(" + PATTERN_DATETIME_STRING + ")+$");
 
-	private final DatatypeFactory datatypeFactory;
+	private static final DatatypeFactory DATATYPE_FACTORY;
 
-	DatetimeFunction(final DatatypeFactory datatypeFactory) {
-		this.datatypeFactory = datatypeFactory;
+	static {
+		try {
+			DATATYPE_FACTORY = DatatypeFactory.newInstance();
+		} catch (final DatatypeConfigurationException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	DatetimeFunction() {
+		// nothing to do
 	}
 
 	@Override
@@ -59,7 +68,7 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 				change = Duration.between(nullDateTime,
 						LocalDateTime.now().withHour(12).withMinute(0).withSecond(0).withNano(0));
 			} else if (temporalString.startsWith("P")) {
-				javax.xml.datatype.Duration duration = datatypeFactory.newDuration(temporalString);
+				javax.xml.datatype.Duration duration = DATATYPE_FACTORY.newDuration(temporalString);
 				if (op == '-') {
 					duration = duration.negate();
 					op = '+';

@@ -98,6 +98,7 @@ public final class JsonUtils {
 		}
 	}
 
+	@Nullable
 	public static <T> T extractValueUsingJsonPath(final JsonPath jsonPath, final String json) {
 		return jsonPath.read(json, jsonpathConfiguration);
 	}

@@ -36,7 +36,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
 import com.hlag.oversigt.core.eventsource.Property;
@@ -47,15 +46,11 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.util.SSLUtils;
 import com.hlag.oversigt.util.function.ThrowingBiFunction;
 import com.hlag.oversigt.util.text.TextProcessor;
-import com.hlag.oversigt.util.text.TextProcessorProvider;
 
 import de.larssh.utils.text.StringConverters;
 
 public abstract class AbstractDownloadEventSource<T extends OversigtEvent> extends AbstractSslAwareEventSource<T> {
 	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile("\\$\\{([0-9]+)\\.([0-9]+)\\}");
-
-	@Inject
-	private TextProcessorProvider textProcessorProvider;
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
 
@@ -78,7 +73,7 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 	}
 
 	private TextProcessor createTextProcessor() {
-		return textProcessorProvider.createTextProcessor().registerDatetimeFunctions();
+		return new TextProcessor().registerDatetimeFunctions();
 	}
 
 	private URLConnection createConnection(final String urlString,
