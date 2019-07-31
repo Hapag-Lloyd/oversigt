@@ -46,6 +46,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
@@ -61,6 +62,7 @@ import com.hlag.oversigt.core.event.JsonEvent;
 import com.hlag.oversigt.model.Dashboard;
 import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.util.ClassPathResourceManager;
 import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.HttpUtils;
@@ -124,6 +126,9 @@ public class HttpHandlers {
 
 	@Inject
 	private IdentityManager identityManager;
+
+	@Inject
+	private Authenticator authenticator;
 
 	@Inject
 	@Named("widgetsPaths")
@@ -242,7 +247,19 @@ public class HttpHandlers {
 								.map(Optional::get)
 								.filter(Dashboard::isEnabled)
 								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
-								.collect(Collectors.toList())));
+								.collect(Collectors.toList()),
+						"getOwnerName",
+						(Function<String, String>) dashboardId -> dashboardController.getDashboard(dashboardId)
+								.map(d -> d.getOwners().iterator().next())
+								.flatMap(authenticator::readPrincipal)
+								.map(p -> Strings.isNullOrEmpty(p.getName()) ? p.getUsername() : p.getName())
+								.orElse("No owner"),
+						"getOwnerMail",
+						(Function<String, String>) dashboardId -> dashboardController.getDashboard(dashboardId)
+								.map(d -> d.getOwners().iterator().next())
+								.flatMap(authenticator::readPrincipal)
+								.map(p -> p.getEmail())
+								.orElse(null)));
 		exchange.getResponseSender().send(html);
 	}
 
