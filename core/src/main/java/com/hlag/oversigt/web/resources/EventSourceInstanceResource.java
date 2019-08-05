@@ -358,20 +358,20 @@ public class EventSourceInstanceResource {
 			throw new RuntimeException("Unable to adopt passwords from another type of event source.");
 		}
 
-		final EventSourceDescriptor descriptor = instanceToChange.getDescriptor();
-		for (final EventSourceProperty property : descriptor.getProperties()) {
-			if (property.isJson()) {
-				// final String valueToAdopt =
-				// instanceToAdoptFrom.getPropertyValueString(property);
-				// final String valueToChange =
-				// instanceToChange.getPropertyValueString(property);
-				// final Object objectToAdopt =
-				// Objects.requireNonNull(JsonUtils.fromJson(valueToAdopt, Object.class));
-				// final Object objectToChange =
-				// Objects.requireNonNull(JsonUtils.fromJson(valueToChange, Object.class));
-				// TODO adoptPasswords(mapToChange, mapToAdopt);
-			}
-		}
+		// final EventSourceDescriptor descriptor = instanceToChange.getDescriptor();
+		// for (final EventSourceProperty property : descriptor.getProperties()) {
+		// if (property.isJson()) {
+		// // final String valueToAdopt =
+		// // instanceToAdoptFrom.getPropertyValueString(property);
+		// // final String valueToChange =
+		// // instanceToChange.getPropertyValueString(property);
+		// // final Object objectToAdopt =
+		// // Objects.requireNonNull(JsonUtils.fromJson(valueToAdopt, Object.class));
+		// // final Object objectToChange =
+		// // Objects.requireNonNull(JsonUtils.fromJson(valueToChange, Object.class));
+		// // TODO adoptPasswords(mapToChange, mapToAdopt);
+		// }
+		// }
 	}
 
 	static Map<String, String> getValueMap(final Stream<EventSourceProperty> propertyStream,
