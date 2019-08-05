@@ -45,7 +45,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
  * @author avarabyeu
  */
 @Singleton
-public class OversigtConfiguration {
+public final class OversigtConfiguration {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);
 
 	private static ObjectMapper createObjectMapper() {
@@ -240,7 +240,6 @@ public class OversigtConfiguration {
 				@JsonProperty("name") final String name,
 				@JsonProperty("username") final String username,
 				@JsonProperty("password") final String password) {
-			super();
 			this.sqlDialect = sqlDialect;
 			this.location = location;
 			this.name = name;

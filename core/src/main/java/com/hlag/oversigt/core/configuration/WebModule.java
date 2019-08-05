@@ -30,6 +30,10 @@ import freemarker.template.TemplateExceptionHandler;
 import io.undertow.security.idm.IdentityManager;
 
 public class WebModule extends AbstractModule {
+	public WebModule() {
+		// nothing to initialize
+	}
+
 	@Override
 	protected void configure() {
 		// REST API

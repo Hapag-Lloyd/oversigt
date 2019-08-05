@@ -32,6 +32,10 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
 public class JsonModule extends AbstractModule {
+	public JsonModule() {
+		// nothing to initialize
+	}
+
 	@Override
 	protected void configure() {
 		// JSON handling
