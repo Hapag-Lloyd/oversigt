@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
@@ -18,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  *
  * @author neumaol
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "$class")
 public abstract class SerializableProperty implements Comparable<SerializableProperty> {
 
 	private final int id;
