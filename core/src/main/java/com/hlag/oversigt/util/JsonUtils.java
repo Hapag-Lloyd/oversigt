@@ -47,6 +47,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
 
+	private static final String SERIALIZABLE_PROPERTY_TYPE = "number";
+
 	private static final Predicate<String> PASSWORD_FILTER = s -> !s.toLowerCase().contains("password");
 
 	@Inject
@@ -161,6 +163,7 @@ public final class JsonUtils {
 		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
+			// TODO move this conversion to another class
 			schema = map("$schema",
 					"http://json-schema.org/schema#",
 					"$id",
@@ -181,32 +184,34 @@ public final class JsonUtils {
 	}
 
 	private static Map<String, Object> toJsonSchemaFromProperty(final Class<? extends SerializableProperty> clazz) {
-		final List<? extends SerializableProperty> props = Objects.requireNonNull(storage).listProperties(clazz);
-		final List<String> names
-				= new ArrayList<>(props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
-		final List<Integer> ids
-				= new ArrayList<>(props.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
-		final List<Map<String, Object>> maps
-				= props.stream().map(p -> map("value", p.getId(), "title", p.getName())).collect(Collectors.toList());
+		final List<? extends SerializableProperty> propertyValues
+				= Objects.requireNonNull(storage).listProperties(clazz);
+		final List<String> names = new ArrayList<>(
+				propertyValues.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
+		final List<Integer> ids = new ArrayList<>(
+				propertyValues.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
+		final List<Map<String, Object>> mapping = propertyValues.stream()
+				.map(p -> map("value", p.getId(), "title", p.getName()))
+				.collect(Collectors.toList());
 		try {
 			if (clazz.getDeclaredField("EMPTY") != null) {
 				names.add(0, "\u00a0");
 				ids.add(0, 0);
-				maps.add(0, map("value", 0, "title", "\u00a0"));
+				mapping.add(0, map("value", 0, "title", "\u00a0"));
 			}
 		} catch (@SuppressWarnings("unused") final NoSuchFieldException | SecurityException ignore) {
 			// continue if EMPTY is not found
 		}
 		return map("type",
-				"string",
+				SERIALIZABLE_PROPERTY_TYPE,
 				"uniqueItems",
-				true, // TODO check whether this should always be true
-				// "enum",
-				// names,
+				true,
+				"enum",
+				ids,
 				"oversigt-ids",
 				ids,
 				"enumSource",
-				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", maps)));
+				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", mapping)));
 	}
 
 	private static Map<String, Object> toJsonSchemaFromType(final Type type, final Optional<JsonHint> hint) {
@@ -265,7 +270,16 @@ public final class JsonUtils {
 					"enumSource",
 					Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", abc)));
 		} else if (SerializableProperty.class.isAssignableFrom(clazz)) {
-			return map("type", "string", "$ref", "/schema/" + clazz.getName(), "oversigt-property", clazz.getName());
+			return map("type",
+					SERIALIZABLE_PROPERTY_TYPE,
+					"$ref",
+					"/schema/" + clazz.getName(),
+					"oversigt-property",
+					clazz.getName(),
+					"$class",
+					clazz.getName(),
+					"serializable-property",
+					clazz.getSimpleName());
 		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
 			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
 			final Map<String, Object> map = map("type",
