@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.core.OversigtConfiguration.LdapConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.LdapConfiguration;
 
 @Singleton
 public class LdapAuthenticator implements Authenticator {

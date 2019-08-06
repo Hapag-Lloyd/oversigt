@@ -1,4 +1,4 @@
-package com.hlag.oversigt.util;
+package com.hlag.oversigt.util.function;
 
 import java.util.function.IntFunction;
 

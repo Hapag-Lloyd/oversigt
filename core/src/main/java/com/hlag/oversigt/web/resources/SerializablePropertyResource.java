@@ -1,7 +1,7 @@
 package com.hlag.oversigt.web.resources;
 
+import static com.hlag.oversigt.util.JsonUtils.removePasswords;
 import static com.hlag.oversigt.util.TypeUtils.toMemberMap;
-import static com.hlag.oversigt.util.Utils.removePasswords;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 
@@ -284,7 +284,7 @@ public class SerializablePropertyResource {
 	}
 
 	static Map<String, Object> toMapWithoutPassword(final SerializableProperty property) {
-		return removePasswords(toMemberMap(property), "");
+		return removePasswords(toMemberMap(property));
 	}
 
 	/**

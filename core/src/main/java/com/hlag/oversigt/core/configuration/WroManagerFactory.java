@@ -1,4 +1,4 @@
-package com.hlag.oversigt.core;
+package com.hlag.oversigt.core.configuration;
 
 import static java.util.stream.Collectors.toList;
 
@@ -42,13 +42,13 @@ import ro.isdc.wro.model.resource.processor.impl.css.CssUrlRewritingProcessor;
  *
  * @author avarabyeu
  */
-class WroManagerFactory extends ConfigurableWroManagerFactory {
+public class WroManagerFactory extends ConfigurableWroManagerFactory {
 
 	private static final String COFFEE_FILENAME = ".coffee";
 
 	private final WroGroupContent content;
 
-	WroManagerFactory(final WroGroupContent content) {
+	public WroManagerFactory(final WroGroupContent content) {
 		this.content = content;
 	}
 
@@ -109,7 +109,7 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 	public static final class WroGroupContent {
 		private final Map<ResourceType, Collection<URI>> paths = new HashMap<>();
 
-		WroGroupContent() {
+		public WroGroupContent() {
 			// nothing to do
 		}
 
@@ -156,7 +156,7 @@ class WroManagerFactory extends ConfigurableWroManagerFactory {
 	public static final class CustomWroConfiguration {
 		private Map<ResourceType, List<String>> types = new HashMap<>();
 
-		CustomWroConfiguration() {
+		public CustomWroConfiguration() {
 			// nothing to do
 		}
 	}

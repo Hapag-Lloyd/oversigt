@@ -139,12 +139,12 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			final ResultSetFunction<X> readOneLine,
 			final String sql,
 			final Object... parameters) throws SQLException {
-		return readFromDatabase(connection, readOneLine, Optional.of(getStatisticsCollector()), sql, parameters);
+		return readFromDatabase(connection, readOneLine, getStatisticsCollector(), sql, parameters);
 	}
 
 	public static <X> List<X> readFromDatabase(final Connection connection,
 			final ResultSetFunction<X> readOneLine,
-			final Optional<StatisticsCollector> statisticsCollector, // TODO this parameter needs to be required
+			final StatisticsCollector statisticsCollector,
 			final String sql,
 			final Object... parameters) throws SQLException {
 		final long time = System.currentTimeMillis();
@@ -152,11 +152,8 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			final Optional<StartedAction> action = statisticsCollector.map(c -> c.startAction("SQL-Query", sql));
-			try {
+			try (StartedAction action = statisticsCollector.startAction("SQL-Query", sql)) {
 				return readFromDatabase(stmt, readOneLine);
-			} finally {
-				action.ifPresent(StartedAction::done);
 			}
 		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);

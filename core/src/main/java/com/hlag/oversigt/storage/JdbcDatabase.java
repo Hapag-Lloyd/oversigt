@@ -386,8 +386,8 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 		final DashboardColorScheme colorScheme = DashboardColorScheme.fromString((String) data.get("COLOR_SCHEME"));
 		final Color foregroundColorStart = Color.parse((String) data.get("FOREGROUND_COLOR_START"));
 		final Color foregroundColorEnd = Color.parse((String) data.get("FOREGROUND_COLOR_END"));
-		final Collection<String> owners = list((String) data.get("OWNER"));
-		final Collection<String> editors = list((String) data.get("EDITOR"));
+		final Collection<String> owners = list(Optional.ofNullable((String) data.get("OWNER")));
+		final Collection<String> editors = list(Optional.ofNullable((String) data.get("EDITOR")));
 
 		return new Dashboard(id,
 				title,

@@ -48,7 +48,7 @@ import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.controller.EventSourceInstanceController;
 import com.hlag.oversigt.core.Oversigt;
-import com.hlag.oversigt.core.OversigtConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.model.EventSourceInstance;

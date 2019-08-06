@@ -22,7 +22,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hlag.oversigt.controller.DashboardController;
 import com.hlag.oversigt.controller.EventSourceInstanceController;
-import com.hlag.oversigt.core.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.HttpListenerConfiguration;
 import com.hlag.oversigt.core.event.EventSender;
 import com.hlag.oversigt.core.event.OversigtEvent;
 
