@@ -36,6 +36,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
 import com.hlag.oversigt.core.eventsource.EventId;
 import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
@@ -90,23 +91,19 @@ public class EventSourceInstanceController {
 	}
 
 	@SuppressWarnings("unchecked")
-	// TODO make private
-	<S extends Service> Optional<S> getService(final EventSourceInstance instance) {
+	private <S extends Service> Optional<S> getService(final EventSourceInstance instance) {
 		return eventSourceInstancesLock.read(() -> Optional.ofNullable((S) eventSourceInstancesInternal.get(instance)));
 	}
 
-	// TODO make private
-	void setService(final EventSourceInstance instance, final Service service) {
+	private void setService(final EventSourceInstance instance, final Service service) {
 		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, service));
 	}
 
-	// TODO make private
-	void unsetService(final EventSourceInstance instance) {
+	private void unsetService(final EventSourceInstance instance) {
 		eventSourceInstancesLock.write(() -> eventSourceInstancesInternal.put(instance, null));
 	}
 
-	// TODO make private
-	void removeEventSourceInstance(final EventSourceInstance instance) {
+	private void removeEventSourceInstance(final EventSourceInstance instance) {
 		eventSourceInstancesLock.write(() -> {
 			/*
 			 * This method is a work around because (why ever)
@@ -253,7 +250,7 @@ public class EventSourceInstanceController {
 
 	private static Module createChildModule(final Class<? extends Module> moduleClass) {
 		if (moduleClass == NOP.class) {
-			return binder -> { /* empty by design */ };
+			return Modules.EMPTY_MODULE;
 		}
 		return TypeUtils.createInstance(moduleClass);
 	}

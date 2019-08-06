@@ -3,14 +3,9 @@ package com.hlag.oversigt.util.text;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.xml.datatype.DatatypeFactory;
-
-import com.jayway.jsonpath.Configuration;
 
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
@@ -18,13 +13,8 @@ public final class TextProcessor {
 
 	private final Map<String, Function<String, String>> processors = new HashMap<>();
 
-	private final Configuration jsonPathConfiguration;
-
-	private final DatatypeFactory dataTypeFactory;
-
-	TextProcessor(final Configuration jsonPathConfiguration, final DatatypeFactory dataTypeFactory) {
-		this.jsonPathConfiguration = jsonPathConfiguration;
-		this.dataTypeFactory = dataTypeFactory;
+	public TextProcessor() {
+		// nothing to do
 	}
 
 	public TextProcessor registerFunction(final String name, final Function<String, String> function) {
@@ -33,7 +23,7 @@ public final class TextProcessor {
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
-		final DatetimeFunction datetimeFunction = new DatetimeFunction(Objects.requireNonNull(dataTypeFactory));
+		final DatetimeFunction datetimeFunction = new DatetimeFunction();
 		registerFunction("datetime", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 		registerFunction("date", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE));
 		registerFunction("time", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_TIME));
@@ -41,8 +31,7 @@ public final class TextProcessor {
 	}
 
 	public TextProcessor registerJsonPathFunction(final String json) {
-		return registerFunction("jsonpath",
-				jsonpath -> new JsonPathFunction(Objects.requireNonNull(jsonPathConfiguration), json).apply(jsonpath));
+		return registerFunction("jsonpath", jsonpath -> new JsonPathFunction(json).apply(jsonpath));
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {

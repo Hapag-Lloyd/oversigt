@@ -18,21 +18,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
-import com.hlag.oversigt.util.text.TextProcessorProvider;
+import com.hlag.oversigt.util.text.TextProcessor;
 
 @EventSource(displayName = "Internet Extraction Text",
 		description = "Shows text extracted from (one or more) URL",
 		view = "List",
 		hiddenDataItems = "updated-at-message")
 public class InternetTextExtractionEventSource extends AbstractDownloadEventSource<TwoColumnListEvent<String>> {
-	@Inject
-	private TextProcessorProvider textProcessorProvider;
-
 	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("", "$[*].name") };
 
 	private Summarization summarization = Summarization.ConcatenationWithLineBreak;
@@ -116,8 +112,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	}
 
 	private boolean filter(final ValueExtraction valueExtraction, final String downloadedContent) {
-		final String result = textProcessorProvider.createTextProcessor()
-				.registerDatetimeFunctions()
+		final String result = new TextProcessor().registerDatetimeFunctions()
 				.registerJsonPathFunction(downloadedContent)
 				.registerRegularExpressionFunction(downloadedContent)
 				.process(valueExtraction.condition)
@@ -140,8 +135,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 	}
 
 	private String process(final ValueExtraction valueExtraction, final String downloadedContent) {
-		return textProcessorProvider.createTextProcessor()
-				.registerDatetimeFunctions()
+		return new TextProcessor().registerDatetimeFunctions()
 				.registerJsonPathFunction(downloadedContent)
 				.registerRegularExpressionFunction(downloadedContent)
 				.process(valueExtraction.format);

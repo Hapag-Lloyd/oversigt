@@ -25,8 +25,8 @@ import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
 import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
-import com.hlag.oversigt.util.ThrowingIntFunction;
 import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.util.function.ThrowingIntFunction;
 
 @EventSource(displayName = "SQL Graph", view = "Rickshawgraph")
 public class SqlGraphEventSource extends AbstractJdbcEventSource<ComplexGraphEvent> {

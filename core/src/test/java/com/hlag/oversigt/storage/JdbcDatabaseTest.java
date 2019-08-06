@@ -14,28 +14,28 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.io.Resources;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JdbcDatabaseTest {
 	private static final String DATABASE_FILENAME = "JdbcDatabaseTest.db";
 
 	private static Optional<Path> tempFolder = Optional.empty();
 
-	@BeforeClass
+	@BeforeAll
 	public static void initTempFolder() throws IOException {
 		tempFolder = Optional.of(Files.createTempDirectory("oversigt"));
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void deleteTempFolder() {
 		tempFolder.map(Path::toFile).ifPresent(dir -> {
 			try {
@@ -51,7 +51,7 @@ public class JdbcDatabaseTest {
 	private Optional<JdbcDatabase> database = Optional.empty();
 
 	@SuppressWarnings("resource")
-	@Before
+	@BeforeEach
 	public void prepareDatabase() throws IOException, URISyntaxException {
 		final URL db = Resources.getResource(DATABASE_FILENAME);
 		dbLocation = tempFolder.map(dir -> dir.resolve(DATABASE_FILENAME));
@@ -60,7 +60,7 @@ public class JdbcDatabaseTest {
 				.of(new JdbcDatabase(new SqliteDialect(), dbLocation.get().toAbsolutePath().toString(), "", "", ""));
 	}
 
-	@After
+	@AfterEach
 	public void shutdownDatabase() throws IOException {
 		database.get().close();
 		Files.delete(dbLocation.get());

@@ -8,10 +8,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -195,17 +193,6 @@ public final class Utils {
 			throw new IllegalArgumentException(errorMessage);
 		}
 		return stringToCheck;
-	}
-
-	public static <T> Map<String, T> removePasswords(final Map<String, T> map, final T empty) {
-		final Iterator<Entry<String, T>> it = map.entrySet().iterator();
-		while (it.hasNext()) {
-			final Entry<String, T> e = it.next();
-			if (e.getKey().toLowerCase().contains("password")) {
-				e.setValue(empty);
-			}
-		}
-		return map;
 	}
 
 	public static int computeHashCode(final Object... objects) {

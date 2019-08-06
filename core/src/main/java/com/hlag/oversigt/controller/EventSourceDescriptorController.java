@@ -27,10 +27,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +61,7 @@ import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.model.EventSourceDescriptor;
 import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.sources.MotivationEventSource;
@@ -67,7 +70,6 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.StringUtils;
 import com.hlag.oversigt.util.TypeUtils;
-import com.hlag.oversigt.util.UiUtils;
 import com.hlag.oversigt.util.Utils;
 
 import de.larssh.utils.Collectors;
@@ -294,7 +296,7 @@ public class EventSourceDescriptorController {
 		final Method setter = descriptor.getWriteMethod();
 		final Class<?> clazz = descriptor.getPropertyType();
 		final Optional<JsonHint> hint = findJsonHint(descriptor);
-		final boolean json = !UiUtils.hasDedicatedEditor(clazz);
+		final boolean json = !hasDedicatedEditor(clazz);
 
 		final String inputType = getType(name,
 				Optional.ofNullable(Strings.emptyToNull(property.type())),
@@ -326,7 +328,7 @@ public class EventSourceDescriptorController {
 		final boolean customValuesAllowed
 				= Boolean.parseBoolean(properties.getProperty("dataItem." + name + ".customValuesAllowed", "false"));
 		final Map<String, String> allowedValues
-				= StringUtils.list(properties.getProperty("dataItem." + name + ".values"))
+				= StringUtils.list(Optional.ofNullable(properties.getProperty("dataItem." + name + ".values")))
 						.stream()
 						.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));
 
@@ -479,8 +481,8 @@ public class EventSourceDescriptorController {
 		addDataItemsFromHtml(dataItems, folder);
 		addDataItemsFromCoffeeScript(dataItems, folder);
 		dataItems.removeAll(RESERVED_DATA_BINDINGS);
-		dataItems.removeAll(StringUtils.list(properties.getProperty("hiddenDataItems")));
-		dataItems.addAll(StringUtils.list(properties.getProperty("additionalDataItems")));
+		dataItems.removeAll(StringUtils.list(Optional.ofNullable(properties.getProperty("hiddenDataItems"))));
+		dataItems.addAll(StringUtils.list(Optional.ofNullable(properties.getProperty("additionalDataItems"))));
 
 		dataItems.stream().map(d -> createEventSourceProperty(d, properties)).forEach(builder::addDataItem);
 
@@ -550,5 +552,41 @@ public class EventSourceDescriptorController {
 		throw new RuntimeException(String.format("Event producing method [%s] does not return event of type %s",
 				method.toString(),
 				OversigtEvent.class.getName()));
+	}
+
+	/**
+	 * Determines whether the provided class has a dedicated editor in the UI or
+	 * not.<br>
+	 * Classes that have a dedicated editor:
+	 * <ul>
+	 * <li>all primitive types</li>
+	 * <li>all types extending {@link SerializableProperty}</li>
+	 * <li>all {@link Enum}s</li>
+	 * <li>{@link String}</li>
+	 * <li>{@link Color}</li>
+	 * <li>{@link Locale}</li>
+	 * <li>{@link Date}</li>
+	 * <li>{@link LocalDate}</li>
+	 * <li>{@link LocalTime}</li>
+	 * <li>{@link TemporalAmount}</li>
+	 * <li>{@link ZoneId}</li>
+	 * </ul>
+	 *
+	 * @param clazz the class to test
+	 * @return <code>true</code> if the class has a dedicated UI editor, otherwise
+	 *         <code>false</code>
+	 */
+	private static boolean hasDedicatedEditor(final Class<?> clazz) {
+		return clazz.isPrimitive()
+				|| clazz == String.class
+				|| SerializableProperty.class.isAssignableFrom(clazz)
+				|| clazz.isEnum()
+				|| clazz == Color.class
+				|| clazz == Locale.class
+				|| clazz == Date.class
+				|| clazz == LocalDate.class
+				|| clazz == LocalTime.class
+				|| TemporalAmount.class.isAssignableFrom(clazz)
+				|| clazz == ZoneId.class; // TODO really?
 	}
 }

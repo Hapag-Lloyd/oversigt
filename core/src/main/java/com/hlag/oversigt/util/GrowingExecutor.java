@@ -87,12 +87,12 @@ public class GrowingExecutor {
 	private final Duration waitBeforeThreadShutdown;
 
 	/**
-	 * mutex object to acquire the monitor for when manipulating the task list
+	 * Mutex object to acquire the monitor for when manipulating the task list
 	 */
 	private final Object taskMutex = new Object();
 
 	/**
-	 * mutex object to acquire the monitor for when manipulating the list of
+	 * Mutex object to acquire the monitor for when manipulating the list of
 	 * threads<br>
 	 * <em>Attention:</em> In order to avoid deadlocks you <strong>must</strong>
 	 * acquire the monitor for {@link #taskMutex} before acquiring this monitor!

@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,10 +47,9 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public final class JsonUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);
 
-	// @Inject
-	// @Named("only-annotated")
-	// @Nullable
-	// private static ObjectMapper onlyAnnotatedObjectMapper;
+	private static final String SERIALIZABLE_PROPERTY_TYPE = "number";
+
+	private static final Predicate<String> PASSWORD_FILTER = s -> !s.toLowerCase().contains("password");
 
 	@Inject
 	@Nullable
@@ -60,11 +60,6 @@ public final class JsonUtils {
 	@Nullable
 	private static ObjectMapper allFieldObjectMapper;
 
-	// @Inject
-	// @Named("only-annotated")
-	// @Nullable
-	// private static ObjectMapper onlyAnnotatedObjectMapper;
-
 	@Inject
 	@Nullable
 	private static Configuration jsonpathConfiguration;
@@ -72,10 +67,6 @@ public final class JsonUtils {
 	private static ObjectMapper getAllFieldsJsonConverter() {
 		return Objects.requireNonNull(allFieldObjectMapper);
 	}
-
-	// private static ObjectMapper getOnlyAnnotatedJsonConverter() {
-	// return Objects.requireNonNull(onlyAnnotatedObjectMapper);
-	// }
 
 	public static String toJson(final Object object) {
 		try {
@@ -95,6 +86,7 @@ public final class JsonUtils {
 		}
 	}
 
+	@Nullable
 	public static <T> T extractValueUsingJsonPath(final JsonPath jsonPath, final String json) {
 		return jsonPath.read(json, jsonpathConfiguration);
 	}
@@ -109,7 +101,9 @@ public final class JsonUtils {
 	 * @return the stripped JSON
 	 */
 	public static String removeKeysFromJson(final String json, final Predicate<String> filter) {
-		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)), filter));
+		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)),
+				filter,
+				obj -> obj instanceof Double ? ((Double) obj).longValue() : obj));
 	}
 
 	/**
@@ -120,36 +114,42 @@ public final class JsonUtils {
 	 * @return the JSON without keys containing "password" (not case sensitive)
 	 */
 	public static String removePasswordsFromJson(final String string) {
-		return removeKeysFromJson(string, s -> !s.toLowerCase().contains("password"));
+		return removeKeysFromJson(string, PASSWORD_FILTER);
+	}
+
+	public static <T> Map<String, T> removePasswords(final Map<String, T> map) {
+		removeKeys(map, PASSWORD_FILTER, Function.identity());
+		return map;
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Object removeKeys(final Object json, final Predicate<String> filter) {
-		if (json instanceof Collection) {
-			removeKeys((Collection<?>) json, filter);
-		} else if (json instanceof Map) {
-			removeKeys((Map<String, Object>) json, filter);
-		} else if (json instanceof Double) {
-			final long l = ((Double) json).longValue();
-			if ((double) l == (Double) json) {
-				return l;
-			}
+	private static Object removeKeys(final Object object,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		if (object instanceof Collection) {
+			removeKeys((Collection<?>) object, filter, customConverter);
+		} else if (object instanceof Map) {
+			removeKeys((Map<String, Object>) object, filter, customConverter);
 		}
-		return json;
+		return customConverter.apply(object);
 	}
 
-	private static void removeKeys(final Collection<?> json, final Predicate<String> filter) {
-		for (final Object e : json) {
-			removeKeys(e, filter);
+	private static void removeKeys(final Collection<?> collection,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		for (final Object e : collection) {
+			removeKeys(e, filter, customConverter);
 		}
 	}
 
-	private static void removeKeys(final Map<String, Object> json, final Predicate<String> filter) {
-		for (final Entry<String, Object> e : json.entrySet()) {
+	private static void removeKeys(final Map<String, Object> map,
+			final Predicate<String> filter,
+			final Function<Object, Object> customConverter) {
+		for (final Entry<String, Object> e : map.entrySet()) {
 			if (!filter.test(e.getKey())) {
 				e.setValue(null);
 			} else {
-				e.setValue(removeKeys(e.getValue(), filter));
+				e.setValue(removeKeys(e.getValue(), filter, customConverter));
 			}
 		}
 	}
@@ -163,6 +163,7 @@ public final class JsonUtils {
 		LOGGER.debug("Creating JSONSchema for class: " + clazz.getName());
 		final Map<String, Object> schema;
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
+			// TODO move this conversion to another class
 			schema = map("$schema",
 					"http://json-schema.org/schema#",
 					"$id",
@@ -183,32 +184,34 @@ public final class JsonUtils {
 	}
 
 	private static Map<String, Object> toJsonSchemaFromProperty(final Class<? extends SerializableProperty> clazz) {
-		final List<? extends SerializableProperty> props = Objects.requireNonNull(storage).listProperties(clazz);
-		final List<String> names
-				= new ArrayList<>(props.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
-		final List<Integer> ids
-				= new ArrayList<>(props.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
-		final List<Map<String, Object>> maps
-				= props.stream().map(p -> map("value", p.getId(), "title", p.getName())).collect(Collectors.toList());
+		final List<? extends SerializableProperty> propertyValues
+				= Objects.requireNonNull(storage).listProperties(clazz);
+		final List<String> names = new ArrayList<>(
+				propertyValues.stream().map(SerializableProperty::getName).collect(Collectors.toList()));
+		final List<Integer> ids = new ArrayList<>(
+				propertyValues.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
+		final List<Map<String, Object>> mapping = propertyValues.stream()
+				.map(p -> map("value", p.getId(), "title", p.getName()))
+				.collect(Collectors.toList());
 		try {
 			if (clazz.getDeclaredField("EMPTY") != null) {
 				names.add(0, "\u00a0");
 				ids.add(0, 0);
-				maps.add(0, map("value", 0, "title", "\u00a0"));
+				mapping.add(0, map("value", 0, "title", "\u00a0"));
 			}
 		} catch (@SuppressWarnings("unused") final NoSuchFieldException | SecurityException ignore) {
 			// continue if EMPTY is not found
 		}
 		return map("type",
-				"string",
+				SERIALIZABLE_PROPERTY_TYPE,
 				"uniqueItems",
-				true, // TODO check whether this should always be true
-				// "enum",
-				// names,
+				true,
+				"enum",
+				ids,
 				"oversigt-ids",
 				ids,
 				"enumSource",
-				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", maps)));
+				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", mapping)));
 	}
 
 	private static Map<String, Object> toJsonSchemaFromType(final Type type, final Optional<JsonHint> hint) {
@@ -267,7 +270,16 @@ public final class JsonUtils {
 					"enumSource",
 					Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", abc)));
 		} else if (SerializableProperty.class.isAssignableFrom(clazz)) {
-			return map("type", "string", "$ref", "/schema/" + clazz.getName(), "oversigt-property", clazz.getName());
+			return map("type",
+					SERIALIZABLE_PROPERTY_TYPE,
+					"$ref",
+					"/schema/" + clazz.getName(),
+					"oversigt-property",
+					clazz.getName(),
+					"$class",
+					clazz.getName(),
+					"serializable-property",
+					clazz.getSimpleName());
 		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
 			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
 			final Map<String, Object> map = map("type",

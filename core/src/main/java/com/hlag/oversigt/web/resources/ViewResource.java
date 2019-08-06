@@ -20,9 +20,9 @@ import javax.ws.rs.core.Response;
 import com.google.common.base.CaseFormat;
 import com.google.common.io.Resources;
 import com.google.inject.Singleton;
-import com.hlag.oversigt.util.Wro4jExecutor;
 import com.hlag.oversigt.web.api.ErrorResponse;
 import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.api.Wro4jExecutor;
 
 import de.larssh.utils.SneakyException;
 import io.swagger.annotations.Api;

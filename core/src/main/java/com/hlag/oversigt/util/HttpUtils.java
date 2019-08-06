@@ -1,15 +1,10 @@
 package com.hlag.oversigt.util;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
 
 public final class HttpUtils {
-
-	public static void reloadWithGet(final HttpServerExchange exchange) {
-		redirect(exchange, exchange.getRequestURI(), false, true);
-	}
 
 	public static void redirect(final HttpServerExchange exchange,
 			final String location,
@@ -56,12 +51,6 @@ public final class HttpUtils {
 		exchange.endExchange();
 	}
 
-	public static void internalServerError(final HttpServerExchange exchange) {
-		exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-		exchange.getResponseSender().send("500 - Internal Server Error");
-		exchange.endExchange();
-	}
-
 	/**
 	 * Convert a byte array to a URL encoded string
 	 *
@@ -69,9 +58,9 @@ public final class HttpUtils {
 	 * @return String
 	 */
 	@SuppressWarnings("checkstyle:IllegalToken")
-	public static String encodeByteArrayToUrlString(/* TODO remove Nullable */@Nullable final byte[] in) {
+	public static String encodeByteArrayToUrlString(final byte[] in) {
 		int i = 0;
-		if (in == null || in.length == 0) {
+		if (in.length == 0) {
 			return "";
 		}
 
