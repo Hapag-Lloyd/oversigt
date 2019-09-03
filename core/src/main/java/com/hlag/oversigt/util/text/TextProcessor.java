@@ -3,9 +3,12 @@ package com.hlag.oversigt.util.text;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.w3c.dom.Document;
 
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
@@ -30,12 +33,20 @@ public final class TextProcessor {
 		return this;
 	}
 
-	public TextProcessor registerJsonPathFunction(final String json) {
-		return registerFunction("jsonpath", jsonpath -> new JsonPathFunction(json).apply(jsonpath));
+	public TextProcessor registerJsonPathFunction(final String probablyJson) {
+		return registerFunction("jsonpath", new JsonPathFunction(probablyJson)::apply);
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {
-		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
+		return registerFunction("regex", new RegularExpressionFunction(value)::apply);
+	}
+
+	public TextProcessor registerXPathFunction(final Optional<Document> document) {
+		return registerFunction("xpath", new XPathFunction(document)::apply);
+	}
+
+	public TextProcessor registerXPathFunction(final String probablyJsonOrXml) {
+		return registerFunction("xpath", new XPathFunction(probablyJsonOrXml)::apply);
 	}
 
 	public String process(final String value) {

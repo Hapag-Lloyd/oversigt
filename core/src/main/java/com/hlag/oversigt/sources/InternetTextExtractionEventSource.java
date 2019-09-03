@@ -29,7 +29,7 @@ import com.hlag.oversigt.util.text.TextProcessor;
 		view = "List",
 		hiddenDataItems = "updated-at-message")
 public class InternetTextExtractionEventSource extends AbstractDownloadEventSource<TwoColumnListEvent<String>> {
-	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("", "$[*].name") };
+	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("true", "$[*].name") };
 
 	private Summarization summarization = Summarization.ConcatenationWithLineBreak;
 
@@ -84,7 +84,8 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		return Objects.toString(value);
 	}
 
-	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match")
+	@Property(name = "Default Value",
+			description = "The default value to show if no or an empty value has been extracted")
 	public String getDefaultValue() {
 		return defaultValue;
 	}
@@ -115,6 +116,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		final String result = new TextProcessor().registerDatetimeFunctions()
 				.registerJsonPathFunction(downloadedContent)
 				.registerRegularExpressionFunction(downloadedContent)
+				.registerXPathFunction(downloadedContent)
 				.process(valueExtraction.condition)
 				.trim();
 		try {
@@ -138,6 +140,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		return new TextProcessor().registerDatetimeFunctions()
 				.registerJsonPathFunction(downloadedContent)
 				.registerRegularExpressionFunction(downloadedContent)
+				.registerXPathFunction(downloadedContent)
 				.process(valueExtraction.format);
 	}
 
