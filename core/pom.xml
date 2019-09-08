@@ -262,10 +262,11 @@
 		</dependency>
 
 		<!-- other useful stuff -->
+		<!-- Must not be updated as long as the JIRA client requires a method that has been removed in version 21! -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>28.1-jre</version>
+			<version>20.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
