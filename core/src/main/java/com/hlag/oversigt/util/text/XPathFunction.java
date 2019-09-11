@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
@@ -22,10 +23,12 @@ import de.larssh.json.dom.values.JacksonDomValue;
 import de.larssh.utils.dom.XPathExpressions;
 import de.larssh.utils.function.ThrowingFunction;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 class XPathFunction implements ThrowingFunction<String, String> {
+	@SuppressFBWarnings(value = "XFB_XML_FACTORY_BYPASS", justification = "There is no factory for JsonDomDocument.")
 	private static Optional<JsonDomDocument<JsonNode>> createJsonDocument(final String probablyJson) {
-		JsonNode jsonNode;
+		final JsonNode jsonNode;
 		try {
 			jsonNode = new ObjectMapper().readTree(probablyJson);
 		} catch (@SuppressWarnings("unused") final IOException e) {
@@ -36,10 +39,11 @@ class XPathFunction implements ThrowingFunction<String, String> {
 
 	private static Optional<Document> createXmlDocument(final String probablyXml) {
 		try {
-			return Optional.of(DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder()
-					.parse(new InputSource(new StringReader(probablyXml))));
-		} catch (@SuppressWarnings("unused") SAXException | IOException | ParserConfigurationException e) {
+			final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			return Optional.of(
+					documentBuilderFactory.newDocumentBuilder().parse(new InputSource(new StringReader(probablyXml))));
+		} catch (@SuppressWarnings("unused") final SAXException | IOException | ParserConfigurationException e) {
 			return Optional.empty();
 		}
 	}
@@ -62,6 +66,7 @@ class XPathFunction implements ThrowingFunction<String, String> {
 
 	@Nullable
 	@Override
+	@SuppressFBWarnings(value = "XPATH_INJECTION", justification = "xPath injection by design")
 	public String applyThrowing(@Nullable final String xPathString) throws XPathExpressionException {
 		Objects.requireNonNull(xPathString, "Input for a XPath must be non null");
 
