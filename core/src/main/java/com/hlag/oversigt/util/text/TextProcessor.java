@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 
 import org.w3c.dom.Document;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
 			= Pattern.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
@@ -58,8 +60,16 @@ public final class TextProcessor {
 				throw new RuntimeException("Data replacement '" + mainMatcher.group(1) + "' is unknown.");
 			}
 
-			string = string.replace(mainMatcher.group(),
-					processors.get(processorName).apply(mainMatcher.group("input")));
+			@Nullable
+			final String input = mainMatcher.group("input");
+			if (input != null) {
+				final Function<String, String> processor = processors.get(processorName);
+				@Nullable
+				final String replacement = processor.apply(input);
+				if (replacement != null) {
+					string = string.replace(mainMatcher.group(), replacement);
+				}
+			}
 		}
 		return string;
 	}
