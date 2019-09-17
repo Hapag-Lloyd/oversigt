@@ -471,6 +471,10 @@ public final class OversigtConfiguration {
 	static final class UiConfiguration {
 		private boolean showOwnersInWelcomePage = true;
 
+		private UiConfiguration() {
+			// nothing to do
+		}
+
 		public boolean isShowOwnersInWelcomePage() {
 			return showOwnersInWelcomePage;
 		}
