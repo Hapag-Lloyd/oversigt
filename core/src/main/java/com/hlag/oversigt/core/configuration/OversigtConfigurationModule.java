@@ -75,6 +75,9 @@ public class OversigtConfigurationModule extends AbstractModule {
 		// template handling
 		bind(CustomWroConfiguration.class).toInstance(config.getWro());
 
+		// ui settings
+		bind("showOwnersInWelcomePage").to(config.getUi().isShowOwnersInWelcomePage());
+
 		// api settings
 		bind("hostname").to(config.getHostname().orElseThrow(() -> new RuntimeException("No hostname specified")));
 		bind(SignatureAlgorithm.class).toInstance(config.getApi().getJwtAlgorithm());

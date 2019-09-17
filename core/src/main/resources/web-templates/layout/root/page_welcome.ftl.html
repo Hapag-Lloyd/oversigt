@@ -37,7 +37,9 @@
 								<#list dashboards as dashboard>
 								<div class="list-group-item">
 									<a class="btn dashboardLink" href="/${dashboard.id}">${dashboard.title}</a>
+									<#if showOwnersInWelcomePage>
 									<a class="btn dashboardLink right" style="font-size: 0.8em" href="mailto:${getOwnerMail.apply(dashboard.id)}">${getOwnerName.apply(dashboard.id)}</a>
+									</#if>
 								</div>
 								</#list>
 							</div>

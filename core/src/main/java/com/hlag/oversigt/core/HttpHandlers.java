@@ -136,6 +136,10 @@ public class HttpHandlers {
 	private String[] widgetsPaths;
 
 	@Inject
+	@Named("showOwnersInWelcomePage")
+	private boolean showOwnersInWelcomePage;
+
+	@Inject
 	@Named("foreignEvents.needAuthentication")
 	private boolean foreignEventsNeedAuthentication;
 
@@ -249,6 +253,8 @@ public class HttpHandlers {
 								.filter(Dashboard::isEnabled)
 								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))
 								.collect(Collectors.toList()),
+						"showOwnersInWelcomePage",
+						showOwnersInWelcomePage,
 						"getOwnerName",
 						(Function<String, String>) dashboardId -> dashboardController.getDashboard(dashboardId)
 								.map(d -> d.getOwners().iterator().next())
