@@ -3,9 +3,14 @@ package com.hlag.oversigt.util.text;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.w3c.dom.Document;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class TextProcessor {
 	private static final Pattern PATTERN_DATA_REPLACEMENT
@@ -30,12 +35,20 @@ public final class TextProcessor {
 		return this;
 	}
 
-	public TextProcessor registerJsonPathFunction(final String json) {
-		return registerFunction("jsonpath", jsonpath -> new JsonPathFunction(json).apply(jsonpath));
+	public TextProcessor registerJsonPathFunction(final String probablyJson) {
+		return registerFunction("jsonpath", new JsonPathFunction(probablyJson)::apply);
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {
-		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
+		return registerFunction("regex", new RegularExpressionFunction(value)::apply);
+	}
+
+	public TextProcessor registerXPathFunction(final Optional<Document> document) {
+		return registerFunction("xpath", new XPathFunction(document)::apply);
+	}
+
+	public TextProcessor registerXPathFunction(final String probablyJsonOrXml) {
+		return registerFunction("xpath", new XPathFunction(probablyJsonOrXml)::apply);
 	}
 
 	public String process(final String value) {
@@ -47,8 +60,16 @@ public final class TextProcessor {
 				throw new RuntimeException("Data replacement '" + mainMatcher.group(1) + "' is unknown.");
 			}
 
-			string = string.replace(mainMatcher.group(),
-					processors.get(processorName).apply(mainMatcher.group("input")));
+			@Nullable
+			final String input = mainMatcher.group("input");
+			if (input != null) {
+				final Function<String, String> processor = processors.get(processorName);
+				@Nullable
+				final String replacement = processor.apply(input);
+				if (replacement != null) {
+					string = string.replace(mainMatcher.group(), replacement);
+				}
+			}
 		}
 		return string;
 	}
