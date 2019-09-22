@@ -80,6 +80,8 @@ public final class OversigtConfiguration {
 
 	private Optional<String> hostname = Optional.empty();
 
+	private UiConfiguration ui = new UiConfiguration();
+
 	private ApiConfiguration api = new ApiConfiguration();
 
 	private EventManagerConfiguration eventManager = new EventManagerConfiguration();
@@ -115,6 +117,10 @@ public final class OversigtConfiguration {
 
 	public ApiConfiguration getApi() {
 		return api;
+	}
+
+	public UiConfiguration getUi() {
+		return ui;
 	}
 
 	public EventManagerConfiguration getEventManager() {
@@ -459,6 +465,18 @@ public final class OversigtConfiguration {
 
 		public List<String> getAllowedApiKeys() {
 			return allowedApiKeys;
+		}
+	}
+
+	static final class UiConfiguration {
+		private boolean showOwnersInWelcomePage = true;
+
+		private UiConfiguration() {
+			// nothing to do
+		}
+
+		public boolean isShowOwnersInWelcomePage() {
+			return showOwnersInWelcomePage;
 		}
 	}
 }

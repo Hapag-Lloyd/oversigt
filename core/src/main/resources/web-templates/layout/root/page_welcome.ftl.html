@@ -30,25 +30,25 @@
 				<h1>Oversigt</h1>
 				<p><strong>Welcome to Oversigt</strong>. This is the famous dashboard server.</p>
 				<#if dashboards?size != 0>
-				<p>There are already a number of dashboards available. You may visit them by clicking the links below:</p>
-				<div class="panel panel-default">
-					<div class="list-group">
-						<div id="dashboardSearchList">
-							<#list dashboards as dashboard>
-							<div class="list-group-item">
-								<form method="POST" style="margin-bottom:0px;">
-									<input type="hidden" name="dashboardId" value="${dashboard.id}" />
+					<p>There are already a number of dashboards available. You may visit them by clicking the links below:</p>
+					<div class="panel panel-default">
+						<div class="list-group">
+							<div id="dashboardSearchList">
+								<#list dashboards as dashboard>
+								<div class="list-group-item">
 									<a class="btn dashboardLink" href="/${dashboard.id}">${dashboard.title}</a>
-								</form>
+									<#if showOwnersInWelcomePage>
+									<a class="btn dashboardLink right" style="font-size: 0.8em" href="mailto:${getOwnerMail.apply(dashboard.id)}">${getOwnerName.apply(dashboard.id)}</a>
+									</#if>
+								</div>
+								</#list>
 							</div>
-							</#list>
 						</div>
 					</div>
-				</div>
-				<p>You can create new dashboards by navigating to <code>/dashboardName</code>.</p>
-				<p>Another option is to switch to the <a href="/config">configuration page</a> to change some dashboard settings.</p>
+					<p>You can create new dashboards by navigating to <code>/dashboardName</code>.</p>
+					<p>Another option is to switch to the <a href="/config">configuration page</a> to change some dashboard settings.</p>
 				<#else>
-				<p>There are no dashboards yet. Create one by navigating to <code>/dashboardName</code> or switch to the <a href="/config">configuration page</a> to configure your server.</p>
+					<p>There are no dashboards yet. Create one by navigating to <code>/dashboardName</code> or switch to the <a href="/config">configuration page</a> to configure your server.</p>
 				</#if>				
 			</div>
 		</div><!-- /.container -->

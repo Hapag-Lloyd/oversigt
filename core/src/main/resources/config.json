@@ -16,6 +16,9 @@
 			}
 		}
 	],
+	"ui": {
+		"showOwnersInWelcomePage": true
+	},
 	"api": {
 		"jwtSecretBase64": "2e35939482304c0aafdb774c4a4ab754"
 	},
