@@ -10,12 +10,12 @@ rem Update parent version of child modules
 call mvn org.codehaus.mojo:versions-maven-plugin:update-child-modules -DgenerateBackupPoms=false -DallowSnapshots=true
 
 rem Update version properties
-call mvn org.codehaus.mojo:versions-maven-plugin:update-properties -DgenerateBackupPoms=false -Dmaven.version.rules="file:///%old_cd%/rules.xml"
+call mvn org.codehaus.mojo:versions-maven-plugin:update-properties -DgenerateBackupPoms=false -Dmaven.version.rules="file:///%~dp0/rules.xml"
 
 rem Update version tags
-call mvn org.codehaus.mojo:versions-maven-plugin:use-latest-releases -DgenerateBackupPoms=false -Dmaven.version.rules="file:///%old_cd%/rules.xml"
+call mvn org.codehaus.mojo:versions-maven-plugin:use-latest-releases -DgenerateBackupPoms=false -Dmaven.version.rules="file:///%~dp0/rules.xml"
 
-rem Revert working directory and pause
+rem Revert working directory
 cd /d "%old_cd%"
 
 rem Keep results visible

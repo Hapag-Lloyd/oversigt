@@ -2,7 +2,7 @@
 <ruleset comparisonMethod="maven" xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0 http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
 	<ignoreVersions>
 		<!-- Preview -->
-		<ignoreVersion type="regex">^(?i)[\d.]+-?(alpha|b|beta|cr|m|milestone|nightly|p|preview|rc|test)([^a-z].*)?$</ignoreVersion>
+		<ignoreVersion type="regex">^(?i)[\d.]+-?(alpha|b|beta|cr|m|milestone|nightly|p|pr|preview|rc|test)([^a-z].*)?$</ignoreVersion>
 		
 		<!-- Date-based versions from the 2000s -->
 		<ignoreVersion type="regex">^200\d{4}.*$</ignoreVersion>

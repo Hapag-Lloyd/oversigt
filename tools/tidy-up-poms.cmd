@@ -9,7 +9,7 @@ cd /d "%~dp0\.."
 rem Tidy up POMs
 call mvn org.codehaus.mojo:tidy-maven-plugin:pom
 
-rem Revert working directory and pause
+rem Revert working directory
 cd /d "%old_cd%"
 
 rem Keep results visible
