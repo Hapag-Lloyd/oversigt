@@ -142,9 +142,50 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		return readFromDatabase(connection, readOneLine, getStatisticsCollector(), sql, parameters);
 	}
 
+	/**
+	 * Read object from a database.
+	 *
+	 * @param <X>                 the type to read
+	 * @param connection          the connection to read from
+	 * @param readOneLine         a function to read one single object from a
+	 *                            {@link ResultSet}
+	 * @param statisticsCollector an object to collect statistical information
+	 * @param sql                 the SQL to execute
+	 * @param parameters          parameters to be inserted into the SQL
+	 * @return the list of read objects
+	 * @throws SQLException if something fails
+	 */
 	public static <X> List<X> readFromDatabase(final Connection connection,
 			final ResultSetFunction<X> readOneLine,
 			final StatisticsCollector statisticsCollector,
+			final String sql,
+			final Object... parameters) throws SQLException {
+		return readFromDatabase(connection, readOneLine, Optional.of(statisticsCollector), sql, parameters);
+	}
+
+	/**
+	 * Read object from a database.
+	 *
+	 * @param <X>                 the type to read
+	 * @param connection          the connection to read from
+	 * @param readOneLine         a function to read one single object from a
+	 *                            {@link ResultSet}
+	 * @param statisticsCollector an optional object to collect statistical
+	 *                            information
+	 * @param sql                 the SQL to execute
+	 * @param parameters          parameters to be inserted into the SQL
+	 * @return the list of read objects
+	 * @throws SQLException if something fails
+	 * @deprecated In the end the
+	 *             {@link com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector}
+	 *             shall not be optional. Use
+	 *             {@link #readFromDatabase(Connection, ResultSetFunction, StatisticsCollector, String, Object...)}
+	 *             instead.
+	 */
+	@Deprecated
+	public static <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final Optional<StatisticsCollector> statisticsCollector,
 			final String sql,
 			final Object... parameters) throws SQLException {
 		final long time = System.currentTimeMillis();
@@ -152,8 +193,11 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			try (StartedAction action = statisticsCollector.startAction("SQL-Query", sql)) {
+			final Optional<StartedAction> action = statisticsCollector.map(sc -> sc.startAction("SQL-Query", sql));
+			try {
 				return readFromDatabase(stmt, readOneLine);
+			} finally {
+				action.ifPresent(StartedAction::close);
 			}
 		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
