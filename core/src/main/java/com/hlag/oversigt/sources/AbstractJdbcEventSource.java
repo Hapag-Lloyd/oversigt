@@ -179,7 +179,7 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 	 * @deprecated In the end the
 	 *             {@link com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector}
 	 *             shall not be optional. Use
-	 *             {@link #readFromDatabase(Connection, ResultSetFunction, StatisticsCollector, String, Object...)}
+	 *             {@code #readFromDatabase(Connection, ResultSetFunction, StatisticsCollector, String, Object...)}
 	 *             instead.
 	 */
 	@Deprecated
