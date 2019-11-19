@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.28</version>
+			<version>1.7.29</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-core</artifactId>
-			<version>2.0.25.Final</version>
+			<version>2.0.27.Final</version>
 		</dependency>
 		<!-- undertow-servlet for WRO -->
 		<dependency>
@@ -102,12 +102,12 @@
 		<dependency>
 			<groupId>org.jboss.spec.javax.servlet</groupId>
 			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
-			<version>1.0.0.Final</version>
+			<version>2.0.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
-			<version>2.0.25.Final</version>
+			<version>2.0.27.Final</version>
 		</dependency>
 
 		<!-- Validation -->
@@ -119,12 +119,12 @@
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>6.0.17.Final</version>
+			<version>6.1.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator-annotation-processor</artifactId>
-			<version>6.0.17.Final</version>
+			<version>6.1.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.web</groupId>
@@ -136,8 +136,10 @@
 		<dependency>
 			<groupId>org.jboss.spec.javax.ws.rs</groupId>
 			<artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
-			<version>1.0.3.Final</version>
+			<version>2.0.1.Final</version>
 		</dependency>
+		
+		<!-- Resteasy dependencies must not be updated as staring Oversigt fails otherwise! -->
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxrs</artifactId>
@@ -176,27 +178,27 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.9</version>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.9.9</version>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.9.3</version>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.9</version>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jdk8</artifactId>
-			<version>2.9.9</version>
+			<version>2.10.0</version>
 		</dependency>
 		<!--javax.el is dependency required by weld-servlet -->
 		<dependency>
@@ -215,22 +217,22 @@
 		<dependency>
 			<groupId>io.swagger</groupId>
 			<artifactId>swagger-core</artifactId>
-			<version>1.5.23</version>
+			<version>1.5.24</version>
 		</dependency>
 		<dependency>
 			<groupId>io.swagger</groupId>
 			<artifactId>swagger-models</artifactId>
-			<version>1.5.23</version>
+			<version>1.5.24</version>
 		</dependency>
 		<dependency>
 			<groupId>io.swagger</groupId>
 			<artifactId>swagger-annotations</artifactId>
-			<version>1.5.23</version>
+			<version>1.5.24</version>
 		</dependency>
 		<dependency>
 			<groupId>io.swagger</groupId>
 			<artifactId>swagger-jaxrs</artifactId>
-			<version>1.5.23</version>
+			<version>1.5.24</version>
 		</dependency>
 
 		<!-- String similarity -->
@@ -286,7 +288,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
-			<version>5.1.9.RELEASE</version>
+			<version>5.2.1.RELEASE</version>
 		</dependency>
 
 		<!-- JSON -->
@@ -353,7 +355,7 @@
 		<dependency>
 			<groupId>de.jollyday</groupId>
 			<artifactId>jollyday</artifactId>
-			<version>0.5.8</version>
+			<version>0.5.9</version>
 		</dependency>
 
 		<!-- Mail sending -->
@@ -367,32 +369,32 @@
 		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
-			<version>5.4.2.201908231537-r</version>
+			<version>5.5.1.201910021850-r</version>
 		</dependency>
 
 		<!-- Testing -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.13.2</version>
+			<version>3.14.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>3.0.0</version>
+			<version>3.1.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
   <groupId>org.mockito</groupId>
   <artifactId>mockito-junit-jupiter</artifactId>
-  <version>3.0.0</version>
+  <version>3.1.0</version>
   <scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.5.1</version>
+			<version>5.5.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
