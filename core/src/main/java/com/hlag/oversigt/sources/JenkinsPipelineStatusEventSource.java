@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.hlag.oversigt.core.eventsource.EventSource;
 import com.hlag.oversigt.core.eventsource.EventSourceException;
@@ -14,74 +16,192 @@ import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.ServerConnection;
-import com.hlag.oversigt.sources.event.TwoColumnListEvent;
-import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
+import com.hlag.oversigt.sources.event.JenkinsPipelineStatusEvent;
+import com.hlag.oversigt.sources.event.JenkinsPipelineStatusEvent.JenkinsPipelineEventStatusItem;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.Build;
+import com.offbytwo.jenkins.model.BuildResult;
 import com.offbytwo.jenkins.model.Job;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-@EventSource(view = "List", displayName = "Jenkins Pipeline Status", hiddenDataItems = { "moreinfo" })
-public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<TwoColumnListEvent<String>> {
+@EventSource(view = "JenkinsPipelineStatus", displayName = "Jenkins Pipeline Status", hiddenDataItems = { "moreinfo" })
+public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<JenkinsPipelineStatusEvent> {
 
 	private Credentials credentials = Credentials.EMPTY;
 
 	private ServerConnection jenkinsUrl = ServerConnection.EMPTY;
 
+	private String regEx = "";
+
 	private Pipeline[] pipelines = {};
 
 	@Override
-	protected Optional<TwoColumnListEvent<String>> produceEvent() throws EventSourceException {
-		final List<ListEventItem<String>> list = new ArrayList<>();
+	protected Optional<JenkinsPipelineStatusEvent> produceEvent() throws EventSourceException {
+		final List<JenkinsPipelineEventStatusItem> list = new ArrayList<>();
 
 		// Requests pipeline status
 		for (final Pipeline pipeline : pipelines) {
-			list.add(new ListEventItem<>(pipeline.pipelineName.replace("_", " ").substring(4),
-					getJenkinsDataByID(pipeline.pipelineName),
-					"color: red;", // TODO: test style
-					""));
+			for (final Branch branch : pipeline.branch) {
+				list.addAll(getJenkinsDataByID(pipeline, branch, branch.times));
+			}
 		}
 
 		// Compare Pipelines
-		final Comparator<ListEventItem<String>> compareValue = Comparator.comparing(ListEventItem::getValue);
-		final Comparator<ListEventItem<String>> compareValueAndLabel
-				= compareValue.thenComparing(ListEventItem::getLabel);
-		list.sort(compareValueAndLabel);
+		final Comparator<JenkinsPipelineEventStatusItem> comparator
+				= Comparator.comparing(JenkinsPipelineEventStatusItem::getStatus)
+						.thenComparing(JenkinsPipelineEventStatusItem::getPipeline);
+		list.sort(comparator);
 
-		return Optional.of(new TwoColumnListEvent<>(list));
+		return Optional.of(new JenkinsPipelineStatusEvent(list));
 	}
 
-	public String getJenkinsDataByID(final String build) throws EventSourceException {
+	public List<JenkinsPipelineEventStatusItem> getJenkinsDataByID(final Pipeline pipe,
+			final Branch branch,
+			final int times) throws EventSourceException {
 		try (final JenkinsServer jenkins
 				= new JenkinsServer(getJenkinsUri(), credentials.getUsername(), credentials.getPassword())) {
 			final Map<String, Job> jobs = jenkins.getJobs();
-
 			// request Pipeline information
-			final JobWithDetails job = jobs.get(build).details();
-			final Build last = job.getLastBuild();
-			final Build lateststable = job.getLastStableBuild();
-			final Build latestunstable = job.getLastUnstableBuild();
-			final Build latestfailed = job.getLastFailedBuild();
+			final JobWithDetails job = jobs.get(pipe.pipelineName).details();
+			final List<JenkinsPipelineEventStatusItem> returns = new ArrayList<>();
+			for (final Build buildfromjob : job.getBuilds()) {
+				if (buildfromjob.details().getDescription() != null
+						&& buildfromjob.details().getDescription().contains(branch.branchName)) {
+					final BuildResult status = buildfromjob.details().getResult();
+					if (status != null) {
+						String userID = "";
+						String ticket = "";
+						final Matcher m = Pattern.compile(regEx).matcher(buildfromjob.details().getDescription());
+						m.reset(buildfromjob.details().getDescription());
+						if (m.find()) {
+							// Use group 2 and 3 from RegEx
+							userID = m.group(2);
+							ticket = m.group(3);
+						}
+						if (status.equals(BuildResult.UNKNOWN)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"No Build available",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else if (status.equals(BuildResult.SUCCESS)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Build successful",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else if (status.equals(BuildResult.UNSTABLE)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Build unstable",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else if (status.equals(BuildResult.FAILURE)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Build failed",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											"color:red"));
+						} else if (status.equals(BuildResult.NOT_BUILT)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Has never run",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else if (status.equals(BuildResult.BUILDING)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Is currently building",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else if (status.equals(BuildResult.ABORTED)) {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"Build aborted",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						} else {
+							returns.add(
+									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace("_", " ").substring(4),
+											branch.branchName,
+											ticket,
+											userID,
+											Integer.toString(buildfromjob.getNumber()),
+											"no status available",
+											"font-weight: bold",
+											"",
+											"font-style: italic",
+											"font-style: italic",
+											"font-size: 80%",
+											""));
+						}
+						if (returns.size() == times) {
+							return returns;
+						}
+					}
+				}
+			}
 
-			// compares build numbers to get build status
-			if (last.equals(latestfailed) && last.equals(latestunstable) && last.equals(lateststable)) {
-				return "No Build available";
-			}
-			if (last.equals(lateststable)) {
-				return "Build succesful";
-			}
-			if (last.equals(latestunstable)) {
-				return "Build unstable";
-			}
-			if (last.equals(latestfailed)) {
-				return "Build failed";
-			}
-			if (last.equals(Build.BUILD_HAS_NEVER_RUN)) {
-				return "Has never run";
-			}
-			return "Newest Build not finished";
+			return returns;
+
 		} catch (final IOException e) {
-			throw new EventSourceException("Failed accessing Jenkins for " + build, e);
+			throw new EventSourceException("Failed accessing Jenkins for " + pipe.pipelineName, e);
 		}
 	}
 
@@ -91,6 +211,16 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<TwoCo
 		} catch (final IllegalArgumentException e) {
 			throw new EventSourceException("Failed parsing Jenkins URL as URI", e);
 		}
+	}
+
+	@Property(name = "Regular Expression",
+			description = "The regular expression(Java) used to specify information from description.")
+	public String getValue() {
+		return regEx;
+	}
+
+	public void setValue(final String regEx) {
+		this.regEx = regEx;
 	}
 
 	@Property(name = "Credentials", description = "The credentials to be used when connecting to Jenkins.")
@@ -120,12 +250,22 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<TwoCo
 		this.pipelines = pipelines;
 	}
 
-	private static class Pipeline {
+	public static class Pipeline {
 		private String pipelineName = "";
 
-		private String branch = "";
+		private Branch[] branch = {};
 
 		public Pipeline() {
+			// nothing to initialize here
+		}
+	}
+
+	public static class Branch {
+		private String branchName = "";
+
+		private int times = 1;
+
+		public Branch() {
 			// nothing to initialize here
 		}
 	}
