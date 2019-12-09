@@ -433,7 +433,7 @@ public class EventSourceDescriptorController {
 	private EventSourceDescriptor loadEventSourceFromPathOrFail(final Path folder) {
 		try {
 			return loadEventSourceFromPath(folder);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			throw new RuntimeException("Unable to load widget from: " + folder, e);
 		}
 	}

@@ -1,0 +1,17 @@
+<h1 class="title" data-bind="title"></h1>
+
+<div class="cut">
+	<table>
+	  <tr data-foreach-item="items">
+	    <td class="pipeline" data-bind="item.pipeline" data-bind-style="item.pipelineStyle"></td>
+	    <td class="branch" data-bind="item.branch" data-bind-style="item.branchStyle"></td>
+	    <td class="userID" data-bind="item.userID" data-bind-style="item.userIDStyle"></td>
+	    <td class="ticket" data-bind="item.ticket" data-bind-style="item.ticketStyle"></td>
+	    <td class="buildID" data-bind="item.buildID" data-bind-style="item.buildIDStyle"></td>
+	    <td class="status" data-bind="item.status" data-bind-style="item.statusStyle"></td>
+	  </tr>
+	</table>
+</div>
+
+<p class="more-info" data-bind="moreinfo"></p>
+<p class="updated-at" data-bind="updatedAtMessage"></p>
