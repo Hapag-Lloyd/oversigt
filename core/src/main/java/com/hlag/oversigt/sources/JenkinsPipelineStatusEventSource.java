@@ -35,6 +35,10 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<Jenki
 
 	private Pipeline[] pipelines = {};
 
+	public JenkinsPipelineStatusEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
 	protected Optional<JenkinsPipelineStatusEvent> produceEvent() throws EventSourceException {
 		final List<JenkinsPipelineEventStatusItem> list = new ArrayList<>();
@@ -58,7 +62,7 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<Jenki
 	public List<JenkinsPipelineEventStatusItem> getJenkinsDataByID(final Pipeline pipe,
 			final Branch branch,
 			final int times) throws EventSourceException {
-		try (final JenkinsServer jenkins
+		try (JenkinsServer jenkins
 				= new JenkinsServer(getJenkinsUri(), credentials.getUsername(), credentials.getPassword())) {
 			final Map<String, Job> jobs = jenkins.getJobs();
 			// request Pipeline information

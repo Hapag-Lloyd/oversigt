@@ -138,8 +138,9 @@
 			<artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
 			<version>2.0.1.Final</version>
 		</dependency>
-		
-		<!-- Resteasy dependencies must not be updated as staring Oversigt fails otherwise! -->
+
+		<!-- Resteasy dependencies must not be updated as staring Oversigt fails 
+			otherwise! -->
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxrs</artifactId>
@@ -264,7 +265,8 @@
 		</dependency>
 
 		<!-- other useful stuff -->
-		<!-- Must not be updated as long as the JIRA client requires a method that has been removed in version 21! -->
+		<!-- Must not be updated as long as the JIRA client requires a method that 
+			has been removed in version 21! -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -386,10 +388,10 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-  <groupId>org.mockito</groupId>
-  <artifactId>mockito-junit-jupiter</artifactId>
-  <version>3.1.0</version>
-  <scope>test</scope>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>3.1.0</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -401,6 +403,11 @@
 			<groupId>com.offbytwo.jenkins</groupId>
 			<artifactId>jenkins-client</artifactId>
 			<version>0.3.8</version>
+		</dependency>
+		<dependency>
+			<groupId>xml-apis</groupId>
+			<artifactId>xml-apis</artifactId>
+			<version>1.4.01</version>
 		</dependency>
 	</dependencies>
 
