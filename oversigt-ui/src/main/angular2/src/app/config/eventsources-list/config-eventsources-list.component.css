@@ -1,0 +1,15 @@
+.event-source-list {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start /*space-between*/;
+    align-items: baseline;
+}
+
+.not-running {
+  background-color: rgb(235,235,235);
+}
+
+.not-enabled {
+  text-decoration: line-through;
+}
+

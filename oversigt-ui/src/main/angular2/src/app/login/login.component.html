@@ -1,0 +1,20 @@
+<div class="login-wrapper">
+  <form class="login">
+    <section class="title">
+      <h3 class="welcome">Welcome to</h3>
+      Oversigt
+    </section>
+    <div class="login-group">
+      <clr-input-container>
+        <input type="text" name="username" clrInput placeholder="Username" [(ngModel)]="username" />
+      </clr-input-container>
+      <clr-password-container>
+        <input type="password" name="password" clrPassword placeholder="Password" [(ngModel)]="password" />
+      </clr-password-container>
+      <div *ngIf="loginFailed" class="error active">
+        Invalid user name or password
+      </div>
+      <button type="submit" class="btn btn-primary" (click)="doLogin()" [disabled]="!loginButtonEnabled">Log In</button>
+    </div>
+  </form>
+</div>

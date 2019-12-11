@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -17,6 +18,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.OPTIONS;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -34,59 +36,37 @@ import com.google.inject.matcher.Matchers;
 import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.resources.Authentication;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 
 public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextListener {
+	private static final Pattern CHECK_METHOD_WITH_PATH_PATTERN = Pattern.compile("\\{[^\\}]*?\\}");
+
+	public ApiBootstrapListener() {
+		// no fields to be initialized
+	}
+
+	/** {@inheritDoc} */
 	@Override
-	protected List<? extends Module> getModules(ServletContext context) {
+	protected List<? extends Module> getModules(@SuppressWarnings("unused") @Nullable final ServletContext context) {
 		return Arrays.asList(new ApiModule());
 	}
 
-	private static class ApiModule extends AbstractModule {
-		@Override
-		protected void configure() {
-			List<Class<? extends Annotation>> annotations = Arrays.asList(io.swagger.annotations.Api.class,
-					javax.ws.rs.ext.Provider.class);
-			Predicate<Class<?>> predicate = clazz -> annotations.stream()
-					.filter(clazz::isAnnotationPresent)
-					.findAny()
-					.isPresent();
-			// TODO Create possibility to register more packages to scan
-			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());
-			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());
-
-			ApiValidationInterceptor interceptor = new ApiValidationInterceptor();
-			binder().requestInjection(interceptor);
-			binder().bindInterceptor(Matchers.annotatedWith(Path.class),
-					Matchers.annotatedWith(GET.class)
-							.or(Matchers.annotatedWith(POST.class))
-							.or(Matchers.annotatedWith(PUT.class))
-							.or(Matchers.annotatedWith(DELETE.class))
-							.or(Matchers.annotatedWith(HEAD.class))
-							.or(Matchers.annotatedWith(OPTIONS.class)),
-					interceptor);
-		}
-	}
-
+	/** {@inheritDoc} */
 	@Override
-	protected void withInjector(Injector injector) {
-		processInjector(injector, this::checkClassMethods);
+	protected void withInjector(@Nullable final Injector injector) {
+		processInjector(Objects.requireNonNull(injector), this::checkClassMethods);
 	}
 
-	private void checkClassMethods(Class<?> clazz) {
+	private void checkClassMethods(final Class<?> clazz) {
 		if (clazz.isAnnotationPresent(Path.class)) {
 			checkMethodWithPath(clazz.getAnnotation(Path.class).value(), "Class " + clazz.getName() + " ");
 		}
-		for (Method method : clazz.getDeclaredMethods()) {
-			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(method), //
-					GET.class,
-					PUT.class,
-					POST.class,
-					DELETE.class,
-					HEAD.class,
-					OPTIONS.class)) {
+		for (final Method method : clazz.getDeclaredMethods()) {
+			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(
+					method), GET.class, PUT.class, POST.class, DELETE.class, HEAD.class, OPTIONS.class)) {
 				checkMethod(method);
 			}
 			if (method.isAnnotationPresent(Path.class)) {
@@ -95,28 +75,31 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
-	private void checkMethodWithPath(String originalPath, String message) {
-		String path = originalPath.replaceAll("\\{[^\\}]*?\\}", "");
+	private void checkMethodWithPath(final String originalPath, final String message) {
+		final String path = CHECK_METHOD_WITH_PATH_PATTERN.matcher(originalPath).replaceAll("");
 		Arrays.asList(CaseFormat.values()).forEach(cf -> checkCaseFormatOnMethodWithPath(path, cf, message));
 	}
 
-	private void checkCaseFormatOnMethodWithPath(String before, CaseFormat from, String message) {
-		String after = from.converterTo(CaseFormat.LOWER_HYPHEN).convert(before);
+	private void checkCaseFormatOnMethodWithPath(final String before, final CaseFormat from, final String message) {
+		final String after = from.converterTo(CaseFormat.LOWER_HYPHEN).convert(before);
 		if (!before.equals(after)) {
-			error(message + "does not follow the path guide line. The Path must be in lower-hypen format: " + after
-					+ " instead of " + before);
+			error(message
+					+ "does not follow the path guide line. The Path must be in lower-hypen format: "
+					+ after
+					+ " instead of "
+					+ before);
 		}
 	}
 
-	private void checkMethod(Method method) {
-		ApiOperation operation = method.getAnnotation(ApiOperation.class);
+	private void checkMethod(final Method method) {
+		final ApiOperation operation = method.getAnnotation(ApiOperation.class);
 		Objects.requireNonNull(operation, message(method, "must use @ApiOperation", false));
 		verify(!Strings.isNullOrEmpty(operation.value()),
 				method,
 				"must expose a short description using @ApiOperation.value()",
 				false);
 
-		ApiResponses responses = method.getAnnotation(ApiResponses.class);
+		final ApiResponses responses = method.getAnnotation(ApiResponses.class);
 		Objects.requireNonNull(responses, message(method, "must declare response codes using @ApiResponses", false));
 		verify(responses.value().length > 0,
 				method,
@@ -126,8 +109,11 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		if (method.isAnnotationPresent(RolesAllowed.class)) {
 			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),
 					message(method,
-							"must declare @" + JwtSecured.class.getSimpleName() + " as it has @"
-									+ RolesAllowed.class.getSimpleName() + " declared.",
+							"must declare @"
+									+ JwtSecured.class.getSimpleName()
+									+ " as it has @"
+									+ RolesAllowed.class.getSimpleName()
+									+ " declared.",
 							false));
 		}
 
@@ -135,8 +121,11 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 				&& !method.isAnnotationPresent(PermitAll.class)) {
 			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),
 					message(method,
-							"must declare @" + JwtSecured.class.getSimpleName() + " as it has @"
-									+ RolesAllowed.class.getSimpleName() + " declared.",
+							"must declare @"
+									+ JwtSecured.class.getSimpleName()
+									+ " as it has @"
+									+ RolesAllowed.class.getSimpleName()
+									+ " declared.",
 							false));
 		}
 
@@ -145,22 +134,22 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
-	private void checkSecuredMethod(Method method) {
-		ApiOperation operation = method.getAnnotation(ApiOperation.class);
-		String message = "or its declaring class must declare exactly one authorization in @ApiOperation: "
+	private void checkSecuredMethod(final Method method) {
+		final ApiOperation operation = method.getAnnotation(ApiOperation.class);
+		final String message = "or its declaring class must declare exactly one authorization in @ApiOperation: "
 				+ ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION;
 		Authorization[] authorizations = operation.authorizations();
-		Authorization[] classAuthorizations = Optional.ofNullable(method//
-				.getDeclaringClass()//
-				.getAnnotation(io.swagger.annotations.Api.class))//
-				.map(io.swagger.annotations.Api::authorizations)
-				.orElse(null);
+		final Authorization[] classAuthorizations
+				= Optional.ofNullable(method.getDeclaringClass().getAnnotation(io.swagger.annotations.Api.class))
+						.map(io.swagger.annotations.Api::authorizations)
+						.orElse(null);
 		if (authorizations == null || Strings.isNullOrEmpty(authorizations[0].value())) {
 			authorizations = classAuthorizations;
-		} else if (classAuthorizations != null && classAuthorizations.length == 1
+		} else if (classAuthorizations != null
+				&& classAuthorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(classAuthorizations[0].value())) {
-			error(method, "contains the same authorization like its declaring class. Remove one.", true);
-		}
+					error(method, "contains the same authorization like its declaring class. Remove one.", true);
+				}
 		Objects.requireNonNull(authorizations, message(method, message, true));
 		verify(authorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(authorizations[0].value()),
@@ -169,30 +158,35 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 				true);
 	}
 
-	private static String message(Method method, String message, boolean secured) {
-		return "The " + (secured ? "@" + JwtSecured.class.getSimpleName() + " annotated" : "") + " method "
-				+ method.getName() + " in class " + method.getDeclaringClass().getName() + " " + message;
+	private static String message(final Method method, final String message, final boolean secured) {
+		return "The "
+				+ (secured ? "@" + JwtSecured.class.getSimpleName() + " annotated" : "")
+				+ " method "
+				+ method.getName()
+				+ " in class "
+				+ method.getDeclaringClass().getName()
+				+ " "
+				+ message;
 	}
 
-	private static void error(Method method, String message, boolean secured) {
+	private static void error(final Method method, final String message, final boolean secured) {
 		error(message(method, message, secured));
 	}
 
-	private static void error(String message) {
+	private static void error(final String message) {
 		throw new ApiBootstrapException(message);
 	}
 
-	private static void verify(boolean check, Method method, String message, boolean secured) {
+	private static void verify(final boolean check, final Method method, final String message, final boolean secured) {
 		if (!check) {
 			error(method, message, secured);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@SafeVarargs
-	private static boolean hasAnnotations(Annotation[] annotations, Class<? extends Annotation>... classes) {
-		for (@SuppressWarnings("rawtypes")
-		Class clazz : classes) {
+	private static boolean hasAnnotations(final Annotation[] annotations,
+			final Class<? extends Annotation>... classes) {
+		for (final Class<?> clazz : classes) {
 			if (FindAnnotation.findAnnotation(annotations, clazz) != null) {
 				return true;
 			}
@@ -200,7 +194,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		return false;
 	}
 
-	private void processInjector(final Injector injector, Consumer<Class<?>> consumer) {
+	private void processInjector(final Injector injector, final Consumer<Class<?>> consumer) {
 		for (final Key<?> key : injector.getBindings().keySet()) {
 			final Type type = key.getTypeLiteral().getRawType();
 			if (type instanceof Class) {
@@ -209,11 +203,40 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
-	private static class ApiBootstrapException extends RuntimeException {
+	private static final class ApiBootstrapException extends RuntimeException {
 		private static final long serialVersionUID = 7618319300693716653L;
 
-		public ApiBootstrapException(String message) {
+		private ApiBootstrapException(final String message) {
 			super(message);
+		}
+	}
+
+	private static final class ApiModule extends AbstractModule {
+		private ApiModule() {
+			// no fields to be initialized
+		}
+
+		@Override
+		protected void configure() {
+			final List<Class<? extends Annotation>> annotations
+					= Arrays.asList(io.swagger.annotations.Api.class, javax.ws.rs.ext.Provider.class);
+			final Predicate<Class<?>> predicate
+					= clazz -> annotations.stream().filter(clazz::isAnnotationPresent).findAny().isPresent();
+			// TODO Create possibility to register more packages to scan
+			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());
+			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());
+
+			final ApiValidationInterceptor interceptor = new ApiValidationInterceptor();
+			binder().requestInjection(interceptor);
+			binder().bindInterceptor(Matchers.annotatedWith(Path.class),
+					Matchers.annotatedWith(GET.class)
+							.or(Matchers.annotatedWith(POST.class))
+							.or(Matchers.annotatedWith(PUT.class))
+							.or(Matchers.annotatedWith(PATCH.class))
+							.or(Matchers.annotatedWith(DELETE.class))
+							.or(Matchers.annotatedWith(HEAD.class))
+							.or(Matchers.annotatedWith(OPTIONS.class)),
+					interceptor);
 		}
 	}
 }

@@ -1,0 +1,7 @@
+.clr-control-container, input {
+  width: 100%;
+}
+
+.clr-select-wrapper, .clr-select-wrapper select, textarea {
+  width: 100%;
+}

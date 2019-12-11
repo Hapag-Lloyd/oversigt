@@ -1,6 +1,7 @@
 package com.hlag.oversigt.sources.data;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -8,35 +9,33 @@ import com.hlag.oversigt.properties.Color;
 import com.hlag.oversigt.properties.JsonBasedData;
 import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 @JsonHint(headerTemplate = "{{ self.displayValue }}", arrayStyle = ArrayStyle.TABS)
-public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
+public class DisplayOption implements JsonBasedData, Comparable<DisplayOption> {
 	@NotNull
-	private Color color = Color.Grey;
-	@NotNull
-	private String displayValue = null;
-	@NotNull
-	private String value = null;
+	private Color color = Color.GRAY;
 
-	public DisplayOption() {
-	}
+	@NotNull
+	private String displayValue = "";
 
-	public DisplayOption(String displayValue) {
+	@NotNull
+	private String value = "";
+
+	public DisplayOption() {}
+
+	public DisplayOption(final String displayValue) {
 		this.displayValue = Objects.requireNonNull(displayValue);
 	}
 
-	public DisplayOption(String displayValue, Color color) {
+	public DisplayOption(final String displayValue, final Color color) {
 		this(displayValue);
-		this.color = color;
+		this.color = Objects.requireNonNull(color);
 	}
 
 	@Override
-	public int compareTo(DisplayOption o) {
-		return getDisplayValue().compareTo(o.getDisplayValue());
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		return o != null && o instanceof DisplayOption && compareTo((DisplayOption) o) == 0;
+	public boolean equals(@Nullable final Object o) {
+		return o != null && o instanceof DisplayOption && displayValue.compareTo(((DisplayOption) o).displayValue) == 0;
 	}
 
 	@Override
@@ -48,27 +47,32 @@ public class DisplayOption implements Comparable<DisplayOption>, JsonBasedData {
 		return color;
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
+	public void setColor(final Color color) {
+		this.color = Objects.requireNonNull(color);
 	}
 
 	public String getDisplayValue() {
 		return displayValue;
 	}
 
-	public String formatDisplayValue(int count) {
+	public String formatDisplayValue(final int count) {
 		return String.format(getDisplayValue(), count);
 	}
 
-	public void setDisplayValue(String displayValue) {
-		this.displayValue = displayValue;
+	public void setDisplayValue(final String displayValue) {
+		this.displayValue = Objects.requireNonNull(displayValue);
 	}
 
 	public String getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setValue(final String value) {
+		this.value = Objects.requireNonNull(value);
+	}
+
+	@Override
+	public int compareTo(@Nullable final DisplayOption o) {
+		return getDisplayValue().compareTo(Optional.ofNullable(o).map(DisplayOption::getDisplayValue).orElse(""));
 	}
 }

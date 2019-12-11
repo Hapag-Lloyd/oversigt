@@ -3,19 +3,27 @@ package com.hlag.oversigt.model;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.Color;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class Widget implements Comparable<Widget> {
-	private static final Comparator<Widget> COMPARE_BY_NAME = (a, b) -> String.CASE_INSENSITIVE_ORDER
-			.compare(a.getName(), b.getName());
+	private static final Comparator<Widget> COMPARE_BY_NAME
+			= (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName());
+
 	private static final Comparator<Widget> COMPARE_BY_ID = (a, b) -> Integer.compare(a.getId(), b.getId());
+
 	private static final Comparator<Widget> COMPARE = COMPARE_BY_NAME.thenComparing(COMPARE_BY_ID);
 
 	@JsonIgnore
@@ -23,23 +31,30 @@ public class Widget implements Comparable<Widget> {
 
 	@NotNull
 	private int id = -1;
+
 	@NotBlank
 	private String title;
+
 	@NotBlank
 	private String name;
 
 	@NotNull
 	private boolean enabled = false;
+
 	@NotNull
 	private int posX = 1;
+
 	@NotNull
 	private int posY = 1;
+
 	@NotNull
 	@Min(1)
 	private int sizeX = 3;
+
 	@NotNull
 	@Min(1)
 	private int sizeY = 3;
+
 	@NotNull
 	private Color backgroundColor = Color.random();
 
@@ -47,25 +62,26 @@ public class Widget implements Comparable<Widget> {
 
 	private final Map<EventSourceProperty, String> data = new HashMap<>();
 
-	public Widget(EventSourceInstance eventSourceInstance) {
+	public Widget(final EventSourceInstance eventSourceInstance) {
 		this.eventSourceInstance = eventSourceInstance;
-		this.name = eventSourceInstance.getName();
-		this.title = eventSourceInstance.getName();
+		name = eventSourceInstance.getName();
+		title = eventSourceInstance.getName();
 	}
 
-	public Widget(@NotNull int id,
-			EventSourceInstance eventSource,
-			@NotBlank String title,
-			@NotBlank String name,
-			@NotNull boolean enabled,
-			@NotNull int posX,
-			@NotNull int posY,
-			@NotNull @Min(1) int sizeX,
-			@NotNull @Min(1) int sizeY,
-			@NotNull Color backgroundColor,
-			String style) {
+	@JsonCreator
+	public Widget(@JsonProperty("id") @NotNull final int id,
+			@JsonProperty("eventSource") final EventSourceInstance eventSource,
+			@JsonProperty("title") @NotBlank final String title,
+			@JsonProperty("name") @NotBlank final String name,
+			@JsonProperty("enabled") @NotNull final boolean enabled,
+			@JsonProperty("posX") @NotNull final int posX,
+			@JsonProperty("posY") @NotNull final int posY,
+			@JsonProperty("sizeX") @NotNull @Min(1) final int sizeX,
+			@JsonProperty("sizeY") @NotNull @Min(1) final int sizeY,
+			@JsonProperty("backgroundColor") @NotNull final Color backgroundColor,
+			@JsonProperty("style") final String style) {
 		this.id = id;
-		this.eventSourceInstance = eventSource;
+		eventSourceInstance = eventSource;
 		this.title = title;
 		this.name = name;
 		this.enabled = enabled;
@@ -81,7 +97,7 @@ public class Widget implements Comparable<Widget> {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(final int id) {
 		this.id = id;
 	}
 
@@ -100,9 +116,7 @@ public class Widget implements Comparable<Widget> {
 
 	@JsonIgnore
 	public String getType() {
-		return Optional.ofNullable(eventSourceInstance.getDescriptor().getServiceClass())
-				.map(Class::getSimpleName)
-				.orElse("");
+		return eventSourceInstance.getDescriptor().getServiceClass().map(Class::getSimpleName).orElse("");
 	}
 
 	public EventSourceInstance getEventSourceInstance() {
@@ -137,86 +151,82 @@ public class Widget implements Comparable<Widget> {
 		return enabled;
 	}
 
-	public void setPosX(int posX) {
+	public void setPosX(final int posX) {
 		this.posX = posX;
 	}
 
-	public void setPosY(int posY) {
+	public void setPosY(final int posY) {
 		this.posY = posY;
 	}
 
-	public void setSizeX(int sizeX) {
+	public void setSizeX(final int sizeX) {
 		this.sizeX = sizeX;
 	}
 
-	public void setSizeY(int sizeY) {
+	public void setSizeY(final int sizeY) {
 		this.sizeY = sizeY;
 	}
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(final boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	public void setBackgroundColor(Color backgroundColor) {
+	public void setBackgroundColor(final Color backgroundColor) {
 		this.backgroundColor = backgroundColor;
 	}
 
-	public void setStyle(String style) {
+	public void setStyle(final String style) {
 		this.style = style;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
-	public String getWidgetData(EventSourceProperty property) {
+	@Nullable
+	public String getWidgetData(final EventSourceProperty property) {
 		return data.get(property);
 	}
 
-	public void setWidgetData(EventSourceProperty property, String value) {
-		if (!property.isCustomValuesAllowed() && !property.getAllowedValues().isEmpty()
+	public void setWidgetData(final EventSourceProperty property, final String value) {
+		if (!property.isCustomValuesAllowed()
+				&& !property.getAllowedValues().isEmpty()
 				&& !property.getAllowedValues().contains(value)) {
 			throw new RuntimeException("The value '" + value + "' is not allowed for property " + property.getName());
 		}
 		data.put(property, value);
 	}
 
-	public boolean hasWidgetData(EventSourceProperty property) {
+	public boolean hasWidgetData(final EventSourceProperty property) {
 		return data.containsKey(property);
 	}
 
-	public void removeWidgetData(EventSourceProperty property) {
+	public void removeWidgetData(final EventSourceProperty property) {
 		data.remove(property);
 	}
 
-	public String getWidgetDataForDashboard(EventSourceProperty property) {
+	public String getWidgetDataForDashboard(final EventSourceProperty property) {
 		return getEventSourceInstance().hasPropertyValue(property)
 				? getEventSourceInstance().getPropertyValueString(property)
 				: data.get(property);
 	}
 
-	public boolean hasWidgetDataForDashboard(EventSourceProperty property) {
+	public boolean hasWidgetDataForDashboard(final EventSourceProperty property) {
 		return getEventSourceInstance().hasPropertyValue(property) || data.containsKey(property);
 	}
 
 	@Override
-	public int compareTo(Widget that) {
+	public int compareTo(@Nullable final Widget that) {
 		return COMPARE.compare(this, that);
 	}
 
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayClass() {
-		return DashboardDesign.getDisplayClass(this);
-	}
-
-	@Deprecated
-	@JsonIgnore
-	public String getDisplayStyle() {
-		return DashboardDesign.getDisplayStyle(this);
+	/** {@inheritDoc} */
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 }

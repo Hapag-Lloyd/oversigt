@@ -12,24 +12,31 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
 import com.hlag.oversigt.properties.Credentials;
 import com.hlag.oversigt.properties.DatabaseConnection;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 /**
  * @author Olaf Neumann
- *
  */
 public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
 	protected static final Logger DB_LOGGER = LoggerFactory.getLogger("db");
 
 	private DatabaseConnection databaseConnection = DatabaseConnection.EMPTY;
+
 	private Credentials credentials = Credentials.EMPTY;
 
 	private Duration databaseQueryInterval = Duration.ofHours(1);
@@ -39,93 +46,86 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		return databaseConnection;
 	}
 
-	public void setDatabaseConnection(DatabaseConnection databaseConnection) {
+	public void setDatabaseConnection(final DatabaseConnection databaseConnection) {
 		this.databaseConnection = databaseConnection;
 	}
 
-	@Property(name = "Credentials", description = "The credentials to be used to connect to the database.", needsRestart = true)
+	@Property(name = "Credentials", description = "The credentials to be used to connect to the database.")
 	public Credentials getCredentials() {
 		return credentials;
 	}
 
-	public void setCredentials(Credentials credentials) {
+	public void setCredentials(final Credentials credentials) {
 		this.credentials = credentials;
 	}
 
-	@Property(name = "Query interval", description = "How often should this event source call the database?", needsRestart = false)
+	@Property(name = "Query interval", description = "How often should this event source call the database?")
 	public Duration getDatabaseQueryInterval() {
 		return databaseQueryInterval;
 	}
 
-	public void setDatabaseQueryInterval(Duration databaseQueryInterval) {
+	public void setDatabaseQueryInterval(final Duration databaseQueryInterval) {
 		this.databaseQueryInterval = databaseQueryInterval;
 	}
 
-	private Connection wrapConnection(Connection connection) {
+	private Connection wrapConnection(final Connection connection) {
 		return (Connection) Proxy.newProxyInstance(getClass().getClassLoader(),
 				new Class[] { Connection.class },
 				new UnpreparedStatementPreventingInvocationHandler(connection));
 	}
 
-	private Connection getConnection() {
-		if (getDatabaseConnection() != DatabaseConnection.EMPTY) {
-			try {
-				// Load the driver
-				getDatabaseConnection().loadDriverClass();
-				getLogger().info("Loaded JDBC driver.");
-
-				// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
-				Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
-						getCredentials().getUsername(),
-						getCredentials().getPassword());
-				// Commit changes manually
-				con.setAutoCommit(false);
-				con.setReadOnly(true);
-				con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-				getLogger().info("Created JDBC connection to the data source.");
-				return wrapConnection(con);
-			} catch (ClassNotFoundException e) {
-				return failure("Could not load JDBC driver.", e);
-			} catch (SQLException e) {
-				return failure("Failed connecting to data base.", e);
-			}
-		} else {
-			return failure("Database connection is not configured.");
+	@SuppressWarnings("resource")
+	private Connection getConnection() throws EventSourceException {
+		if (getDatabaseConnection() == DatabaseConnection.EMPTY) {
+			throw new EventSourceException("Database connection is not configured.");
 		}
-	}
-
-	private boolean withConnection(DBConnectionConsumer function) throws SQLException {
-		Connection connection = null;
 		try {
-			connection = getConnection();
-			if (connection != null) {
-				function.apply(connection);
-				return true;
-			}
-		} finally {
-			if (connection != null) {
-				try {
-					connection.rollback();
-					connection.close();
-				} catch (SQLException e) {
-					getLogger().warn("Unable to rollback and close DB connection", e);
-				}
-			}
+			// Load the driver
+			getDatabaseConnection().loadDriverClass();
+			getLogger().info("Loaded JDBC driver.");
+
+			// Create the connection using the IBM Data Server Driver for JDBC and SQLJ
+			final Connection con = DriverManager.getConnection(getDatabaseConnection().getJdbcUrl(),
+					getCredentials().getUsername(),
+					getCredentials().getPassword());
+			// Commit changes manually
+			con.setAutoCommit(false);
+			con.setReadOnly(true);
+			con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+			getLogger().info("Created JDBC connection to the data source.");
+			return wrapConnection(con);
+		} catch (final ClassNotFoundException e) {
+			throw new EventSourceException("Could not load JDBC driver.", e);
+		} catch (final SQLException e) {
+			throw new EventSourceException("Failed connecting to data base.", e);
 		}
-		return false;
 	}
 
-	private LocalDateTime lastDbAccessDateTime = null;
+	@SuppressWarnings("resource")
+	private void withConnection(final DBConnectionConsumer consumer) throws SQLException, EventSourceException {
+		final Connection connection = getConnection();
+		try {
+			consumer.apply(connection);
+		} finally {
+			try {
+				connection.rollback();
+				connection.close();
+			} catch (final SQLException e) {
+				getLogger().warn("Unable to rollback and close DB connection", e);
+			}
+		}
+	}
+
+	private Optional<LocalDateTime> lastDbAccessDateTime = Optional.empty();
 
 	@Override
-	protected final T produceEvent() {
-		if (lastDbAccessDateTime == null
-				|| LocalDateTime.now().minus(getDatabaseQueryInterval()).isAfter(lastDbAccessDateTime)) {
+	protected final Optional<T> produceEvent() throws EventSourceException {
+		if (lastDbAccessDateTime.map(LocalDateTime.now().minus(getDatabaseQueryInterval())::isAfter).orElse(true)) {
 			try {
 				withConnection(this::gatherDatabaseInfo);
-				lastDbAccessDateTime = LocalDateTime.now();
-			} catch (SQLException e) {
-				return failure("Unable to gather database info", e);
+				lastDbAccessDateTime = Optional.of(LocalDateTime.now());
+			} catch (final SQLException e) {
+				throw new EventSourceException("Unable to gather database info", e);
 			}
 		}
 		return produceEventFromData();
@@ -133,20 +133,73 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 
 	protected abstract void gatherDatabaseInfo(Connection connection) throws SQLException;
 
-	protected abstract T produceEventFromData();
+	protected abstract Optional<T> produceEventFromData();
 
-	public static <T> List<T> readFromDatabase(Connection connection,
-			ResultSetFunction<T> readOneLine,
-			String sql,
-			Object... parameters) throws SQLException {
+	protected <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final String sql,
+			final Object... parameters) throws SQLException {
+		return readFromDatabase(connection, readOneLine, getStatisticsCollector(), sql, parameters);
+	}
 
-		long time = System.currentTimeMillis();
+	/**
+	 * Read object from a database.
+	 *
+	 * @param <X>                 the type to read
+	 * @param connection          the connection to read from
+	 * @param readOneLine         a function to read one single object from a
+	 *                            {@link ResultSet}
+	 * @param statisticsCollector an object to collect statistical information
+	 * @param sql                 the SQL to execute
+	 * @param parameters          parameters to be inserted into the SQL
+	 * @return the list of read objects
+	 * @throws SQLException if something fails
+	 */
+	public static <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final StatisticsCollector statisticsCollector,
+			final String sql,
+			final Object... parameters) throws SQLException {
+		return readFromDatabase(connection, readOneLine, Optional.of(statisticsCollector), sql, parameters);
+	}
+
+	/**
+	 * Read object from a database.
+	 *
+	 * @param <X>                 the type to read
+	 * @param connection          the connection to read from
+	 * @param readOneLine         a function to read one single object from a
+	 *                            {@link ResultSet}
+	 * @param statisticsCollector an optional object to collect statistical
+	 *                            information
+	 * @param sql                 the SQL to execute
+	 * @param parameters          parameters to be inserted into the SQL
+	 * @return the list of read objects
+	 * @throws SQLException if something fails
+	 * @deprecated In the end the
+	 *             {@link com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector}
+	 *             shall not be optional. Use
+	 *             {@code #readFromDatabase(Connection, ResultSetFunction, StatisticsCollector, String, Object...)}
+	 *             instead.
+	 */
+	@Deprecated
+	public static <X> List<X> readFromDatabase(final Connection connection,
+			final ResultSetFunction<X> readOneLine,
+			final Optional<StatisticsCollector> statisticsCollector,
+			final String sql,
+			final Object... parameters) throws SQLException {
+		final long time = System.currentTimeMillis();
 		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-			for (int i = 0; i < parameters.length; ++i) {
+			for (int i = 0; i < parameters.length; i += 1) {
 				stmt.setObject(i + 1, parameters[i]);
 			}
-			return readFromDatabase(stmt, readOneLine);
-		} catch (SQLException e) {
+			final Optional<StartedAction> action = statisticsCollector.map(sc -> sc.startAction("SQL-Query", sql));
+			try {
+				return readFromDatabase(stmt, readOneLine);
+			} finally {
+				action.ifPresent(StartedAction::close);
+			}
+		} catch (final SQLException e) {
 			DB_LOGGER.error("Query failed", e);
 			throw e;
 		} finally {
@@ -155,17 +208,18 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		}
 	}
 
-	private static <T> List<T> readFromDatabase(PreparedStatement statement, ResultSetFunction<T> readOneLine)
-			throws SQLException {
+	private static <T> List<T> readFromDatabase(final PreparedStatement statement,
+			final ResultSetFunction<T> readOneLine) throws SQLException {
 		try (ResultSet rs = statement.executeQuery()) {
 			return readFromDatabase(rs, readOneLine);
 		}
 	}
 
-	private static <T> List<T> readFromDatabase(ResultSet rs, ResultSetFunction<T> readOneLine) throws SQLException {
-		List<T> list = new ArrayList<>();
+	private static <T> List<T> readFromDatabase(final ResultSet rs, final ResultSetFunction<T> readOneLine)
+			throws SQLException {
+		final List<T> list = new ArrayList<>();
 		while (rs.next()) {
-			T item = readOneLine.readLine(rs);
+			final T item = readOneLine.readLine(rs);
 			list.add(item);
 		}
 		return list;
@@ -181,16 +235,19 @@ public abstract class AbstractJdbcEventSource<T extends OversigtEvent> extends S
 		T readLine(ResultSet resultSet) throws SQLException;
 	}
 
-	private static class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
+	private static final class UnpreparedStatementPreventingInvocationHandler implements InvocationHandler {
 		private final Connection connection;
 
-		private UnpreparedStatementPreventingInvocationHandler(Connection connection) {
+		private UnpreparedStatementPreventingInvocationHandler(final Connection connection) {
 			this.connection = connection;
 		}
 
 		@Override
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			if (method.getDeclaringClass() == Connection.class && "createStatement".equals(method.getName())) {
+		public Object invoke(@SuppressWarnings("unused") @Nullable final Object proxy,
+				@Nullable final Method method,
+				@Nullable final Object[] args) throws Throwable {
+			if (Objects.requireNonNull(method).getDeclaringClass() == Connection.class
+					&& "createStatement".equals(method.getName())) {
 				throw new RuntimeException(
 						"Oversigt does not allow unprepared statements. Please use #prepareStatement instead.");
 			}

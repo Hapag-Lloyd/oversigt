@@ -3,70 +3,73 @@ package com.hlag.oversigt.util.text;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.datatype.DatatypeFactory;
+import org.w3c.dom.Document;
 
-import com.google.inject.Inject;
-import com.jayway.jsonpath.Configuration;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
-public class TextProcessor {
-	private static final Pattern PATTERN_DATA_REPLACEMENT = Pattern
-			.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
-
-	@Inject
-	private static Configuration JSON_PATH_CONFIGURATION;
-	@Inject
-	private static DatatypeFactory DATATYPE_FACTORY;
-
-	public static TextProcessor create() {
-		return new TextProcessor();
-	}
+public final class TextProcessor {
+	private static final Pattern PATTERN_DATA_REPLACEMENT
+			= Pattern.compile("\\$\\{(?<processor>[a-z]+)(:(?<input>[^\\}]+))?\\}");
 
 	private final Map<String, Function<String, String>> processors = new HashMap<>();
 
-	private TextProcessor() {
+	public TextProcessor() {
+		// nothing to do
 	}
 
-	public TextProcessor registerFunction(String name, Function<String, String> function) {
+	public TextProcessor registerFunction(final String name, final Function<String, String> function) {
 		processors.put(name, function);
 		return this;
 	}
 
 	public TextProcessor registerDatetimeFunctions() {
-		DatetimeFunction datetimeFunction = new DatetimeFunction(DATATYPE_FACTORY);
+		final DatetimeFunction datetimeFunction = new DatetimeFunction();
 		registerFunction("datetime", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 		registerFunction("date", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE));
 		registerFunction("time", s -> datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_TIME));
 		return this;
 	}
 
-	public TextProcessor registerJsonPathFunction(String json) {
-		return registerFunction("jsonpath",
-				jsonpath -> new JsonPathFunction(JSON_PATH_CONFIGURATION, json).apply(jsonpath));
+	public TextProcessor registerJsonPathFunction(final String probablyJson) {
+		return registerFunction("jsonpath", new JsonPathFunction(probablyJson)::apply);
 	}
 
 	public TextProcessor registerRegularExpressionFunction(final String value) {
-		return registerFunction("regex", regex -> new RegularExpressionFunction(value).apply(regex));
+		return registerFunction("regex", new RegularExpressionFunction(value)::apply);
 	}
 
-	public String process(String string) {
-		Matcher mainMatcher = PATTERN_DATA_REPLACEMENT.matcher(string);
-		while (mainMatcher.find()) {
-			String target = mainMatcher.group();
-			String replacement;
+	public TextProcessor registerXPathFunction(final Optional<Document> document) {
+		return registerFunction("xpath", new XPathFunction(document)::apply);
+	}
 
-			String processorName = mainMatcher.group("processor");
-			if (processors.containsKey(processorName)) {
-				String input = mainMatcher.group("input");
-				replacement = processors.get(processorName).apply(input);
-			} else {
+	public TextProcessor registerXPathFunction(final String probablyJsonOrXml) {
+		return registerFunction("xpath", new XPathFunction(probablyJsonOrXml)::apply);
+	}
+
+	public String process(final String value) {
+		String string = value;
+		final Matcher mainMatcher = PATTERN_DATA_REPLACEMENT.matcher(string);
+		while (mainMatcher.find()) {
+			final String processorName = mainMatcher.group("processor");
+			if (!processors.containsKey(processorName)) {
 				throw new RuntimeException("Data replacement '" + mainMatcher.group(1) + "' is unknown.");
 			}
 
-			string = string.replace(target, replacement);
+			@Nullable
+			final String input = mainMatcher.group("input");
+			if (input != null) {
+				final Function<String, String> processor = processors.get(processorName);
+				@Nullable
+				final String replacement = processor.apply(input);
+				if (replacement != null) {
+					string = string.replace(mainMatcher.group(), replacement);
+				}
+			}
 		}
 		return string;
 	}

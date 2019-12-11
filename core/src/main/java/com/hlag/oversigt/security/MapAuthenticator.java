@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class MapAuthenticator implements Authenticator {
 	private RoleProvider roleProvider;
 
 	@Inject
-	public MapAuthenticator(@Named("UsernamesAndPasswords") Map<String, String> usernamesToPasswords) {
+	public MapAuthenticator(@Named("UsernamesAndPasswords") final Map<String, String> usernamesToPasswords) {
 		if (Objects.requireNonNull(usernamesToPasswords, "Username/Password map must not be null").isEmpty()) {
 			LOGGER.warn("Username/Password map does not contain entries. No log in possible.");
 		}
@@ -30,35 +31,38 @@ public class MapAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public Principal login(String username, String password) {
+	public Optional<Principal> login(final String username, final String password) {
 		Objects.requireNonNull(username, "Username must not be null");
 		Objects.requireNonNull(password, "Password must not be null");
 
-		String savedPassword = usernamesToPasswords.get(username);
-		if (password.equals(savedPassword)) {
-			return new Principal(username, roleProvider.getRoles(username));
-		} else {
-			return null;
+		final String savedPassword = usernamesToPasswords.get(username);
+		if (!password.equals(savedPassword)) {
+			return Optional.empty();
 		}
+		return Optional.of(new Principal(username, roleProvider.getRoles(username)));
 	}
 
 	@Override
-	public Principal readPrincipal(String username) {
-		return new Principal(username, new HashSet<>());
+	public Optional<Principal> readPrincipal(final String username) {
+		if (!usernamesToPasswords.containsKey(username)) {
+			return Optional.empty();
+		}
+		return Optional.of(new Principal(username, new HashSet<>()));
 	}
 
 	@Override
-	public boolean isUsernameValid(String username) {
+	public boolean isUsernameValid(final String username) {
 		return usernamesToPasswords.containsKey(username);
 	}
 
 	@Override
-	public void reloadRoles(String username) {
+	public void reloadRoles(final String username) {
 		Objects.requireNonNull(username);
 		Principal.getPrincipal(username).ifPresent(p -> p.changeRoles(roleProvider.getRoles(username)));
 	}
 
 	@Override
 	public void close() {
+		// there is no resource to be closed
 	}
 }

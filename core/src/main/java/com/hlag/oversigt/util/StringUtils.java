@@ -1,9 +1,11 @@
 package com.hlag.oversigt.util;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
 /**
@@ -13,16 +15,15 @@ import com.google.common.base.Strings;
  */
 public final class StringUtils {
 
-	private StringUtils() {
-	}
+	private StringUtils() {}
 
 	/**
 	 * Returns substring before provided string
 	 *
-	 * @param str String to be truncated
+	 * @param str       String to be truncated
 	 * @param separator Separator
-	 * @return Null of initial string is Null, empty if provided string is empty, otherwise
-	 *         substring before
+	 * @return Null of initial string is Null, empty if provided string is empty,
+	 *         otherwise substring before
 	 */
 	public static String substringBefore(final String str, final String separator) {
 		if (Strings.isNullOrEmpty(str)) {
@@ -35,11 +36,8 @@ public final class StringUtils {
 		return str.substring(0, pos);
 	}
 
-	public static List<String> list(String string) {
-		if (!Strings.isNullOrEmpty(string)) {
-			return Arrays.asList(string.split("\\s*,+\\s*"));
-		} else {
-			return Collections.emptyList();
-		}
+	public static List<String> list(final Optional<String> string) {
+		return string.map(Splitter.on(Pattern.compile("\\s*,+\\s*")).omitEmptyStrings()::splitToList)
+				.orElse(Collections.emptyList());
 	}
 }

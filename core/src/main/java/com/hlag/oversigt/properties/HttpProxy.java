@@ -3,20 +3,29 @@ package com.hlag.oversigt.properties;
 import java.net.InetSocketAddress;
 import java.net.Proxy.Type;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import com.hlag.oversigt.properties.SerializableProperty.Description;
 
+@Description("Details for an HTTP proxy to access other network parts - e.g. the internet.")
 public class HttpProxy extends SerializableProperty {
 	public static final HttpProxy EMPTY = new HttpProxy(0, "", "", 0);
 
-	@Member(icon = "folder-close", size = 4)
+	@Member(icon = "hdd", size = 4)
 	private String hostname;
-	@Member(icon = "asterisk", size = 2)
+
+	@Member(icon = "ellipsis", size = 2)
 	private int port;
 
-	public HttpProxy(int id, String name, String host, int port) {
+	@JsonCreator
+	public HttpProxy(@JsonProperty("id") final int id,
+			@JsonProperty("name") final String name,
+			@JsonProperty("host") final String host,
+			@JsonProperty("port") final int port) {
 		super(id, name);
-		this.hostname = host;
+		hostname = host;
 		this.port = port;
 	}
 
@@ -24,7 +33,7 @@ public class HttpProxy extends SerializableProperty {
 		return hostname;
 	}
 
-	public void setHostname(String hostname) {
+	public void setHostname(final String hostname) {
 		this.hostname = hostname;
 	}
 
@@ -32,7 +41,7 @@ public class HttpProxy extends SerializableProperty {
 		return port;
 	}
 
-	public void setPort(int port) {
+	public void setPort(final int port) {
 		this.port = port;
 	}
 
@@ -40,8 +49,7 @@ public class HttpProxy extends SerializableProperty {
 	public java.net.Proxy getProxy() {
 		if (Strings.isNullOrEmpty(getHostname())) {
 			return java.net.Proxy.NO_PROXY;
-		} else {
-			return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 		}
+		return new java.net.Proxy(Type.HTTP, new InetSocketAddress(getHostname(), getPort()));
 	}
 }

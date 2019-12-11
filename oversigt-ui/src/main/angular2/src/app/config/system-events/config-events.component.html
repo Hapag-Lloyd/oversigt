@@ -1,0 +1,22 @@
+<app-header [title]="'Cached Events'" [additional]="search"></app-header>
+<ng-template #search>
+  <button class="btn btn-outline btn-icon btn-sm" (click)="reloadEvents()" title="Reload events"><clr-icon shape="refresh"></clr-icon></button>
+  <div class="clr-control-container">
+    <div class="clr-input-wrapper">
+      <input class="clr-input" type="text" placeholder="Filter events" [(ngModel)]="filter"/>
+    </div>
+  </div>
+</ng-template>
+
+<clr-datagrid>
+    <clr-dg-column>Event ID</clr-dg-column>
+    <clr-dg-column>Link</clr-dg-column>
+
+    <clr-dg-row *ngFor="let item of events | filterEventitem: filter">
+        <clr-dg-cell>{{item.event.id}}</clr-dg-cell>
+        <clr-dg-cell><a routerLink="{{getEventSourceLink(item.event.id)}}" title="Go to event source"><clr-icon shape="link"></clr-icon></a></clr-dg-cell>
+        <clr-dg-row-detail *clrIfExpanded>
+            <pre class="event">{{item.event | json}}</pre>
+        </clr-dg-row-detail>
+    </clr-dg-row>
+</clr-datagrid>

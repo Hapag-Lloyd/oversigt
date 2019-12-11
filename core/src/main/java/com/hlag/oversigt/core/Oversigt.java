@@ -1,30 +1,30 @@
 package com.hlag.oversigt.core;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.annotation.Nullable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Module;
 import com.google.inject.name.Names;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
+import com.hlag.oversigt.core.configuration.JsonModule;
+import com.hlag.oversigt.core.configuration.OversigtConfigurationModule;
+import com.hlag.oversigt.core.configuration.OversigtModule;
+import com.hlag.oversigt.core.configuration.WebModule;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.security.Authenticator;
-import com.hlag.oversigt.storage.AbstractJdbcConnector;
 import com.hlag.oversigt.storage.Storage;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Finals;
 
 /**
  * Application Entry Point. Creates Guava's Injector and runs spark server
@@ -33,36 +33,53 @@ import ch.qos.logback.classic.LoggerContext;
  * @author noxfireone
  */
 public final class Oversigt {
+	/**
+	 * The human readable application name
+	 */
+	public static final String APPLICATION_NAME = Finals.constant("Oversigt");
+
+	/**
+	 * The human readable application version
+	 */
+	public static final String APPLICATION_VERSION = Finals.constant("0.6");
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);
 
-	static final String APPLICATION_CONFIG = "config.json";
+	/**
+	 * The name of the file containing the application configuration
+	 */
+	public static final String APPLICATION_CONFIG_FILE = Finals.constant("config.json");
 
-	private AtomicBoolean bootstrapped;
+	private AtomicBoolean bootstrapped = new AtomicBoolean(false);
+
+	private AtomicBoolean shuttingDown = new AtomicBoolean(false);
+
 	private Injector injector;
+
 	private Thread shutdownHook;
 
-	private Oversigt(Injector injector) {
+	private Oversigt(final Injector injector) {
 		this.injector = injector;
-		this.bootstrapped = new AtomicBoolean(false);
-		this.shutdownHook = new Thread(this::shutdown, "Oversigt-Shutdown-Hook");
+		shutdownHook = new Thread(this::shutdown, "Oversigt-Shutdown-Hook");
 	}
 
 	/**
-	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping already started Oversigt is not permitted
+	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping
+	 * already started Oversigt is not permitted
 	 *
 	 * @return itself
 	 */
-	public Oversigt bootstrap() {
+	private Oversigt bootstrap() {
 		if (bootstrapped.compareAndSet(false, true)) {
-			boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
-			if (debug) {
-				((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AbstractJdbcConnector.class))
-						.setLevel(Level.ALL);
-			}
+			final boolean debug = injector.getInstance(Key.get(boolean.class, Names.named("debug")));
+			// if (debug) {
+			// ((ch.qos.logback.classic.Logger)
+			// LoggerFactory.getLogger(AbstractJdbcConnector.class))
+			// .setLevel(Level.ALL);
+			// }
 
 			/* bootstrap server */
-			Service application = injector.getInstance(OversigtServer.class);
+			final Service application = injector.getInstance(OversigtServer.class);
 			application.startAsync();
 
 			Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -79,36 +96,38 @@ public final class Oversigt {
 	/**
 	 * Shutdowns Oversigt. Permitted only for bootstrapped instance
 	 */
-	public void shutdown() {
-		if (bootstrapped.compareAndSet(true, false)) {
-			LOGGER.info("Shutting down Oversigt...");
+	private void shutdown() {
+		if (bootstrapped.get()) {
+			if (shuttingDown.compareAndSet(false, true)) {
+				LOGGER.info("Shutting down Oversigt...");
 
-			injector.getInstance(OversigtServer.class).stopAsync().awaitTerminated();
-			LOGGER.info("Stopping storage service");
-			close(Storage.class);
-			LOGGER.info("Stopping authenticator service");
-			close(Authenticator.class);
+				injector.getInstance(OversigtServer.class).stopAsync().awaitTerminated();
+				LOGGER.info("Stopping storage service");
+				close(Storage.class);
+				LOGGER.info("Stopping authenticator service");
+				close(Authenticator.class);
 
-			/*
-			 * shutdown method might be called by this hook. So, trying to remove hook which is currently is progress
-			 * causes error
-			 */
-			if (!shutdownHook.isAlive()) {
-				Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				/*
+				 * shutdown method might be called by this hook. So, trying to remove hook which
+				 * is currently is progress causes error
+				 */
+				if (!shutdownHook.isAlive()) {
+					Runtime.getRuntime().removeShutdownHook(shutdownHook);
+				}
+				LOGGER.info("Oversigt has stopped.");
+
+				// Shutdown slf4j
+				((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
 			}
-			LOGGER.info("Oversigt has stopped.");
-
-			// Shutdown slf4j
-			((LoggerContext) LoggerFactory.getILoggerFactory()).stop();
 		} else {
 			throw new IllegalStateException("Oversigt is not bootstrapped");
 		}
 	}
 
-	private void close(Class<? extends AutoCloseable> clazz) {
+	private void close(final Class<? extends AutoCloseable> clazz) {
 		try {
 			injector.getInstance(clazz).close();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			LOGGER.error("Unable to close " + clazz.getSimpleName() + " instance.", e);
 		}
 	}
@@ -122,47 +141,62 @@ public final class Oversigt {
 		return new Builder();
 	}
 
-	public static void main(String... args) throws InterruptedException, IOException {
+	/**
+	 * The main Oversigt entry point
+	 *
+	 * @param args command line arguments
+	 */
+	public static void main(final String[] args) {
 		// parse command line options
-		StartOptions options = StartOptions.parse(args);
+		final Optional<CommandLineOptions> options = CommandLineOptions.parse(args);
 		// if command line options fail: shut down
-		if (options == null) {
+		if (!options.isPresent()) {
 			return;
 		}
 
 		// bootstrap Oversigt
 		try {
 			LOGGER.info("Bootstrapping Oversigt");
-			Oversigt.builder().startOptions(options).build().bootstrap();
-		} catch (Exception e) {
+			Oversigt.builder().startOptions(options.get()).build().bootstrap();
+		} catch (final Exception e) {
 			LOGGER.error("Oversigt cannot start", e);
 		}
+	}
+
+	/**
+	 * Called if an exception occurred when dispatching an event in the
+	 * application's event bus
+	 *
+	 * @param throwable the exception that occurred
+	 * @param context   the context in which the exception occurred
+	 */
+	public static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Could not dispatch event");
+		if (context.getEvent() instanceof OversigtEvent) {
+			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
+		}
+		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
+		LOGGER.error(sb.toString(), throwable);
 	}
 
 	/**
 	 * Oversigt builder
 	 */
 	public static class Builder {
+		private CommandLineOptions options = new CommandLineOptions();
 
-		/* List of extension-modules */
-		private List<Module> modules = new LinkedList<>();
-		private StartOptions options = null;
-
-		/**
-		 * Registers extension modules
-		 *
-		 * @param modules
-		 *            Array of extension modules
-		 * @return this builder
-		 */
-		public Builder registerModule(@Nullable Module... modules) {
-			if (null != modules) {
-				Collections.addAll(this.modules, modules);
-			}
-			return this;
+		public Builder() {
+			// no fields to be initialized
 		}
 
-		public Builder startOptions(StartOptions options) {
+		/**
+		 * Create a builder
+		 *
+		 * @param options the options from the user
+		 * @return the created builder
+		 */
+		public Builder startOptions(final CommandLineOptions options) {
 			this.options = options;
 			return this;
 		}
@@ -173,28 +207,23 @@ public final class Oversigt {
 		 * @return Oversigt
 		 */
 		public Oversigt build() {
-			Oversigt[] oversigt = new Oversigt[] { null };
-			Injector createdInjector = Guice//
-					.createInjector(//
-							new OversigtModule(//
-									options,
-									() -> oversigt[0].shutdown(), //
-									ImmutableList.//
-									<Module> builder()//
-											.addAll(modules)//
-											.build()));
+			final AtomicReference<Oversigt> oversigt = new AtomicReference<>();
+			final Injector injector = Guice.createInjector(//
+					Binder::requireExplicitBindings,
+					binder -> binder.bind(Runnable.class)
+							.annotatedWith(Names.named("Shutdown"))
+							.toInstance(() -> oversigt.get().shutdown()),
+					options.createModule(),
+					new OversigtConfigurationModule(options.isDebugFallback(), options.getLdapBindPasswordFallback()),
+					new JsonModule(),
+					new WebModule(),
+					new OversigtModule());
 
-			return oversigt[0] = new Oversigt(createdInjector);
-		}
-	}
+			JiraConfigurationProvider.setSocketTimeout(
+					injector.getBinding(Key.get(int.class, Names.named("jira.socketTimeout"))).getProvider().get());
 
-	static void handleEventBusException(Throwable throwable, SubscriberExceptionContext context) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Could not dispatch event");
-		if (context.getEvent() instanceof OversigtEvent) {
-			sb.append(" ID ").append(((OversigtEvent) context.getEvent()).getId());
+			oversigt.set(new Oversigt(injector));
+			return oversigt.get();
 		}
-		sb.append(": ").append(context.getSubscriber()).append(" to ").append(context.getSubscriberMethod());
-		LOGGER.error(sb.toString(), throwable);
 	}
 }

@@ -1,0 +1,6 @@
+.login-wrapper {
+  background-image: url("../../assets/login/background.jpg");
+  background-position: 50% 50%;
+  background-repeat: repeat;
+  background-size: cover;
+}

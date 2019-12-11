@@ -1,19 +1,17 @@
 package com.hlag.oversigt.connect.ssh;
 
-import java.util.Comparator;
+import com.hlag.oversigt.util.Utils;
 
-class SshConnectionKey implements Comparable<SshConnectionKey> {
-	@SuppressWarnings("rawtypes")
-	protected static final Comparator COMPARATOR = //
-			Comparator.comparing(SshConnectionKey::getHostname)
-					.thenComparing(Comparator.comparingInt(SshConnectionKey::getPort))
-					.thenComparing(Comparator.comparing(SshConnectionKey::getUsername));
+import edu.umd.cs.findbugs.annotations.Nullable;
 
+class SshConnectionKey {
 	private final String hostname;
+
 	private final int port;
+
 	private final String username;
 
-	protected SshConnectionKey(String hostname, int port, String username) {
+	protected SshConnectionKey(final String hostname, final int port, final String username) {
 		this.hostname = hostname;
 		this.port = port;
 		this.username = username;
@@ -31,24 +29,13 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 		return username;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public int compareTo(SshConnectionKey that) {
-		return COMPARATOR.compare(this, that);
-	}
-
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (hostname == null ? 0 : hostname.hashCode());
-		result = prime * result + port;
-		result = prime * result + (username == null ? 0 : username.hashCode());
-		return result;
+		return Utils.computeHashCode(hostname, port, username);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -58,22 +45,14 @@ class SshConnectionKey implements Comparable<SshConnectionKey> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		SshConnectionKey other = (SshConnectionKey) obj;
-		if (hostname == null) {
-			if (other.hostname != null) {
-				return false;
-			}
-		} else if (!hostname.equals(other.hostname)) {
+		final SshConnectionKey other = (SshConnectionKey) obj;
+		if (!hostname.equals(other.hostname)) {
 			return false;
 		}
 		if (port != other.port) {
 			return false;
 		}
-		if (username == null) {
-			if (other.username != null) {
-				return false;
-			}
-		} else if (!username.equals(other.username)) {
+		if (!username.equals(other.username)) {
 			return false;
 		}
 		return true;

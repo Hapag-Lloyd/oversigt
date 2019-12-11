@@ -1,21 +1,24 @@
 {
 	"debug": true,
-	"hostname": "https://dashboard",
+	"hostname": "http://localhost",
 	"listeners": [
 		{
 			"port": 80
 		},
 		{
 			"port": 443,
-			"ssl": {
-				"keystore": "ssl_keystore.jks",
+			"tls": {
+				"keystore": "tls/keystore.jks",
 				"keystorePassword": "oversigt",
 				"keystoreEntryPassword": "oversigt",
-				"truststore": "ssl_truststore.jks",
+				"truststore": "tls/truststore.jks",
 				"truststorePassword": "oversigt"
 			}
 		}
 	],
+	"ui": {
+		"showOwnersInWelcomePage": true
+	},
 	"api": {
 		"jwtSecretBase64": "2e35939482304c0aafdb774c4a4ab754"
 	},
@@ -34,14 +37,12 @@
 			"bindUser": "",
 			"bindPassword": ""
 		},
-		"session": {
-			"timeout": 30,
-			"maxCount": -1,
-			"expireOldestUnusedSessionOnMax": false,
-			"statisticsEnabled": true,
-			"cookieConfig": {
-				
-			}
+		"foreignEvents": {
+			"enabled": true,
+			"needAuthentication": true,
+			"allowedApiKeys": [
+				"7bcc2fd0-31f1-4c35-be8c-fe0b2b484053"
+			]
 		}
 	},
 	"mail": {
@@ -77,5 +78,32 @@
 	},
 	"jira": {
 		"socketTimeout": 120
+	},
+	"wro": {
+		"types": {
+			"JS": [
+				"statics/dashing/jquery.js",
+				"statics/dashing/batman.js",
+				"statics/dashing/*.js",
+				"statics/dashing/*.coffee",
+				"statics/moment/moment.js",
+				"statics/moment/moment-timezone-with-data.js",
+				"statics/moment/moment-locale-en-gb.js",
+				"statics/moment/moment-locale-de.js",
+				"statics/assets/javascripts/**.js",
+				"statics/assets/javascripts/dashing.gridster.coffee",
+				"statics/widgets/**.coffee",
+				"statics/widgets/**.js",
+				"statics/hlag/**.js",
+				"statics/assets/javascripts/application.coffee"
+			],
+			"CSS": [
+				"statics/assets/stylesheets/*.css",
+				"statics/assets/stylesheets/application.scss",
+				"statics/widgets/**.css",
+				"statics/widgets/**.scss",
+				"statics/hlag/**.scss"
+			]
+		}
 	}
 }

@@ -37,9 +37,19 @@ rebel.xml
 # clearcase migration
 .copyarea.db
 
+# de.lars-sh:parent
+/.settings/
+/src/main/lombok/lombok.config
+/src/test/lombok/lombok.config
+/src/lombok.config
+/target/
+/.checkstyle
+/.classpath
+/.project
 
 # Oversigt specific
 /log/*.log
 /data/*.db
 /lib-user/*.jar
 /addons/*.jar
+/private-test/*

@@ -1,7 +1,11 @@
 package com.hlag.oversigt.model;
 
+import static java.util.Optional.empty;
+
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -14,58 +18,67 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource.NOP;
 import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
 
-public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public final class EventSourceDescriptor implements Comparable<EventSourceDescriptor> {
 	@NotNull
 	private final EventSourceKey key;
 
 	@NotBlank
 	@NotNull
 	private final String displayName;
-	private final String description;
-	@NotNull
-	private final Set<@NotNull EventSourceProperty> properties = new TreeSet<>();
-	@NotNull
-	private final Set<@NotNull EventSourceProperty> dataItems = new TreeSet<>();
-	@JsonIgnore
-	private final Set<@NotBlank String> dataItemsToHide = new TreeSet<>();
+
+	private final Optional<String> description;
 
 	@NotBlank
 	@JsonProperty(access = Access.READ_ONLY, required = false)
 	private final String view;
-	@JsonProperty(access = Access.READ_ONLY, required = false)
-	private final Class<? extends Service> serviceClass;
-	@JsonProperty(access = Access.READ_ONLY, required = false)
-	private final Class<? extends OversigtEvent> eventClass;
+
+	private final Optional<Class<? extends Service>> serviceClass;
+
+	private final Optional<Class<? extends OversigtEvent>> eventClass;
+
 	@JsonIgnore
 	private final Class<? extends Module> moduleClass;
-	private boolean standAlone = false;
 
-	EventSourceDescriptor(@NotNull EventSourceKey key,
-			@NotBlank String displayName,
-			String description,
-			@NotBlank String view,
-			boolean standAlone) {
-		this(key, displayName, description, view, null, null, null);
-		this.standAlone = standAlone;
-	}
+	private final boolean standAlone;
 
-	EventSourceDescriptor(@NotNull EventSourceKey key,
-			@NotBlank String displayName,
-			String description,
-			@NotBlank String view,
-			Class<? extends Service> serviceClass,
-			Class<? extends OversigtEvent> eventClass,
-			Class<? extends Module> moduleClass) {
+	@NotNull
+	private final Set<@NotNull EventSourceProperty> properties;
+
+	@NotNull
+	private final Set<@NotNull EventSourceProperty> dataItems;
+
+	@JsonIgnore
+	private final Set<@NotBlank String> dataItemsToHide;
+
+	private EventSourceDescriptor(final EventSourceKey key,
+			final String displayName,
+			final Optional<String> description,
+			final String view,
+			final Optional<Class<? extends Service>> serviceClass,
+			final Optional<Class<? extends OversigtEvent>> eventClass,
+			final Class<? extends Module> moduleClass,
+			final boolean standAlone,
+			final Set<EventSourceProperty> properties,
+			final Set<EventSourceProperty> dataItems,
+			final Set<String> dataItemsToHide) {
 		this.key = key;
 		this.displayName = displayName;
-		this.description = description != null && description.trim().length() > 1 ? description : null;
+		this.description = description;
 		this.view = view;
 		this.serviceClass = serviceClass;
 		this.eventClass = eventClass;
 		this.moduleClass = moduleClass;
+		this.standAlone = standAlone;
+		this.properties = Collections.unmodifiableSet(new LinkedHashSet<>(properties));
+		this.dataItems = Collections.unmodifiableSet(new LinkedHashSet<>(dataItems));
+		this.dataItemsToHide = Collections.unmodifiableSet(new LinkedHashSet<>(dataItemsToHide));
 	}
 
 	public EventSourceKey getKey() {
@@ -76,17 +89,34 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return view;
 	}
 
-	public Class<? extends Service> getServiceClass() {
+	public Optional<Class<? extends Service>> getServiceClass() {
 		return serviceClass;
+	}
+
+	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
+	public String getServiceClassName() {
+		return serviceClass.map(Class::getName).orElse(null);
+	}
+
+	@JsonProperty(access = Access.READ_ONLY, required = false)
+	@Nullable
+	public String getEventClassName() {
+		return eventClass.map(Class::getName).orElse(null);
 	}
 
 	@JsonIgnore
 	public boolean isScheduledService() {
-		return serviceClass != null && ScheduledEventSource.class.isAssignableFrom(serviceClass);
+		return serviceClass.map(ScheduledEventSource.class::isAssignableFrom).orElse(false);
 	}
 
+	public boolean isDeprecated() {
+		return serviceClass.map(clazz -> clazz.isAnnotationPresent(Deprecated.class)).orElse(false);
+	}
+
+	@Nullable
 	public Class<? extends OversigtEvent> getEventClass() {
-		return eventClass;
+		return eventClass.orElse(null);
 	}
 
 	public Class<? extends Module> getModuleClass() {
@@ -97,7 +127,7 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return displayName;
 	}
 
-	public String getDescription() {
+	public Optional<String> getDescription() {
 		return description;
 	}
 
@@ -113,38 +143,118 @@ public class EventSourceDescriptor implements Comparable<EventSourceDescriptor> 
 		return Collections.unmodifiableSet(dataItemsToHide);
 	}
 
-	void addProperty(@NotNull EventSourceProperty property) {
-		this.properties.add(Objects.requireNonNull(property, "Property must not be null"));
-	}
-
-	void addDataItem(@NotNull EventSourceProperty dataItem) {
-		this.dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
-	}
-
-	void addDataItemToHide(@NotBlank String itemName) {
-		this.dataItemsToHide
-				.add(Objects.requireNonNull(Strings.emptyToNull(itemName), "Item name must not be null or empty"));
-	}
-
-	EventSourceProperty getProperty(@NotBlank String name) {
+	EventSourceProperty getProperty(final String name) {
 		return properties.stream().filter(p -> name.equals(p.getName())).findAny().get();
 	}
 
-	EventSourceProperty getDataItem(@NotBlank String name) {
+	EventSourceProperty getDataItem(final String name) {
 		return dataItems.stream().filter(p -> name.equals(p.getName())).findAny().get();
 	}
 
-	boolean isStandAlone() {
+	// TODO make non-public
+	public boolean isStandAlone() {
 		return standAlone;
 	}
 
 	@Override
-	public int compareTo(EventSourceDescriptor that) {
-		return this.getDisplayName().compareToIgnoreCase(that.getDisplayName());
+	public int compareTo(@Nullable final EventSourceDescriptor that) {
+		return getDisplayName()
+				.compareToIgnoreCase(Optional.ofNullable(that).map(EventSourceDescriptor::getDisplayName).orElse(""));
 	}
 
 	@Override
 	public String toString() {
 		return key + " (" + displayName + " / " + view + ")";
+	}
+
+	public static final class Builder {
+		private final EventSourceKey key;
+
+		private final String displayName;
+
+		private final Optional<String> description;
+
+		private final String view;
+
+		private final Optional<Class<? extends Service>> serviceClass;
+
+		private final Optional<Class<? extends OversigtEvent>> eventClass;
+
+		private final Class<? extends Module> moduleClass;
+
+		private final boolean standAlone;
+
+		private final Set<EventSourceProperty> properties = new TreeSet<>();
+
+		private final Set<EventSourceProperty> dataItems = new TreeSet<>();
+
+		private final Set<String> dataItemsToHide = new TreeSet<>();
+
+		public Builder(final EventSourceKey key,
+				final String displayName,
+				final Optional<String> description,
+				final String view,
+				final boolean standAlone) {
+			this.key = key;
+			this.displayName = displayName;
+			this.description = description;
+			this.view = view;
+			serviceClass = empty();
+			eventClass = empty();
+			moduleClass = NOP.class;
+			this.standAlone = standAlone;
+		}
+
+		public Builder(final EventSourceKey key,
+				final String displayName,
+				final String description,
+				final String view,
+				final Class<? extends Service> serviceClass,
+				final Class<? extends OversigtEvent> eventClass,
+				final Class<? extends Module> moduleClass) {
+			this.key = key;
+			this.displayName = displayName;
+			this.description = Optional.of(description);
+			this.view = view;
+			this.serviceClass = Optional.of(serviceClass);
+			this.eventClass = Optional.of(eventClass);
+			this.moduleClass = moduleClass;
+			standAlone = false;
+		}
+
+		public String getView() {
+			return view;
+		}
+
+		public Set<String> getDataItemsToHide() {
+			return dataItemsToHide;
+		}
+
+		public void addProperty(final EventSourceProperty property) {
+			properties.add(Objects.requireNonNull(property, "Property must not be null"));
+		}
+
+		public void addDataItem(final EventSourceProperty dataItem) {
+			dataItems.add(Objects.requireNonNull(dataItem, "Data item must not be null"));
+		}
+
+		public void addDataItemToHide(final String itemName) {
+			dataItemsToHide
+					.add(Objects.requireNonNull(Strings.emptyToNull(itemName), "Item name must not be null or empty"));
+		}
+
+		public EventSourceDescriptor build() {
+			return new EventSourceDescriptor(key,
+					displayName,
+					description,
+					view,
+					serviceClass,
+					eventClass,
+					moduleClass,
+					standAlone,
+					properties,
+					dataItems,
+					dataItemsToHide);
+		}
 	}
 }

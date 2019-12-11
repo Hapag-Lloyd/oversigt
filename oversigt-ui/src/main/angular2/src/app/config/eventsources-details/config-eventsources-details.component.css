@@ -1,0 +1,41 @@
+.loading {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.eventsource-config-main {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-content: stretch;
+}
+
+.eventsource-config-main .system-info {
+  flex: 1 1 35%;
+  padding-right: 24px;
+}
+
+.eventsource-config-main .es-info {
+  flex: 2 2 55%;
+}
+
+.info .card:first-child {
+  margin-top: 0;
+}
+
+clr-dropdown-menu input {
+  margin: 0 1rem;
+}
+
+.drop-down-info {
+  margin-left: 1rem;
+  font-size: small;
+}
+
+.drop-down-info + .nothing-found, a + .nothing-found {
+  display: none;
+}
+
+.card clr-dropdown .btn {
+  margin-right: 0.5rem;
+}

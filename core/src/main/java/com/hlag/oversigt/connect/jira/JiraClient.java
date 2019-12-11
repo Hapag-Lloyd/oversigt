@@ -1,16 +1,43 @@
 package com.hlag.oversigt.connect.jira;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import com.atlassian.jira.rest.client.api.domain.Issue;
 
+/**
+ * A client enabling consumer code to retrieve information from a JIRA backend
+ *
+ * @author Lars Knickrehm
+ * @author Olaf Neumann
+ */
 public interface JiraClient {
+	/**
+	 * The maximum number of issues to return from the JIRA backend
+	 */
+	int MAX_RESULTS_DEFAULT = 500;
 
-	public static final int MAX_RESULTS_DEFAULT = 500;
-
-	default List<Issue> search(String jql) throws JiraClientException {
+	/**
+	 * Search the JIRA backend using the given query
+	 *
+	 * @param jql the query to execute on the JIRA backend
+	 * @return a possibly empty list of issues found in jira
+	 * @throws JiraClientException if something fails while searching for issues
+	 * @throws TimeoutException    if the query while waiting before its execution
+	 */
+	default List<Issue> search(final String jql) throws JiraClientException, TimeoutException {
 		return search(jql, MAX_RESULTS_DEFAULT, 0);
 	}
 
-	List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException;
+	/**
+	 * Perform the Jira search with the given parameters
+	 *
+	 * @param jql        the query to execute
+	 * @param maxResults the maximum number of results to return
+	 * @param startAt    <em>don't know</em>
+	 * @return the list of found issues
+	 * @throws JiraClientException if something fails
+	 * @throws TimeoutException    if the query while waiting before its execution
+	 */
+	List<Issue> search(String jql, int maxResults, int startAt) throws JiraClientException, TimeoutException;
 }

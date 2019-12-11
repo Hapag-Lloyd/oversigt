@@ -7,6 +7,9 @@ import javax.ws.rs.ext.Provider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
@@ -14,12 +17,12 @@ public class JacksonConfig implements ContextResolver<ObjectMapper> {
 	private final ObjectMapper objectMapper;
 
 	@Inject
-	public JacksonConfig(ObjectMapper objectMapper) {
+	public JacksonConfig(@Named("only-annotated") final ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 
 	@Override
-	public ObjectMapper getContext(Class<?> objectType) {
+	public ObjectMapper getContext(@SuppressWarnings("unused") @Nullable final Class<?> objectType) {
 		return objectMapper;
 	}
 }

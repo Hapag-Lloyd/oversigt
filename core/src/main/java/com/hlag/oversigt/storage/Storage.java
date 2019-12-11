@@ -45,7 +45,7 @@ public interface Storage extends Closeable {
 	Collection<String> getEventSourcesIds();
 
 	EventSourceInstance loadEventSourceInstance(String id,
-			BiFunction<String, String, EventSourceDescriptor> descriptorSupplier);
+			BiFunction<Optional<String>, String, EventSourceDescriptor> descriptorSupplier);
 
 	Map<String, String> getEventSourceInstanceProperties(String id);
 
@@ -55,7 +55,7 @@ public interface Storage extends Closeable {
 
 	List<Dashboard> loadDashboards();
 
-	Dashboard loadDashboard(String id);
+	Optional<Dashboard> loadDashboard(String id);
 
 	List<Widget> loadWidgetDatas(Dashboard dashboard, Function<String, EventSourceInstance> instanceProvider);
 

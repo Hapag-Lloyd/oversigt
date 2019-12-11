@@ -6,8 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hlag.oversigt.controller.DashboardController;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	public static final Comparator<EventSourceInstance> COMPARATOR = Comparator.comparing(EventSourceInstance::getName)
@@ -17,21 +21,26 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	private final EventSourceDescriptor descriptor;
 
 	private String id;
+
 	private String name;
+
 	private boolean enabled;
+
 	private Duration frequency;
+
 	private final Map<EventSourceProperty, Object> propertyValues = new HashMap<>();
 
 	private final String createdBy;
+
 	private String lastChangeBy;
 
-	public EventSourceInstance(EventSourceDescriptor descriptor,
-			String id,
-			String name,
-			boolean enabled,
-			Duration frequency,
-			String createdBy,
-			String lastChangeBy) {
+	public EventSourceInstance(final EventSourceDescriptor descriptor,
+			final String id,
+			final String name,
+			final boolean enabled,
+			final Duration frequency,
+			final String createdBy,
+			final String lastChangeBy) {
 		this.descriptor = descriptor;
 		this.id = id;
 		this.name = name;
@@ -46,18 +55,17 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return descriptor;
 	}
 
-	Object getPropertyValue(EventSourceProperty property) {
+	// TODO make non-public
+	public Object getPropertyValue(final EventSourceProperty property) {
 		return propertyValues.get(property);
 	}
 
-	public String getPropertyValueString(EventSourceProperty property) {
-		if (property.getClazz() != null) {
-			return Optional.ofNullable(propertyValues.get(property))
-					.map(v -> DashboardController.getInstance().getValueString(property, v))
-					.orElse("");
-		} else {
-			return Optional.ofNullable((String) propertyValues.get(property)).orElse("");
+	public String getPropertyValueString(final EventSourceProperty property) {
+		final Optional<Object> value = Optional.ofNullable(propertyValues.get(property));
+		if (!property.getClazz().isPresent()) {
+			return value.map(v -> (String) v).orElse("");
 		}
+		return value.map(v -> DashboardController.getInstance().getValueString(property, v)).orElse("");
 	}
 
 	public String getId() {
@@ -68,7 +76,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -76,7 +84,7 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return frequency;
 	}
 
-	public void setFrequency(Duration frequency) {
+	public void setFrequency(final Duration frequency) {
 		this.frequency = frequency;
 	}
 
@@ -84,27 +92,31 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return enabled;
 	}
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(final boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	void setProperty(EventSourceProperty property, Object value) {
-		if (property.getClazz() == null && !property.isCustomValuesAllowed() && !property.getAllowedValues().isEmpty()
+	// TODO make non-public
+	public void setProperty(final EventSourceProperty property, final Object value) {
+		Objects.requireNonNull(value, "The value of a property must not be null");
+		if (!property.getClazz().isPresent()
+				&& !property.isCustomValuesAllowed()
+				&& !property.getAllowedValues().isEmpty()
 				&& !property.getAllowedValues().contains(value)) {
 			throw new RuntimeException("The value '" + value + "' is not allowed for property " + property.getName());
 		}
-		this.propertyValues.put(property, value);
+		propertyValues.put(property, value);
 	}
 
-	public void setPropertyString(EventSourceProperty property, String stringValue) {
+	public void setPropertyString(final EventSourceProperty property, final String stringValue) {
 		setProperty(property, DashboardController.getInstance().createObjectFromString(property, stringValue));
 	}
 
-	public boolean hasPropertyValue(EventSourceProperty property) {
+	public boolean hasPropertyValue(final EventSourceProperty property) {
 		return propertyValues.containsKey(property);
 	}
 
-	public void removeProperty(EventSourceProperty property) {
+	public void removeProperty(final EventSourceProperty property) {
 		propertyValues.remove(property);
 	}
 
@@ -116,12 +128,12 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 		return lastChangeBy;
 	}
 
-	public void setLastChangeBy(String lastChangeBy) {
+	public void setLastChangeBy(final String lastChangeBy) {
 		this.lastChangeBy = lastChangeBy;
 	}
 
 	@Override
-	public int compareTo(EventSourceInstance that) {
+	public int compareTo(@Nullable final EventSourceInstance that) {
 		return COMPARATOR.compare(this, that);
 	}
 
@@ -129,13 +141,13 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (id == null ? 0 : id.hashCode());
-		result = prime * result + (name == null ? 0 : name.hashCode());
+		result = prime * result + id.hashCode();
+		result = prime * result + name.hashCode();
 		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -143,21 +155,16 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
+			if (obj instanceof String) {
+				return obj.equals(getId());
+			}
 			return false;
 		}
-		EventSourceInstance other = (EventSourceInstance) obj;
-		if (id == null) {
-			if (other.id != null) {
-				return false;
-			}
-		} else if (!id.equals(other.id)) {
+		final EventSourceInstance other = (EventSourceInstance) obj;
+		if (!id.equals(other.id)) {
 			return false;
 		}
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
+		if (!name.equals(other.name)) {
 			return false;
 		}
 		return true;
@@ -165,9 +172,26 @@ public class EventSourceInstance implements Comparable<EventSourceInstance> {
 
 	@Override
 	public String toString() {
-		return id + " \"" + name + "\""
-				+ (descriptor.getServiceClass() != null
-						? " (" + descriptor.getServiceClass().getSimpleName() + ")"
-						: "");
+		return id
+				+ " \""
+				+ name
+				+ "\""
+				+ descriptor.getServiceClass().map(c -> " (" + c.getSimpleName() + ")").orElse("");
+	}
+
+	public static Predicate<EventSourceInstance> createFilter(final String filter) {
+		return i -> i.getName().toLowerCase().contains(filter)
+				|| i.getId().toLowerCase().contains(filter)
+				|| Optional.ofNullable(i.getFrequency()).map(Object::toString).orElse("").toLowerCase().contains(filter)
+				|| i.getDescriptor()
+						.getProperties()
+						.stream()
+						.filter(i::hasPropertyValue)
+						.anyMatch(p -> i.getPropertyValueString(p).toLowerCase().contains(filter))
+				|| i.getDescriptor()
+						.getDataItems()
+						.stream()
+						.filter(i::hasPropertyValue)
+						.anyMatch(p -> i.getPropertyValueString(p).toLowerCase().contains(filter));
 	}
 }

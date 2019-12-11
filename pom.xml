@@ -1,34 +1,63 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<name>Oversigt</name>
-	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+	<parent>
+		<groupId>de.lars-sh</groupId>
+		<artifactId>parent</artifactId>
+		<version>0.9.4</version>
+		<relativePath></relativePath>
+	</parent>
 
 	<groupId>com.hlag.oversigt</groupId>
 	<artifactId>oversigt</artifactId>
 	<version>0.5.0.1</version>
 	<packaging>pom</packaging>
-	
-	<licenses>
-		<license>
-			<name>MIT License</name>
-			<url>https://opensource.org/licenses/mit-license.php</url>
-		</license>
-	</licenses>
 
+	<name>Oversigt</name>
+	<url>http://github.com/Hapag-Lloyd/oversigt</url>
 	<organization>
 		<name>Hapag-Lloyd AG</name>
 		<url>https://www.hapag-lloyd.com/</url>
 	</organization>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
+	</licenses>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+	<developers>
+		<developer>
+			<name>Hapag-Lloyd AG</name>
+			<url>https://www.hapag-lloyd.com/</url>
+		</developer>
+	</developers>
+
 	<modules>
+		<module>oversigt-ui</module>
+		<module>jira-rest-java-client-fix</module>
 		<module>core</module>
 	</modules>
+
+	<scm>
+		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
+		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
+		<url>https://github.com/Hapag-Lloyd/oversigt</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis</system>
+		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
+	</ciManagement>
+
+	<repositories>
+		<repository>
+			<id>sonatype-nexus-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
 </project>

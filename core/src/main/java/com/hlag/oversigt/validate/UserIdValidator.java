@@ -7,17 +7,27 @@ import com.google.inject.Inject;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 public class UserIdValidator implements ConstraintValidator<UserId, String> {
 
 	@Inject
 	private Authenticator authenticator;
 
+	public UserIdValidator() {
+		// no fields to be initialized manually, some will be injected
+	}
+
 	@Override
-	public boolean isValid(String value, ConstraintValidatorContext context) {
+	public boolean isValid(@Nullable final String value,
+			@SuppressWarnings("unused") @Nullable final ConstraintValidatorContext context) {
+		if (value == null) {
+			return false;
+		}
 		try {
-			Principal principal = Principal.loadPrincipal(authenticator, value);
-			return principal != null;
-		} catch (Exception e) {
+			// TODO improve the way this method works. Do we need to catch all exceptions?
+			return Principal.loadPrincipal(authenticator, value).isPresent();
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			return false;
 		}
 	}

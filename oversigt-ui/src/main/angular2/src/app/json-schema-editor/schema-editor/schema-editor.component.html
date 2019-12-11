@@ -1,0 +1,23 @@
+<div *ngIf="value !== null; else nullValue" [ngSwitch]="schemaObject.type"
+    style="overflow: auto; display: inline-block;width:100%;">
+    <!--<em>{{schemaObject.title}}</em>-->
+  <app-json-array *ngSwitchCase="'array'" [schemaObject]="schemaObject.items" [(ngModel)]="value" [displayFormat]="schemaObject.format" [showMainTitle]="showMainTitle"></app-json-array>
+  <app-json-object *ngSwitchCase="'object'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitles]="showTitles"></app-json-object>
+  <app-json-string *ngSwitchCase="'string'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
+  <app-json-string *ngSwitchCase="'number'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
+  <app-json-string *ngSwitchCase="'boolean'" [schemaObject]="schemaObject" [(ngModel)]="value" [showTitle]="showTitles"></app-json-string>
+  <pre *ngSwitchDefault>No editor for schema type "{{schemaObject.type}}"</pre>
+</div>
+
+<ng-template #nullValue>
+  <div class="alert alert-danger" role="alert">
+      <div class="alert-items">
+          <div class="alert-item static">
+              <div class="alert-icon-wrapper">
+                  <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+              </div>
+              <span class="alert-text">SchemaEditor value is null</span>
+          </div>
+      </div>
+  </div>
+</ng-template>

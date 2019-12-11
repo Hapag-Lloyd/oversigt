@@ -1,0 +1,63 @@
+<#ftl output_format="HTML">
+<#macro dashboardLayout title="Dashboard Layout">
+    <!DOCTYPE html>
+    <html lang="en">
+	    <head>
+	        <meta charset="utf-8" />
+	        <title>${title}</title>
+	
+	        <script type="text/javascript" src="/compiled/assets/application.js"></script>
+	        <script type="text/javascript" src="/assets/config/dashboard.js"></script>
+	        <link rel="stylesheet" href="/compiled/assets/application.css">
+	        <link rel="stylesheet" href="/assets/hlag/modifiable.css">
+	        
+	        <link href="//fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" type="text/css">
+	        <link href="/assets/hlag/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	    </head>
+	    <body class="hide-mouse" style="background-color:${backgroundColor};">
+		    <script type="text/javascript">
+		        $(function () {
+		            // These settings override the defaults set in application.coffee. You can do this on a per dashboard basis.
+		            Dashing.widget_base_dimensions = [${computedTileWidth}, ${computedTileHeight}]
+		            Dashing.numColumns = ${columns}
+		        });
+		    </script>
+		    <div class="container">
+		        <#nested/>
+		        <div data-id="reload" data-view="RemoteReload" style="padding: 0px"></div>
+		    </div>
+			<div id="saving-instructions">
+				<p>Paste the following at the top of your <i>ftl.html</i>:</p>
+				<textarea id="gridster-code"></textarea>
+			</div>
+			<a class="hide" href="#saving-instructions" id="save-gridster">Save this layout</a>
+
+			<div id="configurationModal" class="modal">
+				<div class="modal-header">
+					<button class="close" onclick="document.getElementById('configurationModal').style.display='none';">×</button>
+					<h4>Modify <span id="modifyWidgetName">Widget</span></h4>
+				</div>
+				<div class="modal-content">
+					<div id="configurationModal-content">
+						<p>This is a modal</p>
+					</div>
+				</div>
+			</div>
+			<script type="text/javascript">
+			function loadModal(widgetId) {
+				$.ajax({
+		            type: 'GET',
+		            url: window.location.href + '/config/' + widgetId,
+		            error: function(jqXHR, textStatus, errorMessage) {
+						alert(textStatus + ": " + errorMessage);
+	                },
+	                success: function(data, status) {
+	                	document.getElementById('configurationModal-content').innerHTML=data;
+	                	$('#configurationModal').show();
+	                } 
+		        });
+			};
+			</script>
+		</body>
+   	</html>
+</#macro>

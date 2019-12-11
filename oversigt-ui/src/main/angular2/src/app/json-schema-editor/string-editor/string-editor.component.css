@@ -1,0 +1,19 @@
+.clr-input-wrapper, .clr-select-wrapper {
+  max-height: none;
+  width: 100%;
+}
+
+.clr-control-container {
+  padding-right: 0.5rem;
+}
+.clr-control-container, .clr-control-container div, .clr-control-container div * {
+  width: 100%;
+}
+
+.checkbox {
+  padding-left: 0.25rem;
+}
+
+.checkbox, .checkbox label {
+  margin-right: 0;
+}

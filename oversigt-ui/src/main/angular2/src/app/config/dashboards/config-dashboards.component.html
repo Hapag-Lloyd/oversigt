@@ -1,0 +1,48 @@
+<app-header [hidden]="outlet.isActivated" [title]="'Dashboards'" [level]="1" [additional]="createButton"></app-header>
+<ng-template #createButton>
+  <button *appHasRole="'server.admin'" (click)="createModal.open()" class="btn btn-icon" title="Create new dashboard">
+    <clr-icon shape="plus-circle"></clr-icon> New dashboard
+  </button>
+  <div class="clr-input-wrapper">
+    <input class="clr-input" type="text" [(ngModel)]="dashboardFilter" placeholder="Filter dashboards"
+      id="dashboardFilter" name="dashboardFilter" />
+  </div>
+</ng-template>
+
+
+<div [hidden]="outlet.isActivated" class="list-group">
+  <ng-container *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter">
+    <div class="list-group-item content">
+      <!-- FIXME: if search-filter is not empty and but role-filter removes all lines the 'empty-message' will not be displayed -->
+      <!--  *appHasRole="'dashboard.' + dashboard.id + '.editor'" -->
+      <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a> <span
+        *ngIf="!dashboard.enabled">(disabled)</span>
+    </div>
+  </ng-container>
+  <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
+    Your filter did not return any dashboard.
+  </div>
+</div>
+
+
+<clr-modal #createModal [(clrModalOpen)]="createDashboardModelOpen" [clrModalClosable]="false">
+  <h3 class="modal-title">Create a new dashboard</h3>
+  <div class="modal-body">
+    <form clrForm class="clr-form">
+      <clr-input-container>
+        <label>ID</label>
+        <input clrInput type="text" [(ngModel)]="newDashboardName" name="newDashboardName" />
+        <clr-control-helper>This will be the ID of the new dashboard. The dashboard's ID cannot be changed but you can
+          change its title later.</clr-control-helper>
+      </clr-input-container>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline"
+      (click)="createDashboardModelOpen = false; newDashboardName = ''">Cancel</button>
+    <button type="button" class="btn btn-primary" [disabled]="newDashboardName.length === 0"
+      (click)="createDashboardModelOpen = false; createDashboard(newDashboardName)">Create</button>
+  </div>
+</clr-modal>
+
+<router-outlet #outlet="outlet"></router-outlet>

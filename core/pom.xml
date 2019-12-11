@@ -1,47 +1,83 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.hlag.oversigt</groupId>
 		<artifactId>oversigt</artifactId>
-		<version>0.5.0.1</version>
+		<version>0.6-SNAPSHOT</version>
 	</parent>
 
-	<name>Oversigt-core</name>
-
 	<artifactId>oversigt-core</artifactId>
+
+	<name>Oversigt Core</name>
+	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+	<organization>
+		<name>Hapag-Lloyd AG</name>
+		<url>https://www.hapag-lloyd.com/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Hapag-Lloyd AG</name>
+			<url>https://www.hapag-lloyd.com/</url>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
+		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
+		<url>https://github.com/Hapag-Lloyd/oversigt</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis</system>
+		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
+	</ciManagement>
 
 	<properties>
 		<compilerArgument>-parameters</compilerArgument>
 
-		<guice.version>4.1.0</guice.version>
-		<undertow.version>1.4.8.Final</undertow.version>
-		<freemarker.version>2.3.26-incubating</freemarker.version>
-		<wro.version>1.8.0</wro.version>
-		<resteasy.version>3.1.4.Final</resteasy.version>
-		<weld.version>2.4.1.Final</weld.version>
+		<pmd.skip>true</pmd.skip>
+		<cpd.excludeFromFailureFile>${project.basedir}/cpd-excludes.csv</cpd.excludeFromFailureFile>
+		<spotbugs.excludeFilterFile>${project.basedir}/spotbugs-excludes.xml</spotbugs.excludeFilterFile>
+		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
 	</properties>
 
 	<dependencies>
+		<!-- our own UI -->
+		<dependency>
+			<groupId>com.hlag.oversigt</groupId>
+			<artifactId>oversigt-ui</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<!-- logging -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.21</version>
+			<version>1.7.29</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.1.7</version>
+			<version>1.2.3</version>
 		</dependency>
 
 		<!-- storage -->
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.15.1</version>
+			<version>3.28.0</version>
 		</dependency>
 
 		<!-- startup properties made easy -->
@@ -55,25 +91,40 @@
 		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-core</artifactId>
-			<version>${undertow.version}</version>
+			<version>2.0.27.Final</version>
 		</dependency>
 		<!-- undertow-servlet for WRO -->
 		<dependency>
+			<groupId>org.jboss.spec.javax.annotation</groupId>
+			<artifactId>jboss-annotations-api_1.2_spec</artifactId>
+			<version>1.0.2.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.spec.javax.servlet</groupId>
+			<artifactId>jboss-servlet-api_4.0_spec</artifactId>
+			<version>2.0.0.Final</version>
+		</dependency>
+		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-servlet</artifactId>
-			<version>${undertow.version}</version>
+			<version>2.0.27.Final</version>
 		</dependency>
 
 		<!-- Validation -->
 		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
+		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>6.0.7.Final</version>
+			<version>6.1.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator-annotation-processor</artifactId>
-			<version>6.0.7.Final</version>
+			<version>6.1.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.web</groupId>
@@ -83,44 +134,72 @@
 
 		<!-- JaxRS classes to enable REST services -->
 		<dependency>
+			<groupId>org.jboss.spec.javax.ws.rs</groupId>
+			<artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
+
+		<!-- Resteasy dependencies must not be updated as staring Oversigt fails 
+			otherwise! -->
+		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxrs</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-client</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-cdi</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-links</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-guice</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jackson2-provider</artifactId>
-			<version>${resteasy.version}</version>
+			<version>3.8.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.weld.servlet</groupId>
 			<artifactId>weld-servlet</artifactId>
-			<version>${weld.version}</version>
+			<version>2.4.8.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.3</version>
+			<version>2.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jdk8</artifactId>
+			<version>2.10.0</version>
 		</dependency>
 		<!--javax.el is dependency required by weld-servlet -->
 		<dependency>
@@ -132,21 +211,36 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt</artifactId>
-			<version>0.9.0</version>
-		</dependency>
-
-		<!-- String similiarity -->
-		<dependency>
-			<groupId>info.debatty</groupId>
-			<artifactId>java-string-similarity</artifactId>
-			<version>1.1.0</version>
+			<version>0.9.1</version>
 		</dependency>
 
 		<!-- Swagger -->
 		<dependency>
 			<groupId>io.swagger</groupId>
+			<artifactId>swagger-core</artifactId>
+			<version>1.5.24</version>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-models</artifactId>
+			<version>1.5.24</version>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>1.5.24</version>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger</groupId>
 			<artifactId>swagger-jaxrs</artifactId>
-			<version>1.5.17</version>
+			<version>1.5.24</version>
+		</dependency>
+
+		<!-- String similarity -->
+		<dependency>
+			<groupId>info.debatty</groupId>
+			<artifactId>java-string-similarity</artifactId>
+			<version>1.2.1</version>
 		</dependency>
 
 		<!-- Microsoft API for Exchange access -->
@@ -160,15 +254,19 @@
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>${guice.version}</version>
+			<version>4.2.2</version>
 		</dependency>
+
+		<!-- Aspect Oriented Programming (Intercepting API method calls for validation) -->
 		<dependency>
-			<groupId>com.google.inject.extensions</groupId>
-			<artifactId>guice-multibindings</artifactId>
-			<version>${guice.version}</version>
+			<groupId>aopalliance</groupId>
+			<artifactId>aopalliance</artifactId>
+			<version>1.0</version>
 		</dependency>
 
 		<!-- other useful stuff -->
+		<!-- Must not be updated as long as the JIRA client requires a method that 
+			has been removed in version 21! -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -177,86 +275,149 @@
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
-			<version>3.0.1</version>
+			<version>3.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.9</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>5.2.1.RELEASE</version>
 		</dependency>
 
 		<!-- JSON -->
 		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.8.0</version>
-		</dependency>
-		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
 			<version>2.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>de.lars-sh</groupId>
+			<artifactId>json-dom</artifactId>
+			<version>0.9.1</version>
 		</dependency>
 
 		<!-- templates -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
 			<artifactId>freemarker</artifactId>
-			<version>${freemarker.version}</version>
+			<version>2.3.29</version>
 		</dependency>
 
 		<!-- CoffeScript & other script language stuff -->
 		<dependency>
 			<groupId>ro.isdc.wro4j</groupId>
 			<artifactId>wro4j-core</artifactId>
-			<version>${wro.version}</version>
+			<version>1.8.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ro.isdc.wro4j</groupId>
 			<artifactId>wro4j-extensions</artifactId>
-			<version>${wro.version}</version>
+			<version>1.8.0</version>
 		</dependency>
-
 
 		<!-- JIRA support -->
 		<dependency>
-			<groupId>com.atlassian.fugue</groupId>
-			<artifactId>fugue</artifactId>
-			<version>2.6.1</version>
+			<groupId>com.hlag.oversigt</groupId>
+			<artifactId>jira-rest-java-client-fix</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.jira</groupId>
-			<artifactId>jira-rest-java-client-core</artifactId>
-			<version>4.0.0</version>
+			<artifactId>jira-rest-java-client-api</artifactId>
+			<version>5.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>io.atlassian.util.concurrent</groupId>
+			<artifactId>atlassian-util-concurrent</artifactId>
+			<version>4.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.jettison</groupId>
+			<artifactId>jettison</artifactId>
+			<version>1.4.0</version>
 		</dependency>
 
 		<!-- SSH support -->
 		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jsch</artifactId>
-			<version>0.1.54</version>
+			<version>0.1.55</version>
 		</dependency>
 
-		<!-- FTP client -->
-		<dependency>
-			<groupId>commons-net</groupId>
-			<artifactId>commons-net</artifactId>
-			<version>3.5</version>
-		</dependency>
-
-		<!-- Calendar with holydays -->
+		<!-- Calendar with holidays -->
 		<dependency>
 			<groupId>de.jollyday</groupId>
 			<artifactId>jollyday</artifactId>
-			<version>0.5.1</version>
+			<version>0.5.9</version>
 		</dependency>
 
 		<!-- Mail sending -->
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
-			<version>1.6.0</version>
+			<version>1.6.2</version>
 		</dependency>
 
 		<!-- GIT -->
 		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
-			<version>5.0.2.201807311906-r</version>
+			<version>5.5.1.201910021850-r</version>
+		</dependency>
+
+		<!-- Testing -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.14.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>3.1.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>3.1.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.5.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.offbytwo.jenkins</groupId>
+			<artifactId>jenkins-client</artifactId>
+			<version>0.3.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>xml-apis</groupId>
+			<artifactId>xml-apis</artifactId>
+			<version>1.4.01</version>
 		</dependency>
 	</dependencies>
 
@@ -264,64 +425,15 @@
 		<repository>
 			<id>atlassian-public</id>
 			<url>https://maven.atlassian.com/repository/public</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>never</updatePolicy>
-				<checksumPolicy>warn</checksumPolicy>
-			</snapshots>
-			<releases>
-				<enabled>true</enabled>
-				<checksumPolicy>warn</checksumPolicy>
-			</releases>
 		</repository>
 	</repositories>
-
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
-				<executions>
-					<execution>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>src/launcher/java</source>
-								<source>src/launcher/resources</source>
-							</sources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
 				<executions>
 					<execution>
-						<id>launcher</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-							<classifier>launcher</classifier>
-							<includes>
-								<include>com/hlag/oversigt/launcher/**/*</include>
-							</includes>
-							<archive>
-								<manifest>
-									<mainClass>com.hlag.oversigt.launcher.OversigtLauncher</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-					</execution>
-					<execution>
-						<id>application</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
@@ -331,9 +443,6 @@
 							<includes>
 								<include>**/*.class</include>
 							</includes>
-							<excludes>
-								<exclude>com/hlag/oversigt/launcher/**/*</exclude>
-							</excludes>
 							<archive>
 								<manifest>
 									<addClasspath>true</addClasspath>
@@ -347,8 +456,28 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.8</version>
 				<executions>
+					<execution>
+						<!-- analyze-only -->
+						<id>default</id>
+						<configuration>
+							<ignoredUsedUndeclaredDependencies>
+								<!-- OversigtServer: io.undertow.server.HttpServerExchange#getConnection() -->
+								<ignoredUsedUndeclaredDependency>org.jboss.xnio:xnio-api:jar:</ignoredUsedUndeclaredDependency>
+							</ignoredUsedUndeclaredDependencies>
+							<usedDependencies>
+								<!-- REST API -->
+								<usedDependency>javax.el:javax.el-api</usedDependency>
+								<usedDependency>org.glassfish.web:javax.el</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-client</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-links</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-jackson2-provider</usedDependency>
+
+								<!-- REST API Validation -->
+								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
+							</usedDependencies>
+						</configuration>
+					</execution>
 					<execution>
 						<id>copy-dependencies</id>
 						<phase>package</phase>
@@ -378,18 +507,18 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.6</version>
 				<configuration>
 					<descriptors>
-						<descriptor>src/package/assembly/bin.xml</descriptor>
+						<descriptor>${project.basedir}/src/package/assembly/bin.xml</descriptor>
 					</descriptors>
 					<appendAssemblyId>true</appendAssemblyId>
 					<recompressZippedFiles>true</recompressZippedFiles>
 				</configuration>
 				<executions>
+					<!-- Used for inheritance merges -->
 					<execution>
-						<id>make-assembly</id> <!-- this is used for inheritance merges -->
-						<phase>package</phase> <!-- append to the packaging phase. -->
+						<id>make-assembly</id>
+						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
@@ -398,5 +527,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

@@ -1,7 +1,12 @@
 package com.hlag.oversigt.storage;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public interface SqlDialect {
 
@@ -15,26 +20,29 @@ public interface SqlDialect {
 
 	String alterTableDropColumn(String tableName, String columnName);
 
-	default String select(String tableName, Collection<String> select) {
-		return select(tableName, null, select);
+	default String select(final String tableName, final Collection<String> where) {
+		return select(tableName, Collections.emptyList(), where);
 	}
 
-	default String select(String tableName, Collection<String> select, Collection<String> where) {
-		return select(tableName, select, where, null, false, 0L);
+	default String select(final String tableName, final Collection<String> select, final Collection<String> where) {
+		return select(tableName, select, where, Optional.empty(), false, 0L);
 	}
 
-	default String select(String tableName, Collection<String> select, String columnIn, long inValues) {
-		return select(tableName, select, null, columnIn, false, inValues);
+	default String select(final String tableName,
+			final Collection<String> select,
+			final Optional<String> columnIn,
+			final long inValues) {
+		return select(tableName, select, Collections.emptyList(), columnIn, false, inValues);
 	}
 
 	String select(String tableName,
 			Collection<String> select,
 			Collection<String> where,
-			String columnIn,
+			Optional<String> columnIn,
 			boolean notIn,
 			long inValues);
 
-	String selectithOneLike(String tableName,
+	String selectWithOneLike(String tableName,
 			Collection<String> select,
 			Collection<String> columnsToCheck,
 			String columnWithLike);
@@ -45,11 +53,11 @@ public interface SqlDialect {
 
 	String delete(String tableName, Collection<String> whereNames);
 
-	String delete(String tableName, Collection<String> where, String columnIn, boolean notIn, long inValues);
+	String delete(String tableName, Collection<String> where, Optional<String> columnIn, boolean notIn, long inValues);
 
 	Object convertValue(Object object);
 
-	public static enum ColumnType {
+	enum ColumnType {
 		Text,
 		Integer,
 		BigInteger,
@@ -60,42 +68,88 @@ public interface SqlDialect {
 		Time
 	}
 
-	public static class ColumnOptions {
+	class ColumnOptions {
 
-		final String name;
-		final ColumnType type;
-		final boolean nullable;
-		final Object defaultValue;
-		final boolean primaryKey;
-		final boolean autoincrement;
-		final boolean unique;
-		final Integer length;
-		final Integer precision;
+		private final String name;
 
-		public ColumnOptions(String name, ColumnType type, Object defaultValue, boolean nullable, boolean primaryKey) {
+		private final ColumnType type;
+
+		private final boolean nullable;
+
+		@Nullable
+		private final Object defaultValue;
+
+		private final boolean primaryKey;
+
+		private final boolean autoincrement;
+
+		private final boolean unique;
+
+		private final OptionalInt length;
+
+		private final OptionalInt precision;
+
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				@Nullable final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey) {
 			this(name, type, defaultValue, nullable, primaryKey, false, false);
 		}
 
-		public ColumnOptions(String name,
-				ColumnType type,
-				Object defaultValue,
-				boolean nullable,
-				boolean primaryKey,
-				boolean autoincrement,
-				boolean unique) {
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				@Nullable final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey,
+				final boolean autoincrement,
+				final boolean unique) {
 			this.name = Objects.requireNonNull(name);
 			this.type = Objects.requireNonNull(type);
 			this.defaultValue = defaultValue;
 			this.nullable = nullable;
 			this.primaryKey = primaryKey;
 			this.autoincrement = autoincrement;
-			this.length = null;
-			this.precision = null;
+			length = OptionalInt.empty();
+			precision = OptionalInt.empty();
 			this.unique = unique;
+		}
+
+		@Nullable
+		public Object getDefaultValue() {
+			return defaultValue;
 		}
 
 		public String getName() {
 			return name;
+		}
+
+		public OptionalInt getLength() {
+			return length;
+		}
+
+		public OptionalInt getPrecision() {
+			return precision;
+		}
+
+		public ColumnType getType() {
+			return type;
+		}
+
+		public boolean isAutoincrement() {
+			return autoincrement;
+		}
+
+		public boolean isNullable() {
+			return nullable;
+		}
+
+		public boolean isPrimaryKey() {
+			return primaryKey;
+		}
+
+		public boolean isUnique() {
+			return unique;
 		}
 	}
 }

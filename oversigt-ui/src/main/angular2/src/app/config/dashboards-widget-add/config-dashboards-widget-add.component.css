@@ -1,0 +1,14 @@
+.event-source-list {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start /*space-between*/;
+  align-items: baseline;
+}
+
+.event-source-list .card {
+  margin-right: 1rem;
+}
+
+.content + .no-content {
+  display: none;
+}

@@ -1,0 +1,26 @@
+<app-header [title]="'Log Files'" [additional]="filelist"></app-header>
+
+<ng-template #filelist>
+  <button *ngIf="selectedValue" (click)="downloadLogfile(selectedValue)" title="Download complete log file from server" class="btn btn-outline btn-icon">
+    <clr-icon shape="download-cloud"></clr-icon>
+  </button>
+  <button *ngIf="selectedValue" (click)="loadLogFileContent(selectedValue)" title="Reload log file content" class="btn btn-outline btn-icon">
+    <clr-icon shape="refresh"></clr-icon>
+  </button>
+  <clr-dropdown [clrCloseMenuOnItemClick]="true">
+    <button type="button" class="btn btn-outline" clrDropdownTrigger>
+      Select log file <clr-icon shape="caret down"></clr-icon>
+    </button>
+    <clr-dropdown-menu clrPosition="bottom-right" *clrIfOpen>
+      <!--<h4 class="dropdown-header">Dropdown header</h4>-->
+      <button *ngFor="let file of logfiles" clrDropDownItem (click)="loadLogFileContent(file)" type="button" class="dropdown-item">{{file}}</button>
+    </clr-dropdown-menu>
+  </clr-dropdown>
+</ng-template>
+
+<h3 *ngIf="selectedValue">{{selectedValue}}</h3>
+<pre *ngIf="selectedValue; else noLogFile">{{content}}</pre>
+
+<ng-template #noLogFile>
+  <pre>Please choose a log file.</pre>
+</ng-template>

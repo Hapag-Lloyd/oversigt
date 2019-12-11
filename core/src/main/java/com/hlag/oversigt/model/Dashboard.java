@@ -1,8 +1,9 @@
 package com.hlag.oversigt.model;
 
+import static com.hlag.oversigt.util.Utils.sortedAndSynchronizedSet;
+
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -14,36 +15,42 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hlag.oversigt.properties.Color;
-import com.hlag.oversigt.validate.UserId;
 
 public class Dashboard {
-	static final int TILE_DISTANCE = 6;
+	private static final int TILE_DISTANCE = 6;
 
 	@NotNull
 	@NotBlank
 	@JsonPropertyDescription("The unique ID of the dashboard. It will be used to reference the dashboard.")
-	private String id = null;
+	private String id;
+
 	@NotNull
 	@NotBlank
 	@JsonPropertyDescription("The title of the dashboard for display in the browser")
 	private String title = "Dashboard";
+
 	@NotNull
 	@JsonPropertyDescription("Whether the dashboard is available to the public")
 	private boolean enabled = false;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "1920")
 	@JsonPropertyDescription("The screen width the dashboard will be optimized for")
 	private int screenWidth = 1920;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "1080")
 	@JsonPropertyDescription("The screen height the dashboard will be optimized for")
 	private int screenHeight = 1080;
+
 	@NotNull
 	@Min(1)
 	@JsonProperty(defaultValue = "15")
@@ -54,49 +61,50 @@ public class Dashboard {
 	@JsonProperty(defaultValue = "#222222")
 	@JsonPropertyDescription("The background color of the dashboard")
 	private Color backgroundColor = Color.parse("#222222");
+
 	@NotNull
 	@JsonPropertyDescription("The type of coloring the dashboard will use")
 	private DashboardColorScheme colorScheme = DashboardColorScheme.COLORED;
+
 	@NotNull
 	@JsonPropertyDescription("The first color for the selected color scheme")
 	private Color foregroundColorStart = Color.parse("#888888");
+
 	@NotNull
 	@JsonPropertyDescription("The second color for the selected color scheme")
 	private Color foregroundColorEnd = Color.parse("#AAAAAA");
 
-	@NotBlank
-	@UserId
+	@NotNull
 	@JsonPropertyDescription("The user id of dashboard's owner")
-	private String owner = null;
+	private Set<@NotBlank /* TODO @UserId */ String> owners = sortedAndSynchronizedSet();
+
 	@NotNull
 	@JsonPropertyDescription("A list of user ids of people who are allowed to edit the dashboard")
-	private Set<@NotBlank @UserId String> editors = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+	private Set<@NotBlank /* TODO @UserId */ String> editors = sortedAndSynchronizedSet();
 
 	@JsonIgnore
 	private final Set<Widget> widgets = new TreeSet<>();
 
-	Dashboard() {
-	}
-
-	public Dashboard(String id, String owner, boolean enabled) {
+	public Dashboard(final String id, final String owner, final boolean enabled) {
 		this.id = id;
-		this.title = id;
-		this.owner = owner;
+		title = id;
+		owners.add(owner);
 		this.enabled = enabled;
 	}
 
-	public Dashboard(String id,
-			String title,
-			boolean enabled,
-			int screenWidth,
-			int screenHeight,
-			int columns,
-			Color backgroundColor,
-			DashboardColorScheme colorScheme,
-			Color foregroundColorStart,
-			Color foregroundColorEnd,
-			String owner,
-			Collection<String> editors) {
+	@JsonCreator(mode = Mode.PROPERTIES)
+	public Dashboard(@JsonProperty("id") final String id,
+			@JsonProperty("title") final String title,
+			@JsonProperty("enabled") final boolean enabled,
+			@JsonProperty("screenWidth") final int screenWidth,
+			@JsonProperty("screenHeight") final int screenHeight,
+			@JsonProperty("columns") final int columns,
+			@JsonProperty("backgroundColor") final Color backgroundColor,
+			@JsonProperty("colorScheme") final DashboardColorScheme colorScheme,
+			@JsonProperty("foregroundColorStart") final Color foregroundColorStart,
+			@JsonProperty("foregroundColorEnd") final Color foregroundColorEnd,
+			@JsonProperty("owners") final Collection<String> owners,
+			@JsonProperty("editors") final Collection<String> editors) {
 		this.id = id;
 		this.title = title;
 		this.enabled = enabled;
@@ -107,15 +115,15 @@ public class Dashboard {
 		this.colorScheme = colorScheme;
 		this.foregroundColorStart = foregroundColorStart;
 		this.foregroundColorEnd = foregroundColorEnd;
-		this.owner = owner;
-		this.editors = new HashSet<>(editors);
+		this.owners.addAll(owners);
+		this.editors.addAll(editors);
 	}
 
 	public String getId() {
 		return Objects.requireNonNull(id);
 	}
 
-	public void setId(String id) {
+	public void setId(final String id) {
 		this.id = id;
 	}
 
@@ -123,7 +131,7 @@ public class Dashboard {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
@@ -131,7 +139,7 @@ public class Dashboard {
 		return enabled;
 	}
 
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(final boolean enabled) {
 		this.enabled = enabled;
 	}
 
@@ -139,7 +147,7 @@ public class Dashboard {
 		return screenWidth;
 	}
 
-	public void setScreenWidth(int screenWidth) {
+	public void setScreenWidth(final int screenWidth) {
 		this.screenWidth = screenWidth;
 	}
 
@@ -147,7 +155,7 @@ public class Dashboard {
 		return screenHeight;
 	}
 
-	public void setScreenHeight(int screenHeight) {
+	public void setScreenHeight(final int screenHeight) {
 		this.screenHeight = screenHeight;
 	}
 
@@ -155,7 +163,7 @@ public class Dashboard {
 		return columns;
 	}
 
-	public void setColumns(int columns) {
+	public void setColumns(final int columns) {
 		this.columns = columns;
 	}
 
@@ -163,11 +171,11 @@ public class Dashboard {
 		return backgroundColor;
 	}
 
-	public void setBackgroundColor(Color backgroundColor) {
+	public void setBackgroundColor(final Color backgroundColor) {
 		this.backgroundColor = backgroundColor;
 	}
 
-	public void setBackgroundColor(String backgroundColor) {
+	public void setBackgroundColor(final String backgroundColor) {
 		setBackgroundColor(Color.parse(backgroundColor));
 	}
 
@@ -175,11 +183,11 @@ public class Dashboard {
 		return colorScheme;
 	}
 
-	public void setColorScheme(DashboardColorScheme colorScheme) {
+	public void setColorScheme(final DashboardColorScheme colorScheme) {
 		this.colorScheme = colorScheme;
 	}
 
-	public void setColorScheme(String string) {
+	public void setColorScheme(final String string) {
 		setColorScheme(DashboardColorScheme.fromString(string));
 	}
 
@@ -187,31 +195,43 @@ public class Dashboard {
 		return foregroundColorStart;
 	}
 
-	public void setForegroundColorStart(String foregroundColorStart) {
-		this.foregroundColorStart = Color.parse(foregroundColorStart);
+	public void setForegroundColorStart(final Color foregroundColorStart) {
+		this.foregroundColorStart = foregroundColorStart;
+	}
+
+	public void setForegroundColorStart(final String foregroundColorStart) {
+		setForegroundColorStart(Color.parse(foregroundColorStart));
 	}
 
 	public Color getForegroundColorEnd() {
 		return foregroundColorEnd;
 	}
 
-	public void setForegroundColorEnd(String foregroundColorEnd) {
-		this.foregroundColorEnd = Color.parse(foregroundColorEnd);
+	public void setForegroundColorEnd(final Color foregroundColorEnd) {
+		this.foregroundColorEnd = foregroundColorEnd;
 	}
 
-	public String getOwner() {
-		return owner;
+	public void setForegroundColorEnd(final String foregroundColorEnd) {
+		setForegroundColorEnd(Color.parse(foregroundColorEnd));
 	}
 
-	public void setOwner(String owner) {
-		this.owner = owner;
+	public Collection<String> getOwners() {
+		return owners;
 	}
 
-	public Set<String> getEditors() {
+	public void setOwners(final Collection<String> owners) {
+		this.owners = sortedAndSynchronizedSet(owners);
+	}
+
+	public Collection<String> getEditors() {
 		return editors;
 	}
 
-	public boolean isEditor(String username) {
+	public void setEditors(final Collection<String> editors) {
+		this.editors = sortedAndSynchronizedSet(editors);
+	}
+
+	public boolean isEditor(final String username) {
 		return getEditors().contains(username);
 	}
 
@@ -220,11 +240,14 @@ public class Dashboard {
 		return Collections.unmodifiableCollection(widgets);
 	}
 
-	public Widget getWidget(int id) {
+	public Widget getWidget(final int id) {
+		// TODO return optional
 		return getWidgets().stream().filter(w -> w.getId() == id).findFirst().get();
 	}
 
-	Collection<Widget> getModifiableWidgets() {
+	// TODO make non-public
+	@JsonIgnore
+	public Collection<Widget> getModifiableWidgets() {
 		return widgets;
 	}
 
@@ -244,5 +267,22 @@ public class Dashboard {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+	}
+
+	public Dashboard copy() {
+		final Dashboard dashboard = new Dashboard(getId(),
+				getTitle(),
+				isEnabled(),
+				getScreenWidth(),
+				getScreenHeight(),
+				getColumns(),
+				getBackgroundColor(),
+				getColorScheme(),
+				getForegroundColorStart(),
+				getForegroundColorEnd(),
+				getOwners(),
+				getEditors());
+		dashboard.getModifiableWidgets().addAll(getWidgets());
+		return dashboard;
 	}
 }

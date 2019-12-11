@@ -1,86 +1,105 @@
 package com.hlag.oversigt.sources;
 
-import static com.hlag.oversigt.util.Utils.*;
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logError;
+import static com.hlag.oversigt.util.Utils.logTrace;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.hlag.oversigt.core.EventSource;
-import com.hlag.oversigt.core.eventsource.annotation.Property;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent;
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 import com.hlag.oversigt.util.text.TextProcessor;
 
-@EventSource(displayName = "Internet Extraction Text", description = "Shows text extracted from (one or more) URL", view = "List", hiddenDataItems = "updated-at-message")
+@EventSource(displayName = "Internet Extraction Text",
+		description = "Shows text extracted from (one or more) URL",
+		view = "List",
+		hiddenDataItems = "updated-at-message")
 public class InternetTextExtractionEventSource extends AbstractDownloadEventSource<TwoColumnListEvent<String>> {
-	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("", "$[*].name") };
+	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction("true", "$[*].name") };
+
 	private Summarization summarization = Summarization.ConcatenationWithLineBreak;
+
 	private String defaultValue = "";
 
+	public InternetTextExtractionEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
-	protected TwoColumnListEvent<String> produceEvent() {
+	protected Optional<TwoColumnListEvent<String>> produceEvent() {
 		logTrace(getLogger(), "Starting event creation");
 
-		String body = downloadText();
+		final String body = downloadText();
 		String output = processValueExtractions(body);
 		if (Strings.isNullOrEmpty(output)) {
 			output = getDefaultValue();
 		}
 
-		List<ListEventItem<String>> items = Splitter.on("\n")
+		final List<ListEventItem<String>> items = Splitter.on("\n")
 				.splitToList(output)
 				.stream()
 				.map(l -> new ListEventItem<>(l, ""))
 				.collect(Collectors.toList());
-		return new TwoColumnListEvent<>(items);
+		return Optional.of(new TwoColumnListEvent<>(items));
 	}
 
 	private String downloadText() {
 		try {
-			String body = downloadString(createConfiguredConnection());
+			final String body = downloadString(createConfiguredConnection());
 			logDebug(getLogger(), "Downloaded body");
 			logTrace(getLogger(), "Body content %s", body);
 			return body;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logError(getLogger(), "Unable to download content: %s", e.getMessage());
 			throw new RuntimeException(e);
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private String processValueExtractions(String downloadedContent) {
-		Object value = Arrays//
-				.stream(getValueExtractions())
-				.filter(ve -> ve.filter(downloadedContent))
-				.map(ve -> ve.process(downloadedContent))
+	private String processValueExtractions(final String downloadedContent) {
+		Object value = Arrays.stream(getValueExtractions())
+				.filter(ve -> filter(ve, downloadedContent))
+				.map(ve -> process(ve, downloadedContent))
 				.collect(getSummarization().getCollector());
 		if (value instanceof Optional) {
-			value = ((Optional) value).orElse("");
+			final Optional<?> optional = (Optional<?>) value;
+			if (!optional.isPresent()) {
+				return "";
+			}
+			value = optional.get();
 		}
-		return value.toString();
+		return Objects.toString(value);
 	}
 
-	@Property(name = "Default Value", description = "The default value to show if the JSONPath does not match", type = "text")
+	@Property(name = "Default Value",
+			description = "The default value to show if no or an empty value has been extracted")
 	public String getDefaultValue() {
 		return defaultValue;
 	}
 
-	public void setDefaultValue(String defaultValue) {
+	public void setDefaultValue(final String defaultValue) {
 		this.defaultValue = defaultValue;
 	}
 
-	@Property(name = "Value Extraction", description = "Specify the values to extract and how to extract them.", json = true)
+	@Property(name = "Value Extraction", description = "Specify the values to extract and how to extract them.")
 	public ValueExtraction[] getValueExtractions() {
 		return valueExtractions;
 	}
 
-	public void setValueExtractions(ValueExtraction[] valueExtractions) {
+	public void setValueExtractions(final ValueExtraction[] valueExtractions) {
 		this.valueExtractions = valueExtractions;
 	}
 
@@ -89,16 +108,52 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		return summarization;
 	}
 
-	public void setSummarization(Summarization summaization) {
-		this.summarization = summaization;
+	public void setSummarization(final Summarization summaization) {
+		summarization = summaization;
+	}
+
+	private boolean filter(final ValueExtraction valueExtraction, final String downloadedContent) {
+		final String result = new TextProcessor().registerDatetimeFunctions()
+				.registerJsonPathFunction(downloadedContent)
+				.registerRegularExpressionFunction(downloadedContent)
+				.registerXPathFunction(downloadedContent)
+				.process(valueExtraction.condition)
+				.trim();
+		try {
+			if (Boolean.parseBoolean(result)) {
+				return true;
+			}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			/* ignore */
+		}
+		try {
+			if (Long.parseLong(result) > 0L) {
+				return true;
+			}
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
+			// ignore invalid user input
+		}
+		return false;
+	}
+
+	private String process(final ValueExtraction valueExtraction, final String downloadedContent) {
+		return new TextProcessor().registerDatetimeFunctions()
+				.registerJsonPathFunction(downloadedContent)
+				.registerRegularExpressionFunction(downloadedContent)
+				.registerXPathFunction(downloadedContent)
+				.process(valueExtraction.format);
 	}
 
 	public static class ValueExtraction {
+		@NotNull
 		private final String condition;
+
+		@NotNull
 		private final String format;
 
-		public ValueExtraction(String condition, String format) {
-			super();
+		@JsonCreator
+		public ValueExtraction(@JsonProperty("condition") final String condition,
+				@JsonProperty("format") final String format) {
 			this.condition = condition;
 			this.format = format;
 		}
@@ -110,41 +165,9 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 		public String getFormat() {
 			return format;
 		}
-
-		boolean filter(String downloadedContent) {
-			String result = TextProcessor//
-					.create()
-					.registerDatetimeFunctions()
-					.registerJsonPathFunction(downloadedContent)
-					.registerRegularExpressionFunction(downloadedContent)
-					.process(condition)
-					.trim();
-			try {
-				if (Boolean.parseBoolean(result)) {
-					return true;
-				}
-			} catch (Exception ignore) {
-			}
-			try {
-				if (Long.parseLong(result) > 0L) {
-					return true;
-				}
-			} catch (Exception ignore) {
-			}
-			return false;
-		}
-
-		String process(String downloadedContent) {
-			return TextProcessor//
-					.create()
-					.registerDatetimeFunctions()
-					.registerJsonPathFunction(downloadedContent)
-					.registerRegularExpressionFunction(downloadedContent)
-					.process(format);
-		}
 	}
 
-	public static enum Summarization {
+	public enum Summarization {
 		Concatenation(Collectors.joining()),
 		ConcatenationWithLineBreak(Collectors.joining("\n")),
 		Sum(Collectors.summingInt(cs -> Integer.parseInt(cs.toString()))),
@@ -156,7 +179,7 @@ public class InternetTextExtractionEventSource extends AbstractDownloadEventSour
 
 		private final Collector<CharSequence, ?, ?> collector;
 
-		private Summarization(Collector<CharSequence, ?, ?> collector) {
+		Summarization(final Collector<CharSequence, ?, ?> collector) {
 			this.collector = collector;
 		}
 

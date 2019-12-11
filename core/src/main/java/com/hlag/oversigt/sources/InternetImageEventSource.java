@@ -1,21 +1,29 @@
 package com.hlag.oversigt.sources;
 
 import java.io.IOException;
+import java.util.Optional;
 
-import com.hlag.oversigt.core.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
 import com.hlag.oversigt.sources.event.StyleEvent;
-import com.hlag.oversigt.util.Tuple;
 
-@EventSource(view = "ImageView", displayName = "Internet Image", description = "Load an image from the internet by parsing a web site and show the image in the dashboard.", dataItems = {
-		"width" })
+@EventSource(view = "ImageView",
+		displayName = "Internet Image",
+		description = "Load an image from the internet by parsing a web site and show the image in the dashboard.",
+		dataItems = { "width" },
+		hiddenDataItems = { "more-info" })
 public class InternetImageEventSource extends AbstractDownloadEventSource<StyleEvent> {
+	public InternetImageEventSource() {
+		// no fields to be initialized
+	}
+
 	@Override
-	protected StyleEvent produceEvent() {
+	protected Optional<StyleEvent> produceEvent() throws EventSourceException {
 		try {
-			Tuple<byte[], String> image = downloadBytes(createConfiguredConnection());
-			return StyleEvent.backgroundImage(image.getSecond(), image.getFirst());
-		} catch (IOException e) {
-			return failure("Unable to download image: " + e.getMessage(), e);
+			final DownloadData image = downloadBytes(createConfiguredConnection());
+			return Optional.of(StyleEvent.backgroundImage(image.getContentType(), image.getData()));
+		} catch (final IOException e) {
+			throw new EventSourceException("Unable to download image", e);
 		}
 	}
 }

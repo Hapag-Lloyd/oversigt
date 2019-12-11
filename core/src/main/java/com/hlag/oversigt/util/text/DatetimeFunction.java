@@ -9,30 +9,46 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAmount;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 // public modifier for Guice-Injection
 class DatetimeFunction implements Function<String, LocalDateTime> {
-	private static final String PATTERN_DATETIME_STRING = "\\s*([+-])?\\s*([a-z]+|(?:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:.[0-9]{3})?|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}(?:.[0-9]{3})?)|P(?=\\d|T\\d)(?:\\d+Y)?(?:\\d+M)?(?:\\d+[DW])?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?)\\s*";
+	private static final String PATTERN_DATETIME_STRING
+			= "\\s*([+-])?\\s*([a-z]+|(?:[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:.[0-9]{3})?|[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}(?:.[0-9]{3})?)|P(?=\\d|T\\d)(?:\\d+Y)?(?:\\d+M)?(?:\\d+[DW])?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?)\\s*";
+
 	private static final Pattern PATTERN_DATETIME = Pattern.compile(PATTERN_DATETIME_STRING);
+
 	private static final Pattern PATTERN_DATETIME_COMPLETE = Pattern.compile("^(" + PATTERN_DATETIME_STRING + ")+$");
 
-	private final DatatypeFactory datatypeFactory;
+	private static final DatatypeFactory DATATYPE_FACTORY;
 
-	DatetimeFunction(DatatypeFactory datatypeFactory) {
-		this.datatypeFactory = datatypeFactory;
+	static {
+		try {
+			DATATYPE_FACTORY = DatatypeFactory.newInstance();
+		} catch (final DatatypeConfigurationException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	DatetimeFunction() {
+		// nothing to do
 	}
 
 	@Override
-	public LocalDateTime apply(String input) {
+	public LocalDateTime apply(@Nullable final String input) {
+		Objects.requireNonNull(input, "Input for a date time function must be non null");
 		if (!PATTERN_DATETIME_COMPLETE.matcher(input).matches()) {
 			throw new RuntimeException("Expression '" + input + "' cannot be parsed for dates and times.");
 		}
-		Matcher dateMatcher = PATTERN_DATETIME.matcher(input);
+		final Matcher dateMatcher = PATTERN_DATETIME.matcher(input);
 		final LocalDateTime nullDateTime = LocalDateTime.of(0, 1, 1, 0, 0, 0, 0);
 		LocalDateTime datetime = LocalDateTime.from(nullDateTime);
 		while (dateMatcher.find()) {
@@ -41,8 +57,8 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 				op = dateMatcher.group(1).charAt(0);
 			}
 
-			TemporalAmount change;
-			String temporalString = dateMatcher.group(2).toUpperCase();
+			final TemporalAmount change;
+			final String temporalString = dateMatcher.group(2).toUpperCase();
 			if (temporalString.equals("NOW")) {
 				change = Duration.between(nullDateTime, LocalDateTime.now());
 			} else if (temporalString.equals("MIDNIGHT")) {
@@ -52,12 +68,13 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 				change = Duration.between(nullDateTime,
 						LocalDateTime.now().withHour(12).withMinute(0).withSecond(0).withNano(0));
 			} else if (temporalString.startsWith("P")) {
-				javax.xml.datatype.Duration duration = datatypeFactory.newDuration(temporalString);
+				javax.xml.datatype.Duration duration = DATATYPE_FACTORY.newDuration(temporalString);
 				if (op == '-') {
 					duration = duration.negate();
 					op = '+';
 				}
-				long millis = duration.getTimeInMillis(Date.from(datetime.atZone(ZoneId.systemDefault()).toInstant()));
+				final long millis
+						= duration.getTimeInMillis(Date.from(datetime.atZone(ZoneId.systemDefault()).toInstant()));
 				change = Duration.ofMillis(millis);
 			} else if (temporalString.contains("T")) {
 				change = Duration.between(nullDateTime,
@@ -74,14 +91,14 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 				datetime = datetime.plus(change);
 			} else {
 				switch (op) {
-					case '+':
-						datetime = datetime.plus(change);
-						break;
-					case '-':
-						datetime = datetime.minus(change);
-						break;
-					default:
-						throw new RuntimeException("Unknown operator: " + op);
+				case '+':
+					datetime = datetime.plus(change);
+					break;
+				case '-':
+					datetime = datetime.minus(change);
+					break;
+				default:
+					throw new RuntimeException("Unknown operator: " + op);
 				}
 			}
 		}

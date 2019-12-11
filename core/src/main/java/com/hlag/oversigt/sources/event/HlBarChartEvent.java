@@ -2,15 +2,16 @@ package com.hlag.oversigt.sources.event;
 
 import java.util.List;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
 public class HlBarChartEvent extends OversigtEvent {
 
 	private final List<Category> categories;
+
 	private final String value;
 
-	public HlBarChartEvent(List<Category> categories, String value) {
+	public HlBarChartEvent(final List<Category> categories, final String value) {
 		this.categories = categories;
 		this.value = value;
 	}
@@ -26,10 +27,12 @@ public class HlBarChartEvent extends OversigtEvent {
 	public static final class Category {
 
 		private final String title;
+
 		private final String description;
+
 		private final List<Serie> series;
 
-		public Category(String title, String description, List<Serie> series) {
+		public Category(final String title, final String description, final List<Serie> series) {
 			this.title = title;
 			this.description = description;
 			this.series = series;
@@ -51,13 +54,15 @@ public class HlBarChartEvent extends OversigtEvent {
 	public static final class Serie {
 
 		private final String backgroundColor;
+
 		private final String height;
+
 		private final String style;
 
-		public Serie(Color backgroundColor, double height) {
+		public Serie(final Color backgroundColor, final double height) {
 			this.backgroundColor = backgroundColor.getHexColor();
 			this.height = height * 100 + "%";
-			this.style = "background-color: " + this.backgroundColor + "; height: " + this.height + ";";
+			style = "background-color: " + this.backgroundColor + "; height: " + this.height + ";";
 		}
 
 		public String getBackgroundColor() {

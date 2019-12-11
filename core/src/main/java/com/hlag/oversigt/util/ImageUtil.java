@@ -16,28 +16,25 @@ public final class ImageUtil {
 
 	private static final Map<EventSourceDescriptor, String> IMAGE_URLS = new HashMap<>();
 
-	private static boolean isFileAvailable(String path) {
+	private static boolean isFileAvailable(final String path) {
 		try (InputStream in = Oversigt.class.getClassLoader().getResourceAsStream(path)) {
 			return in != null;
-		} catch (Exception ignore) {
+		} catch (@SuppressWarnings("unused") final Exception ignore) {
 			return false;
 		}
 	}
 
-	public static String getPreviewImageUrl(EventSourceDescriptor info) {
+	public static String getPreviewImageUrl(final EventSourceDescriptor info) {
 		return IMAGE_URLS.computeIfAbsent(info,
 				i -> getPreviewImageUrl(//
-						Optional//
-								.ofNullable(info.getServiceClass())
-								.map(Class::getName)
-								.orElse(null),
+						info.getServiceClass().map(Class::getName),
 						i.getView()));
 	}
 
-	private static String getPreviewImageUrl(String serviceClassName, String viewName) {
-		if (serviceClassName != null) {
-			if (isFileAvailable(getResourcePathForPreview(serviceClassName))) {
-				return getUrlPathForPreview(serviceClassName);
+	private static String getPreviewImageUrl(final Optional<String> serviceClassName, final String viewName) {
+		if (serviceClassName.isPresent()) {
+			if (isFileAvailable(getResourcePathForPreview(serviceClassName.get()))) {
+				return getUrlPathForPreview(serviceClassName.get());
 			}
 		}
 		if (isFileAvailable(getResourcePathForWidget(viewName))) {
@@ -46,20 +43,20 @@ public final class ImageUtil {
 		return "http://placehold.it/500x300";
 	}
 
-	private static String getResourcePathForPreview(String serviceClassName) {
+	private static String getResourcePathForPreview(final String serviceClassName) {
 		return "statics/preview/" + serviceClassName + ".png";
 	}
 
-	private static String getUrlPathForPreview(String serviceClassName) {
+	private static String getUrlPathForPreview(final String serviceClassName) {
 		return "/assets/preview/" + serviceClassName + ".png";
 	}
 
-	private static String getResourcePathForWidget(String widget) {
-		widget = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, widget);
-		return "statics/widgets/" + widget + "/" + widget + ".png";
+	private static String getResourcePathForWidget(final String widget) {
+		final String widgetResourceName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, widget);
+		return "statics/widgets/" + widgetResourceName + "/" + widgetResourceName + ".png";
 	}
 
-	private static String getUrlPathForWidget(String widget) {
+	private static String getUrlPathForWidget(final String widget) {
 		return "/assets/widgets/" + widget + "/" + widget + ".png";
 	}
 }

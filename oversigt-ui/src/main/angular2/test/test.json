@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "http://schema.hlag.com/oversigt/type/[Lcom.hlag.oversigt.sources.TestingEventSource$Test;",
+  "title": "Test[]",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "title": "Test",
+    "properties": {
+      "name": { "type": "string", "title": "Name" },
+      "volume": {
+        "type": "number",
+        "minimum": -2147483648,
+        "maximum": 2147483647,
+        "multipleOf": 1.0,
+        "title": "Volume"
+      },
+      "type": {
+        "type": "string",
+        "uniqueItems": true,
+        "oversigt-ids": ["A", "B", "C", "D"],
+        "enumSource": [
+          {
+            "title": "{{item.title}}",
+            "value": "{{item.value}}",
+            "source": [
+              { "value": "A", "title": "A" },
+              { "value": "B", "title": "B" },
+              { "value": "C", "title": "C" },
+              { "value": "D", "title": "D" }
+            ]
+          }
+        ],
+        "title": "Type"
+      },
+      "types": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "uniqueItems": true,
+          "oversigt-ids": ["A", "B", "C", "D"],
+          "enumSource": [
+            {
+              "title": "{{item.title}}",
+              "value": "{{item.value}}",
+              "source": [
+                { "value": "A", "title": "A" },
+                { "value": "B", "title": "B" },
+                { "value": "C", "title": "C" },
+                { "value": "D", "title": "D" }
+              ]
+            }
+          ]
+        },
+        "additionalItems": false,
+        "title": "Types"
+      }
+    },
+    "required": ["name", "volume", "type", "types"],
+    "additionalProperties": false
+  },
+  "additionalItems": false
+}

@@ -7,18 +7,20 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 class SshConnectionWithPassword extends SshConnection {
 	private final char[] password;
 
-	SshConnectionWithPassword(String hostname, int port, String username, String password) {
+	SshConnectionWithPassword(final String hostname, final int port, final String username, final String password) {
 		super(hostname, port, username);
 		this.password = password.toCharArray();
 	}
 
 	@Override
-	protected synchronized Session createSession(JSch jsch) throws JSchException {
-		Session session = jsch.getSession(getUsername(), getHostname(), getPort());
-		Properties properties = new java.util.Properties();
+	protected synchronized Session createSession(final JSch jsch) throws JSchException {
+		final Session session = jsch.getSession(getUsername(), getHostname(), getPort());
+		final Properties properties = new java.util.Properties();
 		properties.put("StrictHostKeyChecking", "no");
 		session.setDaemonThread(true);
 		session.setConfig(properties);
@@ -28,17 +30,21 @@ class SshConnectionWithPassword extends SshConnection {
 		return session;
 	}
 
-	private static class FixedUserInfo implements UserInfo {
+	private static final class FixedUserInfo implements UserInfo {
 
 		private final String password;
 
-		private FixedUserInfo(char[] password) {
+		private FixedUserInfo(final char[] password) {
 			this.password = new String(password);
 		}
 
+		/**
+		 * This method should never be called because {@link #promptPassword(String)}
+		 * returns <code>false</code>.
+		 */
 		@Override
 		public String getPassphrase() {
-			return null;
+			return "";
 		}
 
 		@Override
@@ -47,22 +53,23 @@ class SshConnectionWithPassword extends SshConnection {
 		}
 
 		@Override
-		public boolean promptPassphrase(String arg0) {
+		public boolean promptPassphrase(@SuppressWarnings("unused") @Nullable final String prompt) {
 			return false;
 		}
 
 		@Override
-		public boolean promptPassword(String arg0) {
+		public boolean promptPassword(@SuppressWarnings("unused") @Nullable final String prompt) {
 			return true;
 		}
 
 		@Override
-		public boolean promptYesNo(String arg0) {
+		public boolean promptYesNo(@SuppressWarnings("unused") @Nullable final String promt) {
 			return false;
 		}
 
 		@Override
-		public void showMessage(String arg0) {
+		public void showMessage(@SuppressWarnings("unused") @Nullable final String message) {
+			// there is no message
 		}
 	}
 }

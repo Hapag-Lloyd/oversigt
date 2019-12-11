@@ -4,26 +4,34 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.hlag.oversigt.core.OversigtEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
 
 public class BarChartEvent extends OversigtEvent {
 	private Collection<String> labels = new ArrayList<>();
+
 	private List<Dataset> datasets = new ArrayList<>();
 
-	public void addDataset(String name, String color, int borderWidth) {
+	public BarChartEvent() {
+		// no fields to be initialized
+	}
+
+	public void addDataset(final String name, final String color, final int borderWidth) {
 		addDataset(name, color, color, borderWidth);
 	}
 
-	public void addDataset(String name, String backgroundColor, String borderColor, int borderWidth) {
+	public void addDataset(final String name,
+			final String backgroundColor,
+			final String borderColor,
+			final int borderWidth) {
 		datasets.add(new Dataset(name, backgroundColor, borderColor, borderWidth));
 	}
 
-	public void addData(String label, double... values) {
+	public void addData(final String label, final double... values) {
 		if (values.length != datasets.size()) {
 			throw new RuntimeException("Number of values doesn't match the number of datasets");
 		}
-		this.labels.add(label);
-		for (int i = 0; i < values.length; ++i) {
+		labels.add(label);
+		for (int i = 0; i < values.length; i += 1) {
 			datasets.get(i).add(values[i]);
 		}
 	}
@@ -36,24 +44,32 @@ public class BarChartEvent extends OversigtEvent {
 		return labels;
 	}
 
-	public static class Dataset {
+	public static final class Dataset {
 		private final String label;
+
 		private final Collection<Double> data = new ArrayList<>();
+
 		private final Collection<String> backgroundColor = new ArrayList<>();
+
 		private final Collection<String> borderColor = new ArrayList<>();
+
 		private final int borderWidth;
 
 		private final transient String defaultBackgroundColor;
+
 		private final transient String defaultBorderColor;
 
-		private Dataset(String label, String backgroundColor, String borderColor, int borderWidth) {
+		private Dataset(final String label,
+				final String backgroundColor,
+				final String borderColor,
+				final int borderWidth) {
 			this.label = label;
 			this.borderWidth = borderWidth;
-			this.defaultBackgroundColor = backgroundColor;
-			this.defaultBorderColor = borderColor;
+			defaultBackgroundColor = backgroundColor;
+			defaultBorderColor = borderColor;
 		}
 
-		private void add(double value) {
+		private void add(final double value) {
 			data.add(value);
 			backgroundColor.add(defaultBackgroundColor);
 			borderColor.add(defaultBorderColor);

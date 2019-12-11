@@ -11,18 +11,32 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+/**
+ * Feature to enable CORS in debug mode to enable development of web UIs
+ *
+ * @see <a href=
+ *      "https://stackoverflow.com/questions/36511330/resteasy-and-corsfilter-implementation">StackOverflow</a>
+ */
 @Provider
 public class CorsFeature implements Feature {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CorsFeature.class);
+
 	@Inject
 	@Named("debug")
 	private boolean debug;
 
+	public CorsFeature() {
+		// no fields to be initialized manually, some will be injected
+	}
+
+	/** {@inheritDoc} */
 	@Override
-	public boolean configure(FeatureContext context) {
-		if (debug) {
+	public boolean configure(@Nullable final FeatureContext context) {
+		if (debug && context != null) {
 			LOGGER.warn("Debug mode: Enabling CORS to permit calls from other hosts.");
-			CorsFilter corsFilter = new CorsFilter();
+			final CorsFilter corsFilter = new CorsFilter();
 			corsFilter.getAllowedOrigins().add("*");
 			context.register(corsFilter);
 		} else {

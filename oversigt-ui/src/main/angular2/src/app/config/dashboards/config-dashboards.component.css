@@ -1,0 +1,14 @@
+
+.content + .no-content {
+  display: none;
+}
+
+
+.create-dashboard {
+  display: flex;
+  align-items: baseline;
+}
+
+.create-dashboard>* {
+  margin-right: 0.5rem;
+}

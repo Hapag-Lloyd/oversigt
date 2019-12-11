@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.hlag.oversigt</groupId>
+		<artifactId>oversigt</artifactId>
+		<version>0.6-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>oversigt-ui</artifactId>
+
+	<name>Oversigt UI</name>
+	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+	<organization>
+		<name>Hapag-Lloyd AG</name>
+		<url>https://www.hapag-lloyd.com/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Hapag-Lloyd AG</name>
+			<url>https://www.hapag-lloyd.com/</url>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
+		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
+		<url>https://github.com/Hapag-Lloyd/oversigt</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis</system>
+		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
+	</ciManagement>
+
+	<properties>
+		<mdep.analyze.skip>true</mdep.analyze.skip>
+
+		<exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>28.1-jre</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-angular2-dir</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.basedir}/target/angular2</outputDirectory>
+							<resources>
+								<resource>
+									<directory>src/main/angular2</directory>
+									<includes>
+										<include>*.*</include>
+										<include>src/**/*</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${exec-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<?m2e ignore?>
+						<id>npm install</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<executable>npm</executable>
+							<arguments>
+								<argument>install</argument>
+							</arguments>
+							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
+							<target>
+								<echo message="npm install" />
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<?m2e ignore?>
+						<id>angular-cli build</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<!-- <executable>node_modules/@angular/cli/bin/ng</executable> -->
+							<!-- <executable>ng</executable> -->
+							<executable>node</executable>
+							<arguments>
+								<argument>node_modules/@angular/cli/bin/ng</argument>
+								<argument>build</argument>
+								<argument>--prod</argument>
+								<argument>--base-href</argument>
+								<argument>/config/</argument>
+							</arguments>
+							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
+							<target>
+								<echo message="ng build" />
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>add-resource</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>add-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/target/angular2/dist</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

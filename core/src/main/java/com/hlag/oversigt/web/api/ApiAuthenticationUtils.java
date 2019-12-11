@@ -1,6 +1,7 @@
 package com.hlag.oversigt.web.api;
 
-import java.io.UnsupportedEncodingException;
+import static com.hlag.oversigt.core.HttpHandlers.MAPPING_API;
+
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -8,7 +9,6 @@ import java.util.UUID;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.hlag.oversigt.core.OversigtServer;
 import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 
@@ -22,51 +22,50 @@ import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
 /**
- * @author Olaf Neumann
- * see https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+ * @author Olaf Neumann see
+ *         https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
  *
  */
 @Singleton
 public class ApiAuthenticationUtils {
 	private final String issuer;
+
 	private final byte[] apiSecret;
+
 	private final SignatureAlgorithm signatureAlgorithm;
+
 	private final long apiTtl;
 
 	private final Authenticator authenticator;
 
 	@Inject
-	public ApiAuthenticationUtils(@Named("hostname") String hostname,
-			@Named("api.secret.base64") String apiSecretBase64,
-			Authenticator authenticator,
-			SignatureAlgorithm signatureAlgorithm,
-			@Named("api.ttl") long ttl) {
-		this.issuer = hostname + OversigtServer.MAPPING_API;
-		this.apiSecret = Base64.getDecoder().decode(apiSecretBase64);
+	public ApiAuthenticationUtils(@Named("hostname") final String hostname,
+			@Named("api.secret.base64") final String apiSecretBase64,
+			final Authenticator authenticator,
+			final SignatureAlgorithm signatureAlgorithm,
+			@Named("api.ttl") final long ttl) {
+		issuer = hostname + MAPPING_API;
+		apiSecret = Base64.getDecoder().decode(apiSecretBase64);
 		this.signatureAlgorithm = signatureAlgorithm;
-		this.apiTtl = ttl;
+		apiTtl = ttl;
 		this.authenticator = authenticator;
 	}
 
-	public Principal authenticate(String username, String password) throws Exception {
+	public Principal authenticate(final String username, final String password) throws Exception {
 		// Authenticate against a database, LDAP, file or whatever
 		// Throw an Exception if the credentials are invalid
 
-		Principal principal = authenticator.login(username, password);
-		if (principal != null) {
-			return principal;
-		} else {
-			throw new RuntimeException("Unable to log in");
-		}
+		return authenticator//
+				.login(username, password)
+				.orElseThrow(() -> new RuntimeException("Unable to log in"));
 	}
 
-	public String issueToken(Principal principal) throws IllegalArgumentException, UnsupportedEncodingException {
+	public String issueToken(final Principal principal) throws IllegalArgumentException {
 		final long nowMillis = System.currentTimeMillis();
 		final Date now = new Date(nowMillis);
 		final String id = nowMillis + "-" + UUID.randomUUID().toString();
 
-		JwtBuilder builder = Jwts//
-				.builder()
+		final JwtBuilder builder = Jwts.builder()
 				.setId(id)
 				.setIssuedAt(now)
 				.setSubject("oversigt-api")
@@ -83,14 +82,13 @@ public class ApiAuthenticationUtils {
 		return builder.compact();
 	}
 
-	public Principal validateToken(String token) throws ExpiredJwtException, UnsupportedJwtException,
-			MalformedJwtException, SignatureException, IllegalArgumentException {
+	public Principal validateToken(final String token)
+			throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException {
 		// Check if the token was issued by the server and if it's not expired
 		// Throw an Exception if the token is invalid
 
-		//This line will throw an exception if it is not a signed JWS (as expected)
-		Claims claims = Jwts//
-				.parser()
+		// This line will throw an exception if it is not a signed JWS (as expected)
+		final Claims claims = Jwts.parser()
 				.setSigningKey(apiSecret)
 				.requireSubject("oversigt-api")
 				.requireIssuer(issuer)
@@ -101,6 +99,6 @@ public class ApiAuthenticationUtils {
 			throw new RuntimeException("JWT expired");
 		}
 
-		return Principal.loadPrincipal(authenticator, claims.get("username", String.class));
+		return Principal.loadPrincipal(authenticator, claims.get("username", String.class)).get();
 	}
 }

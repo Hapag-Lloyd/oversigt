@@ -4,6 +4,7 @@ import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
 import static javax.ws.rs.core.Response.ok;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -13,10 +14,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
-import com.hlag.oversigt.model.DashboardController;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
 import com.hlag.oversigt.model.EventSourceDescriptor;
-import com.hlag.oversigt.model.EventSourceKey;
-import com.hlag.oversigt.model.InvalidKeyException;
 import com.hlag.oversigt.util.ImageUtil;
 import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
 import com.hlag.oversigt.web.api.ErrorResponse;
@@ -29,43 +31,54 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 
-@Api(tags = { "EventSource" }, authorizations = {
-		@Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Api(tags = { "EventSource" },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
 @Path("/event-source/descriptions")
+@Singleton
 public class EventSourceDescriptionResource {
+	public EventSourceDescriptionResource() {
+		// no fields to be initialized
+	}
+
 	@Inject
-	private DashboardController dashboardController;
+	private EventSourceDescriptorController eventSourceDescriptorController;
 
 	@GET
 	@Path("/")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "Returns a list of available event sources", response = EventSourceInfo.class, responseContainer = "List") })
+			@ApiResponse(code = 200,
+					message = "Returns a list of available event sources",
+					response = EventSourceInfo.class,
+					responseContainer = "List") })
 	@JwtSecured
 	@ApiOperation(value = "List available event sources")
 	@NoChangeLog
 	public Response listAvailableEventSources() {
-		return ok(dashboardController//
-				.getEventSourceKeys()
+		return ok(eventSourceDescriptorController.getEventSourceKeys()
 				.stream()
-				.map(dashboardController::getEventSourceDescriptor)
+				.map(eventSourceDescriptorController::getEventSourceDescriptor)
 				.map(EventSourceInfo::new)
-				.collect(Collectors.toList()))//
-						.build();
+				.collect(Collectors.toList())).build();
 	}
 
 	@GET
 	@Path("/{key}")
 	@ApiResponses({
-			@ApiResponse(code = 200, message = "The details of the requested event source descriptor", response = EventSourceDescriptor.class),
-			@ApiResponse(code = 404, message = "The requested event source descriptor does not exist", response = ErrorResponse.class) })
+			@ApiResponse(code = 200,
+					message = "The details of the requested event source descriptor",
+					response = EventSourceDescriptor.class),
+			@ApiResponse(code = 404,
+					message = "The requested event source descriptor does not exist",
+					response = ErrorResponse.class) })
 	@JwtSecured
 	@ApiOperation(value = "Read event source description")
 	@NoChangeLog
-	public Response getEventSourceDetails(@PathParam("key") String key) {
+	public Response getEventSourceDetails(@PathParam("key") final String key) {
 		try {
-			EventSourceDescriptor descriptor = dashboardController.getEventSourceDescriptor(EventSourceKey.getKey(key));
+			final EventSourceDescriptor descriptor
+					= eventSourceDescriptorController.getEventSourceDescriptor(EventSourceKey.fromKeyString(key));
 			return ok(descriptor).build();
-		} catch (NoSuchElementException | InvalidKeyException e) {
+		} catch (@SuppressWarnings("unused") final NoSuchElementException | InvalidKeyException ignore) {
 			return notFound("The event source descriptor does not exist.");
 		}
 	}
@@ -73,7 +86,7 @@ public class EventSourceDescriptionResource {
 	public static class EventSourceInfo {
 		private final EventSourceDescriptor descriptor;
 
-		EventSourceInfo(EventSourceDescriptor descriptor) {
+		EventSourceInfo(final EventSourceDescriptor descriptor) {
 			this.descriptor = descriptor;
 		}
 
@@ -87,8 +100,7 @@ public class EventSourceDescriptionResource {
 			return descriptor.getDisplayName();
 		}
 
-		@NotNull
-		public String getDescription() {
+		public Optional<String> getDescription() {
 			return descriptor.getDescription();
 		}
 

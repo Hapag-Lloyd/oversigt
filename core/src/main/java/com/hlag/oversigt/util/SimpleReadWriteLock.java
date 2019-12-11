@@ -7,7 +7,11 @@ import java.util.function.Supplier;
 public class SimpleReadWriteLock {
 	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
-	public <T> T read(Supplier<T> supplier) {
+	public SimpleReadWriteLock() {
+		// no fields to be initialized
+	}
+
+	public <T> T read(final Supplier<T> supplier) {
 		lock.readLock().lock();
 		try {
 			return supplier.get();
@@ -16,7 +20,7 @@ public class SimpleReadWriteLock {
 		}
 	}
 
-	public void write(Runnable runnable) {
+	public void write(final Runnable runnable) {
 		lock.writeLock().lock();
 		try {
 			runnable.run();
