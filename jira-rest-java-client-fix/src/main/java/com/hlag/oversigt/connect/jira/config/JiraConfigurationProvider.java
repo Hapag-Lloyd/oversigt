@@ -4,14 +4,12 @@ import com.atlassian.jira.rest.client.api.JiraRestClientFactory;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.experimental.UtilityClass;
 
 /**
  * Provide jira properties
  *
  * @author neumaol
  */
-@UtilityClass
 @SuppressWarnings("PMD.ClassNamingConventions")
 public final class JiraConfigurationProvider {
 	/**
@@ -50,5 +48,10 @@ public final class JiraConfigurationProvider {
 	 */
 	public static JiraRestClientFactory createClientFactory() {
 		return new AsynchronousJiraRestClientFactory();
+	}
+
+	@SuppressWarnings({ "checkstyle:MissingJavadocMethod", "PMD.AvoidThrowingRawExceptionTypes" })
+	private JiraConfigurationProvider() {
+		throw new RuntimeException();
 	}
 }
