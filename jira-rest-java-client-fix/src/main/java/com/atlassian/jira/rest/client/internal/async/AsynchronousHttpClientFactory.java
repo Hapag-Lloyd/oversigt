@@ -45,9 +45,6 @@ import de.larssh.utils.annotations.PackagePrivate;
 import de.larssh.utils.function.ThrowingRunnable;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.UtilityClass;
 
 /**
  * Factory for asynchronous http clients.
@@ -57,7 +54,6 @@ import lombok.experimental.UtilityClass;
  *
  * @since v2.0
  */
-@RequiredArgsConstructor
 @SuppressWarnings({
 		"checkstyle:JavadocVariable",
 		"checkstyle:MissingJavadocMethod",
@@ -65,6 +61,10 @@ import lombok.experimental.UtilityClass;
 		"javadoc",
 		"PMD.CommentRequired" })
 public class AsynchronousHttpClientFactory {
+	public AsynchronousHttpClientFactory() {
+		// nothing to do
+	}
+
 	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
 		final HttpClientOptions options = new HttpClientOptions();
 		options.setSocketTimeout(JiraConfigurationProvider.getSocketTimeout(), TimeUnit.SECONDS);
@@ -99,7 +99,7 @@ public class AsynchronousHttpClientFactory {
 			return new DisposableAtlassianHttpClientDecorator(httpClient, authenticationHandler, onDestroy);
 		}
 
-		ThrowingRunnable onDestroy;
+		private final ThrowingRunnable onDestroy;
 
 		private DisposableAtlassianHttpClientDecorator(final HttpClient httpClient,
 				final AuthenticationHandler authenticationHandler,
@@ -115,7 +115,6 @@ public class AsynchronousHttpClientFactory {
 		}
 	}
 
-	@UtilityClass
 	private static final class MavenUtils {
 		private static final Logger LOGGER = LoggerFactory.getLogger(MavenUtils.class);
 
@@ -138,11 +137,19 @@ public class AsynchronousHttpClientFactory {
 				return UNKNOWN_VERSION;
 			}
 		}
+
+		@SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
+		private MavenUtils() {
+			throw new RuntimeException();
+		}
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	private static final class NoOpEventPublisher implements EventPublisher {
 		private static final NoOpEventPublisher INSTANCE = new NoOpEventPublisher();
+
+		private NoOpEventPublisher() {
+			// nothing to do
+		}
 
 		@Override
 		public void publish(@SuppressWarnings("unused") @Nullable final Object object) {
@@ -165,9 +172,12 @@ public class AsynchronousHttpClientFactory {
 		}
 	}
 
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	private static final class NoOpThreadLocalContextManager implements ThreadLocalContextManager<Object> {
 		private static final NoOpThreadLocalContextManager INSTANCE = new NoOpThreadLocalContextManager();
+
+		private NoOpThreadLocalContextManager() {
+			// nothing to do
+		}
 
 		@Nullable
 		@Override
@@ -190,13 +200,16 @@ public class AsynchronousHttpClientFactory {
 	 * These properties are used to present JRJC as a User-Agent during http
 	 * requests.
 	 */
-	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 	private static final class RestClientApplicationProperties implements ApplicationProperties {
 		private static RestClientApplicationProperties create(final URI jiraUri) {
 			return new RestClientApplicationProperties(jiraUri.getPath());
 		}
 
 		private final String baseUrl;
+
+		private RestClientApplicationProperties(final String baseUrl) {
+			this.baseUrl = baseUrl;
+		}
 
 		/**
 		 * {@inheritDoc}
