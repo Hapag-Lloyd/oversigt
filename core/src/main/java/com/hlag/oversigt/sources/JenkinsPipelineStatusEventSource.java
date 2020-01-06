@@ -31,7 +31,6 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 @EventSource(view = "JenkinsPipelineStatus", displayName = "Jenkins Pipeline Status", hiddenDataItems = { "moreinfo" })
 public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<JenkinsPipelineStatusEvent> {
-
 	private Credentials credentials = Credentials.EMPTY;
 
 	private HttpProxy proxy = HttpProxy.EMPTY;
@@ -221,7 +220,6 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<Jenki
 			}
 
 			return returns;
-
 		} catch (final IOException e) {
 			throw new EventSourceException("Failed accessing Jenkins for " + pipe.pipelineName, e);
 		}

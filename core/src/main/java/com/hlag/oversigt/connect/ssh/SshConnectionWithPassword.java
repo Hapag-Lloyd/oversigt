@@ -31,7 +31,6 @@ class SshConnectionWithPassword extends SshConnection {
 	}
 
 	private static final class FixedUserInfo implements UserInfo {
-
 		private final String password;
 
 		private FixedUserInfo(final char[] password) {

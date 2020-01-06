@@ -25,7 +25,6 @@ import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFo
  */
 @EventSource(view = "HlBarChart", displayName = "Microsoft Exchange Mailbox Viewer")
 public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBarChartEvent> {
-
 	private static final String UNASSIGNED_LABEL = "NN";
 
 	private static final Color UNASSIGNED_COLOR = Color.GRAY;
@@ -202,7 +201,6 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	}
 
 	private static class CategoryInfo {
-
 		private final DisplayOption option;
 
 		private int total = 0;

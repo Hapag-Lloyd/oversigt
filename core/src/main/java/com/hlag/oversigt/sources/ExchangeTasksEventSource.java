@@ -21,7 +21,6 @@ import microsoft.exchange.webservices.data.core.service.item.Task;
  */
 @EventSource(view = "List", displayName = "Microsoft Exchange Tasks Viewer", hiddenDataItems = { "moreinfo" })
 public class ExchangeTasksEventSource extends AbstractExchangeEventSource<TwoColumnListEvent<String>> {
-
 	private boolean showDateColumn = true;
 
 	public ExchangeTasksEventSource() {

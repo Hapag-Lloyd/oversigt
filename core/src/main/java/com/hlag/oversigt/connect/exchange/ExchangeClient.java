@@ -18,7 +18,6 @@ import microsoft.exchange.webservices.data.core.service.item.Task;
  *
  */
 public interface ExchangeClient extends Closeable {
-
 	/**
 	 * Read all mails from the folder of the logged in user
 	 *

@@ -18,6 +18,7 @@ public @interface JsonHint {
 		GRID,
 		TABLE("table"),
 		TABS("tabs");
+
 		private final Optional<String> value;
 
 		ArrayStyle() {

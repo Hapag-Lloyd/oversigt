@@ -16,7 +16,6 @@ import microsoft.exchange.webservices.data.core.exception.http.HttpErrorExceptio
 import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceRequestException;
 
 public abstract class AbstractExchangeEventSource<T extends OversigtEvent> extends ScheduledEventSource<T> {
-
 	private static boolean isLoginException(final Exception e) {
 		return e instanceof ServiceRequestException
 				&& e.getCause() != null

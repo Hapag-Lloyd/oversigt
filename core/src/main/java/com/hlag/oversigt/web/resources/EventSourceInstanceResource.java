@@ -124,7 +124,6 @@ public class EventSourceInstanceResource {
 					value = "Maximum number of instances to be returned") @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Integer limit,
 			@QueryParam("onlyStartable") @ApiParam(required = false,
 					value = "Only return instances that can be started") @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Boolean onlyStartable) {
-
 		Predicate<EventSourceInstance> containingFilter = i -> true;
 		Predicate<EventSourceInstance> startableFilter = i -> true;
 

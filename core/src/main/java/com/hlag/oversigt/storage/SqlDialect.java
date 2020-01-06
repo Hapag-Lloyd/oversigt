@@ -9,7 +9,6 @@ import java.util.OptionalInt;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public interface SqlDialect {
-
 	String getDriverClassName();
 
 	String getJdbcConnectionUrl(String location, String schemaName, String username, String password);
@@ -69,7 +68,6 @@ public interface SqlDialect {
 	}
 
 	class ColumnOptions {
-
 		private final String name;
 
 		private final ColumnType type;

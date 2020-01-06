@@ -348,7 +348,6 @@ public final class FileUtils {
 					regex.append("[^/]");
 				}
 				break;
-
 			default:
 				if (isRegexMeta(c)) {
 					regex.append('\\');

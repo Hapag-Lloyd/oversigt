@@ -10,7 +10,6 @@ import com.hlag.oversigt.security.Principal;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class UserIdValidator implements ConstraintValidator<UserId, String> {
-
 	@Inject
 	private Authenticator authenticator;
 
@@ -31,5 +30,4 @@ public class UserIdValidator implements ConstraintValidator<UserId, String> {
 			return false;
 		}
 	}
-
 }

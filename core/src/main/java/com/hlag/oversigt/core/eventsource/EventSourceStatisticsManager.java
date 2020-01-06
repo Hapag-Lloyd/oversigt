@@ -155,7 +155,6 @@ public class EventSourceStatisticsManager {
 		public List<Action> getActions() {
 			return actions;
 		}
-
 	}
 
 	public static final class Action {

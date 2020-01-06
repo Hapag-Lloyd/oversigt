@@ -96,7 +96,6 @@ public class Wro4jExecutor2 {
 	}
 
 	private static final class CustomWroManagerFactory extends ConfigurableWroManagerFactory {
-
 		@Override
 		protected UriLocatorFactory newUriLocatorFactory() {
 			return new AbstractUriLocatorFactory() {
@@ -164,5 +163,4 @@ public class Wro4jExecutor2 {
 			return true;
 		}
 	}
-
 }

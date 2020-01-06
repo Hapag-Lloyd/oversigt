@@ -183,5 +183,4 @@ public class JsonUtilsTest {
 			return senderAddress.orElseThrow(() -> new RuntimeException("No sender address configured"));
 		}
 	}
-
 }

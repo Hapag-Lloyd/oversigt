@@ -34,7 +34,6 @@ import com.hlag.oversigt.util.MailSender;
  * @author noxfireone
  */
 public class OversigtModule extends AbstractModule {
-
 	/**
 	 * Create a module to configure Guice for Oversigt creation
 	 */
@@ -88,5 +87,4 @@ public class OversigtModule extends AbstractModule {
 		eventBus.register(sender);
 		return eventBus;
 	}
-
 }

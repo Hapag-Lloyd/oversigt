@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 
 public final class Meeting {
-
 	private final Room room;
 
 	private final ZonedDateTime startTime;

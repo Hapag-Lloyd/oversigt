@@ -21,7 +21,6 @@ import com.hlag.oversigt.sources.event.MeterEvent;
 				@DataItemDefault(name = "min", value = "0"),
 				@DataItemDefault(name = "max", value = "100") })
 public class MotivationEventSource extends ScheduledEventSource<MeterEvent> {
-
 	private static final ZoneId HERE = ZoneId.of("Europe/Berlin");
 
 	private static final LocalTime START_ZEIT = LocalTime.of(7, 0);

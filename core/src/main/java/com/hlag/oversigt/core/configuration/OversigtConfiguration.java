@@ -326,7 +326,6 @@ public final class OversigtConfiguration {
 		public String getUidAttribute() {
 			return uidAttribute;
 		}
-
 	}
 
 	static final class MailConfiguration {
@@ -393,7 +392,6 @@ public final class OversigtConfiguration {
 		public String[] getWidgetsPaths() {
 			return widgetsPaths;
 		}
-
 	}
 
 	static final class JiraConfiguration {

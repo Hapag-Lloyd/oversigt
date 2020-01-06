@@ -436,7 +436,6 @@ public class HttpHandlers {
 			exchange.getResponseSender().send(ByteBuffer.wrap(Files.readAllBytes(fileToServe)));
 			exchange.endExchange();
 		};
-
 	}
 
 	/**

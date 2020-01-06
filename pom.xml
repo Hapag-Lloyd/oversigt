@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.lars-sh</groupId>
 		<artifactId>parent</artifactId>
-		<version>0.9.4</version>
+		<version>0.9.5</version>
 		<relativePath></relativePath>
 	</parent>
 
@@ -53,6 +53,13 @@
 		<system>Travis</system>
 		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
 	</ciManagement>
+
+	<properties>
+		<lombok.delombok.skip>true</lombok.delombok.skip>
+		<parent-pom.create-gitignore>false</parent-pom.create-gitignore>
+		<parent-pom.create-lombok-config>false</parent-pom.create-lombok-config>
+		<parent-pom.default-sources-folder>java</parent-pom.default-sources-folder>
+	</properties>
 
 	<repositories>
 		<repository>

@@ -6,7 +6,6 @@ import com.hlag.oversigt.core.event.OversigtEvent;
 import com.hlag.oversigt.properties.Color;
 
 public class HlBarChartEvent extends OversigtEvent {
-
 	private final List<Category> categories;
 
 	private final String value;
@@ -25,7 +24,6 @@ public class HlBarChartEvent extends OversigtEvent {
 	}
 
 	public static final class Category {
-
 		private final String title;
 
 		private final String description;
@@ -52,7 +50,6 @@ public class HlBarChartEvent extends OversigtEvent {
 	}
 
 	public static final class Serie {
-
 		private final String backgroundColor;
 
 		private final String height;

@@ -15,7 +15,6 @@ import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.SerializableProperty;
 
 public interface Storage extends Closeable {
-
 	List<String> getEventSourceNames();
 
 	List<String> getDashboardIds();

@@ -62,7 +62,6 @@ public class JenkinsPipelineStatusEvent extends ListEvent<JenkinsPipelineEventSt
 			this.ticketStyle = Nullables.orElse(ticketStyle, "");
 			this.userIDStyle = Nullables.orElse(userIDStyle, "");
 			this.buildIDStyle = buildIDStyle;
-
 		}
 
 		public String getBranch() {

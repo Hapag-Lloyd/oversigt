@@ -237,5 +237,4 @@ public class OversigtServer extends AbstractIdleService {
 			LOGGER.info("Stopping embedded Oversigt server");
 		}
 	}
-
 }

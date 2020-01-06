@@ -14,7 +14,6 @@ import com.google.common.base.Strings;
  * @author avarabyeu
  */
 public final class StringUtils {
-
 	private StringUtils() {}
 
 	/**

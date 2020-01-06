@@ -7,7 +7,6 @@ import com.google.common.base.Strings;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class JSchLogger implements com.jcraft.jsch.Logger {
-
 	private final Logger logger;
 
 	public JSchLogger(final Logger logger) {

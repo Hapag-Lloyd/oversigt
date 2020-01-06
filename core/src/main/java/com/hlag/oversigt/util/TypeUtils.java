@@ -54,7 +54,6 @@ import de.larssh.utils.Nullables;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class TypeUtils {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
 
 	private TypeUtils() {

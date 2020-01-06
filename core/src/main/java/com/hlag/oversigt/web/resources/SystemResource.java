@@ -240,7 +240,6 @@ public class SystemResource {
 	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
 	public Response setLogLevel(@PathParam("logger") @NotBlank final String loggerName,
 			@QueryParam("level") @ApiParam(required = true) @NotBlank final String levelName) {
-
 		final Level level = Level.valueOf(levelName);
 
 		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();

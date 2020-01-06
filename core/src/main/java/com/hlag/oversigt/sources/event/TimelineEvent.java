@@ -16,7 +16,6 @@ import com.hlag.oversigt.properties.Color;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class TimelineEvent extends OversigtEvent {
-
 	private static final Comparator<Event> BY_DATE = (e1, e2) -> e1.getOriginalDate().compareTo(e2.getOriginalDate());
 
 	private static final Comparator<Event> BY_NAME = (e1, e2) -> e1.getName().compareTo(e2.getName());
@@ -125,7 +124,6 @@ public class TimelineEvent extends OversigtEvent {
 	}
 
 	public static final class Event implements Comparable<Event> {
-
 		private final String name;
 
 		private final String date;

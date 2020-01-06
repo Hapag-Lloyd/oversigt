@@ -5,7 +5,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.StatusCodes;
 
 public final class HttpUtils {
-
 	public static void redirect(final HttpServerExchange exchange,
 			final String location,
 			final boolean permanent,

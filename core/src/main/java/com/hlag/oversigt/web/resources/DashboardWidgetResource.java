@@ -227,7 +227,6 @@ public class DashboardWidgetResource {
 	public Response updateWidget(@PathParam("dashboardId") @NotNull final String dashboardId,
 			@PathParam("id") @Positive final int widgetId,
 			@NotNull final WidgetDetails details) {
-
 		final Optional<Dashboard> dashboard = controller.getDashboard(dashboardId);
 		if (!dashboard.isPresent()) {
 			return ErrorResponse.notFound("The dashboard does not exist");

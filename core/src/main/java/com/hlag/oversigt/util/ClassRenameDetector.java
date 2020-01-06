@@ -132,6 +132,5 @@ public final class ClassRenameDetector {
 		public Double getDistance() {
 			return distance;
 		}
-
 	}
 }

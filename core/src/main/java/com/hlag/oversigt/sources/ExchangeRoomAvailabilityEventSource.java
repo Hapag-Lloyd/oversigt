@@ -129,7 +129,6 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	}
 
 	public static final class RoomAvailabilityListEvent extends OversigtEvent {
-
 		private final List<RoomAvailabilityItem> items;
 
 		public RoomAvailabilityListEvent(final List<RoomAvailabilityItem> items) {
@@ -142,7 +141,6 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 	}
 
 	public static final class RoomAvailabilityItem {
-
 		private final String clazz;
 
 		private final String name;
@@ -376,5 +374,4 @@ public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSo
 			return true;
 		}
 	}
-
 }

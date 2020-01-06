@@ -21,7 +21,6 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Protocols;
 
 public final class UndertowHelper {
-
 	public static FormData createFormData(final String... strings) {
 		final FormData formData = new FormData(2000);
 		addPairs(formData::add, strings);

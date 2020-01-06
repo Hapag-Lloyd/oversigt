@@ -7,7 +7,6 @@ package com.hlag.oversigt.connect.jira;
  * @author neumaol
  */
 abstract class JiraClientFilter implements JiraClient {
-
 	private final JiraClient jiraClient;
 
 	/**

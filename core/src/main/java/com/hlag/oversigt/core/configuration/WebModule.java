@@ -76,7 +76,6 @@ public class WebModule extends AbstractModule {
 	 * Constraint validator to check each the API calls for valid values
 	 */
 	class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
-
 		@Inject
 		private Injector injector;
 

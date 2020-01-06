@@ -33,7 +33,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
 public abstract class AbstractJdbcConnector implements Closeable {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcConnector.class);
 
 	protected abstract Connection getConnection();

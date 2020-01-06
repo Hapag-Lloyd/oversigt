@@ -35,5 +35,4 @@ public class DatabaseConnection extends SerializableProperty {
 	public String getJdbcUrl() {
 		return jdbcUrl;
 	}
-
 }

@@ -15,7 +15,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Documented
 public @interface Property {
-
 	/**
 	 * The name of the property. If this annotation is not used the camel case name
 	 * of the getter method is used.

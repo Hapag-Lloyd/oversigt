@@ -55,7 +55,6 @@ public class ViewResource {
 			}
 		}
 		return ErrorResponse.notFound("View does not exist.");
-
 	}
 
 	@GET

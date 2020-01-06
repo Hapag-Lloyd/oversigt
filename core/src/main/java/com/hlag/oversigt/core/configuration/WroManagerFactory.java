@@ -43,7 +43,6 @@ import ro.isdc.wro.model.resource.processor.impl.css.CssUrlRewritingProcessor;
  * @author avarabyeu
  */
 public class WroManagerFactory extends ConfigurableWroManagerFactory {
-
 	private static final String COFFEE_FILENAME = ".coffee";
 
 	private final WroGroupContent content;
@@ -76,7 +75,6 @@ public class WroManagerFactory extends ConfigurableWroManagerFactory {
 	@Override
 	protected WroModelFactory newModelFactory() {
 		return new WroModelFactory() {
-
 			@Override
 			public WroModel create() {
 				final WroModel model = new WroModel();

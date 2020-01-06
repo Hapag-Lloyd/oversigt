@@ -12,7 +12,6 @@ import com.hlag.oversigt.core.event.OversigtEvent;
  * @author Andrei Varabyeu
  */
 abstract class SimpleEventSource<T extends OversigtEvent> extends AbstractExecutionThreadService {
-
 	/**
 	 * EventBus to send events
 	 */

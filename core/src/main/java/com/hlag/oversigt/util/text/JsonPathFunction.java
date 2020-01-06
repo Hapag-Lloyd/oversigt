@@ -11,7 +11,6 @@ import com.jayway.jsonpath.JsonPath;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 class JsonPathFunction implements Function<String, String> {
-
 	private final String probablyJson;
 
 	JsonPathFunction(final String probablyJson) {
