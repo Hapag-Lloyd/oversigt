@@ -297,11 +297,20 @@ public class DashboardController {
 					return spController.getEmpty((Class<SerializableProperty>) type);
 				}
 			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {
+				// if string is empty, create empty object
+				if (string.isEmpty()) {
+					return TypeUtils.createInstance(type);
+				}
+
+				// create object from json
 				final Object value = JsonUtils.fromJson(string, type);
 				if (value != null) {
 					return value;
 				}
-				return TypeUtils.createInstance(type);
+
+				// unable to create object
+				throw new RuntimeException(String
+						.format("Unable to create object of type %s from input string:\n%s", type.getName(), string));
 			} else if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);
 			} else if (Path.class == type) {
