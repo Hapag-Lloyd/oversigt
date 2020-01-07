@@ -6,7 +6,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import { ClarityModule, ClrFormsNextModule } from '@clr/angular';
+import { ClarityModule } from '@clr/angular';
 import { environment } from 'src/environments/environment';
 
 import { AppComponent } from './app.component';
@@ -135,7 +135,6 @@ export function initializeApiConfiguration(): Configuration {
     BrowserAnimationsModule,
     JsonSchemaEditorModule,
     ClarityModule,
-    ClrFormsNextModule,
     ReactiveFormsModule,
     ToastrModule.forRoot(), // ToastrModule added
   ],

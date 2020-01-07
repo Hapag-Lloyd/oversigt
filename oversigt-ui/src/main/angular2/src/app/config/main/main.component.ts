@@ -26,7 +26,8 @@ export class ConfigurationComponent implements OnInit {
     this.isCollapsed = false;
     this.propertiesService.loadProperties(props => {
       const item = this.menuItems.find(mi => mi.id === 'properties');
-      item.children = props.map(p => <MenuItem>{title: p.name, link: getLinkForProperty(p.name), children: [], description: p.description});
+      const propArray = Array.from(props);
+      item.children = propArray.map(p => <MenuItem>{title: p.name, link: getLinkForProperty(p.name), children: [], description: p.description});
     });
     const loadedUrl = this.route.snapshot.pathFromRoot.map(p => p.url.map(u => u.path).join('/')).join('/').replace('//', '/');
     this.menuItem = this.menuItems.find(mi => {
