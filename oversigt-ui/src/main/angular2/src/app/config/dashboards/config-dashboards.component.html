@@ -10,19 +10,28 @@
 </ng-template>
 
 
-<div [hidden]="outlet.isActivated" class="list-group">
+<clr-datagrid [hidden]="outlet.isActivated">
+  <clr-dg-column>Dashboard</clr-dg-column>
+  <clr-dg-column></clr-dg-column>
+
   <ng-container *ngFor="let dashboard of dashboards | filterEventitem:dashboardFilter">
-    <div class="list-group-item content">
+    <clr-dg-row>
       <!-- FIXME: if search-filter is not empty and but role-filter removes all lines the 'empty-message' will not be displayed -->
       <!--  *appHasRole="'dashboard.' + dashboard.id + '.editor'" -->
-      <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a> <span
-        *ngIf="!dashboard.enabled">(disabled)</span>
-    </div>
+      <clr-dg-cell>
+        <a class="btn btn-link" routerLink="{{dashboard.id}}" style="margin:0;">{{dashboard.title}}</a>
+      </clr-dg-cell>
+      <clr-dg-cell>
+        <span *ngIf="!dashboard.enabled">disabled</span>
+      </clr-dg-cell>
+    </clr-dg-row>
   </ng-container>
-  <div *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
-    Your filter did not return any dashboard.
-  </div>
-</div>
+  <clr-dg-row *ngIf="(dashboards | filterEventitem:dashboardFilter).length === 0" class="list-group-item no-content">
+    <clr-dg-cell>
+      Your filter did not return any dashboard.
+    </clr-dg-cell>
+  </clr-dg-row>
+</clr-datagrid>
 
 
 <clr-modal #createModal [(clrModalOpen)]="createDashboardModelOpen" [clrModalClosable]="false">

@@ -310,7 +310,7 @@ public class DashboardController {
 
 				// unable to create object
 				throw new RuntimeException(String
-						.format("Unable to create object of type %s from input string:\n%s", type.getName(), string));
+						.format("Unable to create object of type %s from input string: %s", type.getName(), string));
 			} else if (type.isArray()) {
 				throw new RuntimeException("Unable to deserialize type " + type);
 			} else if (Path.class == type) {
