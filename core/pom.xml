@@ -288,7 +288,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
-			<version>5.2.2.RELEASE</version>
+			<version>5.2.3.RELEASE</version>
 		</dependency>
 
 		<!-- JSON -->
