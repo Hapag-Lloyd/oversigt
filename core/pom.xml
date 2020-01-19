@@ -137,8 +137,9 @@
 			<version>2.0.1.Final</version>
 		</dependency>
 
-		<!-- Resteasy dependencies must not be updated as staring Oversigt fails 
-			otherwise! -->
+		<!-- Resteasy dependencies must not be updated. Starting Oversigt fails 
+			otherwise! 
+			TODO: Why? What is the reason for that? -->
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jaxrs</artifactId>
@@ -205,7 +206,8 @@
 			<artifactId>javax.el-api</artifactId>
 			<version>3.0.0</version>
 		</dependency>
-		<!-- JSON Web Token -->
+		
+		<!-- JSON Web Token for securing the API -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt</artifactId>
@@ -262,8 +264,8 @@
 			<version>1.0</version>
 		</dependency>
 
-		<!-- other useful stuff -->
-		<!-- Must not be updated as long as the JIRA client requires a method that 
+		<!-- common libraries -->
+		<!-- Guava must not be updated as long as the JIRA client requires a method that 
 			has been removed in version 21! -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -286,7 +288,7 @@
 			<version>5.2.3.RELEASE</version>
 		</dependency>
 
-		<!-- JSON -->
+		<!-- JSONPath -->
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
