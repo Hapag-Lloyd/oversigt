@@ -3,6 +3,12 @@ package com.hlag.oversigt.util;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +17,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -25,7 +32,6 @@ import java.util.stream.Stream.Builder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
 import com.google.common.base.CaseFormat;
 import com.hlag.oversigt.security.Principal;
@@ -135,7 +141,7 @@ public final class Utils {
 
 	public static boolean is(final Object object) {
 		if (object instanceof Boolean) {
-			return ((Boolean) object).booleanValue();
+			return (Boolean) object;
 		} else if (object instanceof Number) {
 			return ((Number) object).intValue() > 0;
 		} else if (object instanceof String) {
@@ -199,8 +205,7 @@ public final class Utils {
 		return Stream.of(objects)//
 				.filter(notNull())
 				.map(Object::hashCode)
-				.collect(hashing())
-				.intValue();
+				.collect(hashing());
 	}
 
 	public static void sleep(final long millis) {
@@ -246,7 +251,58 @@ public final class Utils {
 	}
 
 	public static <T> void copyProperties(final T source, final T target, final String... ignoreProperties) {
-		BeanUtils.copyProperties(source, target, ignoreProperties);
+		Objects.requireNonNull(source, "Source object must not be null.");
+		Objects.requireNonNull(target, "Target objects must not be null.");
+		if (source.getClass() != target.getClass()) {
+			throw new RuntimeException("Source and target must be of same type.");
+		}
+
+		final Collection<String> propertiesToIgnore
+				= Optional.ofNullable(ignoreProperties).map(Arrays::asList).orElse(Collections.emptyList());
+
+		final BeanInfo beanInfo;
+		try {
+			beanInfo = Introspector.getBeanInfo(target.getClass(), Object.class);
+		} catch (final IntrospectionException e) {
+			throw new RuntimeException(String.format("Unable to examine class %s", target.getClass().getName()), e);
+		}
+		Stream.of(Objects.requireNonNull(beanInfo.getPropertyDescriptors()))
+				// remove all properties to ignore
+				.filter(p -> !propertiesToIgnore.contains(p.getName()))
+				// we need both getters and setters
+				.filter(p -> Objects.nonNull(p.getReadMethod()))
+				.filter(p -> Objects.nonNull(p.getWriteMethod()))
+				// getters should not return anything
+				.filter(p -> p.getReadMethod().getParameterCount() == 0)
+				// setters should accept exactly one parameter
+				.filter(p -> p.getWriteMethod().getParameterCount() == 1)
+				.forEach(p -> copyProperty(p, source, target));
+	}
+
+	private static <T> void copyProperty(final PropertyDescriptor propertyDescriptor, final T source, final T target) {
+		if (!Modifier.isPublic(propertyDescriptor.getReadMethod().getDeclaringClass().getModifiers())) {
+			propertyDescriptor.getReadMethod().setAccessible(true);
+		}
+		if (!Modifier.isPublic(propertyDescriptor.getWriteMethod().getDeclaringClass().getModifiers())) {
+			propertyDescriptor.getWriteMethod().setAccessible(true);
+		}
+
+		final Object value;
+		try {
+			value = propertyDescriptor.getReadMethod().invoke(source);
+		} catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new RuntimeException(
+					String.format("Unable to read source value to copy. Method: %s",
+							propertyDescriptor.getReadMethod()),
+					e);
+		}
+		try {
+			propertyDescriptor.getWriteMethod().invoke(target, value);
+		} catch (final IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new RuntimeException(
+					String.format("Unable to write value to copy. Method: %s", propertyDescriptor.getWriteMethod()),
+					e);
+		}
 	}
 
 	private Utils() {
