@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
 import com.google.inject.Singleton;
@@ -64,10 +64,8 @@ public final class OversigtConfiguration {
 
 	static OversigtConfiguration readConfiguration() {
 		try {
-			final URL configUrl = Resources.getResource(Oversigt.APPLICATION_CONFIG_FILE);
-			Preconditions.checkState(configUrl != null,
-					"Main application config [%s] not found",
-					Oversigt.APPLICATION_CONFIG_FILE);
+			final URL configUrl = Objects.requireNonNull(Resources.getResource(Oversigt.APPLICATION_CONFIG_FILE),
+					String.format("Main application config [%s] not found", Oversigt.APPLICATION_CONFIG_FILE));
 			LOGGER.info("Reading Oversigt configuration: " + configUrl);
 			final String configString = Resources.toString(configUrl, Charsets.UTF_8);
 			return createObjectMapper().readValue(configString, OversigtConfiguration.class);
