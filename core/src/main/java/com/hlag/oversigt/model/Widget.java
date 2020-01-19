@@ -8,12 +8,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.MoreObjects;
 import com.hlag.oversigt.properties.Color;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -227,6 +225,17 @@ public class Widget implements Comparable<Widget> {
 	/** {@inheritDoc} */
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+		return MoreObjects.toStringHelper(this)
+				.add("id", id)
+				.add("title", title)
+				.add("name", name)
+				.add("enabled", enabled)
+				.add("posX", posX)
+				.add("posY", posY)
+				.add("sizeX", sizeX)
+				.add("sizeY", sizeY)
+				.add("backgroundColor", backgroundColor)
+				.add("style", style)
+				.toString();
 	}
 }

@@ -1,8 +1,5 @@
 package com.hlag.oversigt.properties;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hlag.oversigt.properties.SerializableProperty.Description;
@@ -80,11 +77,5 @@ public class Credentials extends SerializableProperty {
 
 	public void setUsername(final String username) {
 		this.username = username;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(new Credentials(getId(), getName(), username, "********", domain),
-				ToStringStyle.JSON_STYLE);
 	}
 }

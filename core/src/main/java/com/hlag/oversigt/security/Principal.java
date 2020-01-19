@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
+import com.google.common.base.MoreObjects;
 
 public class Principal implements java.security.Principal {
 	private static final Map<String, Principal> PRINCIPALS = Collections.synchronizedMap(new WeakHashMap<>());
@@ -129,6 +128,12 @@ public class Principal implements java.security.Principal {
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+		return MoreObjects.toStringHelper(this)
+				.add("distinguishedName", getDistinguishedName())
+				.add("username", getUsername())
+				.add("name", getName())
+				.add("email", getEmail())
+				.add("roles", getRoles())
+				.toString();
 	}
 }

@@ -12,14 +12,12 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.MoreObjects;
 import com.hlag.oversigt.properties.Color;
 
 public class Dashboard {
@@ -266,7 +264,20 @@ public class Dashboard {
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+		return MoreObjects.toStringHelper(this)
+				.add("id", id)
+				.add("title", title)
+				.add("enabled", enabled)
+				.add("screenWidth", screenWidth)
+				.add("screenHeight", screenHeight)
+				.add("columns", columns)
+				.add("backgroundColor", backgroundColor)
+				.add("foregroundColorStart", foregroundColorStart)
+				.add("foregroundColorEnd", foregroundColorEnd)
+				.add("colorScheme", colorScheme)
+				.add("owners", owners)
+				.add("editors", editors)
+				.toString();
 	}
 
 	public Dashboard copy() {

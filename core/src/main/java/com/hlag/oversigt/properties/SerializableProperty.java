@@ -7,9 +7,6 @@ import java.lang.annotation.Target;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -47,11 +44,6 @@ public abstract class SerializableProperty implements Comparable<SerializablePro
 	public int compareTo(@Nullable final SerializableProperty that) {
 		return String.CASE_INSENSITIVE_ORDER.compare(getName(),
 				Optional.ofNullable(that).map(SerializableProperty::getName).orElse(""));
-	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName() + ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 
 	@Override

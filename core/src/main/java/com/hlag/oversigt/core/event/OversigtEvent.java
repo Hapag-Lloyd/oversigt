@@ -7,9 +7,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hlag.oversigt.util.JsonUtils;
 
@@ -103,11 +100,6 @@ public class OversigtEvent implements Comparable<OversigtEvent> {
 	@JsonIgnore
 	public LocalDateTime getCreatedOn() {
 		return createdOn;
-	}
-
-	@Override
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 	}
 
 	@Override

@@ -3,9 +3,6 @@ package com.hlag.oversigt.sources.event;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -66,11 +63,6 @@ public class TwoColumnListEvent<T> extends ListEvent<ListEventItem<T>> {
 
 		public void setValueStyle(final String valueStyle) {
 			this.valueStyle = valueStyle;
-		}
-
-		@Override
-		public String toString() {
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
 		}
 	}
 }

@@ -9,13 +9,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.spi.BooleanOptionHandler;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 
@@ -98,7 +98,13 @@ public final class CommandLineOptions {
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+		return MoreObjects.toStringHelper(this)
+				.add("debugFallback", isDebugFallback())
+				.add("startEventSources", isStartEventSources())
+				.add("deleteNonExistingEventSourcesFromDatabase", isDeleteNonExistingEventSourceFromDatabase())
+				.add("ldapBindPasswordFallback",
+						Strings.isNullOrEmpty(getLdapBindPasswordFallback()) ? "is set" : "not specified")
+				.toString();
 	}
 
 	Module createModule() {
