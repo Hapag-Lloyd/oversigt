@@ -50,9 +50,9 @@
 				<include>stop.sh</include>
 			</includes>
 		</fileSet>
-		<!-- Add a simple starter -->
+		<!-- Add a simple shell script for starting the application -->
 		<fileSet>
-			<directory>${project.basedir}/src/main/starter</directory>
+			<directory>${project.basedir}/src/main/shell</directory>
 			<outputDirectory></outputDirectory>
 			<includes>
 				<include>run.bat</include>
