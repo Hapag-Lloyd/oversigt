@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -225,7 +224,7 @@ public class DashboardController {
 				return spController.toString((SerializableProperty) value);
 			} else if (value.getClass().isArray()) {
 				if (TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {
-					throw new NotImplementedException(
+					throw new UnsupportedOperationException(
 							"Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.");
 				}
 				// return Arrays.deepToString((Object[]) value);
