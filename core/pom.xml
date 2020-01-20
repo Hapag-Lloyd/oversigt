@@ -108,6 +108,13 @@
 			<version>2.0.29.Final</version>
 		</dependency>
 
+		<!-- Mail sending -->
+		<dependency>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>javax.mail</artifactId>
+			<version>1.6.2</version>
+		</dependency>
+
 		<!-- JSON handling -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -290,6 +297,12 @@
 			<artifactId>json-dom</artifactId>
 			<version>0.9.1</version>
 		</dependency>
+		<dependency>
+			<groupId>xml-apis</groupId>
+			<artifactId>xml-apis</artifactId>
+			<version>1.4.01</version>
+		</dependency>
+
 
 		<!-- templates -->
 		<dependency>
@@ -346,18 +359,28 @@
 			<version>0.5.10</version>
 		</dependency>
 
-		<!-- Mail sending -->
-		<dependency>
-			<groupId>com.sun.mail</groupId>
-			<artifactId>javax.mail</artifactId>
-			<version>1.6.2</version>
-		</dependency>
-
 		<!-- GIT -->
 		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
 			<version>5.6.0.201912101111-r</version>
+		</dependency>
+
+		<!-- Jenkins Connectivity -->
+		<dependency>
+			<groupId>com.offbytwo.jenkins</groupId>
+			<artifactId>jenkins-client</artifactId>
+			<version>0.3.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.4.13</version>
 		</dependency>
 
 		<!-- Testing -->
@@ -384,26 +407,6 @@
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>5.5.2</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.offbytwo.jenkins</groupId>
-			<artifactId>jenkins-client</artifactId>
-			<version>0.3.8</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.5.10</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpcore</artifactId>
-			<version>4.4.13</version>
-		</dependency>
-		<dependency>
-			<groupId>xml-apis</groupId>
-			<artifactId>xml-apis</artifactId>
-			<version>1.4.01</version>
 		</dependency>
 	</dependencies>
 
