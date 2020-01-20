@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
+import com.google.inject.Module;
 import com.hlag.oversigt.core.configuration.JsonModule;
 import com.hlag.oversigt.storage.Storage;
 import com.jayway.jsonpath.Configuration;
@@ -26,6 +27,12 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 @ExtendWith(MockitoExtension.class)
 public class JsonUtilsTest {
+	public static Module[] createModulesForJsonTesting() {
+		return new Module[] {
+				new JsonModule(),
+				binder -> binder.bind(Storage.class).toInstance(Mockito.mock(Storage.class)) };
+	}
+
 	@Mock
 	@Nullable
 	private ObjectMapper allFieldObjectMapper;
@@ -37,10 +44,7 @@ public class JsonUtilsTest {
 	@BeforeAll
 	public static void initJsonUtils() {
 		// needed to inject static values
-		Guice.createInjector(//
-				new JsonModule(),
-				binder -> binder.bind(Storage.class).toInstance(Mockito.mock(Storage.class))//
-		);
+		Guice.createInjector(createModulesForJsonTesting());
 	}
 
 	// TODO build tests

@@ -12,6 +12,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
+import com.hlag.oversigt.core.event.ErrorEvent;
 import com.hlag.oversigt.core.event.OversigtEvent;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -40,6 +41,14 @@ public final class EventSourceTestHelper {
 
 	private EventSourceTestHelper() {
 		// nothing to do here
+	}
+
+	public static boolean isErrorEvent(final OversigtEvent event) {
+		return event instanceof ErrorEvent;
+	}
+
+	public static Class<? extends OversigtEvent> getErrorEventClass() {
+		return ErrorEvent.class;
 	}
 
 	private static final class EventReceiver implements Consumer<OversigtEvent> {

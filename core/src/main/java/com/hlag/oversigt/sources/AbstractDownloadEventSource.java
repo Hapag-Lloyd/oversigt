@@ -108,6 +108,8 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 
 		if (con instanceof HttpURLConnection && !loginData.isEmpty()) {
 			final HttpURLConnection hcon = (HttpURLConnection) con;
+			hcon.setConnectTimeout(30 * 1000);
+			hcon.setReadTimeout(30 * 1000);
 			hcon.setDoOutput(true);
 			hcon.setInstanceFollowRedirects(false);
 			hcon.setRequestMethod("POST");
@@ -372,6 +374,12 @@ public abstract class AbstractDownloadEventSource<T extends OversigtEvent> exten
 				@JsonProperty("pattern") final String patternString) {
 			address = urlString;
 			pattern = patternString;
+		}
+
+		public InternetAddress(final String urlString, final String patternString, final LoginData[] loginDatas) {
+			address = urlString;
+			pattern = patternString;
+			this.loginDatas = loginDatas;
 		}
 
 		public String getUrlString() {
