@@ -27,7 +27,7 @@
     "core-js": "^3.6.2",
     "iso8601-duration": "^1.2.0",
     "jquery": "^3.4.1",
-    "ngx-toastr": "^11.2.1",
+    "ngx-toastr": "^11.3.2",
     "rxjs": "^6.5.4",
     "tslib": "^1.10.0",
     "zone.js": "~0.9.1"
