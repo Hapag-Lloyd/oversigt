@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -220,9 +221,11 @@ public final class JsonUtils {
 			if (((Class<?>) type).isAnnotationPresent(JsonHint.class)) {
 				jsonHint = Optional.of(((Class<?>) type).getAnnotation(JsonHint.class));
 			}
-			return toJsonSchemaFromClass((Class<?>) type, jsonHint);
+			return toJsonSchemaFromClass((Class<?>) type, new Type[0], jsonHint);
 		} else if (type instanceof ParameterizedType) {
 			return toJsonSchemaFromType(((ParameterizedType) type).getActualTypeArguments()[0], hint);
+		} else if (type instanceof WildcardType) {
+			return toJsonSchemaFromClass(Object.class, new Type[0], hint);
 		} else if (type instanceof TypeVariable) {
 			// TypeVariable<?> tv = (TypeVariable<?>) type;
 			// AnnotatedType[] at = tv.getAnnotatedBounds();
@@ -235,7 +238,9 @@ public final class JsonUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz, final Optional<JsonHint> hint) {
+	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz,
+			final Type[] typeArguments,
+			final Optional<JsonHint> hint) {
 		Optional<JsonHint> jsonHint = hint;
 		if (clazz == String.class) {
 			return map("type", "string");
@@ -281,7 +286,14 @@ public final class JsonUtils {
 					"serializable-property",
 					clazz.getSimpleName());
 		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
-			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
+			final Type componentType;
+			if (clazz.isArray()) {
+				componentType = clazz.getComponentType();
+			} else if (typeArguments.length == 1) {
+				componentType = typeArguments[0];
+			} else {
+				componentType = clazz.getGenericInterfaces()[0];
+			}
 			final Map<String, Object> map = map("type",
 					"array",
 					"items",
@@ -303,12 +315,19 @@ public final class JsonUtils {
 				}
 			}
 			return map;
+		} else if (clazz == Map.class) {
+			return map("type", "object", "additionalProperties", true);
 		} else if (clazz == Color.class) {
 			return map("type", "string", "format", "color");
 		} else if (clazz == LocalDate.class) {
 			return map("type", "string", "format", "date");
 		} else if (clazz == LocalTime.class) {
 			return map("type", "string", "format", "time");
+		} else if (clazz == Optional.class) {
+			if (typeArguments.length == 1) {
+				return toJsonSchemaFromType(typeArguments[0], Optional.empty());
+			}
+			return toJsonSchemaFromType(Object.class, Optional.empty());
 		} else {
 			// TODO check for notnull ???
 			final List<Field> fields = TypeUtils.streamFields(clazz)
@@ -317,11 +336,7 @@ public final class JsonUtils {
 					.collect(Collectors.toList());
 			final Map<String, Map<String, Object>> fieldsMap = new LinkedHashMap<>();
 			for (final Field field : fields) {
-				Optional<JsonHint> fieldHint = Optional.empty();
-				if (field.isAnnotationPresent(JsonHint.class)) {
-					fieldHint = Optional.of(field.getAnnotation(JsonHint.class));
-				}
-				final Map<String, Object> map = JsonUtils.toJsonSchemaFromClass(field.getType(), fieldHint);
+				final Map<String, Object> map = JsonUtils.toJsonSchemaFromField(field);
 				map.put("title", makeFirstCharacterCapital(field.getName()));
 				getFormat(field).ifPresent(format -> map.put("format", format));
 				fieldsMap.put(field.getName(), map);
@@ -347,13 +362,34 @@ public final class JsonUtils {
 		}
 	}
 
+	private static Map<String, Object> toJsonSchemaFromField(final Field field) {
+		Optional<JsonHint> fieldHint = Optional.empty();
+		if (field.isAnnotationPresent(JsonHint.class)) {
+			fieldHint = Optional.of(field.getAnnotation(JsonHint.class));
+		}
+
+		final Type type = field.getGenericType();
+		if (type instanceof Class) {
+			return JsonUtils.toJsonSchemaFromClass(field.getType(), new Type[0], fieldHint);
+		} else if (type instanceof ParameterizedType) {
+			return JsonUtils.toJsonSchemaFromClass(field.getType(),
+					((ParameterizedType) type).getActualTypeArguments(),
+					fieldHint);
+		} else if (type instanceof TypeVariable) {
+			LOGGER.warn(String.format("Type %s contains a VariableType. Unable to handle this.", type.getTypeName()));
+			return JsonUtils.toJsonSchemaFromClass(field.getType(), new Type[0], fieldHint);
+		} else {
+			throw new RuntimeException("Unknown type: " + type);
+		}
+	}
+
 	private static boolean isRequired(final Field field) {
 		if (field.isAnnotationPresent(javax.annotation.Nullable.class)) {
 			return false;
 		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {
 			return field.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class).required();
 		} else {
-			return true;
+			return field.getType() != Optional.class;
 		}
 	}
 

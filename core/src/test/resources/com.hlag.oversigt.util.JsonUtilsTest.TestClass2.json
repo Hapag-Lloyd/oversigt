@@ -1,0 +1,211 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "$id": "http://schema.hlag.com/oversigt/type/com.hlag.oversigt.util.JsonUtilsTest$TestClass2",
+    "title": "TestClass2",
+    "type": "object",
+    "properties": {
+        "hostname": {
+            "type": "string",
+            "title": "Hostname",
+            "format": "hostname"
+        },
+        "otherName": {
+            "type": "object",
+            "title": "OtherName",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+        },
+        "port": {
+            "type": "number",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "multipleOf": 1.0,
+            "title": "Port"
+        },
+        "c": {
+            "type": "number",
+            "minimum": "\u0000",
+            "maximum": "￿",
+            "multipleOf": 1.0,
+            "title": "C"
+        },
+        "b": {
+            "type": "number",
+            "minimum": -128,
+            "maximum": 127,
+            "multipleOf": 1.0,
+            "title": "B"
+        },
+        "s": {
+            "type": "number",
+            "minimum": -32768,
+            "maximum": 32767,
+            "multipleOf": 1.0,
+            "title": "S"
+        },
+        "l": {
+            "type": "number",
+            "minimum": -9223372036854775808,
+            "maximum": 9223372036854775807,
+            "multipleOf": 1.0,
+            "title": "L"
+        },
+        "startTls": {
+            "type": "boolean",
+            "title": "StartTls"
+        },
+        "username": {
+            "type": "string",
+            "title": "Username"
+        },
+        "usernames": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "additionalItems": false,
+            "title": "Usernames"
+        },
+        "enumeration": {
+            "type": "string",
+            "uniqueItems": true,
+            "oversigt-ids": [
+                "COLORED",
+                "SINGLE_COLOR",
+                "TILED_VERTICAL_GRADIENT",
+                "TILED_HORIZONTAL_GRADIENT",
+                "VERTICAL_GRADIENT",
+                "HORIZONTAL_GRADIENT"
+            ],
+            "enumSource": [
+                {
+                    "title": "{{item.title}}",
+                    "value": "{{item.value}}",
+                    "source": [
+                        {
+                            "value": "COLORED",
+                            "title": "COLORED"
+                        },
+                        {
+                            "value": "SINGLE_COLOR",
+                            "title": "SINGLE_COLOR"
+                        },
+                        {
+                            "value": "TILED_VERTICAL_GRADIENT",
+                            "title": "TILED_VERTICAL_GRADIENT"
+                        },
+                        {
+                            "value": "TILED_HORIZONTAL_GRADIENT",
+                            "title": "TILED_HORIZONTAL_GRADIENT"
+                        },
+                        {
+                            "value": "VERTICAL_GRADIENT",
+                            "title": "VERTICAL_GRADIENT"
+                        },
+                        {
+                            "value": "HORIZONTAL_GRADIENT",
+                            "title": "HORIZONTAL_GRADIENT"
+                        }
+                    ]
+                }
+            ],
+            "title": "Enumeration"
+        },
+        "list": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "uniqueItems": true,
+                "oversigt-ids": [
+                    "COLORED",
+                    "SINGLE_COLOR",
+                    "TILED_VERTICAL_GRADIENT",
+                    "TILED_HORIZONTAL_GRADIENT",
+                    "VERTICAL_GRADIENT",
+                    "HORIZONTAL_GRADIENT"
+                ],
+                "enumSource": [
+                    {
+                        "title": "{{item.title}}",
+                        "value": "{{item.value}}",
+                        "source": [
+                            {
+                                "value": "COLORED",
+                                "title": "COLORED"
+                            },
+                            {
+                                "value": "SINGLE_COLOR",
+                                "title": "SINGLE_COLOR"
+                            },
+                            {
+                                "value": "TILED_VERTICAL_GRADIENT",
+                                "title": "TILED_VERTICAL_GRADIENT"
+                            },
+                            {
+                                "value": "TILED_HORIZONTAL_GRADIENT",
+                                "title": "TILED_HORIZONTAL_GRADIENT"
+                            },
+                            {
+                                "value": "VERTICAL_GRADIENT",
+                                "title": "VERTICAL_GRADIENT"
+                            },
+                            {
+                                "value": "HORIZONTAL_GRADIENT",
+                                "title": "HORIZONTAL_GRADIENT"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "additionalItems": false,
+            "format": "table",
+            "title": "List"
+        },
+        "map": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Map"
+        },
+        "color": {
+            "type": "string",
+            "format": "color",
+            "title": "Color"
+        },
+        "credentials": {
+            "type": "number",
+            "$ref": "/schema/com.hlag.oversigt.properties.Credentials",
+            "oversigt-property": "com.hlag.oversigt.properties.Credentials",
+            "$class": "com.hlag.oversigt.properties.Credentials",
+            "serializable-property": "Credentials",
+            "title": "Credentials"
+        },
+        "localDate": {
+            "type": "string",
+            "format": "date",
+            "title": "LocalDate"
+        },
+        "localTime": {
+            "type": "string",
+            "format": "time",
+            "title": "LocalTime"
+        }
+    },
+    "required": [
+        "port",
+        "c",
+        "b",
+        "s",
+        "l",
+        "startTls",
+        "username",
+        "enumeration",
+        "list",
+        "map",
+        "color",
+        "credentials",
+        "localDate",
+        "localTime"
+    ],
+    "additionalProperties": false
+}

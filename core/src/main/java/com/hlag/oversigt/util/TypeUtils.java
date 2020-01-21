@@ -194,7 +194,7 @@ public final class TypeUtils {
 				while ((jarEntry = in.getNextJarEntry()) != null) {
 					if (!jarEntry.isDirectory()) {
 						String name = jarEntry.getName();
-						if (name.toLowerCase().endsWith(".class")) {
+						if (name.endsWith(".class") && !name.endsWith("/package-info.class")) {
 							name = name.substring(0, name.length() - ".class".length());
 							name = name.replace("/", ".");
 							classNames.add(name);
@@ -382,7 +382,7 @@ public final class TypeUtils {
 				}
 			}
 
-			final List<Method> fabricMethods = Arrays.stream(clazz.getDeclaredMethods())
+			final List<Method> factoryMethods = Arrays.stream(clazz.getDeclaredMethods())
 					.filter(m -> Modifier.isStatic(m.getModifiers()))
 					.filter(m -> m.getParameterTypes().length == parameters.length)
 					.filter(m -> clazz.isAssignableFrom(m.getReturnType()))
@@ -395,11 +395,11 @@ public final class TypeUtils {
 						return true;
 					})
 					.collect(Collectors.toList());
-			if (fabricMethods.size() == 1) {
-				return invokeStaticMethod(fabricMethods.get(0), parameters);
+			if (factoryMethods.size() == 1) {
+				return invokeStaticMethod(factoryMethods.get(0), parameters);
 			}
-			if (fabricMethods.size() > 1) {
-				final Optional<T> maybe = tryStaticMethods(fabricMethods,
+			if (factoryMethods.size() > 1) {
+				final Optional<T> maybe = tryStaticMethods(factoryMethods,
 						new String[] {
 								"parse",
 								"create",
@@ -523,7 +523,7 @@ public final class TypeUtils {
 
 		private final boolean required;
 
-		private SerializablePropertyMember(final Field field) {
+		SerializablePropertyMember(final Field field) {
 			this(field,
 					field.getName(),
 					Type.fromField(field),

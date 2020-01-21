@@ -3,6 +3,12 @@ package com.hlag.oversigt.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -16,9 +22,16 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.Resources;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.hlag.oversigt.core.configuration.JsonModule;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardColorScheme;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
 import com.hlag.oversigt.storage.Storage;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -80,12 +93,12 @@ public class JsonUtilsTest {
 				+ "		\"senderAddress\": \"noreply@oversigt.com\"\r\n"
 				+ "	}";
 
-		final TestClass actual = JsonUtils.fromJson(given, TestClass.class);
+		final TestClass1 actual = JsonUtils.fromJson(given, TestClass1.class);
 
 		assertThat(actual).isNotNull();
-		assertThat(actual).extracting(TestClass::getHostname).isEqualTo(Optional.of("smtp.server.com"));
-		assertThat(actual).extracting(TestClass::getPort).isEqualTo(587);
-		assertThat(actual).extracting(TestClass::isStartTls).isEqualTo(true);
+		assertThat(actual).extracting(TestClass1::getHostname).isEqualTo(Optional.of("smtp.server.com"));
+		assertThat(actual).extracting(TestClass1::getPort).isEqualTo(587);
+		assertThat(actual).extracting(TestClass1::isStartTls).isEqualTo(true);
 		assertThrows(NoSuchElementException.class, () -> Objects.requireNonNull(actual).getPassword().get());
 	}
 
@@ -144,7 +157,28 @@ public class JsonUtilsTest {
 		assertThat(actual).isEqualTo(expected);
 	}
 
-	private static final class TestClass {
+	@Test
+	public void testJsonSchema() throws IOException {
+		final String expected
+				= Resources.toString(Resources.getResource("com.hlag.oversigt.util.JsonUtilsTest.TestClass2.json"),
+						StandardCharsets.UTF_8);
+
+		final String actual = JsonUtils.toJsonSchema(TestClass2.class);
+
+		assertThat(actual).isEqualToIgnoringWhitespace(expected);
+	}
+
+	@Test
+	public void testJsonSchemaFromProperty() {
+		final String expected
+				= "{\"$schema\":\"http://json-schema.org/schema#\",\"$id\":\"http://schema.hlag.com/oversigt/property/com.hlag.oversigt.properties.Credentials\",\"title\":\"Credentials\",\"type\":\"number\",\"uniqueItems\":true,\"enum\":[0],\"oversigt-ids\":[0],\"enumSource\":[{\"title\":\"{{item.title}}\",\"value\":\"{{item.value}}\",\"source\":[{\"value\":0,\"title\":\" \"}]}]}";
+
+		final String actual = JsonUtils.toJsonSchema(Credentials.class);
+
+		assertThat(actual).isEqualTo(expected);
+	}
+
+	private static final class TestClass1 {
 		private Optional<String> hostname = Optional.empty();
 
 		private int port = 0;
@@ -157,7 +191,7 @@ public class JsonUtilsTest {
 
 		private Optional<String> senderAddress = Optional.empty();
 
-		private TestClass() {
+		private TestClass1() {
 			// no fields to be initialized
 		}
 
@@ -186,5 +220,59 @@ public class JsonUtilsTest {
 		public String getSenderAddress() {
 			return senderAddress.orElseThrow(() -> new RuntimeException("No sender address configured"));
 		}
+	}
+
+	public static final class TestClass2 {
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Optional<String> hostname = Optional.empty();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Optional<?> otherName = Optional.empty();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public int port = 0;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public char c = 'c';
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public byte b = 1;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public short s = 2;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public long l = 3;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public boolean startTls = false;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public String username = "user";
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Optional<String[]> usernames = Optional.empty();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public DashboardColorScheme enumeration = DashboardColorScheme.COLORED;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = "abc$1")
+		public List<DashboardColorScheme> list = Collections.emptyList();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Map<DashboardColorScheme, Dashboard[]> map = Collections.emptyMap();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Color color = Color.AQUA;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public Credentials credentials = Credentials.EMPTY;
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public LocalDate localDate = LocalDate.now();
+
+		@SuppressWarnings("checkstyle:VisibilityModifier")
+		public LocalTime localTime = LocalTime.NOON;
 	}
 }
