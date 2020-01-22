@@ -290,13 +290,6 @@
 			<artifactId>spring-beans</artifactId>
 			<version>5.2.3.RELEASE</version>
 		</dependency>
-		
-		<!-- XPath -->
-		<dependency>
-			<groupId>xml-apis</groupId>
-			<artifactId>xml-apis</artifactId>
-			<version>2.0.2</version>
-		</dependency>
 
 		<!-- JSON -->
 		<dependency>
@@ -418,6 +411,11 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
 			<version>4.4.13</version>
+		</dependency>
+		<dependency>
+			<groupId>xml-apis</groupId>
+			<artifactId>xml-apis</artifactId>
+			<version>1.4.01</version>
 		</dependency>
 	</dependencies>
 
