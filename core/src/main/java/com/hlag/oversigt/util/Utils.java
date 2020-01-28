@@ -135,7 +135,7 @@ public final class Utils {
 
 	public static boolean is(final Object object) {
 		if (object instanceof Boolean) {
-			return ((Boolean) object).booleanValue();
+			return (Boolean) object;
 		} else if (object instanceof Number) {
 			return ((Number) object).intValue() > 0;
 		} else if (object instanceof String) {
@@ -196,11 +196,10 @@ public final class Utils {
 	}
 
 	public static int computeHashCode(final Object... objects) {
-		return Stream.of(objects)//
+		return Stream.of(objects) //
 				.filter(notNull())
 				.map(Object::hashCode)
-				.collect(hashing())
-				.intValue();
+				.collect(hashing());
 	}
 
 	public static void sleep(final long millis) {

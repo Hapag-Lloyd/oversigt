@@ -16,7 +16,7 @@ public class CommandLineOptionsTest {
 	public void shouldCreateObject_whenParsingStringArray_givenValidCommandLine() {
 		// given
 		final String[] givenCommandLine
-				= new String[] { "--debug", "--startEventSources", "--ldapBindPassword", "idefix", };
+				= new String[] { "--debug", "--startEventSources", "--ldapBindPassword", "idefix" };
 
 		// when
 		final CommandLineOptions actualStartOptions = CommandLineOptions.parse(givenCommandLine).get();
@@ -31,7 +31,7 @@ public class CommandLineOptionsTest {
 	@Test
 	public void shouldCreateFilledMap_whenParsingStringArray_givenValidCommandLine() {
 		// given
-		final String[] givenCommandLine = new String[] { "--debug", "--ldapBindPassword", "idefix", };
+		final String[] givenCommandLine = new String[] { "--debug", "--ldapBindPassword", "idefix" };
 		final Map<String, String> expectedProperties = new HashMap<>();
 		expectedProperties.put("debugFallback", "true");
 		expectedProperties.put("ldapBindPasswordFallback", "idefix");

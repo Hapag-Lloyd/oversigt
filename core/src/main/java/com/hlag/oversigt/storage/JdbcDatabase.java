@@ -20,7 +20,6 @@ import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET;
 import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET_DATA;
 import static com.hlag.oversigt.util.StringUtils.list;
 import static com.hlag.oversigt.util.Utils.is;
-import static com.hlag.oversigt.util.Utils.map;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
@@ -66,6 +65,8 @@ import com.hlag.oversigt.properties.SerializableProperty;
 import com.hlag.oversigt.storage.SqlDialect.ColumnOptions;
 import com.hlag.oversigt.util.JsonUtils;
 import com.hlag.oversigt.util.TypeUtils;
+
+import de.larssh.utils.collection.Maps;
 
 @Singleton
 public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
@@ -231,26 +232,25 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public void persistEventSourceInstance(final EventSourceInstance instance) {
-		final Map<String, Object> values = map("NAME",
-				instance.getName(),
-				"ENABLED",
-				instance.isEnabled(),
-				"EVENT_SOURCE_CLASS",
-				instance.getDescriptor().getServiceClass().map(c -> c.getName()).orElse(null), //
-				"FREQUENCY",
-				instance.getFrequency(),
-				"VIEW",
-				instance.getDescriptor().getView(),
-				"LAST_CHANGE",
-				now(),
-				"LAST_CHANGE_BY",
-				instance.getLastChangeBy());
+		final Map<String, Object> values = Maps.<String, Object>builder()
+				.put("NAME", instance.getName())
+				.put("ENABLED", instance.isEnabled())
+				.put("EVENT_SOURCE_CLASS",
+						instance.getDescriptor().getServiceClass().map(c -> c.getName()).orElse(null))
+				.put("FREQUENCY", instance.getFrequency())
+				.put("VIEW", instance.getDescriptor().getView())
+				.put("LAST_CHANGE", now())
+				.put("LAST_CHANGE_BY", instance.getLastChangeBy())
+				.get();
 		persist(TABLE_EVENT_SOURCE,
 				"ID",
 				instance,
 				EventSourceInstance::getId,
 				values,
-				map("CREATED_ON", now(), "CREATED_BY", instance.getCreatedBy()));
+				Maps.<String, Object>builder()
+						.put("CREATED_ON", now())
+						.put("CREATED_BY", instance.getCreatedBy())
+						.get());
 		final List<Map<String, Object>> existingProperties = load(TABLE_EVENT_SOURCE_PROPERTY,
 				"*",
 				Optional.of("EVENT_SOURCE_ID"),
@@ -260,7 +260,11 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 				instance.getDescriptor().getProperties().stream(),
 				"PROPERTY",
 				existingProperties);
-		delete(TABLE_EVENT_SOURCE_PROPERTY, map("EVENT_SOURCE_ID", instance.getId(), "TYPE", "DATA"));
+		delete(TABLE_EVENT_SOURCE_PROPERTY,
+				Maps.<String, Object>builder() //
+						.put("EVENT_SOURCE_ID", instance.getId())
+						.put("TYPE", "DATA")
+						.get());
 		createOrUpdateEventSourceProperties(instance,
 				instance.getDescriptor().getDataItems().stream().filter(instance::hasPropertyValue),
 				"DATA",
@@ -319,7 +323,13 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public void updateEventSourceClasses(final String oldClassName, final String newClassName) {
-		update(TABLE_EVENT_SOURCE, map("EVENT_SOURCE_CLASS", oldClassName), map("EVENT_SOURCE_CLASS", newClassName));
+		update(TABLE_EVENT_SOURCE,
+				Maps.<String, Object>builder() //
+						.put("EVENT_SOURCE_CLASS", oldClassName)
+						.get(),
+				Maps.<String, Object>builder() //
+						.put("EVENT_SOURCE_CLASS", newClassName)
+						.get());
 	}
 
 	@Override
@@ -329,30 +339,20 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 
 	@Override
 	public void persistDashboard(final Dashboard dashboard) {
-		final Map<String, Object> values = map("TITLE",
-				dashboard.getTitle(),
-				"WIDTH",
-				dashboard.getScreenWidth(),
-				"HEIGHT",
-				dashboard.getScreenHeight(),
-				"COLUMNS",
-				dashboard.getColumns(),
-				"BACKGROUND_COLOR",
-				dashboard.getBackgroundColor().getHexColor(),
-				"COLOR_SCHEME",
-				dashboard.getColorScheme().name(),
-				"FOREGROUND_COLOR_START",
-				dashboard.getForegroundColorStart().getHexColor(),
-				"FOREGROUND_COLOR_END",
-				dashboard.getForegroundColorEnd().getHexColor(),
-				"OWNER",
-				dashboard.getOwners().stream().collect(Collectors.joining(",", ",", ",")),
-				"EDITOR",
-				dashboard.getEditors().stream().collect(Collectors.joining(",", ",", ",")),
-				"ENABLED",
-				dashboard.isEnabled(),
-				"LAST_CHANGE",
-				now());
+		final Map<String, Object> values = Maps.<String, Object>builder()
+				.put("TITLE", dashboard.getTitle())
+				.put("WIDTH", dashboard.getScreenWidth())
+				.put("HEIGHT", dashboard.getScreenHeight())
+				.put("COLUMNS", dashboard.getColumns())
+				.put("BACKGROUND_COLOR", dashboard.getBackgroundColor().getHexColor())
+				.put("COLOR_SCHEME", dashboard.getColorScheme().name())
+				.put("FOREGROUND_COLOR_START", dashboard.getForegroundColorStart().getHexColor())
+				.put("FOREGROUND_COLOR_END", dashboard.getForegroundColorEnd().getHexColor())
+				.put("OWNER", dashboard.getOwners().stream().collect(Collectors.joining(",", ",", ",")))
+				.put("EDITOR", dashboard.getEditors().stream().collect(Collectors.joining(",", ",", ",")))
+				.put("ENABLED", dashboard.isEnabled())
+				.put("LAST_CHANGE", now())
+				.get();
 		persist(TABLE_DASHBOARD, "ID", dashboard, Dashboard::getId, values);
 	}
 
@@ -645,8 +645,14 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 	@Override
 	public void updateProperty(final SerializableProperty value) {
 		update(TABLE_VALUES,
-				map("ID", value.getId(), "CLASS", value.getClass().getName()),
-				map("NAME", value.getName(), "JSON", JsonUtils.toJson(value)));
+				Maps.<String, Object>builder() //
+						.put("ID", value.getId())
+						.put("CLASS", value.getClass().getName())
+						.get(),
+				Maps.<String, Object>builder() //
+						.put("NAME", value.getName())
+						.put("JSON", JsonUtils.toJson(value))
+						.get());
 	}
 
 	@Override
@@ -705,7 +711,11 @@ public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
 			insert(table, Optional.empty(), values);
 		} else if (found.size() == 1) {
 			// update existing entry
-			update(table, map(idColumn, getId.apply(item)), values);
+			update(table,
+					Maps.<String, Object>builder() //
+							.put(idColumn, getId.apply(item))
+							.get(),
+					values);
 		} else {
 			throw new RuntimeException("More than one line found for ID: " + getId.apply(item));
 		}

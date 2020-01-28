@@ -1,6 +1,6 @@
 package com.hlag.oversigt.util;
 
-import static com.hlag.oversigt.util.Utils.map;
+import static java.util.Collections.emptyMap;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,6 +42,7 @@ import com.hlag.oversigt.storage.Storage;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 
+import de.larssh.utils.collection.Maps;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class JsonUtils {
@@ -164,20 +165,18 @@ public final class JsonUtils {
 		final Map<String, Object> schema;
 		if (SerializableProperty.class.isAssignableFrom(clazz)) {
 			// TODO move this conversion to another class
-			schema = map("$schema",
-					"http://json-schema.org/schema#",
-					"$id",
-					"http://schema.hlag.com/oversigt/property/" + clazz.getName(),
-					"title",
-					clazz.getSimpleName());
+			schema = Maps.builder(new LinkedHashMap<String, Object>())
+					.put("$schema", "http://json-schema.org/schema#")
+					.put("$id", "http://schema.hlag.com/oversigt/property/" + clazz.getName())
+					.put("title", clazz.getSimpleName())
+					.get();
 			schema.putAll(toJsonSchemaFromProperty((Class<? extends SerializableProperty>) clazz));
 		} else {
-			schema = map("$schema",
-					"http://json-schema.org/schema#",
-					"$id",
-					"http://schema.hlag.com/oversigt/type/" + clazz.getName(),
-					"title",
-					clazz.getSimpleName());
+			schema = Maps.builder(new LinkedHashMap<String, Object>())
+					.put("$schema", "http://json-schema.org/schema#")
+					.put("$id", "http://schema.hlag.com/oversigt/type/" + clazz.getName())
+					.put("title", clazz.getSimpleName())
+					.get();
 			schema.putAll(toJsonSchemaFromType(clazz, hint));
 		}
 		return toJson(schema);
@@ -191,27 +190,36 @@ public final class JsonUtils {
 		final List<Integer> ids = new ArrayList<>(
 				propertyValues.stream().map(SerializableProperty::getId).collect(Collectors.toList()));
 		final List<Map<String, Object>> mapping = propertyValues.stream()
-				.map(p -> map("value", p.getId(), "title", p.getName()))
+				.map(p -> Maps.builder(new LinkedHashMap<String, Object>()) //
+						.put("value", p.getId())
+						.put("title", p.getName())
+						.get())
 				.collect(Collectors.toList());
 		try {
 			if (clazz.getDeclaredField("EMPTY") != null) {
 				names.add(0, "\u00a0");
 				ids.add(0, 0);
-				mapping.add(0, map("value", 0, "title", "\u00a0"));
+				mapping.add(0,
+						Maps.builder(new LinkedHashMap<String, Object>()) //
+								.put("value", 0)
+								.put("title", "\u00a0")
+								.get());
 			}
 		} catch (@SuppressWarnings("unused") final NoSuchFieldException | SecurityException ignore) {
 			// continue if EMPTY is not found
 		}
-		return map("type",
-				SERIALIZABLE_PROPERTY_TYPE,
-				"uniqueItems",
-				true,
-				"enum",
-				ids,
-				"oversigt-ids",
-				ids,
-				"enumSource",
-				Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", mapping)));
+		return Maps.builder(new LinkedHashMap<String, Object>())
+				.put("type", SERIALIZABLE_PROPERTY_TYPE)
+				.put("uniqueItems", true)
+				.put("enum", ids)
+				.put("oversigt-ids", ids)
+				.put("enumSource",
+						Arrays.asList(Maps.builder(new LinkedHashMap<String, Object>())
+								.put("title", "{{item.title}}")
+								.put("value", "{{item.value}}")
+								.put("source", mapping)
+								.get()))
+				.get();
 	}
 
 	private static Map<String, Object> toJsonSchemaFromType(final Type type, final Optional<JsonHint> hint) {
@@ -228,7 +236,7 @@ public final class JsonUtils {
 			// AnnotatedType[] at = tv.getAnnotatedBounds();
 			// Type[] b = tv.getBounds();
 			// GenericDeclaration d = tv.getGenericDeclaration();
-			return map();
+			return emptyMap();
 		} else {
 			throw new RuntimeException("Unknown type: " + type);
 		}
@@ -238,9 +246,13 @@ public final class JsonUtils {
 	private static Map<String, Object> toJsonSchemaFromClass(final Class<?> clazz, final Optional<JsonHint> hint) {
 		Optional<JsonHint> jsonHint = hint;
 		if (clazz == String.class) {
-			return map("type", "string");
+			return Maps.builder(new LinkedHashMap<String, Object>()) //
+					.put("type", "string")
+					.get();
 		} else if (clazz == boolean.class || clazz == Boolean.class) {
-			return map("type", "boolean");
+			return Maps.builder(new LinkedHashMap<String, Object>()) //
+					.put("type", "boolean")
+					.get();
 		} else if (clazz == int.class || clazz == Integer.class) {
 			return makeNumber(true, Optional.of(Integer.MIN_VALUE), Optional.of(Integer.MAX_VALUE));
 		} else if (clazz == long.class || clazz == Long.class) {
@@ -259,35 +271,37 @@ public final class JsonUtils {
 			return makeNumber(false, Optional.empty(), Optional.empty());
 		} else if (Enum.class.isAssignableFrom(clazz)) {
 			final List<Map<String, Object>> abc = Arrays.stream(clazz.getEnumConstants())
-					.map(e -> map("value", ((Enum<?>) e).name(), "title", e.toString()))
+					.map(e -> Maps.builder(new LinkedHashMap<String, Object>())
+							.put("value", ((Enum<?>) e).name())
+							.put("title", e.toString())
+							.get())
 					.collect(Collectors.toList());
-			return map("type",
-					"string",
-					"uniqueItems",
-					true, // TODO check whether this should always be true
-					"oversigt-ids",
-					getEnumConstants((Class<Enum<?>>) clazz),
-					"enumSource",
-					Arrays.asList(map("title", "{{item.title}}", "value", "{{item.value}}", "source", abc)));
+			return Maps.builder(new LinkedHashMap<String, Object>())
+					.put("type", "string")
+					.put("uniqueItems", true) // TODO check whether this should always be true
+					.put("oversigt-ids", getEnumConstants((Class<Enum<?>>) clazz))
+					.put("enumSource",
+							Arrays.asList(Maps.builder(new LinkedHashMap<String, Object>())
+									.put("title", "{{item.title}}")
+									.put("value", "{{item.value}}")
+									.put("source", abc)
+									.get()))
+					.get();
 		} else if (SerializableProperty.class.isAssignableFrom(clazz)) {
-			return map("type",
-					SERIALIZABLE_PROPERTY_TYPE,
-					"$ref",
-					"/schema/" + clazz.getName(),
-					"oversigt-property",
-					clazz.getName(),
-					"$class",
-					clazz.getName(),
-					"serializable-property",
-					clazz.getSimpleName());
+			return Maps.builder(new LinkedHashMap<String, Object>())
+					.put("type", SERIALIZABLE_PROPERTY_TYPE)
+					.put("$ref", "/schema/" + clazz.getName())
+					.put("oversigt-property", clazz.getName())
+					.put("$class", clazz.getName())
+					.put("serializable-property", clazz.getSimpleName())
+					.get();
 		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {
 			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];
-			final Map<String, Object> map = map("type",
-					"array",
-					"items",
-					toJsonSchemaFromType(componentType, Optional.empty()),
-					"additionalItems",
-					false);
+			final Map<String, Object> map = Maps.builder(new LinkedHashMap<String, Object>())
+					.put("type", "array")
+					.put("items", toJsonSchemaFromType(componentType, Optional.empty()))
+					.put("additionalItems", false)
+					.get();
 			if (Set.class.isAssignableFrom(clazz)) {
 				map.put("unique", true);
 			}
@@ -304,11 +318,20 @@ public final class JsonUtils {
 			}
 			return map;
 		} else if (clazz == Color.class) {
-			return map("type", "string", "format", "color");
+			return Maps.builder(new LinkedHashMap<String, Object>()) //
+					.put("type", "string")
+					.put("format", "color")
+					.get();
 		} else if (clazz == LocalDate.class) {
-			return map("type", "string", "format", "date");
+			return Maps.builder(new LinkedHashMap<String, Object>()) //
+					.put("type", "string")
+					.put("format", "date")
+					.get();
 		} else if (clazz == LocalTime.class) {
-			return map("type", "string", "format", "time");
+			return Maps.builder(new LinkedHashMap<String, Object>()) //
+					.put("type", "string")
+					.put("format", "time")
+					.get();
 		} else {
 			// TODO check for notnull ???
 			final List<Field> fields = TypeUtils.streamFields(clazz)
@@ -326,16 +349,13 @@ public final class JsonUtils {
 				getFormat(field).ifPresent(format -> map.put("format", format));
 				fieldsMap.put(field.getName(), map);
 			}
-			final Map<String, Object> map = map("type",
-					"object",
-					"title",
-					makeFirstCharacterCapital(clazz.getSimpleName()),
-					"properties",
-					fieldsMap,
-					"required",
-					fields.stream().filter(JsonUtils::isRequired).map(Field::getName).toArray(),
-					"additionalProperties",
-					false);
+			final Map<String, Object> map = Maps.builder(new LinkedHashMap<String, Object>())
+					.put("type", "object")
+					.put("title", makeFirstCharacterCapital(clazz.getSimpleName()))
+					.put("properties", fieldsMap)
+					.put("required", fields.stream().filter(JsonUtils::isRequired).map(Field::getName).toArray())
+					.put("additionalProperties", false)
+					.get();
 
 			if (clazz.isAnnotationPresent(JsonHint.class)) {
 				jsonHint = Optional.of(clazz.getAnnotation(JsonHint.class));
@@ -360,7 +380,9 @@ public final class JsonUtils {
 	private static Map<String, Object> makeNumber(final boolean wholeNumbers,
 			final Optional<Object> min,
 			final Optional<Object> max) {
-		final Map<String, Object> map = map("type", "number");
+		final Map<String, Object> map = Maps.builder(new LinkedHashMap<String, Object>()) //
+				.put("type", "number")
+				.get();
 		min.ifPresent(v -> map.put("minimum", v));
 		max.ifPresent(v -> map.put("maximum", v));
 		if (wholeNumbers) {
