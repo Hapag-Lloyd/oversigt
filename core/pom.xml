@@ -45,10 +45,10 @@
 	</ciManagement>
 
 	<properties>
-		<compilerArgument>-parameters</compilerArgument>
-
+		<eclipse.compiler.javadoc>disabled</eclipse.compiler.javadoc>
 		<pmd.skip>true</pmd.skip>
-		<org.eclipse.jdt.core.compiler.doc.comment.support>disabled</org.eclipse.jdt.core.compiler.doc.comment.support>
+
+		<maven.compiler.parameters>true</maven.compiler.parameters>
 	</properties>
 
 	<dependencies>

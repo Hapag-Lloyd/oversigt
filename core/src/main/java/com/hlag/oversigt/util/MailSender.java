@@ -1,7 +1,6 @@
 package com.hlag.oversigt.util;
 
 import static com.hlag.oversigt.util.Utils.logChange;
-import static com.hlag.oversigt.util.Utils.map;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -43,6 +42,7 @@ import com.hlag.oversigt.security.Authenticator;
 import com.hlag.oversigt.security.Principal;
 import com.hlag.oversigt.security.Roles;
 
+import de.larssh.utils.collection.Maps;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -99,7 +99,9 @@ public class MailSender {
 				"New dashboard requested",
 				"A new dashboard has been created...",
 				"NewDashboard",
-				map("dashboard", dashboard));
+				Maps.<String, Object>builder() //
+						.put("dashboard", dashboard)
+						.get());
 	}
 
 	public void sendPermissionsReceived(final Principal sender,
@@ -118,7 +120,10 @@ public class MailSender {
 				"New permission received",
 				"You have received a new permssion for dashboard '" + dashboard.getTitle() + "'.",
 				"PermissionReceived",
-				map("role", role.getDisplayName(), "dashboard", dashboard));
+				Maps.<String, Object>builder() //
+						.put("role", role.getDisplayName())
+						.put("dashboard", dashboard)
+						.get());
 	}
 
 	public void sendDashboardEnabled(final Principal sender, final Dashboard dashboard) {
@@ -127,7 +132,7 @@ public class MailSender {
 				"Dashboard enabled",
 				"The dashboard '" + dashboard.getTitle() + "' has been enabled. Configure it now!",
 				"DashboardEnabled",
-				map("dashboard", dashboard));
+				Maps.<String, Object>builder().put("dashboard", dashboard).get());
 	}
 
 	public void sendRawMail(final Principal sender, final String recipient, final String content) {
@@ -187,11 +192,16 @@ public class MailSender {
 		Objects.requireNonNull(recipientName, "The recipient name must not be null");
 		Objects.requireNonNull(recipientEmail, "The recipient mail must not be null");
 
-		final Map<String, Object> model = new HashMap<>(mModel);
-		model.put("hostname", dashboardHostname);
-		model.put("subject", subject);
-		model.put("title", title);
-		model.put("recipient", map("name", recipientName, "email", recipientEmail));
+		final Map<String, Object> model = Maps.builder(new HashMap<>(mModel))
+				.put("hostname", dashboardHostname)
+				.put("subject", subject)
+				.put("title", title)
+				.put("recipient",
+						Maps.<String, String>builder() //
+								.put("name", recipientName)
+								.put("email", recipientEmail)
+								.get())
+				.get();
 
 		if (!model.containsKey("preHeaderText")) {
 			model.put("preHeaderText", title);

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
 
+import de.larssh.utils.collection.Maps;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 @Singleton
@@ -105,7 +106,11 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			final String mainName,
 			final Object mainValue,
 			final Object... whereValues) {
-		return update(table, map(mainName, mainValue), map(whereValues));
+		return update(table,
+				Maps.<String, Object>builder() //
+						.put(mainName, mainValue)
+						.get(),
+				map(whereValues));
 	}
 
 	protected int updateByTwoKey(final String table,
@@ -114,7 +119,12 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			final String subName,
 			final Object subValue,
 			final Object... whereValues) {
-		return update(table, map(mainName, mainValue, subName, subValue), map(whereValues));
+		return update(table,
+				Maps.<String, Object>builder() //
+						.put(mainName, mainValue)
+						.put(subName, subValue)
+						.get(),
+				map(whereValues));
 	}
 
 	protected int updateByThreeKey(final String table,
@@ -125,7 +135,13 @@ public abstract class AbstractJdbcConnector implements Closeable {
 			final String threeName,
 			final Object threeValue,
 			final Object... whereValues) {
-		return update(table, map(oneName, oneValue, twoName, twoValue, threeName, threeValue), map(whereValues));
+		return update(table,
+				Maps.<String, Object>builder()
+						.put(oneName, oneValue)
+						.put(twoName, twoValue)
+						.put(threeName, threeValue)
+						.get(),
+				map(whereValues));
 	}
 
 	protected int update(final String table, final Map<String, Object> where, final Map<String, Object> values) {

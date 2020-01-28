@@ -52,6 +52,7 @@ import com.hlag.oversigt.util.function.ThrowingFunction;
 
 import de.larssh.utils.Nullables;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public final class TypeUtils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);
@@ -677,8 +678,9 @@ public final class TypeUtils {
 			}
 		}
 
+		@SuppressFBWarnings(value = "IMC_IMMATURE_CLASS_BAD_SERIALVERSIONUID", justification = "false positive")
 		public static final class MemberMissingException extends Exception {
-			private static final long serialVersionUID = 9022818290418219308L;
+			private static final long serialVersionUID = 7946681486429103627L;
 
 			private MemberMissingException(final String message) {
 				super(message);

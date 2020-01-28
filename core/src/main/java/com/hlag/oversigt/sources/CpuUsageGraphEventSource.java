@@ -158,7 +158,7 @@ public class CpuUsageGraphEventSource extends ScheduledEventSource<ComplexGraphE
 
 	private enum OperatingSystem {
 		Aix,
-		Linux,
+		Linux
 		// Windows
 	}
 }

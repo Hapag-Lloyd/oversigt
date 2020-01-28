@@ -37,6 +37,7 @@ import com.hlag.oversigt.util.TypeUtils;
 import com.hlag.oversigt.web.resources.Authentication;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
@@ -203,6 +204,7 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		}
 	}
 
+	@SuppressFBWarnings(value = "IMC_IMMATURE_CLASS_BAD_SERIALVERSIONUID", justification = "false positive")
 	private static final class ApiBootstrapException extends RuntimeException {
 		private static final long serialVersionUID = 7618319300693716653L;
 
