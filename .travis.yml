@@ -2,9 +2,10 @@ language: java
 jdk:
   - openjdk8
   - openjdk11
-node_js:
-  - 12
+env:
+  - NODE_VERSION="12.16.1"
 
+before_install: nvm install $NODE_VERSION
 install: skip
 script: mvn install -Dgpg.skip=true --batch-mode --show-version --update-snapshots
 
