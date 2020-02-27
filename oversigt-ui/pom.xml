@@ -45,6 +45,8 @@
 	</ciManagement>
 
 	<properties>
+		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
+		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
 
 		<!-- Versions: Plugins -->
