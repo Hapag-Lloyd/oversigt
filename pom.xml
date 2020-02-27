@@ -57,8 +57,9 @@
 	<properties>
 		<lombok.delombok.skip>true</lombok.delombok.skip>
 		<parent-pom.create-gitignore>false</parent-pom.create-gitignore>
-		<parent-pom.create-lombok-config>false</parent-pom.create-lombok-config>
 		<parent-pom.default-sources-folder>java</parent-pom.default-sources-folder>
+		<parent-pom.create-lombok-config>false</parent-pom.create-lombok-config>
+		<parent-pom.create-travis-yml>false</parent-pom.create-travis-yml>
 	</properties>
 
 	<repositories>
