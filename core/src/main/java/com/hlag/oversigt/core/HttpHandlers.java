@@ -234,6 +234,8 @@ public class HttpHandlers {
 						(Function<Widget, String>) DashboardDesignHelper::getDisplayStyle,
 						"getWidgetDisplayClass",
 						(Function<Widget, String>) DashboardDesignHelper::getDisplayClass));
+
+		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
 		exchange.getResponseSender().send(html);
 	}
 
@@ -267,6 +269,8 @@ public class HttpHandlers {
 								.flatMap(authenticator::readPrincipal)
 								.map(p -> p.getEmail())
 								.orElse(null)));
+
+		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
 		exchange.getResponseSender().send(html);
 	}
 
