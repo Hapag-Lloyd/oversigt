@@ -74,6 +74,7 @@ public class JenkinsPipelineStatusEventSource extends ScheduledEventSource<Jenki
 		return Optional.of(new JenkinsPipelineStatusEvent(list));
 	}
 
+	@SuppressWarnings("resource")
 	public List<JenkinsPipelineEventStatusItem> getJenkinsDataByID(final Pipeline pipe,
 			final Branch branch,
 			final int times) throws EventSourceException {
