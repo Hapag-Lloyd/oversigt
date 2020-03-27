@@ -254,7 +254,7 @@
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>4.2.2</version>
+			<version>4.2.3</version>
 		</dependency>
 
 		<!-- Aspect Oriented Programming (Intercepting API method calls for validation) -->
@@ -290,7 +290,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
-			<version>5.2.4.RELEASE</version>
+			<version>5.2.5.RELEASE</version>
 		</dependency>
 
 		<!-- XPath -->
@@ -351,7 +351,7 @@
 		<dependency>
 			<groupId>org.codehaus.jettison</groupId>
 			<artifactId>jettison</artifactId>
-			<version>1.4.0</version>
+			<version>1.4.1</version>
 		</dependency>
 
 		<!-- SSH support -->
@@ -404,7 +404,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.6.0</version>
+			<version>5.6.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
