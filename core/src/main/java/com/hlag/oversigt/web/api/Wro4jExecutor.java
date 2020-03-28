@@ -61,8 +61,7 @@ public class Wro4jExecutor {
 			"    </group>\n"
 			+ "</groups>\n";
 
-	private static final String WRO_PROPERTIES
-			= "preProcessors=cssUrlRewriting,coffeeScript\r\npostProcessors=rubySassCss";
+	private static final String WRO_PROPERTIES = "preProcessors=coffeeScript\r\npostProcessors=rubySassCss";
 
 	private static final String GROUP = "group";
 
