@@ -6,7 +6,7 @@ It is able to serve several dashboards simultaneously and change the dashboards'
 ``Oversigt`` is danish and means nothing else then *oversight*.
 
 ## How does it work?
-Oversigt uses *event sources* to gather data from nearly any source of information. For each event source you can create several *widgets*. Each widget displays the information from its event source and is customizable how it displays the data. Those widgets will then be placed in *dashboards* which simply order the widgets and enable you to arrange the dashboard's content as you like.  
+Oversigt uses *event sources* to gather data from nearly any source of information. For each event source you can create several *widgets*. Each widget displays the information of its event source and is customizable how it displays the data. Those widgets will then be placed in *dashboards* which simply order the widgets and enable you to arrange the dashboard's content as you like.  
 Then simply open a browser and violá:
 ![Screenshot of the dashboard](screenshot.png) 
 
