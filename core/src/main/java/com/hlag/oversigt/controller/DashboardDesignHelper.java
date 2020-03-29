@@ -10,11 +10,11 @@ import com.hlag.oversigt.model.Widget;
 import com.hlag.oversigt.properties.Color;
 
 public final class DashboardDesignHelper {
-	private static int getRows(final Dashboard dashboard) {
+	private static int computeRows(final Dashboard dashboard) {
 		return dashboard.getScreenHeight() / dashboard.getComputedTileHeight();
 	}
 
-	public static boolean isAddColorCssToWidgets(final Dashboard dashboard) {
+	public static boolean isAddCssColorsToWidgets(final Dashboard dashboard) {
 		return dashboard.getColorScheme() != DashboardColorScheme.COLORED;
 	}
 
@@ -30,15 +30,15 @@ public final class DashboardDesignHelper {
 			return new StyleAddon(getCssSolidBackgroundColor(dashboard.getForegroundColorStart()),
 					Optional.of(dashboard.getForegroundColorStart()));
 		case TILED_VERTICAL_GRADIENT:
-			Color color = computeColor(dashboard, py, sy, getRows(dashboard));
+			Color color = computeColor(dashboard, py, sy, computeRows(dashboard));
 			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));
 		case TILED_HORIZONTAL_GRADIENT:
 			color = computeColor(dashboard, px, sx, dashboard.getColumns());
 			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));
 		case VERTICAL_GRADIENT:
-			Color[] colors = computeColors(dashboard, py, sy, getRows(dashboard));
+			Color[] colors = computeColors(dashboard, py, sy, computeRows(dashboard));
 			return new StyleAddon(getCssGradientBackgroundColor("bottom", colors[0], colors[1]),
-					Optional.of(computeColor(dashboard, py, sy, getRows(dashboard))));
+					Optional.of(computeColor(dashboard, py, sy, computeRows(dashboard))));
 		case HORIZONTAL_GRADIENT:
 			colors = computeColors(dashboard, px, sx, dashboard.getColumns());
 			return new StyleAddon(getCssGradientBackgroundColor("right", colors[0], colors[1]),
@@ -66,7 +66,7 @@ public final class DashboardDesignHelper {
 
 	public static String getDisplayClass(final Widget widget) {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
-		if (!isAddColorCssToWidgets(dashboard)) {
+		if (!isAddCssColorsToWidgets(dashboard)) {
 			return "";
 		}
 
@@ -84,7 +84,7 @@ public final class DashboardDesignHelper {
 		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);
 		final StringBuilder sb = new StringBuilder();
 		sb.append(widget.getStyle());
-		if (isAddColorCssToWidgets(dashboard)) {
+		if (isAddCssColorsToWidgets(dashboard)) {
 			final StyleAddon addon = getStyleAddon(dashboard,
 					widget.getPosX(),
 					widget.getPosY(),
