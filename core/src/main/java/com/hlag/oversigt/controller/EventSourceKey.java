@@ -21,14 +21,8 @@ import de.larssh.utils.Finals;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 public final class EventSourceKey implements Comparable<EventSourceKey> {
-	private static final Comparator<EventSourceKey> COMPARATOR_BY_DISPLAY_NAME
-			= Utils.caseInsensitiveComparator(EventSourceKey::getDisplayName);
-
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_KEY
 			= Utils.caseSensitiveComparator(EventSourceKey::getKey);
-
-	public static final Comparator<EventSourceKey> COMPARATOR
-			= COMPARATOR_BY_DISPLAY_NAME.thenComparing(COMPARATOR_BY_KEY);
 
 	private static AtomicReference<EventSourceRenamer> eventSourceRenamer = new AtomicReference<>();
 
@@ -78,18 +72,16 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	public static EventSourceKey fromClassOrView(final Optional<String> className, final String viewName) {
-		final String key = className.isPresent()
-				? EventSourceKey.PREFIX_CLASS + className.get().toString()
-				: EventSourceKey.PREFIX_WIDGET + viewName;
+		final String key = className.map(name -> PREFIX_CLASS + name).orElseGet(() -> PREFIX_WIDGET + viewName);
 		return fromKeyString(key);
 	}
 
 	static EventSourceKey createKeyFromClass(final Class<?> clazz) {
-		Optional<String> displayName = Optional.empty();
-		if (clazz.isAnnotationPresent(EventSource.class)) {
-			displayName = Optional.ofNullable(clazz.getAnnotation(EventSource.class).displayName());
-		}
-		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName.orElse(clazz.getSimpleName())));
+		final String displayName = Optional.of(clazz.getAnnotation(EventSource.class))
+				.map(EventSource::displayName)
+				.map(Strings::emptyToNull)
+				.orElse(clazz.getSimpleName());
+		return addKey(new EventSourceKey("class:" + clazz.getName(), displayName));
 	}
 
 	static EventSourceKey createKeyFromWidget(final String widgetName, final String displayName) {
@@ -153,10 +145,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 			return false;
 		}
 		final EventSourceKey other = (EventSourceKey) obj;
-		if (!key.equals(other.key)) {
-			return false;
-		}
-		return true;
+		return key.equals(other.key);
 	}
 
 	@Override
