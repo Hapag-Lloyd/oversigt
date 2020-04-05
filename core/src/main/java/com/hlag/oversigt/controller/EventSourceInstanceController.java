@@ -174,7 +174,7 @@ public class EventSourceInstanceController {
 
 		String id;
 		do {
-			id = descriptor.getServiceClass().map(c -> c.getSimpleName()).orElse(descriptor.getView())
+			id = descriptor.getServiceClass().map(Class::getSimpleName).orElse(descriptor.getView())
 					+ "__"
 					+ UUID.randomUUID().toString().replace("-", "_");
 		} while (existingIds.contains(id));
@@ -184,8 +184,8 @@ public class EventSourceInstanceController {
 	private EventSourceInstance loadEventSourceInstance(@NotBlank final String id) {
 		try {
 			final EventSourceInstance instance = storage.loadEventSourceInstance(id, (c, v) -> {
-				final EventSourceKey key
-						= EventSourceKey.fromClassOrView(c, Strings.isNullOrEmpty(v) ? getView(id) : v);
+				final EventSourceKey key = EventSourceKey.fromClassOrView(c,
+						Optional.ofNullable(v).map(Strings::emptyToNull).orElseGet(() -> getView(id)));
 				return descriptorController.getEventSourceDescriptor(key);
 			});
 			final Map<String, String> propertyStrings = storage.getEventSourceInstanceProperties(id);

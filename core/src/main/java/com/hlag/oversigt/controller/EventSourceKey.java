@@ -72,9 +72,7 @@ public final class EventSourceKey implements Comparable<EventSourceKey> {
 	}
 
 	public static EventSourceKey fromClassOrView(final Optional<String> className, final String viewName) {
-		final String key = className
-				.map(name -> PREFIX_CLASS + name)
-				.orElseGet(() -> PREFIX_WIDGET + viewName);
+		final String key = className.map(name -> PREFIX_CLASS + name).orElseGet(() -> PREFIX_WIDGET + viewName);
 		return fromKeyString(key);
 	}
 
