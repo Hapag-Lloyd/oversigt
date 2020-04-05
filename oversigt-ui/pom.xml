@@ -64,74 +64,45 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-resources-plugin</artifactId>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.9.1</version>
+				<configuration>
+					<nodeVersion>v10.16.0</nodeVersion>
+					<npmVersion>6.10.2</npmVersion>
+
+					<!-- optional: where to download node and npm from. Defaults to https://nodejs.org/dist/ -->
+					<!-- <downloadRoot>http://myproxy.example.org/nodejs/</downloadRoot> -->
+					
+					<workingDirectory>${project.basedir}/src/main/angular2/</workingDirectory>
+				</configuration>
+
 				<executions>
 					<execution>
-						<id>copy-angular2-dir</id>
-						<phase>validate</phase>
+						<id>install node and npm</id>
 						<goals>
-							<goal>copy-resources</goal>
+							<goal>install-node-and-npm</goal>
 						</goals>
-						<configuration>
-							<outputDirectory>${project.basedir}/target/angular2</outputDirectory>
-							<resources>
-								<resource>
-									<directory>src/main/angular2</directory>
-									<includes>
-										<include>*.*</include>
-										<include>src/**/*</include>
-									</includes>
-								</resource>
-							</resources>
-						</configuration>
+						<phase>generate-resources</phase>
 					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>${exec-maven-plugin.version}</version>
-				<executions>
 					<execution>
-						<?m2e ignore?>
 						<id>npm install</id>
 						<goals>
-							<goal>exec</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<executable>npm</executable>
-							<arguments>
-								<argument>install</argument>
-							</arguments>
-							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
-							<target>
-								<echo message="npm install" />
-							</target>
-						</configuration>
-					</execution>
-					<execution>
-						<?m2e ignore?>
-						<id>angular-cli build</id>
-						<goals>
-							<goal>exec</goal>
+							<goal>npm</goal>
 						</goals>
 						<phase>generate-resources</phase>
 						<configuration>
-							<!-- <executable>node_modules/@angular/cli/bin/ng</executable> -->
-							<!-- <executable>ng</executable> -->
-							<executable>node</executable>
-							<arguments>
-								<argument>node_modules/@angular/cli/bin/ng</argument>
-								<argument>build</argument>
-								<argument>--prod</argument>
-								<argument>--base-href</argument>
-								<argument>/config/</argument>
-							</arguments>
-							<workingDirectory>${project.basedir}/target/angular2</workingDirectory>
-							<target>
-								<echo message="ng build" />
-							</target>
+							<arguments>install</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>ng build</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<arguments>run buildProd</arguments>
 						</configuration>
 					</execution>
 				</executions>
@@ -149,7 +120,7 @@
 						<configuration>
 							<resources>
 								<resource>
-									<directory>${project.basedir}/target/angular2/dist</directory>
+									<directory>${project.basedir}/src/main/angular2/dist</directory>
 								</resource>
 							</resources>
 						</configuration>
