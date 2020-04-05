@@ -20,8 +20,7 @@ import com.hlag.oversigt.util.Utils;
 import de.larssh.utils.Finals;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-public final class
- implements Comparable<EventSourceKey> {
+public final class EventSourceKey implements Comparable<EventSourceKey> {
 	private static final Comparator<EventSourceKey> COMPARATOR_BY_KEY
 			= Utils.caseSensitiveComparator(EventSourceKey::getKey);
 
@@ -162,4 +161,5 @@ public final class
 	@FunctionalInterface
 	interface EventSourceRenamer {
 		void changeEventSourceName(String oldName, String newName);
-	}}
+	}
+}
