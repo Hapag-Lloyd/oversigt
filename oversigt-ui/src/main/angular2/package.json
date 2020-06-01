@@ -23,7 +23,7 @@
     "@clr/angular": "^2.3.4",
     "@clr/icons": "^2.3.4",
     "@clr/ui": "^2.3.4",
-    "@types/jquery": "^3.3.36",
+    "@types/jquery": "^3.3.38",
     "@webcomponents/custom-elements": "^1.4.1",
     "core-js": "^3.6.4",
     "iso8601-duration": "^1.2.0",
