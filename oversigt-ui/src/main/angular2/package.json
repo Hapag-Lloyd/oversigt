@@ -27,7 +27,7 @@
     "@webcomponents/custom-elements": "^1.4.1",
     "core-js": "^3.6.4",
     "iso8601-duration": "^1.2.0",
-    "jquery": "^3.5.0",
+    "jquery": "^3.5.1",
     "ngx-toastr": "^11.3.3",
     "rxjs": "^6.5.5",
     "tslib": "^1.11.1",
