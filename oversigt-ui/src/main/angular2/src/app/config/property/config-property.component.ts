@@ -16,8 +16,8 @@ export enum ModalVerb {
   styleUrls: ['./config-property.component.css']
 })
 export class ConfigPropertyComponent implements OnInit, OnDestroy {
-  @ViewChild('cancelButton', { static: false }) cancelButton: ElementRef;
-  @ViewChild('okButton', { static: false }) okButton: ElementRef;
+  @ViewChild('cancelButton') cancelButton: ElementRef;
+  @ViewChild('okButton') okButton: ElementRef;
   private subscription: Subscription = null;
   propertyType: string;
   members: SerializablePropertyMember[] = [];
