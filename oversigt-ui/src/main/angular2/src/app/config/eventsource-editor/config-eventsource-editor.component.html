@@ -1,10 +1,11 @@
 
 <div class="clr-form-control">
   <label *ngIf="!canBeDisabled" for="prop_{{property.name}}" class="clr-control-label">{{property.displayName}}</label>
-  <div *ngIf="canBeDisabled" class="checkbox clr-control-label">
-    <input type="checkbox" id="prop_check_{{property.name}}" [(ngModel)]="enabled">
+  <clr-checkbox-wrapper *ngIf="canBeDisabled" class="checkbox clr-control-label">
+    <input type="checkbox" id="prop_check_{{property.name}}" [(ngModel)]="enabled" clrCheckbox />
     <label for="prop_check_{{property.name}}">{{property.displayName}}</label>
-  </div>
+  </clr-checkbox-wrapper>
+
   <div class="clr-control-container" [ngSwitch]="property.inputType">
     <div *ngSwitchCase="'text'" class="clr-input-wrapper">
       <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
@@ -33,7 +34,7 @@
     <div *ngSwitchCase="'boolean'" class="clr-input-wrapper">
       <ng-container *ngIf="fixed" [ngTemplateOutlet]="fixedInfo"></ng-container>
       <div class="toggle-switch">
-        <input [disabled]="fixed || (canBeDisabled && !enabled)" type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}">
+        <input [disabled]="fixed || (canBeDisabled && !enabled)" type="checkbox" [(ngModel)]="value" id="prop_{{property.name}}" clrCheckbox />
         <label for="prop_{{property.name}}"></label>
       </div>
     </div>

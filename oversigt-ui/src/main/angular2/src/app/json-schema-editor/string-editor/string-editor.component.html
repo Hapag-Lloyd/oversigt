@@ -8,10 +8,10 @@
       <input class="clr-input" type="number" [(ngModel)]="value"/>
     </div>
     <div *ngSwitchCase="'boolean'" class="checkbox">
-      <div class="checkbox">
-        <input type="checkbox" id="{{schemaObject.title}}_{{id}}" [(ngModel)]="value">
+      <clr-checkbox-wrapper>
+        <input type="checkbox" id="{{schemaObject.title}}_{{id}}" [(ngModel)]="value" clrCheckbox>
         <label for="{{schemaObject.title}}_{{id}}"></label>
-      </div>
+      </clr-checkbox-wrapper>
     </div>
     <div *ngSwitchCase="'select'" class="clr-select-wrapper">
       <select class="clr-select" [(ngModel)]="value">
