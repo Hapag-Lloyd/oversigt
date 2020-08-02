@@ -1,12 +1,8 @@
-*, *:before, *:after {box-sizing:  border-box !important;}
-
-
-article {
-  column-width: 14rem;
-}
 
 section {
  display: inline-block;
- width:  100%;
+ width:  20em;
  margin-bottom: 0.15rem;
+ margin-right: 1em;
+ vertical-align: top;
 }
