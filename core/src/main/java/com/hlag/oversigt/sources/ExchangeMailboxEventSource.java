@@ -39,6 +39,8 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 
 	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);
 
+	private boolean showUnreadOnly = false;
+
 	public ExchangeMailboxEventSource() {
 		// no fields to be initialized
 	}
@@ -80,6 +82,13 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 			description = "If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.")
 	public boolean getShowEmptyCategories() {
 		return showEmptyCategories;
+	}
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = "Show Unread Mails Only",
+			description = "If enabled the event of this event source will contain only unread mails. Otherwise the total mail count is shown with an unread mail indicator on top.")
+	public boolean getShowUnreadOnly() {
+		return showUnreadOnly;
 	}
 
 	public void setShowEmptyCategories(final boolean showEmptyCategories) {
@@ -131,15 +140,22 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		final List<Category> categories = new ArrayList<>();
 		final int maxNumberOfMails = Math.max(3, getMaxNumberOfMails(categoryInfos));
 		for (final CategoryInfo info : categoryInfos) {
-			if (info.total > 0 || getShowEmptyCategories()) {
+			if (getShowEmptyCategories() || getShowUnreadOnly() ? info.unread > 0 : info.total > 0) {
 				final List<Serie> series = new ArrayList<>();
 				final Color baseColor = info.option.getColor();
 				final Color totalColor = getTotalColor(baseColor);
-				series.add(createStrechedSerie(totalColor, info.total, maxNumberOfMails));
-				series.add(createStrechedSerie(baseColor, info.total - info.unread, maxNumberOfMails));
-				categories.add(new Category(info.total > 0 ? Integer.toString(info.total) : "",
-						info.total > 0 ? info.option.getDisplayValue() : "",
-						series));
+				if (getShowUnreadOnly()) {
+					series.add(createStrechedSerie(totalColor, info.unread, maxNumberOfMails));
+					categories.add(new Category(info.unread > 0 ? Integer.toString(info.unread) : "",
+							info.unread > 0 ? info.option.getDisplayValue() : "",
+							series));
+				} else {
+					series.add(createStrechedSerie(totalColor, info.total, maxNumberOfMails));
+					series.add(createStrechedSerie(baseColor, info.total - info.unread, maxNumberOfMails));
+					categories.add(new Category(info.total > 0 ? Integer.toString(info.total) : "",
+							info.total > 0 ? info.option.getDisplayValue() : "",
+							series));
+				}
 			}
 		}
 		return new HlBarChartEvent(categories, Integer.toString(noOfMails));
@@ -172,8 +188,9 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 	private int getMaxNumberOfMails(final Collection<CategoryInfo> categoryInfos) {
 		int max = 0;
 		for (final CategoryInfo info : categoryInfos) {
-			if (info.total > max) {
-				max = info.total;
+			final int value = getShowUnreadOnly() ? info.unread : info.total;
+			if (value > max) {
+				max = value;
 			}
 		}
 		return max;
