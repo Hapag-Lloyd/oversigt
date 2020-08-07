@@ -35,7 +35,7 @@
 	</developers>
 
 	<modules>
-		<module>oversigt-ui</module>
+		<module>ui</module>
 		<module>jira-rest-java-client-fix</module>
 		<module>core</module>
 	</modules>
