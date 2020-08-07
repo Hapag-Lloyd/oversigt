@@ -81,15 +81,17 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	public DisposableHttpClient createClient(final HttpClient httpClient) {
-		return DisposableAtlassianHttpClientDecorator.create(httpClient, builder -> {
-			// no op authentication handler
-		}, () -> {
-			// This should never be implemented. This is simply creation of a wrapper
-			// for AtlassianHttpClient which is extended by a destroy method.
-			// Destroy method should never be called for AtlassianHttpClient coming from
-			// a client! Imagine you create a RestClient, pass your own HttpClient there
-			// and it gets destroyed.
-		});
+		return DisposableAtlassianHttpClientDecorator.create(httpClient, //
+				builder -> {
+					// no op authentication handler
+				},
+				() -> {
+					// This should never be implemented. This is simply creation of a wrapper
+					// for AtlassianHttpClient which is extended by a destroy method.
+					// Destroy method should never be called for AtlassianHttpClient coming from
+					// a client! Imagine you create a RestClient, pass your own HttpClient there
+					// and it gets destroyed.
+				});
 	}
 
 	private static final class DisposableAtlassianHttpClientDecorator extends AtlassianHttpClientDecorator {

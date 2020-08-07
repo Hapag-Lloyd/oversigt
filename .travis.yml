@@ -1,11 +1,36 @@
 language: java
 jdk:
   - openjdk8
-  - openjdk11
-
-install: skip
-script: mvn install -Dgpg.skip=true --batch-mode --show-version --update-snapshots
-
+  - openjdk14
 cache:
   directories:
     - $HOME/.m2/repository
+
+install: mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --batch-mode --show-version 2>&1 | tee mvnout.txt
+script: |
+  mvn verify site --define gpg.skip=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+  
+  mvnout=`cat mvnout.txt | grep --perl-regexp "(?i)\\[(ERR|WARN)" | ./target/travis-parent-suppressions.sh`
+  if [ -n "${mvnout}" ]; then
+    echo ""
+    echo "The Maven output contains the following unknown warnings and errors:"
+    echo "${mvnout}"
+    exit 1
+  fi
+
+after_success:
+  - rm ./target/site/index.html
+  - cp ./CHANGELOG.md ./target/site/CHANGELOG.md
+  - cp ./README.md ./target/site/README.md
+  
+  # Modules
+  - cp -R ./core/target/site ./target/site/core
+  - cp -R ./jira-rest-java-client-fix/target/site ./target/site/jira-rest-java-client-fix
+  - cp -R ./ui/target/site ./target/site/ui
+deploy:
+  provider: pages
+  local_dir: ./target/site
+  edge: true
+  on:
+    branch: master
+    jdk: openjdk8

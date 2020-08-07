@@ -11,42 +11,11 @@
 	<artifactId>jira-rest-java-client-fix</artifactId>
 
 	<name>JIRA REST Java Client Fix</name>
-	<url>http://github.com/Hapag-Lloyd/oversigt</url>
-	<organization>
-		<name>Hapag-Lloyd AG</name>
-		<url>https://www.hapag-lloyd.com/</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>MIT License</name>
-			<url>https://opensource.org/licenses/MIT</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>Hapag-Lloyd AG</name>
-			<url>https://www.hapag-lloyd.com/</url>
-		</developer>
-	</developers>
-
-	<scm>
-		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
-		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
-		<url>https://github.com/Hapag-Lloyd/oversigt</url>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Travis</system>
-		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
-	</ciManagement>
 
 	<properties>
 		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
+		<parent-pom.create-travis-yml>false</parent-pom.create-travis-yml>
 
 		<jira-rest-java-client-api.version>5.2.1</jira-rest-java-client-api.version>
 	</properties>
