@@ -6,8 +6,11 @@ cache:
   directories:
     - $HOME/.m2/repository
 
-install: mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --batch-mode --show-version 2>&1 | tee mvnout.txt
+install: |
+  set -o errexit -o pipefail
+  mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --batch-mode --show-version 2>&1 | tee mvnout.txt
 script: |
+  set -o errexit -o pipefail
   mvn verify site --define gpg.skip=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
   
   mvnout=`cat mvnout.txt | grep --perl-regexp "(?i)\\[(ERR|WARN)" | ./target/travis-parent-suppressions.sh`
