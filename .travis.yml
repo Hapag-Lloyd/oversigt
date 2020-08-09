@@ -12,14 +12,20 @@ install: |
 script: |
   set -o errexit -o pipefail
   mvn verify site --define gpg.skip=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+  set +o errexit +o pipefail
   
+  echo ""
+  echo "[INFO] Checking for Maven warnings and errors..."
   chmod +x ./target/travis-suppressions-parent.sh
   mvnout=`cat mvnout.txt | grep --perl-regexp "(?i)\\[(ERR|WARN)" | ./target/travis-suppressions-parent.sh`
+  
   if [ -n "${mvnout}" ]; then
-    echo ""
-    echo "The Maven output contains the following unknown warnings and errors:"
+    echo "[WARNING] The Maven output contains the following unknown warnings and errors:"
     echo "${mvnout}"
     exit 1
+  else
+    echo "[INFO] No unknown warnings and errors found."
+    echo "${mvnout}"
   fi
 
 after_success:
