@@ -15,9 +15,7 @@
 	<properties>
 		<eclipse.compiler.javadoc>disabled</eclipse.compiler.javadoc>
 		<maven.compiler.parameters>true</maven.compiler.parameters>
-		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
-		<parent-pom.create-travis-yml>false</parent-pom.create-travis-yml>
 
 		<pmd.skip>true</pmd.skip>
 	</properties>

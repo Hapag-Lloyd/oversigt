@@ -14,9 +14,7 @@
 
 	<properties>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
-		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
-		<parent-pom.create-travis-yml>false</parent-pom.create-travis-yml>
 
 		<!-- Versions: Plugins -->
 		<exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
