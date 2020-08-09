@@ -140,7 +140,7 @@ public class ExchangeMailboxEventSource extends AbstractExchangeEventSource<HlBa
 		final List<Category> categories = new ArrayList<>();
 		final int maxNumberOfMails = Math.max(3, getMaxNumberOfMails(categoryInfos));
 		for (final CategoryInfo info : categoryInfos) {
-			if (getShowEmptyCategories() || getShowUnreadOnly() ? info.unread > 0 : info.total > 0) {
+			if (getShowEmptyCategories() || info.unread > 0 || !getShowUnreadOnly() && info.total > 0) {
 				final List<Serie> series = new ArrayList<>();
 				final Color baseColor = info.option.getColor();
 				final Color totalColor = getTotalColor(baseColor);
