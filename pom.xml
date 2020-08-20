@@ -55,6 +55,7 @@
 	</ciManagement>
 
 	<properties>
+		<aggregate>false</aggregate>
 		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-gitignore>false</parent-pom.create-gitignore>
 		<parent-pom.create-lombok-config>false</parent-pom.create-lombok-config>
