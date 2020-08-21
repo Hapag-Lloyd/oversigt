@@ -10,16 +10,5 @@ function suppressJdk8AtlassianDependenciesReport() {
 	fi
 }
 
-# JDK11 and later: Inspecting try-with-resource fails as of https://github.com/spotbugs/spotbugs/issues/259
-function suppressJdk11AndLaterSpotbugsTryWithResourceNPE() {
-	if [ ${JDK_VERSION} -ge 11 ]; then
-		cat < /dev/stdin \
-		| grep --invert-match --perl-regexp "^TODO$"
-	else
-		cat < /dev/stdin
-	fi
-}
-
 cat < /dev/stdin \
-| suppressJdk8AtlassianDependenciesReport \
-| suppressJdk11AndLaterSpotbugsTryWithResourceNPE
+| suppressJdk8AtlassianDependenciesReport
