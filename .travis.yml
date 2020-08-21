@@ -1,9 +1,6 @@
 language: java
 jdk:
-  # Supported versions as of https://en.wikipedia.org/wiki/Java_version_history
   - openjdk8
-  - openjdk11
-  - openjdk14
 cache:
   directories:
     - $HOME/.m2/repository
