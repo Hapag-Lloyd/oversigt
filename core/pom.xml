@@ -394,7 +394,7 @@
 	<repositories>
 		<repository>
 			<id>atlassian-public</id>
-			<url>https://maven.atlassian.com/repository/public</url>
+			<url>https://packages.atlassian.com/mvn/maven-public/</url>
 		</repository>
 	</repositories>
 
