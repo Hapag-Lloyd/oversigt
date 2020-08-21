@@ -41,5 +41,5 @@ deploy:
   local_dir: ./target/site
   edge: true
   on:
-    branch: master
+    branch: develop
     jdk: openjdk8
