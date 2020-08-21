@@ -37,37 +37,29 @@
 				<configuration>
 					<nodeVersion>v10.16.0</nodeVersion>
 					<npmVersion>6.10.2</npmVersion>
-
-					<!-- optional: where to download node and npm from. Defaults to https://nodejs.org/dist/ -->
-					<!-- <downloadRoot>http://myproxy.example.org/nodejs/</downloadRoot> -->
-					
-					<workingDirectory>${project.basedir}/src/main/angular2/</workingDirectory>
+					<workingDirectory>${project.basedir}/src/main/angular2</workingDirectory>
 				</configuration>
-
 				<executions>
 					<execution>
-						<id>install node and npm</id>
+						<id>install-node-and-npm-default</id>
 						<goals>
 							<goal>install-node-and-npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 					</execution>
 					<execution>
-						<id>npm install</id>
+						<id>npm-install</id>
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 						<configuration>
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
 					<execution>
-						<id>ng build</id>
+						<id>npm-run-build-prod</id>
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 						<configuration>
 							<arguments>run buildProd</arguments>
 						</configuration>
