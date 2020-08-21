@@ -21,5 +21,5 @@ function suppressJdk11AndLaterSpotbugsTryWithResourceNPE() {
 }
 
 cat < /dev/stdin \
-| suppressJdk11AndLaterSpotbugsTryWithResourceNPE
+| suppressJdk11AndLaterSpotbugsTryWithResourceNPE \
 | suppressJdk8AtlassianDependenciesReport
