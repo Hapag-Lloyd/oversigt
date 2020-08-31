@@ -1,5 +1,6 @@
 package com.hlag.oversigt.storage;
 
+import static de.larssh.utils.Finals.constant;
 import static java.util.stream.Collectors.toList;
 
 import java.util.stream.Stream;
@@ -8,17 +9,17 @@ import com.hlag.oversigt.storage.SqlDialect.ColumnOptions;
 import com.hlag.oversigt.storage.SqlDialect.ColumnType;
 
 final class DBConstants {
-	public static final String TABLE_EVENT_SOURCE = "EVENT_SOURCE";
+	public static final String TABLE_EVENT_SOURCE = constant("EVENT_SOURCE");
 
-	public static final String TABLE_EVENT_SOURCE_PROPERTY = "EVENT_SOURCE_PROPERTY";
+	public static final String TABLE_EVENT_SOURCE_PROPERTY = constant("EVENT_SOURCE_PROPERTY");
 
-	public static final String TABLE_DASHBOARD = "DASHBOARD";
+	public static final String TABLE_DASHBOARD = constant("DASHBOARD");
 
-	public static final String TABLE_WIDGET = "WIDGET";
+	public static final String TABLE_WIDGET = constant("WIDGET");
 
-	public static final String TABLE_WIDGET_DATA = "WIDGET_DATA";
+	public static final String TABLE_WIDGET_DATA = constant("WIDGET_DATA");
 
-	public static final String TABLE_VALUES = "OVERSIGT_PROPERTY";
+	public static final String TABLE_VALUES = constant("OVERSIGT_PROPERTY");
 
 	public static final ColumnOptions[] COLUMN_OPTIONS_EVENT_SOURCE = new ColumnOptions[] {
 			new ColumnOptions("ID", ColumnType.Text, null, false, true),

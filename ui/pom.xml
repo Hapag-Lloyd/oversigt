@@ -11,43 +11,10 @@
 	<artifactId>oversigt-ui</artifactId>
 
 	<name>Oversigt UI</name>
-	<url>http://github.com/Hapag-Lloyd/oversigt</url>
-	<organization>
-		<name>Hapag-Lloyd AG</name>
-		<url>https://www.hapag-lloyd.com/</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>MIT License</name>
-			<url>https://opensource.org/licenses/MIT</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>Hapag-Lloyd AG</name>
-			<url>https://www.hapag-lloyd.com/</url>
-		</developer>
-	</developers>
-
-	<scm>
-		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
-		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
-		<url>https://github.com/Hapag-Lloyd/oversigt</url>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Travis</system>
-		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
-	</ciManagement>
 
 	<properties>
-		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
-		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
+		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 
 		<!-- Versions: Plugins -->
 		<exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
@@ -70,37 +37,29 @@
 				<configuration>
 					<nodeVersion>v10.16.0</nodeVersion>
 					<npmVersion>6.10.2</npmVersion>
-
-					<!-- optional: where to download node and npm from. Defaults to https://nodejs.org/dist/ -->
-					<!-- <downloadRoot>http://myproxy.example.org/nodejs/</downloadRoot> -->
-					
-					<workingDirectory>${project.basedir}/src/main/angular2/</workingDirectory>
+					<workingDirectory>${project.basedir}/src/main/angular2</workingDirectory>
 				</configuration>
-
 				<executions>
 					<execution>
-						<id>install node and npm</id>
+						<id>install-node-and-npm-default</id>
 						<goals>
 							<goal>install-node-and-npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 					</execution>
 					<execution>
-						<id>npm install</id>
+						<id>npm-install</id>
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 						<configuration>
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
 					<execution>
-						<id>ng build</id>
+						<id>npm-run-build-prod</id>
 						<goals>
 							<goal>npm</goal>
 						</goals>
-						<phase>generate-resources</phase>
 						<configuration>
 							<arguments>run buildProd</arguments>
 						</configuration>

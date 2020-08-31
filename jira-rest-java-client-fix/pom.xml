@@ -11,41 +11,8 @@
 	<artifactId>jira-rest-java-client-fix</artifactId>
 
 	<name>JIRA REST Java Client Fix</name>
-	<url>http://github.com/Hapag-Lloyd/oversigt</url>
-	<organization>
-		<name>Hapag-Lloyd AG</name>
-		<url>https://www.hapag-lloyd.com/</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>MIT License</name>
-			<url>https://opensource.org/licenses/MIT</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>Hapag-Lloyd AG</name>
-			<url>https://www.hapag-lloyd.com/</url>
-		</developer>
-	</developers>
-
-	<scm>
-		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
-		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
-		<url>https://github.com/Hapag-Lloyd/oversigt</url>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Travis</system>
-		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
-	</ciManagement>
 
 	<properties>
-		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 
 		<jira-rest-java-client-api.version>5.2.1</jira-rest-java-client-api.version>
@@ -68,9 +35,16 @@
 	</dependencies>
 
 	<repositories>
+		<!-- com.atlassian.jira:jira-rest-java-client-core -->
 		<repository>
 			<id>atlassian-public</id>
-			<url>https://maven.atlassian.com/repository/public</url>
+			<url>https://packages.atlassian.com/mvn/maven-public/</url>
+		</repository>
+
+		<!-- com.atlassian.platform:platform:3.1.7 (part of com.atlassian.jira:jira-rest-java-client-core) -->
+		<repository>
+			<id>spring-plugins-release</id>
+			<url>https://repo.spring.io/plugins-release/</url>
 		</repository>
 	</repositories>
 

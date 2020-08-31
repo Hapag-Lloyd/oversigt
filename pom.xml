@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.lars-sh</groupId>
 		<artifactId>parent</artifactId>
-		<version>0.9.7</version>
+		<version>0.9.9</version>
 		<relativePath></relativePath>
 	</parent>
 
@@ -15,7 +15,7 @@
 	<packaging>pom</packaging>
 
 	<name>Oversigt</name>
-	<url>http://github.com/Hapag-Lloyd/oversigt</url>
+	<url>https://${parent-pom.github.organization}.github.io/${parent-pom.github.project}/</url>
 	<organization>
 		<name>Hapag-Lloyd AG</name>
 		<url>https://www.hapag-lloyd.com/</url>
@@ -35,31 +35,33 @@
 	</developers>
 
 	<modules>
-		<module>oversigt-ui</module>
-		<module>jira-rest-java-client-fix</module>
 		<module>core</module>
+		<module>ui</module>
+		<module>jira-rest-java-client-fix</module>
 	</modules>
 
 	<scm>
-		<connection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</connection>
-		<developerConnection>scm:git:git@github.com:Hapag-Lloyd/oversigt.git</developerConnection>
-		<url>https://github.com/Hapag-Lloyd/oversigt</url>
+		<connection>scm:git:git@github.com:${parent-pom.github.organization}/${parent-pom.github.project}.git</connection>
+		<developerConnection>scm:git:git@github.com:${parent-pom.github.organization}/${parent-pom.github.project}.git</developerConnection>
+		<url>https://github.com/${parent-pom.github.organization}/${parent-pom.github.project}</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/Hapag-Lloyd/oversigt/issues</url>
+		<url>https://github.com/${parent-pom.github.organization}/${parent-pom.github.project}/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>Travis</system>
-		<url>https://travis-ci.org/Hapag-Lloyd/oversigt</url>
+		<url>https://travis-ci.com/${parent-pom.github.organization}/${parent-pom.github.project}</url>
 	</ciManagement>
 
 	<properties>
-		<lombok.delombok.skip>true</lombok.delombok.skip>
+		<parent-pom.create-changelog-md>false</parent-pom.create-changelog-md>
 		<parent-pom.create-gitignore>false</parent-pom.create-gitignore>
-		<parent-pom.default-sources-folder>java</parent-pom.default-sources-folder>
 		<parent-pom.create-lombok-config>false</parent-pom.create-lombok-config>
 		<parent-pom.create-travis-yml>false</parent-pom.create-travis-yml>
+		<parent-pom.default-sources-folder>java</parent-pom.default-sources-folder>
+		<parent-pom.github.organization>Hapag-Lloyd</parent-pom.github.organization>
+		<parent-pom.github.project>oversigt</parent-pom.github.project>
 	</properties>
 
 	<repositories>

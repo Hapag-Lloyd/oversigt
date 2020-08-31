@@ -4,6 +4,7 @@ import static com.hlag.oversigt.core.event.EventSender.DASHBOARD_KEY;
 import static com.hlag.oversigt.util.HttpUtils.redirect;
 import static com.hlag.oversigt.util.StringUtils.substringBefore;
 import static com.hlag.oversigt.util.Utils.map;
+import static de.larssh.utils.Finals.constant;
 import static io.undertow.servlet.Servlets.defaultContainer;
 import static io.undertow.servlet.Servlets.listener;
 import static io.undertow.servlet.Servlets.servlet;
@@ -108,7 +109,7 @@ import ro.isdc.wro.http.ConfigurableWroFilter;
 public class HttpHandlers {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpHandlers.class);
 
-	public static final String MAPPING_API = "/api/v1";
+	public static final String MAPPING_API = constant("/api/v1");
 
 	@Inject
 	private Injector injector;
@@ -388,7 +389,7 @@ public class HttpHandlers {
 	HttpHandler createAngularHandler() throws IOException {
 		final Path basePath = FileUtils.getPath(OversigtUiHelper.getPathToUiResources().get());
 		final Path indexHtml = basePath.resolve("index.html");
-		if (!(Files.exists(indexHtml) && Files.isRegularFile(indexHtml))) {
+		if (!Files.exists(indexHtml) || !Files.isRegularFile(indexHtml)) {
 			throw new RuntimeException(String.format("No file called 'index.html' found for Oversigt UI"));
 		}
 
