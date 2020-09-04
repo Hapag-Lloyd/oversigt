@@ -21,7 +21,8 @@ script: |
   if [ -n "${mvnout}" ]; then
     echo "[WARNING] The Maven output contains the following unknown warnings and errors:"
     echo "${mvnout}"
-    exit 1
+    # Not using "exit 1" to avoid truncated output as described at https://travis-ci.community/t/7159
+    false
   else
     echo "[INFO] No unknown warnings and errors found."
     echo "${mvnout}"
