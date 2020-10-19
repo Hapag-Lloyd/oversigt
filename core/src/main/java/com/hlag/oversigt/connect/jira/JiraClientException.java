@@ -6,8 +6,6 @@ package com.hlag.oversigt.connect.jira;
  * @author Lars Knickrehm
  */
 public class JiraClientException extends Exception {
-	private static final long serialVersionUID = 2923278956711719664L;
-
 	/**
 	 * Create a new exception with the given message
 	 *

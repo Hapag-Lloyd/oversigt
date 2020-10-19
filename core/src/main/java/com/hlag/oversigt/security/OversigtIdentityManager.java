@@ -10,7 +10,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
@@ -52,10 +51,7 @@ public class OversigtIdentityManager implements IdentityManager {
 		return null;
 	}
 
-	@SuppressFBWarnings(value = "SE_BAD_FIELD_INNER_CLASS", justification = "We will never serialize this value")
 	private static final class OversigtAccount implements Account {
-		private static final long serialVersionUID = 3840458652767273637L;
-
 		private final Principal principal;
 
 		OversigtAccount(final Principal principal) {

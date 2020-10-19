@@ -6,8 +6,6 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 
 public class ApiValidationException extends Exception {
-	private static final long serialVersionUID = 2371275922151051261L;
-
 	private final Set<? extends ConstraintViolation<?>> violations;
 
 	public ApiValidationException(final Method method, final Set<? extends ConstraintViolation<?>> violations) {

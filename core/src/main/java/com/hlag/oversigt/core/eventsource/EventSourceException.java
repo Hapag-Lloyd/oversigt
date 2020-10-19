@@ -7,8 +7,6 @@ package com.hlag.oversigt.core.eventsource;
  *
  */
 public final class EventSourceException extends Exception {
-	private static final long serialVersionUID = -1315823193363193136L;
-
 	public EventSourceException(final String message) {
 		super(message);
 	}
