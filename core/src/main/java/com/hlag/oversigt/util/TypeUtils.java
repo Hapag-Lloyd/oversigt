@@ -63,8 +63,6 @@ public final class TypeUtils {
 
 	public static <T> StdSerializer<T> serializer(final Class<T> clazz, final ThrowingFunction<T, String> converter) {
 		return new StdSerializer<T>(clazz) {
-			private static final long serialVersionUID = 1L;
-
 			@Override
 			public void serialize(@Nullable final T value,
 					@Nullable final JsonGenerator gen,
@@ -77,8 +75,6 @@ public final class TypeUtils {
 	public static <T> StdDeserializer<T> deserializer(final Class<T> clazz,
 			final ThrowingFunction<String, T> converter) {
 		return new StdDeserializer<T>(clazz) {
-			private static final long serialVersionUID = 1L;
-
 			@Override
 			public T deserialize(@Nullable final JsonParser p,
 					@SuppressWarnings("unused") @Nullable final DeserializationContext ctxt)
@@ -496,6 +492,7 @@ public final class TypeUtils {
 		return method.getName();
 	}
 
+	@SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "used only internally")
 	private static final class IndexOfComparator implements Comparator<Method> {
 		private final List<String> methodNames;
 
@@ -678,10 +675,7 @@ public final class TypeUtils {
 			}
 		}
 
-		@SuppressFBWarnings(value = "IMC_IMMATURE_CLASS_BAD_SERIALVERSIONUID", justification = "false positive")
 		public static final class MemberMissingException extends Exception {
-			private static final long serialVersionUID = 7946681486429103627L;
-
 			private MemberMissingException(final String message) {
 				super(message);
 			}
