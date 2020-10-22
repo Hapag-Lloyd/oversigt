@@ -15,7 +15,7 @@
 	<properties>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 
-		<jira-rest-java-client-api.version>5.2.1</jira-rest-java-client-api.version>
+		<jira-rest-java-client-api.version>5.2.2</jira-rest-java-client-api.version>
 	</properties>
 
 	<dependencies>
