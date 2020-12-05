@@ -144,8 +144,8 @@ public class OversigtServer extends AbstractIdleService {
 
 		// Create Handler for compressing content
 		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()
-				.addEncodingHandler("gzip", new GzipEncodingProvider(), 50, Predicates.maxContentSize(5))
-				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(10)))
+				.addEncodingHandler("gzip", new GzipEncodingProvider(), 50, Predicates.requestLargerThan(5))
+				.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.requestLargerThan(10)))
 						.setNext(rootHandler);
 
 		final Logger accessLogger = LoggerFactory.getLogger("access");

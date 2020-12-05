@@ -125,7 +125,7 @@ export function initializeApiConfiguration(): Configuration {
   imports: [
     RouterModule.forRoot(
       appRoutes,
-      {onSameUrlNavigation: 'reload'},
+      { onSameUrlNavigation: 'reload', relativeLinkResolution: 'legacy' },
       // { enableTracing: true } // <-- debugging purposes only
     ),
     BrowserModule,
