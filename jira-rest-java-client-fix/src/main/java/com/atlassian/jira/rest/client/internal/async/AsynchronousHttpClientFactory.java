@@ -125,14 +125,14 @@ public class AsynchronousHttpClientFactory {
 		@PackagePrivate
 		@SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "secure arguments source")
 		static String getVersion(final String groupId, final String artifactId) {
-			final Properties props = new Properties();
-			try (InputStream resourceAsStream = MavenUtils.class
-					.getResourceAsStream(String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId))) {
-				if (resourceAsStream == null) {
-					return UNKNOWN_VERSION;
+			final String propertiesName = String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId);
+			try (InputStream resourceAsStream = MavenUtils.class.getResourceAsStream(propertiesName)) {
+				if (resourceAsStream != null) {
+					final Properties props = new Properties();
+					props.load(resourceAsStream);
+					return props.getProperty("version", UNKNOWN_VERSION);
 				}
-				props.load(resourceAsStream);
-				return props.getProperty("version", UNKNOWN_VERSION);
+				return UNKNOWN_VERSION;
 			} catch (final IOException e) {
 				LOGGER.debug("Could not find version for maven artifact {}:{}", groupId, artifactId);
 				LOGGER.debug("Got the following exception", e);
