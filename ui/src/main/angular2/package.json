@@ -24,7 +24,7 @@
     "@clr/icons": "^4.0.7",
     "@clr/ui": "^4.0.7",
     "@types/jquery": "^3.5.5",
-    "core-js": "^3.8.0",
+    "core-js": "^3.8.1",
     "iso8601-duration": "^1.3.0",
     "jquery": "^3.5.1",
     "ngx-toastr": "^13.2.0",
