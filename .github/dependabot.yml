@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: daily
+    ignore:
+      - dependency-name: org.jboss.resteasy:resteasy-cdi
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: org.jboss.resteasy:resteasy-client
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: org.jboss.resteasy:resteasy-guice
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: org.jboss.resteasy:resteasy-jackson2-provider
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: org.jboss.resteasy:resteasy-jaxrs
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: org.jboss.resteasy:resteasy-links
+        versions:
+          - "> 3.8.1.Final"
+      - dependency-name: ro.isdc.wro4j:wro4j-core
+        versions:
+          - "> 1.8.0"
+          - "< 2"
+      - dependency-name: ro.isdc.wro4j:wro4j-extensions
+        versions:
+          - "> 1.8.0"
+          - "< 2"
+      - dependency-name: xml-apis:xml-apis
+        versions:
+          - ">= 2.0.a"
+          - "< 2.1"
+  - package-ecosystem: npm
+    directory: /ui/src/main/angular2
+    schedule:
+      interval: monthly
