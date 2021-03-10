@@ -41,7 +41,7 @@ jobs:
         if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/develop' || matrix.java-version != '1.8' }}
         run: |
           set -o errexit -o pipefail
-          mvn verify site --define gpg.skip=true --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+          mvn verify --define gpg.skip=true --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Check Output
         run: |
