@@ -35,9 +35,11 @@
 	</developers>
 
 	<modules>
-		<module>core</module>
-		<module>ui</module>
+		<module>artifactory-staging-maven-plugin</module>
+		<module>jira-rest-java-client-parent</module>
 		<module>jira-rest-java-client-fix</module>
+		<module>ui</module>
+		<module>core</module>
 	</modules>
 
 	<scm>
