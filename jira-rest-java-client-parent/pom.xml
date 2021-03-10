@@ -25,13 +25,6 @@
         </license>
     </licenses>
 
-    <modules>
-        <module>api</module>
-        <module>app</module>
-        <module>core</module>
-        <module>test</module>
-    </modules>
-
     <scm>
         <connection>scm:git:ssh://git@bitbucket.org/atlassian/jira-rest-java-client.git</connection>
         <developerConnection>scm:git:ssh://git@bitbucket.org/atlassian/jira-rest-java-client.git</developerConnection>
@@ -224,6 +217,13 @@
             </plugin>
         </plugins>
     </reporting>
+
+	<repositories>
+		<repository>
+			<id>atlassian-public</id>
+			<url>https://packages.atlassian.com/maven-public/</url>
+		</repository>
+	</repositories>
 
     <profiles>
         <profile>
