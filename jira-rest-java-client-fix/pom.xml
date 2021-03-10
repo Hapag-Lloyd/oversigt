@@ -21,7 +21,12 @@
 			<dependency>
 				<groupId>com.atlassian.sal</groupId>
 				<artifactId>sal-api</artifactId>
-				<version>4.4.1</version> <!-- BUILD FIX ONLY: Original version used by com.atlassian.jira:jira-rest-java-client-core cannot be resolved any longer. -->
+				<version>4.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.atlassian.event</groupId>
+				<artifactId>atlassian-event</artifactId>
+				<version>4.1.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -31,12 +36,6 @@
 			<groupId>com.atlassian.jira</groupId>
 			<artifactId>jira-rest-java-client-core</artifactId>
 			<version>5.2.2</version>
-			<exclusions> <!-- BUILD FIX ONLY: Atlassian event POMs contain invalid references and cannot be dereferenced correctly right now. -->
-				<exclusion>
-					<groupId>com.atlassian.event</groupId>
-					<artifactId>atlassian-event</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- Missing inside the JIRA REST Client Implementation dependencies -->
@@ -69,7 +68,9 @@
 								<ignoredUsedUndeclaredDependency>com.atlassian.event:atlassian-event:jar:3.0.0</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.atlassian.httpclient:atlassian-httpclient-api:jar:2.0.0</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.atlassian.httpclient:atlassian-httpclient-library:jar:2.0.0</ignoredUsedUndeclaredDependency>
-								<ignoredUsedUndeclaredDependency>com.atlassian.sal:sal-api:jar:3.0.7</ignoredUsedUndeclaredDependency>
+								<ignoredUsedUndeclaredDependency>com.atlassian.jira:jira-rest-java-client-api:jar:5.2.2</ignoredUsedUndeclaredDependency>
+								<ignoredUsedUndeclaredDependency>com.atlassian.event:atlassian-event:jar:4.1.0</ignoredUsedUndeclaredDependency>
+								<ignoredUsedUndeclaredDependency>com.atlassian.sal:sal-api:jar:4.0.0</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.google.code.findbugs:jsr305:jar:3.0.2</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>org.slf4j:slf4j-api:jar:1.7.10</ignoredUsedUndeclaredDependency>
 							</ignoredUsedUndeclaredDependencies>
