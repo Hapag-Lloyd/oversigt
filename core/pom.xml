@@ -20,6 +20,20 @@
 		<pmd.skip>true</pmd.skip>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.atlassian.sal</groupId>
+				<artifactId>sal-api</artifactId>
+				<version>4.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.atlassian.event</groupId>
+				<artifactId>atlassian-event</artifactId>
+				<version>4.1.0</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<!-- our own UI -->
 		<dependency>
@@ -395,13 +409,7 @@
 		<!-- com.atlassian.jira:jira-rest-java-client-api -->
 		<repository>
 			<id>atlassian-public</id>
-			<url>https://packages.atlassian.com/mvn/maven-public/</url>
-		</repository>
-
-		<!-- com.atlassian.platform:platform:3.1.7 (part of com.atlassian.jira:jira-rest-java-client-api) -->
-		<repository>
-			<id>spring-plugins-release</id>
-			<url>https://repo.spring.io/plugins-release/</url>
+			<url>https://packages.atlassian.com/maven-public/</url>
 		</repository>
 	</repositories>
 
