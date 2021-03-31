@@ -28,13 +28,6 @@ jobs:
       - name: Clean, Build, Install
         run: |
           set -o errexit -o pipefail
-          cd atlassian-artifactory-staging-maven-plugin
-          mvn clean install --update-snapshots --batch-mode --show-version 2>&1 | tee mvnout.txt
-          cd ../jira-rest-java-client-parent
-          mvn clean install --update-snapshots --batch-mode --show-version 2>&1 | tee --append mvnout.txt
-          cd ../atlassian-base-pom
-          mvn clean install --update-snapshots --batch-mode --show-version 2>&1 | tee --append mvnout.txt
-          cd ..
           mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Test, Verify
@@ -44,17 +37,18 @@ jobs:
           mvn verify --define gpg.skip=true --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Check Output
+        shell: bash {0}
         run: |
           chmod +x ./target/travis-suppressions-parent.sh
           mvnout=`cat mvnout.txt | grep --perl-regexp "(?i)\\[(ERR|WARN)" | ./target/travis-suppressions-parent.sh "$JDK_VERSION"`
           
           if [ -n "${mvnout}" ]; then
             echo "[ERROR] The Maven output contains the following unknown warnings and errors:" >&2
-            echo "${mvnout}"
+            echo "${mvnout}" >&2
             false
           else
             echo "[INFO] No unknown warnings and errors found."
-            echo "${mvnout}"
+            echo "${mvnout}" >&2
           fi
         env:
           JDK_VERSION: ${{ matrix.java-version }}
