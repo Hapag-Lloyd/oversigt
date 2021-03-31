@@ -16,20 +16,6 @@
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.atlassian.sal</groupId>
-				<artifactId>sal-api</artifactId>
-				<version>4.0.0</version>
-			</dependency>
-			<dependency>
-				<groupId>com.atlassian.event</groupId>
-				<artifactId>atlassian-event</artifactId>
-				<version>4.1.0</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 		<!-- JIRA REST Client Implementation -->
 		<dependency>
@@ -49,8 +35,8 @@
 	<repositories>
 		<!-- com.atlassian.jira:jira-rest-java-client-core -->
 		<repository>
-			<id>atlassian-public</id>
-			<url>https://packages.atlassian.com/maven-public/</url>
+			<id>atlassian-external</id>
+			<url>https://packages.atlassian.com/maven-external/</url>
 		</repository>
 	</repositories>
 
