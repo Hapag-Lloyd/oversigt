@@ -123,7 +123,12 @@ public class AsynchronousHttpClientFactory {
 		private static final String UNKNOWN_VERSION = "unknown";
 
 		@PackagePrivate
-		@SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "secure arguments source")
+		@SuppressFBWarnings(
+				value = {
+						"CRLF_INJECTION_LOGS",
+						"NP_LOAD_OF_KNOWN_NULL_VALUE",
+						"RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" },
+				justification = "secure arguments source")
 		static String getVersion(final String groupId, final String artifactId) {
 			final String propertiesName = String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId);
 			try (InputStream resourceAsStream = MavenUtils.class.getResourceAsStream(propertiesName)) {

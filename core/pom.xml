@@ -394,14 +394,8 @@
 	<repositories>
 		<!-- com.atlassian.jira:jira-rest-java-client-api -->
 		<repository>
-			<id>atlassian-public</id>
-			<url>https://packages.atlassian.com/mvn/maven-public/</url>
-		</repository>
-
-		<!-- com.atlassian.platform:platform:3.1.7 (part of com.atlassian.jira:jira-rest-java-client-api) -->
-		<repository>
-			<id>spring-plugins-release</id>
-			<url>https://repo.spring.io/plugins-release/</url>
+			<id>atlassian-external</id>
+			<url>https://packages.atlassian.com/maven-external/</url>
 		</repository>
 	</repositories>
 

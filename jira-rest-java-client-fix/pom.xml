@@ -14,8 +14,6 @@
 
 	<properties>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
-
-		<jira-rest-java-client-api.version>5.2.2</jira-rest-java-client-api.version>
 	</properties>
 
 	<dependencies>
@@ -23,7 +21,7 @@
 		<dependency>
 			<groupId>com.atlassian.jira</groupId>
 			<artifactId>jira-rest-java-client-core</artifactId>
-			<version>${jira-rest-java-client-api.version}</version>
+			<version>5.2.2</version>
 		</dependency>
 
 		<!-- Missing inside the JIRA REST Client Implementation dependencies -->
@@ -37,14 +35,8 @@
 	<repositories>
 		<!-- com.atlassian.jira:jira-rest-java-client-core -->
 		<repository>
-			<id>atlassian-public</id>
-			<url>https://packages.atlassian.com/mvn/maven-public/</url>
-		</repository>
-
-		<!-- com.atlassian.platform:platform:3.1.7 (part of com.atlassian.jira:jira-rest-java-client-core) -->
-		<repository>
-			<id>spring-plugins-release</id>
-			<url>https://repo.spring.io/plugins-release/</url>
+			<id>atlassian-external</id>
+			<url>https://packages.atlassian.com/maven-external/</url>
 		</repository>
 	</repositories>
 
@@ -62,7 +54,7 @@
 								<ignoredUsedUndeclaredDependency>com.atlassian.event:atlassian-event:jar:3.0.0</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.atlassian.httpclient:atlassian-httpclient-api:jar:2.0.0</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.atlassian.httpclient:atlassian-httpclient-library:jar:2.0.0</ignoredUsedUndeclaredDependency>
-								<ignoredUsedUndeclaredDependency>com.atlassian.jira:jira-rest-java-client-api:jar:${jira-rest-java-client-api.version}</ignoredUsedUndeclaredDependency>
+								<ignoredUsedUndeclaredDependency>com.atlassian.jira:jira-rest-java-client-api:jar:5.2.2</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.atlassian.sal:sal-api:jar:3.0.7</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>com.google.code.findbugs:jsr305:jar:3.0.2</ignoredUsedUndeclaredDependency>
 								<ignoredUsedUndeclaredDependency>org.slf4j:slf4j-api:jar:1.7.10</ignoredUsedUndeclaredDependency>
