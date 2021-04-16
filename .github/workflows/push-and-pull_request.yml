@@ -53,14 +53,3 @@ jobs:
           fi
         env:
           JDK_VERSION: ${{ matrix.java-version }}
-      - name: Prepare Site
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && matrix.java-version == '8' }}
-        run: |
-          rm ./target/site/index.html
-          cp ./CHANGELOG.md ./target/site/CHANGELOG.md
-          cp ./README.md ./target/site/README.md
-          
-          # Modules
-          cp -R ./core/target/site ./target/site/core
-          cp -R ./jira-rest-java-client-fix/target/site ./target/site/jira-rest-java-client-fix
-          cp -R ./ui/target/site ./target/site/ui
