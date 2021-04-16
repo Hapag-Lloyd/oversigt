@@ -148,8 +148,8 @@ public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextLi
 		} else if (classAuthorizations != null
 				&& classAuthorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(classAuthorizations[0].value())) {
-					error(method, "contains the same authorization like its declaring class. Remove one.", true);
-				}
+			error(method, "contains the same authorization like its declaring class. Remove one.", true);
+		}
 		Objects.requireNonNull(authorizations, message(method, message, true));
 		verify(authorizations.length == 1
 				&& ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(authorizations[0].value()),

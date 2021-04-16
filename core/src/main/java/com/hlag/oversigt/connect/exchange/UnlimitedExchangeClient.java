@@ -195,9 +195,9 @@ public class UnlimitedExchangeClient implements ExchangeClient {
 				return new ArrayList<>();
 			} else if (e instanceof ServiceResponseException
 					&& "The specified folder could not be found in the store.".equals(e.getMessage())) {
-						LOGGER.warn("Unable to get Meetings for " + room.getName() + ". " + e.getMessage(), e);
-						return new ArrayList<>();
-					}
+				LOGGER.warn("Unable to get Meetings for " + room.getName() + ". " + e.getMessage(), e);
+				return new ArrayList<>();
+			}
 			throw new RuntimeException("Unable to get appointments", e);
 		}
 	}

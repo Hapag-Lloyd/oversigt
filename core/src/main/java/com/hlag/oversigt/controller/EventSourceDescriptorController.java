@@ -396,16 +396,16 @@ public class EventSourceDescriptorController {
 					|| type == Long.class
 					|| type == Short.class
 					|| type == Byte.class) {
-						return "number";
-					} else if (name.toLowerCase().contains("password")) {
-						return "password";
-					} else if (type == URL.class
-							|| type == String.class
-									&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
-										return "url";
-									} else {
-										return "text";
-									}
+				return "number";
+			} else if (name.toLowerCase().contains("password")) {
+				return "password";
+			} else if (type == URL.class
+					|| type == String.class
+							&& (name.toLowerCase().endsWith("url") || name.toLowerCase().startsWith("url"))) {
+				return "url";
+			} else {
+				return "text";
+			}
 		} else {
 			throw new RuntimeException("Unable to determine type for: " + name);
 		}

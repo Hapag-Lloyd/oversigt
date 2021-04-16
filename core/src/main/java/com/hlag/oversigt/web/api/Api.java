@@ -16,6 +16,7 @@ import io.swagger.annotations.Tag;
  * @author Olaf Neumann
  *
  */
+@SuppressWarnings("checkstyle:OperatorWrap")
 @SwaggerDefinition(
 		info = @Info(title = "Oversigt API",
 				version = "1.0",

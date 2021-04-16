@@ -95,7 +95,8 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	private static final class DisposableAtlassianHttpClientDecorator extends AtlassianHttpClientDecorator {
-		private static DisposableAtlassianHttpClientDecorator create(final HttpClient httpClient,
+		@PackagePrivate
+		static DisposableAtlassianHttpClientDecorator create(final HttpClient httpClient,
 				final AuthenticationHandler authenticationHandler,
 				final ThrowingRunnable onDestroy) {
 			return new DisposableAtlassianHttpClientDecorator(httpClient, authenticationHandler, onDestroy);
@@ -123,6 +124,7 @@ public class AsynchronousHttpClientFactory {
 		private static final String UNKNOWN_VERSION = "unknown";
 
 		@PackagePrivate
+		@SuppressWarnings("checkstyle:OperatorWrap")
 		@SuppressFBWarnings(
 				value = {
 						"CRLF_INJECTION_LOGS",
@@ -208,7 +210,8 @@ public class AsynchronousHttpClientFactory {
 	 * requests.
 	 */
 	private static final class RestClientApplicationProperties implements ApplicationProperties {
-		private static RestClientApplicationProperties create(final URI jiraUri) {
+		@PackagePrivate
+		static RestClientApplicationProperties create(final URI jiraUri) {
 			return new RestClientApplicationProperties(jiraUri.getPath());
 		}
 

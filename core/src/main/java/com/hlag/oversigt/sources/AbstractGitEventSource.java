@@ -45,6 +45,7 @@ import com.hlag.oversigt.util.FileUtils;
 import com.hlag.oversigt.util.LazyInitializedReference;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class AbstractGitEventSource<E extends OversigtEvent> extends AbstractSslAwareEventSource<E> {
 	private String repositoryUrl = "";
@@ -53,7 +54,7 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 
 	private TemporalAmount lookBack = Period.ofWeeks(1);
 
-	private LazyInitializedReference<Git> git = new LazyInitializedReference<>(this::createGitRepository);
+	private final LazyInitializedReference<Git> git = new LazyInitializedReference<>(this::createGitRepository);
 
 	@Property(name = "Look Back",
 			description = "The amount of time to look into the past. Leave emtpy to use all commits.")
@@ -147,6 +148,8 @@ public abstract class AbstractGitEventSource<E extends OversigtEvent> extends Ab
 		}
 	}
 
+	@SuppressFBWarnings(value = "IMPROPER_UNICODE",
+			justification = "comparing lower cased string with ASCII characters only")
 	private Git createGitRepository() throws IOException, GitAPIException {
 		if (getLogger().isDebugEnabled()) {
 			getLogger().debug("Creating Git object for: " + getRepositoryUrl());

@@ -221,8 +221,8 @@ public class EventSourceInstanceResource {
 					message = "Returns the usage of the event source instance",
 					response = DashboardInfo.class,
 					responseContainer = "List")
-			// , @ApiResponse(code = 404, message = "The event source instance with the
-			// given id does not exist", response = ErrorResponse.class)
+	// , @ApiResponse(code = 404, message = "The event source instance with the
+	// given id does not exist", response = ErrorResponse.class)
 	})
 	@JwtSecured
 	@ApiOperation(value = "Read event source instance usage")
