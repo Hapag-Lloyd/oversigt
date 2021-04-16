@@ -18,6 +18,7 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Ascii;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -66,7 +67,7 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 		final String[] accepts = PATTERN_COMMA.split(Objects.requireNonNull(injectedRequest).getHeader("accept"), 0);
 		for (final String accept : accepts) {
 			final String[] parts = PATTERN_SEMICOLON.split(accept, 0);
-			switch (parts[0].trim().toLowerCase()) {
+			switch (Ascii.toLowerCase(parts[0].trim())) {
 			case "application/json":
 			case "application/xml":
 				final StringWriter sw = new StringWriter();

@@ -13,10 +13,10 @@
 	<name>Oversigt Core</name>
 
 	<properties>
-		<eclipse.compiler.javadoc>disabled</eclipse.compiler.javadoc>
-		<maven.compiler.parameters>true</maven.compiler.parameters>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 
+		<eclipse.compiler.javadoc>disabled</eclipse.compiler.javadoc>
+		<maven.compiler.parameters>true</maven.compiler.parameters>
 		<pmd.skip>true</pmd.skip>
 	</properties>
 

@@ -104,8 +104,8 @@ public final class TypeUtils {
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch,
 			final Class<T> assignableTo,
 			final Class<? extends Annotation> annotationToBePresent) {
-		return findClasses(packageToSearch, c -> assignableTo.isAssignableFrom(c) && //
-				c.isAnnotationPresent(annotationToBePresent));
+		return findClasses(packageToSearch,
+				c -> assignableTo.isAssignableFrom(c) && c.isAnnotationPresent(annotationToBePresent));
 	}
 
 	public static <T> Stream<Class<T>> findClasses(final Package packageToSearch, final Predicate<Class<?>> filter) {

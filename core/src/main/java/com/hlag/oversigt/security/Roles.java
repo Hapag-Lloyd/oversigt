@@ -2,6 +2,8 @@ package com.hlag.oversigt.security;
 
 import java.util.Optional;
 
+import com.google.common.base.Ascii;
+
 public enum Roles {
 	ADMIN("Server Admin", "server.admin", Role.SERVER_ADMIN),
 	DASHBOARD_OWNER("Owner", "server.dashboard.owner", Role.DASHBOARD_OWNER),
@@ -33,7 +35,7 @@ public enum Roles {
 
 	public static Optional<Roles> fromString(final String string) {
 		for (final Roles roles : values()) {
-			if (roles.name().equalsIgnoreCase(string) || roles.name.equalsIgnoreCase(string)) {
+			if (Ascii.equalsIgnoreCase(roles.name(), string) || Ascii.equalsIgnoreCase(roles.name, string)) {
 				return Optional.of(roles);
 			}
 		}
