@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         java-version:
-          - 1.8
+          - 8
 
     name: Build with JDK ${{ matrix.java-version }}
     steps:
@@ -22,8 +22,9 @@ jobs:
       - name: Check out
         uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java-version }}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: adopt
           java-version: ${{ matrix.java-version }}
       - name: Clean, Build, Install
         run: |
@@ -31,7 +32,7 @@ jobs:
           mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Test, Verify
-        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/develop' || matrix.java-version != '1.8' }}
+        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/develop' || matrix.java-version != '8' }}
         run: |
           set -o errexit -o pipefail
           mvn verify --define gpg.skip=true --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
@@ -52,14 +53,3 @@ jobs:
           fi
         env:
           JDK_VERSION: ${{ matrix.java-version }}
-      - name: Prepare Site
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && matrix.java-version == '1.8' }}
-        run: |
-          rm ./target/site/index.html
-          cp ./CHANGELOG.md ./target/site/CHANGELOG.md
-          cp ./README.md ./target/site/README.md
-          
-          # Modules
-          cp -R ./core/target/site ./target/site/core
-          cp -R ./jira-rest-java-client-fix/target/site ./target/site/jira-rest-java-client-fix
-          cp -R ./ui/target/site ./target/site/ui
