@@ -29,13 +29,12 @@ jobs:
       - name: Clean, Build, Install
         run: |
           set -o errexit -o pipefail
-          mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+          mvn clean install --activate-profiles dirty,dirty-package --update-snapshots --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Test, Verify
-        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/develop' || matrix.java-version != '8' }}
         run: |
           set -o errexit -o pipefail
-          mvn verify --define gpg.skip=true --define skip.installnodenpm=true --define skip.npm=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+          mvn verify --define gpg.skip=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Check Output
         shell: bash {0}
