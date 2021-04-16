@@ -399,10 +399,11 @@ public class HttpHandlers {
 		final List<String> otherFilesNames = new ArrayList<>();
 		final Path parent = indexHtml.getParent();
 		try (Stream<Path> paths = Files.list(parent)) {
-			otherFilesNames.addAll(paths.filter(path -> !Ascii.toLowerCase(path.getFileName().toString()).endsWith(".txt"))
-					.map(path -> path.getFileName().toString())
-					.filter(name -> !name.equals("index.html"))
-					.collect(toList()));
+			otherFilesNames
+					.addAll(paths.filter(path -> !Ascii.toLowerCase(path.getFileName().toString()).endsWith(".txt"))
+							.map(path -> path.getFileName().toString())
+							.filter(name -> !name.equals("index.html"))
+							.collect(toList()));
 		}
 
 		return exchange -> {
