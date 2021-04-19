@@ -80,7 +80,7 @@ jobs:
         env:
           JDK_VERSION: ${{ matrix.java-version }}
       - name: Prepare Site
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
         run: |
           rm ./target/site/index.html
           cp ./CHANGELOG.md ./target/site/CHANGELOG.md
@@ -91,7 +91,7 @@ jobs:
           cp -R ./jira-rest-java-client-fix/target/site ./target/site/jira-rest-java-client-fix
           cp -R ./ui/target/site ./target/site/ui
       - name: Deploy Site
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
