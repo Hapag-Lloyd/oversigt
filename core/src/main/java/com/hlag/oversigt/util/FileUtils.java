@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Ascii;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
@@ -63,7 +64,7 @@ public final class FileUtils {
 	}
 
 	public static Path getPath(final URI uri) {
-		if ("jar".equalsIgnoreCase(uri.getScheme())) {
+		if (Ascii.equalsIgnoreCase(uri.getScheme(), "jar")) {
 			final String uriString = uri.toString();
 			final List<String> jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);
 			if (jarPathParts.size() == 2) {
@@ -104,7 +105,7 @@ public final class FileUtils {
 		}
 		final Optional<String> extension = getExtension(classpathEntry);
 		if (extension.isPresent()) {
-			switch (extension.get().toLowerCase()) {
+			switch (Ascii.toLowerCase(extension.get())) {
 			case "jar":
 			case "zip":
 				return listResourcesFromJar(classpathEntry).stream();

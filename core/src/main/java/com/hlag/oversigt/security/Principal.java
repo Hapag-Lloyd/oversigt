@@ -11,6 +11,8 @@ import java.util.WeakHashMap;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import com.google.common.base.Ascii;
+
 public class Principal implements java.security.Principal {
 	private static final Map<String, Principal> PRINCIPALS = Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -111,7 +113,7 @@ public class Principal implements java.security.Principal {
 			return hasRole(roles.get().getRole());
 		}
 
-		final String[] parts = roleName.toLowerCase().split("\\.", 3);
+		final String[] parts = Ascii.toLowerCase(roleName).split("\\.", 3);
 		if (parts.length == 3 && parts[0].equals("dashboard")) {
 			switch (parts[2]) {
 			case "owner":
