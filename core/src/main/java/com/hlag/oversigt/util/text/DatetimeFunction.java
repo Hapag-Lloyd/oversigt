@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
+import com.google.common.base.Ascii;
+
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 // public modifier for Guice-Injection
@@ -58,7 +60,7 @@ class DatetimeFunction implements Function<String, LocalDateTime> {
 			}
 
 			final TemporalAmount change;
-			final String temporalString = dateMatcher.group(2).toUpperCase();
+			final String temporalString = Ascii.toUpperCase(dateMatcher.group(2));
 			if (temporalString.equals("NOW")) {
 				change = Duration.between(nullDateTime, LocalDateTime.now());
 			} else if (temporalString.equals("MIDNIGHT")) {

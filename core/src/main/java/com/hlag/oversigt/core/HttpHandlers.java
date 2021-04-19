@@ -47,6 +47,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Ascii;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.io.Resources;
@@ -100,6 +101,7 @@ import io.undertow.servlet.api.InstanceFactory;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.util.ImmediateInstanceHandle;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.StatusCodes;
@@ -183,7 +185,7 @@ public class HttpHandlers {
 	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
 		final boolean searchHtml = Optional.ofNullable(exchange.getRequestHeaders().get(Headers.ACCEPT))
 				.map(Object::toString)
-				.map(String::toLowerCase)
+				.map(Ascii::toLowerCase)
 				.map(s -> s.contains("html"))
 				.orElse(true);
 
@@ -268,7 +270,7 @@ public class HttpHandlers {
 						(Function<String, String>) dashboardId -> dashboardController.getDashboard(dashboardId)
 								.map(d -> d.getOwners().iterator().next())
 								.flatMap(authenticator::readPrincipal)
-								.map(p -> p.getEmail())
+								.map(com.hlag.oversigt.security.Principal::getEmail)
 								.orElse(null)));
 
 		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/html");
@@ -397,10 +399,11 @@ public class HttpHandlers {
 		final List<String> otherFilesNames = new ArrayList<>();
 		final Path parent = indexHtml.getParent();
 		try (Stream<Path> paths = Files.list(parent)) {
-			otherFilesNames.addAll(paths.filter(path -> !path.getFileName().toString().toLowerCase().endsWith(".txt"))
-					.map(path -> path.getFileName().toString())
-					.filter(name -> !name.equals("index.html"))
-					.collect(toList()));
+			otherFilesNames
+					.addAll(paths.filter(path -> !Ascii.toLowerCase(path.getFileName().toString()).endsWith(".txt"))
+							.map(path -> path.getFileName().toString())
+							.filter(name -> !name.equals("index.html"))
+							.collect(toList()));
 		}
 
 		return exchange -> {
@@ -425,7 +428,7 @@ public class HttpHandlers {
 
 			// actually serve the file
 			final String contentType = FileUtils.getExtension(fileToServe).map(extension -> {
-				switch (extension.toLowerCase()) {
+				switch (Ascii.toLowerCase(extension)) {
 				case "css":
 					return "text/css";
 				case "html":
@@ -536,7 +539,7 @@ public class HttpHandlers {
 			final boolean apiKeyOk = Optional.of(exchange)
 					.map(HttpServerExchange::getRequestHeaders)
 					.map(hm -> hm.get(apiKeyHeaderName))
-					.map(hv -> hv.stream())
+					.map(HeaderValues::stream)
 					.orElse(Stream.empty())
 					.anyMatch(isApiKeyValid);
 			if (!apiKeyOk) {

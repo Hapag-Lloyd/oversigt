@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import de.larssh.utils.collection.Maps;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class Color {
 	private static final Map<String, Color> CSS_COLORS
@@ -215,6 +216,8 @@ public class Color {
 			"([a-z]+)\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*%?\\s*,\\s*([0-9]+)\\s*%?\\s*(?:,\\s*([0-9\\.]+)\\s*%?\\s*)?\\)",
 			Pattern.CASE_INSENSITIVE);
 
+	@SuppressFBWarnings(value = "IMPROPER_UNICODE",
+			justification = "comparing lower cased string with ASCII characters only")
 	private static Color parseFunctionColor(final String string) {
 		final Matcher matcher = FUNCTION_PATTERN.matcher(string);
 		if (matcher.find()) {
