@@ -95,7 +95,8 @@ public class AsynchronousHttpClientFactory {
 	}
 
 	private static final class DisposableAtlassianHttpClientDecorator extends AtlassianHttpClientDecorator {
-		private static DisposableAtlassianHttpClientDecorator create(final HttpClient httpClient,
+		@PackagePrivate
+		static DisposableAtlassianHttpClientDecorator create(final HttpClient httpClient,
 				final AuthenticationHandler authenticationHandler,
 				final ThrowingRunnable onDestroy) {
 			return new DisposableAtlassianHttpClientDecorator(httpClient, authenticationHandler, onDestroy);
@@ -123,7 +124,13 @@ public class AsynchronousHttpClientFactory {
 		private static final String UNKNOWN_VERSION = "unknown";
 
 		@PackagePrivate
-		@SuppressFBWarnings(value = "CRLF_INJECTION_LOGS", justification = "secure arguments source")
+		@SuppressWarnings("checkstyle:OperatorWrap")
+		@SuppressFBWarnings(
+				value = {
+						"CRLF_INJECTION_LOGS",
+						"NP_LOAD_OF_KNOWN_NULL_VALUE",
+						"RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" },
+				justification = "secure arguments source")
 		static String getVersion(final String groupId, final String artifactId) {
 			final String propertiesName = String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId);
 			try (InputStream resourceAsStream = MavenUtils.class.getResourceAsStream(propertiesName)) {
@@ -203,7 +210,8 @@ public class AsynchronousHttpClientFactory {
 	 * requests.
 	 */
 	private static final class RestClientApplicationProperties implements ApplicationProperties {
-		private static RestClientApplicationProperties create(final URI jiraUri) {
+		@PackagePrivate
+		static RestClientApplicationProperties create(final URI jiraUri) {
 			return new RestClientApplicationProperties(jiraUri.getPath());
 		}
 
