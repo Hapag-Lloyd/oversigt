@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiBootstrapListener.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiBootstrapListener.java</span></div><h1>ApiBootstrapListener.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.servlet.ServletContext;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+
+import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
+import org.jboss.resteasy.util.FindAnnotation;
+
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Module;
+import com.google.inject.matcher.Matchers;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.web.resources.Authentication;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+public class ApiBootstrapListener extends GuiceResteasyBootstrapServletContextListener {
+<span class="nc" id="L45">	private static final Pattern CHECK_METHOD_WITH_PATH_PATTERN = Pattern.compile(&quot;\\{[^\\}]*?\\}&quot;);</span>
+
+<span class="nc" id="L47">	public ApiBootstrapListener() {</span>
+		// no fields to be initialized
+<span class="nc" id="L49">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	protected List&lt;? extends Module&gt; getModules(@SuppressWarnings(&quot;unused&quot;) @Nullable final ServletContext context) {
+<span class="nc" id="L54">		return Arrays.asList(new ApiModule());</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	protected void withInjector(@Nullable final Injector injector) {
+<span class="nc" id="L60">		processInjector(Objects.requireNonNull(injector), this::checkClassMethods);</span>
+<span class="nc" id="L61">	}</span>
+
+	private void checkClassMethods(final Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">		if (clazz.isAnnotationPresent(Path.class)) {</span>
+<span class="nc" id="L65">			checkMethodWithPath(clazz.getAnnotation(Path.class).value(), &quot;Class &quot; + clazz.getName() + &quot; &quot;);</span>
+		}
+<span class="nc bnc" id="L67" title="All 2 branches missed.">		for (final Method method : clazz.getDeclaredMethods()) {</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">			if (hasAnnotations(FindAnnotation.getResourcesAnnotations(</span>
+					method), GET.class, PUT.class, POST.class, DELETE.class, HEAD.class, OPTIONS.class)) {
+<span class="nc" id="L70">				checkMethod(method);</span>
+			}
+<span class="nc bnc" id="L72" title="All 2 branches missed.">			if (method.isAnnotationPresent(Path.class)) {</span>
+<span class="nc" id="L73">				checkMethodWithPath(method.getAnnotation(Path.class).value(), &quot;Method &quot; + method + &quot; &quot;);</span>
+			}
+		}
+<span class="nc" id="L76">	}</span>
+
+	private void checkMethodWithPath(final String originalPath, final String message) {
+<span class="nc" id="L79">		final String path = CHECK_METHOD_WITH_PATH_PATTERN.matcher(originalPath).replaceAll(&quot;&quot;);</span>
+<span class="nc" id="L80">		Arrays.asList(CaseFormat.values()).forEach(cf -&gt; checkCaseFormatOnMethodWithPath(path, cf, message));</span>
+<span class="nc" id="L81">	}</span>
+
+	private void checkCaseFormatOnMethodWithPath(final String before, final CaseFormat from, final String message) {
+<span class="nc" id="L84">		final String after = from.converterTo(CaseFormat.LOWER_HYPHEN).convert(before);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (!before.equals(after)) {</span>
+<span class="nc" id="L86">			error(message</span>
+					+ &quot;does not follow the path guide line. The Path must be in lower-hypen format: &quot;
+					+ after
+					+ &quot; instead of &quot;
+					+ before);
+		}
+<span class="nc" id="L92">	}</span>
+
+	private void checkMethod(final Method method) {
+<span class="nc" id="L95">		final ApiOperation operation = method.getAnnotation(ApiOperation.class);</span>
+<span class="nc" id="L96">		Objects.requireNonNull(operation, message(method, &quot;must use @ApiOperation&quot;, false));</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		verify(!Strings.isNullOrEmpty(operation.value()),</span>
+				method,
+				&quot;must expose a short description using @ApiOperation.value()&quot;,
+				false);
+
+<span class="nc" id="L102">		final ApiResponses responses = method.getAnnotation(ApiResponses.class);</span>
+<span class="nc" id="L103">		Objects.requireNonNull(responses, message(method, &quot;must declare response codes using @ApiResponses&quot;, false));</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">		verify(responses.value().length &gt; 0,</span>
+				method,
+				&quot;must declare at least one response code using @ApiResponses and @ApiResponse&quot;,
+				false);
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">		if (method.isAnnotationPresent(RolesAllowed.class)) {</span>
+<span class="nc" id="L110">			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),</span>
+<span class="nc" id="L111">					message(method,</span>
+							&quot;must declare @&quot;
+<span class="nc" id="L113">									+ JwtSecured.class.getSimpleName()</span>
+									+ &quot; as it has @&quot;
+<span class="nc" id="L115">									+ RolesAllowed.class.getSimpleName()</span>
+									+ &quot; declared.&quot;,
+							false));
+		}
+
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		if (method.getDeclaringClass().isAnnotationPresent(RolesAllowed.class)</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">				&amp;&amp; !method.isAnnotationPresent(PermitAll.class)) {</span>
+<span class="nc" id="L122">			Objects.requireNonNull(method.getAnnotation(JwtSecured.class),</span>
+<span class="nc" id="L123">					message(method,</span>
+							&quot;must declare @&quot;
+<span class="nc" id="L125">									+ JwtSecured.class.getSimpleName()</span>
+									+ &quot; as it has @&quot;
+<span class="nc" id="L127">									+ RolesAllowed.class.getSimpleName()</span>
+									+ &quot; declared.&quot;,
+							false));
+		}
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		if (method.isAnnotationPresent(JwtSecured.class)) {</span>
+<span class="nc" id="L133">			checkSecuredMethod(method);</span>
+		}
+<span class="nc" id="L135">	}</span>
+
+	private void checkSecuredMethod(final Method method) {
+<span class="nc" id="L138">		final ApiOperation operation = method.getAnnotation(ApiOperation.class);</span>
+<span class="nc" id="L139">		final String message = &quot;or its declaring class must declare exactly one authorization in @ApiOperation: &quot;</span>
+				+ ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION;
+<span class="nc" id="L141">		Authorization[] authorizations = operation.authorizations();</span>
+<span class="nc" id="L142">		final Authorization[] classAuthorizations</span>
+<span class="nc" id="L143">				= Optional.ofNullable(method.getDeclaringClass().getAnnotation(io.swagger.annotations.Api.class))</span>
+<span class="nc" id="L144">						.map(io.swagger.annotations.Api::authorizations)</span>
+<span class="nc" id="L145">						.orElse(null);</span>
+<span class="nc bnc" id="L146" title="All 4 branches missed.">		if (authorizations == null || Strings.isNullOrEmpty(authorizations[0].value())) {</span>
+<span class="nc" id="L147">			authorizations = classAuthorizations;</span>
+<span class="nc bnc" id="L148" title="All 4 branches missed.">		} else if (classAuthorizations != null</span>
+				&amp;&amp; classAuthorizations.length == 1
+<span class="nc bnc" id="L150" title="All 2 branches missed.">				&amp;&amp; ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(classAuthorizations[0].value())) {</span>
+<span class="nc" id="L151">			error(method, &quot;contains the same authorization like its declaring class. Remove one.&quot;, true);</span>
+		}
+<span class="nc" id="L153">		Objects.requireNonNull(authorizations, message(method, message, true));</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">		verify(authorizations.length == 1</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">				&amp;&amp; ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION.equals(authorizations[0].value()),</span>
+				method,
+				message,
+				true);
+<span class="nc" id="L159">	}</span>
+
+	private static String message(final Method method, final String message, final boolean secured) {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">		return &quot;The &quot;</span>
+<span class="nc" id="L163">				+ (secured ? &quot;@&quot; + JwtSecured.class.getSimpleName() + &quot; annotated&quot; : &quot;&quot;)</span>
+				+ &quot; method &quot;
+<span class="nc" id="L165">				+ method.getName()</span>
+				+ &quot; in class &quot;
+<span class="nc" id="L167">				+ method.getDeclaringClass().getName()</span>
+				+ &quot; &quot;
+				+ message;
+	}
+
+	private static void error(final Method method, final String message, final boolean secured) {
+<span class="nc" id="L173">		error(message(method, message, secured));</span>
+<span class="nc" id="L174">	}</span>
+
+	private static void error(final String message) {
+<span class="nc" id="L177">		throw new ApiBootstrapException(message);</span>
+	}
+
+	private static void verify(final boolean check, final Method method, final String message, final boolean secured) {
+<span class="nc bnc" id="L181" title="All 2 branches missed.">		if (!check) {</span>
+<span class="nc" id="L182">			error(method, message, secured);</span>
+		}
+<span class="nc" id="L184">	}</span>
+
+	@SafeVarargs
+	private static boolean hasAnnotations(final Annotation[] annotations,
+			final Class&lt;? extends Annotation&gt;... classes) {
+<span class="nc bnc" id="L189" title="All 2 branches missed.">		for (final Class&lt;?&gt; clazz : classes) {</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">			if (FindAnnotation.findAnnotation(annotations, clazz) != null) {</span>
+<span class="nc" id="L191">				return true;</span>
+			}
+		}
+<span class="nc" id="L194">		return false;</span>
+	}
+
+	private void processInjector(final Injector injector, final Consumer&lt;Class&lt;?&gt;&gt; consumer) {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">		for (final Key&lt;?&gt; key : injector.getBindings().keySet()) {</span>
+<span class="nc" id="L199">			final Type type = key.getTypeLiteral().getRawType();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">			if (type instanceof Class) {</span>
+<span class="nc" id="L201">				consumer.accept((Class&lt;?&gt;) type);</span>
+			}
+<span class="nc" id="L203">		}</span>
+<span class="nc" id="L204">	}</span>
+
+	private static final class ApiBootstrapException extends RuntimeException {
+		private ApiBootstrapException(final String message) {
+<span class="nc" id="L208">			super(message);</span>
+<span class="nc" id="L209">		}</span>
+	}
+
+	private static final class ApiModule extends AbstractModule {
+		private ApiModule() {
+			// no fields to be initialized
+		}
+
+		@Override
+		protected void configure() {
+<span class="nc" id="L219">			final List&lt;Class&lt;? extends Annotation&gt;&gt; annotations</span>
+<span class="nc" id="L220">					= Arrays.asList(io.swagger.annotations.Api.class, javax.ws.rs.ext.Provider.class);</span>
+<span class="nc" id="L221">			final Predicate&lt;Class&lt;?&gt;&gt; predicate</span>
+<span class="nc" id="L222">					= clazz -&gt; annotations.stream().filter(clazz::isAnnotationPresent).findAny().isPresent();</span>
+			// TODO Create possibility to register more packages to scan
+<span class="nc" id="L224">			TypeUtils.bindClasses(Api.class.getPackage(), predicate, binder());</span>
+<span class="nc" id="L225">			TypeUtils.bindClasses(Authentication.class.getPackage(), predicate, binder());</span>
+
+<span class="nc" id="L227">			final ApiValidationInterceptor interceptor = new ApiValidationInterceptor();</span>
+<span class="nc" id="L228">			binder().requestInjection(interceptor);</span>
+<span class="nc" id="L229">			binder().bindInterceptor(Matchers.annotatedWith(Path.class),</span>
+<span class="nc" id="L230">					Matchers.annotatedWith(GET.class)</span>
+<span class="nc" id="L231">							.or(Matchers.annotatedWith(POST.class))</span>
+<span class="nc" id="L232">							.or(Matchers.annotatedWith(PUT.class))</span>
+<span class="nc" id="L233">							.or(Matchers.annotatedWith(PATCH.class))</span>
+<span class="nc" id="L234">							.or(Matchers.annotatedWith(DELETE.class))</span>
+<span class="nc" id="L235">							.or(Matchers.annotatedWith(HEAD.class))</span>
+<span class="nc" id="L236">							.or(Matchers.annotatedWith(OPTIONS.class)),</span>
+					interceptor);
+<span class="nc" id="L238">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OversigtConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.configuration</a> &gt; <span class="el_source">OversigtConfiguration.java</span></div><h1>OversigtConfiguration.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.configuration;
+
+import static com.hlag.oversigt.util.TypeUtils.deserializer;
+import static com.hlag.oversigt.util.TypeUtils.serializer;
+
+import java.io.IOException;
+import java.net.URL;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.io.Resources;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.sources.AbstractDownloadEventSource;
+import com.hlag.oversigt.storage.SqlDialect;
+import com.hlag.oversigt.util.SSLUtils.TLSConfiguration;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+/**
+ * Events and event sources configuration
+ *
+ * @author avarabyeu
+ */
+@Singleton
+public final class OversigtConfiguration {
+<span class="nc" id="L49">	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfiguration.class);</span>
+
+	private static ObjectMapper createObjectMapper() {
+<span class="nc" id="L52">		final SimpleModule module = new SimpleModule(&quot;Oversigt-API&quot;);</span>
+<span class="nc" id="L53">		module.addSerializer(Duration.class, serializer(Duration.class, Duration::toString));</span>
+<span class="nc" id="L54">		module.addDeserializer(Duration.class, deserializer(Duration.class, Duration::parse));</span>
+
+<span class="nc" id="L56">		final ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="nc" id="L57">		objectMapper.registerModule(module);</span>
+<span class="nc" id="L58">		objectMapper.registerModule(new Jdk8Module());</span>
+<span class="nc" id="L59">		objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);</span>
+<span class="nc" id="L60">		objectMapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);</span>
+<span class="nc" id="L61">		objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);</span>
+<span class="nc" id="L62">		return objectMapper;</span>
+	}
+
+	static OversigtConfiguration readConfiguration() {
+		try {
+<span class="nc" id="L67">			final URL configUrl = Resources.getResource(Oversigt.APPLICATION_CONFIG_FILE);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">			Preconditions.checkState(configUrl != null,</span>
+					&quot;Main application config [%s] not found&quot;,
+					Oversigt.APPLICATION_CONFIG_FILE);
+<span class="nc" id="L71">			LOGGER.info(&quot;Reading Oversigt configuration: &quot; + configUrl);</span>
+<span class="nc" id="L72">			final String configString = Resources.toString(configUrl, Charsets.UTF_8);</span>
+<span class="nc" id="L73">			return createObjectMapper().readValue(configString, OversigtConfiguration.class);</span>
+<span class="nc" id="L74">		} catch (final IOException e) {</span>
+<span class="nc" id="L75">			throw new IllegalStateException(&quot;Unable to read configuration&quot;, e);</span>
+		}
+	}
+
+<span class="nc" id="L79">	private boolean debug = false;</span>
+
+<span class="nc" id="L81">	private Optional&lt;String&gt; hostname = Optional.empty();</span>
+
+<span class="nc" id="L83">	private UiConfiguration ui = new UiConfiguration();</span>
+
+<span class="nc" id="L85">	private ApiConfiguration api = new ApiConfiguration();</span>
+
+<span class="nc" id="L87">	private EventManagerConfiguration eventManager = new EventManagerConfiguration();</span>
+
+<span class="nc" id="L89">	private Optional&lt;DatabaseConfiguration&gt; database = Optional.empty();</span>
+
+<span class="nc" id="L91">	private SecurityConfiguration security = new SecurityConfiguration();</span>
+
+<span class="nc" id="L93">	private MailConfiguration mail = new MailConfiguration();</span>
+
+<span class="nc" id="L95">	private String templateNumberFormat = &quot;0&quot;;</span>
+
+<span class="nc" id="L97">	private List&lt;HttpListenerConfiguration&gt; listeners = new ArrayList&lt;&gt;(Arrays.asList(new HttpListenerConfiguration()));</span>
+
+<span class="nc" id="L99">	private EventSourceConfiguration eventSources = new EventSourceConfiguration();</span>
+
+<span class="nc" id="L101">	private JiraConfiguration jira = new JiraConfiguration();</span>
+
+<span class="nc" id="L103">	private CustomWroConfiguration wro = new CustomWroConfiguration();</span>
+
+	@JsonCreator
+<span class="nc" id="L106">	private OversigtConfiguration() {</span>
+		// fields will be filled by jackson
+<span class="nc" id="L108">	}</span>
+
+	public boolean isDebug() {
+<span class="nc" id="L111">		return debug;</span>
+	}
+
+	public Optional&lt;String&gt; getHostname() {
+<span class="nc" id="L115">		return hostname;</span>
+	}
+
+	public ApiConfiguration getApi() {
+<span class="nc" id="L119">		return api;</span>
+	}
+
+	public UiConfiguration getUi() {
+<span class="nc" id="L123">		return ui;</span>
+	}
+
+	public EventManagerConfiguration getEventManager() {
+<span class="nc" id="L127">		return eventManager;</span>
+	}
+
+	public DatabaseConfiguration getDatabase() {
+<span class="nc" id="L131">		return database.orElseThrow(() -&gt; new RuntimeException(&quot;No database configuration supplied.&quot;));</span>
+	}
+
+	public SecurityConfiguration getSecurity() {
+<span class="nc" id="L135">		return security;</span>
+	}
+
+	public MailConfiguration getMail() {
+<span class="nc" id="L139">		return mail;</span>
+	}
+
+	public String getTemplateNumberFormat() {
+<span class="nc" id="L143">		return templateNumberFormat;</span>
+	}
+
+	public List&lt;HttpListenerConfiguration&gt; getListeners() {
+<span class="nc" id="L147">		return listeners;</span>
+	}
+
+	public EventSourceConfiguration getEventSources() {
+<span class="nc" id="L151">		return eventSources;</span>
+	}
+
+	public JiraConfiguration getJira() {
+<span class="nc" id="L155">		return jira;</span>
+	}
+
+	public CustomWroConfiguration getWro() {
+<span class="nc" id="L159">		return wro;</span>
+	}
+
+	public static class HttpListenerConfiguration {
+<span class="nc" id="L163">		private String ip = &quot;0.0.0.0&quot;;</span>
+
+<span class="nc" id="L165">		private int port = 80;</span>
+
+<span class="nc" id="L167">		private Optional&lt;TLSConfiguration&gt; tls = Optional.empty();</span>
+
+<span class="nc" id="L169">		public HttpListenerConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L171">		}</span>
+
+		public String getIp() {
+<span class="nc" id="L174">			return ip;</span>
+		}
+
+		public int getPort() {
+<span class="nc" id="L178">			return port;</span>
+		}
+
+		public TLSConfiguration getTLSConfiguration() {
+<span class="nc" id="L182">			return tls.get();</span>
+		}
+
+		public boolean isTls() {
+<span class="nc" id="L186">			return tls.isPresent();</span>
+		}
+	}
+
+	static final class ApiConfiguration {
+<span class="nc" id="L191">		private SignatureAlgorithm jwtAlgorithm = SignatureAlgorithm.HS256;</span>
+
+<span class="nc" id="L193">		private Optional&lt;String&gt; jwtSecretBase64 = Optional.empty();</span>
+
+<span class="nc" id="L195">		private long jwtTimeToLive = 4 * 60 * 60 * 1000; // 4 hours</span>
+
+<span class="nc" id="L197">		private ApiConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L199">		}</span>
+
+		public long getJwtTimeToLive() {
+<span class="nc" id="L202">			return jwtTimeToLive;</span>
+		}
+
+		public String getJwtSecretBase64() {
+<span class="nc" id="L206">			return jwtSecretBase64.orElseThrow(() -&gt; new RuntimeException(&quot;No JWT secret configured&quot;));</span>
+		}
+
+		public SignatureAlgorithm getJwtAlgorithm() {
+<span class="nc" id="L210">			return jwtAlgorithm;</span>
+		}
+	}
+
+	static final class EventManagerConfiguration {
+<span class="nc" id="L215">		private long rateLimit = 10;</span>
+
+<span class="nc" id="L217">		private Duration discardEventsAfter = Duration.ofHours(1);</span>
+
+<span class="nc" id="L219">		private EventManagerConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L221">		}</span>
+
+		public long getRateLimit() {
+<span class="nc" id="L224">			return rateLimit;</span>
+		}
+
+		public Duration getDiscardEventsAfter() {
+<span class="nc" id="L228">			return discardEventsAfter;</span>
+		}
+	}
+
+	static final class DatabaseConfiguration {
+		private final Class&lt;? extends SqlDialect&gt; sqlDialect;
+
+		private final String location;
+
+		private final String name;
+
+		private final String username;
+
+		private final String password;
+
+		@JsonCreator
+		private DatabaseConfiguration(@JsonProperty(&quot;sqlDialect&quot;) final Class&lt;? extends SqlDialect&gt; sqlDialect,
+				@JsonProperty(&quot;location&quot;) final String location,
+				@JsonProperty(&quot;name&quot;) final String name,
+				@JsonProperty(&quot;username&quot;) final String username,
+<span class="nc" id="L248">				@JsonProperty(&quot;password&quot;) final String password) {</span>
+<span class="nc" id="L249">			this.sqlDialect = sqlDialect;</span>
+<span class="nc" id="L250">			this.location = location;</span>
+<span class="nc" id="L251">			this.name = name;</span>
+<span class="nc" id="L252">			this.username = username;</span>
+<span class="nc" id="L253">			this.password = password;</span>
+<span class="nc" id="L254">		}</span>
+
+		public Class&lt;? extends SqlDialect&gt; getSqlDialect() {
+<span class="nc" id="L257">			return sqlDialect;</span>
+		}
+
+		public String getLocation() {
+<span class="nc" id="L261">			return location;</span>
+		}
+
+		public String getName() {
+<span class="nc" id="L265">			return name;</span>
+		}
+
+		public String getUsername() {
+<span class="nc" id="L269">			return username;</span>
+		}
+
+		public String getPassword() {
+<span class="nc" id="L273">			return password;</span>
+		}
+	}
+
+	public static class LdapConfiguration {
+		@Nullable
+		private String url;
+
+		@Nullable
+		private String baseDn;
+
+		@Nullable
+		private String bindUser;
+
+		@Nullable
+		private String bindPassword;
+
+		@Nullable
+		private String uidAttribute;
+
+<span class="nc" id="L293">		public LdapConfiguration() {</span>
+			// no fields to be initialized manually, some will be injected
+<span class="nc" id="L295">		}</span>
+
+		public boolean isBindPasswordSet() {
+<span class="nc bnc" id="L298" title="All 2 branches missed.">			return !Strings.isNullOrEmpty(bindPassword);</span>
+		}
+
+		public void setBindPassword(final String bindPassword) {
+<span class="nc" id="L302">			this.bindPassword = bindPassword;</span>
+<span class="nc" id="L303">		}</span>
+
+		@Nullable
+		public String getUrl() {
+<span class="nc" id="L307">			return url;</span>
+		}
+
+		@Nullable
+		public String getBaseDn() {
+<span class="nc" id="L312">			return baseDn;</span>
+		}
+
+		@Nullable
+		public String getBindPassword() {
+<span class="nc" id="L317">			return bindPassword;</span>
+		}
+
+		@Nullable
+		public String getBindUser() {
+<span class="nc" id="L322">			return bindUser;</span>
+		}
+
+		@Nullable
+		public String getUidAttribute() {
+<span class="nc" id="L327">			return uidAttribute;</span>
+		}
+	}
+
+	static final class MailConfiguration {
+<span class="nc" id="L332">		private Optional&lt;String&gt; hostname = Optional.empty();</span>
+
+<span class="nc" id="L334">		private int port = 0;</span>
+
+<span class="nc" id="L336">		private boolean startTls = false;</span>
+
+<span class="nc" id="L338">		private Optional&lt;String&gt; username = Optional.empty();</span>
+
+<span class="nc" id="L340">		private Optional&lt;String&gt; password = Optional.empty();</span>
+
+<span class="nc" id="L342">		private Optional&lt;String&gt; senderAddress = Optional.empty();</span>
+
+<span class="nc" id="L344">		private MailConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L346">		}</span>
+
+		public Optional&lt;String&gt; getHostname() {
+<span class="nc" id="L349">			return hostname;</span>
+		}
+
+		public int getPort() {
+<span class="nc" id="L353">			return port;</span>
+		}
+
+		public boolean isStartTls() {
+<span class="nc" id="L357">			return startTls;</span>
+		}
+
+		public Optional&lt;String&gt; getUsername() {
+<span class="nc" id="L361">			return username;</span>
+		}
+
+		public Optional&lt;String&gt; getPassword() {
+<span class="nc" id="L365">			return password;</span>
+		}
+
+		public String getSenderAddress() {
+<span class="nc" id="L369">			return senderAddress.orElseThrow(() -&gt; new RuntimeException(&quot;No sender address configured&quot;));</span>
+		}
+	}
+
+	static final class EventSourceConfiguration {
+<span class="nc" id="L374">		private String[] packages = new String[] { AbstractDownloadEventSource.class.getPackage().getName() };</span>
+
+<span class="nc" id="L376">		private String[] addonFolders = new String[0];</span>
+
+<span class="nc" id="L378">		private String[] widgetsPaths = new String[] { &quot;statics/widgets/&quot; };</span>
+
+<span class="nc" id="L380">		private EventSourceConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L382">		}</span>
+
+		public String[] getPackages() {
+<span class="nc" id="L385">			return packages;</span>
+		}
+
+		public String[] getAddonFolders() {
+<span class="nc" id="L389">			return addonFolders;</span>
+		}
+
+		public String[] getWidgetsPaths() {
+<span class="nc" id="L393">			return widgetsPaths;</span>
+		}
+	}
+
+	static final class JiraConfiguration {
+<span class="nc" id="L398">		private int socketTimeout = 120;</span>
+
+<span class="nc" id="L400">		private JiraConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L402">		}</span>
+
+		public int getSocketTimeout() {
+<span class="nc" id="L405">			return socketTimeout;</span>
+		}
+	}
+
+	static final class SecurityConfiguration {
+<span class="nc" id="L410">		private Optional&lt;List&lt;String&gt;&gt; serverAdmins = Optional.empty();</span>
+
+<span class="nc" id="L412">		private Map&lt;String, String&gt; users = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L414">		private Optional&lt;LdapConfiguration&gt; ldap = Optional.empty();</span>
+
+<span class="nc" id="L416">		private ForeignEventsConfiguration foreignEvents = new ForeignEventsConfiguration();</span>
+
+<span class="nc" id="L418">		private SecurityConfiguration() {</span>
+			// no fields to be initialized
+<span class="nc" id="L420">		}</span>
+
+		public ForeignEventsConfiguration getForeignEvents() {
+<span class="nc" id="L423">			return foreignEvents;</span>
+		}
+
+		public Optional&lt;LdapConfiguration&gt; getLdap() {
+<span class="nc" id="L427">			return ldap;</span>
+		}
+
+		public Map&lt;String, String&gt; getUsers() {
+<span class="nc" id="L431">			return users;</span>
+		}
+
+		public Optional&lt;List&lt;String&gt;&gt; getServerAdmins() {
+<span class="nc" id="L435">			return serverAdmins;</span>
+		}
+	}
+
+	static final class ForeignEventsConfiguration {
+<span class="nc" id="L440">		private boolean enabled = false;</span>
+
+<span class="nc" id="L442">		private boolean needAuthentication = true;</span>
+
+<span class="nc" id="L444">		private String apiKeyHeaderName = &quot;x-oversigt-api-key&quot;;</span>
+
+<span class="nc" id="L446">		private List&lt;String&gt; allowedApiKeys = Collections.emptyList();</span>
+
+<span class="nc" id="L448">		private ForeignEventsConfiguration() {</span>
+			// nothing to do
+<span class="nc" id="L450">		}</span>
+
+		public boolean isEnabled() {
+<span class="nc" id="L453">			return enabled;</span>
+		}
+
+		public boolean isNeedAuthentication() {
+<span class="nc" id="L457">			return needAuthentication;</span>
+		}
+
+		public String getApiKeyHeaderName() {
+<span class="nc" id="L461">			return apiKeyHeaderName;</span>
+		}
+
+		public List&lt;String&gt; getAllowedApiKeys() {
+<span class="nc" id="L465">			return allowedApiKeys;</span>
+		}
+	}
+
+	static final class UiConfiguration {
+<span class="nc" id="L470">		private boolean showOwnersInWelcomePage = true;</span>
+
+<span class="nc" id="L472">		private UiConfiguration() {</span>
+			// nothing to do
+<span class="nc" id="L474">		}</span>
+
+		public boolean isShowOwnersInWelcomePage() {
+<span class="nc" id="L477">			return showOwnersInWelcomePage;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

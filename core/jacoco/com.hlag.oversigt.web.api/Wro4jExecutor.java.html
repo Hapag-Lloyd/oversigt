@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Wro4jExecutor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">Wro4jExecutor.java</span></div><h1>Wro4jExecutor.java</h1><pre class="source lang-java linenums">/**
+ * Copyright Alex Objelean
+ */
+package com.hlag.oversigt.web.api;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.Properties;
+
+import javax.servlet.FilterConfig;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hlag.oversigt.util.TypeUtils.ClassProxy;
+import com.hlag.oversigt.util.TypeUtils.ReturnValue;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import ro.isdc.wro.WroRuntimeException;
+import ro.isdc.wro.config.Context;
+import ro.isdc.wro.config.factory.PropertyWroConfigurationFactory;
+import ro.isdc.wro.config.jmx.WroConfiguration;
+import ro.isdc.wro.http.support.DelegatingServletOutputStream;
+import ro.isdc.wro.manager.factory.standalone.ConfigurableStandaloneContextAwareManagerFactory;
+import ro.isdc.wro.manager.factory.standalone.StandaloneContext;
+import ro.isdc.wro.manager.factory.standalone.StandaloneContextAware;
+import ro.isdc.wro.model.factory.ConfigurableModelFactory;
+import ro.isdc.wro.model.factory.WroModelFactory;
+import ro.isdc.wro.model.factory.XmlModelFactory;
+import ro.isdc.wro.model.resource.ResourceType;
+import ro.isdc.wro.model.resource.locator.UriLocator;
+import ro.isdc.wro.model.resource.locator.factory.ConfigurableLocatorFactory;
+import ro.isdc.wro.model.resource.locator.factory.UriLocatorFactory;
+
+/**
+ * Defines most common properties used by wro4j build-time solution
+ * infrastructure.
+ *
+ * @author Alex Objelean
+ */
+public class Wro4jExecutor {
+<span class="nc" id="L51">	private static final Logger LOGGER = LoggerFactory.getLogger(Wro4jExecutor.class);</span>
+
+	private static final String XML_TEMPLATE = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;\n&quot;
+			+ &quot;&lt;groups xmlns=\&quot;http://www.isdc.ro/wro\&quot;&gt;\n&quot;
+			+ &quot;    &lt;group name=\&quot;{{groupName}}\&quot;&gt;\n&quot;
+			+ &quot;        &lt;js&gt;classpath:statics/widgets/{{viewName}}/**.js&lt;/js&gt;\n&quot;
+			+ &quot;        &lt;js&gt;classpath:statics/widgets/{{viewName}}/**.coffee&lt;/js&gt;\n&quot;
+			+ &quot;        &lt;css&gt;classpath:statics/widgets/{{viewName}}/**.scss&lt;/css&gt;\n&quot;
+			+
+			// &quot; &lt;css&gt;classpath:statics/widgets/{{viewName}}/**.css&lt;/css&gt;\n&quot; +
+			&quot;    &lt;/group&gt;\n&quot;
+			+ &quot;&lt;/groups&gt;\n&quot;;
+
+	private static final String WRO_PROPERTIES = &quot;preProcessors=coffeeScript\r\npostProcessors=rubySassCss&quot;;
+
+	private static final String GROUP = &quot;group&quot;;
+
+	private final ConfigurableWroManagerFactory managerFactory;
+
+	@SuppressWarnings(&quot;checkstyle:XIllegalCatchDefault&quot;)
+<span class="nc" id="L71">	public Wro4jExecutor(final String viewName, final boolean minimize) {</span>
+		try {
+<span class="nc" id="L73">			Context.set(Context.standaloneContext());</span>
+<span class="nc" id="L74">			managerFactory = new ConfigurableWroManagerFactory(WRO_PROPERTIES,</span>
+<span class="nc" id="L75">					XML_TEMPLATE.replace(&quot;{{groupName}}&quot;, GROUP).replace(&quot;{{viewName}}&quot;, viewName));</span>
+
+<span class="nc" id="L77">			final StandaloneContext runContext = new StandaloneContext();</span>
+<span class="nc" id="L78">			runContext.setContextFoldersAsCSV(&quot;.&quot;);</span>
+<span class="nc" id="L79">			runContext.setMinimize(minimize);</span>
+<span class="nc" id="L80">			runContext.setIgnoreMissingResourcesAsString(&quot;true&quot;);</span>
+<span class="nc" id="L81">			managerFactory.initialize(runContext);</span>
+<span class="nc" id="L82">		} catch (final RuntimeException e) {</span>
+<span class="nc" id="L83">			throw WroRuntimeException.wrap(e);</span>
+<span class="nc" id="L84">		}</span>
+<span class="nc" id="L85">	}</span>
+
+	public final Optional&lt;String&gt; execute(final ResourceType resourceType) {
+<span class="nc" id="L88">		final String groupWithExtension = GROUP + &quot;.&quot; + resourceType.name().toLowerCase();</span>
+
+		// mock request
+<span class="nc" id="L91">		final HttpServletRequest request = ClassProxy.create(HttpServletRequest.class,</span>
+<span class="nc" id="L92">				ReturnValue.find(HttpServletRequest.class, &quot;getContextPath&quot;, &quot;/&quot;),</span>
+<span class="nc" id="L93">				ReturnValue.find(HttpServletRequest.class, &quot;getRequestURI&quot;, groupWithExtension));</span>
+
+		// mock response
+<span class="nc" id="L96">		try (ByteArrayOutputStream resultOutputStream = new ByteArrayOutputStream();</span>
+<span class="nc" id="L97">				DelegatingServletOutputStream delegatingServletOutputStream</span>
+						= new DelegatingServletOutputStream(resultOutputStream)) {
+<span class="nc" id="L99">			final HttpServletResponse response = ClassProxy.create(HttpServletResponse.class,</span>
+<span class="nc" id="L100">					ReturnValue.find(HttpServletResponse.class, &quot;getOutputStream&quot;, delegatingServletOutputStream));</span>
+
+			// init context
+<span class="nc" id="L103">			final WroConfiguration config = Context.get().getConfig();</span>
+<span class="nc" id="L104">			config.setIgnoreEmptyGroup(true);</span>
+<span class="nc" id="L105">			Context.set(Context.webContext(request, response, ClassProxy.create(FilterConfig.class)), config);</span>
+
+			// perform processing
+<span class="nc" id="L108">			managerFactory.create().process();</span>
+<span class="nc" id="L109">			return Optional.of(new String(resultOutputStream.toByteArray(), StandardCharsets.UTF_8));</span>
+<span class="nc" id="L110">		} catch (final Exception e) {</span>
+<span class="nc" id="L111">			LOGGER.error(&quot;Unable to execute WRO&quot;, e);</span>
+<span class="nc" id="L112">			return Optional.empty();</span>
+		}
+	}
+
+	/**
+	 * Default implementation which use a property file to read the pre &amp; post
+	 * processors to be used during processing.
+	 *
+	 * @author Alex Objelean
+	 * @created 2 Aug 2011
+	 * @since 1.4.0
+	 */
+	private static class ConfigurableWroManagerFactory extends ConfigurableStandaloneContextAwareManagerFactory {
+		private final String properties;
+
+		private final String wroXml;
+
+<span class="nc" id="L129">		ConfigurableWroManagerFactory(final String properties, final String wroXml) {</span>
+<span class="nc" id="L130">			this.properties = properties;</span>
+<span class="nc" id="L131">			this.wroXml = wroXml;</span>
+<span class="nc" id="L132">		}</span>
+
+		@Override
+		public void initialize(@Nullable final StandaloneContext standaloneContext) {
+<span class="nc" id="L136">			Context.get().setConfig(initConfiguration());</span>
+<span class="nc" id="L137">			super.initialize(standaloneContext);</span>
+<span class="nc" id="L138">		}</span>
+
+		private WroConfiguration initConfiguration() {
+<span class="nc" id="L141">			return new PropertyWroConfigurationFactory(createProperties()).create();</span>
+		}
+
+		@Override
+		protected WroModelFactory newModelFactory() {
+<span class="nc" id="L146">			return new ConfigurableModelFactory() {</span>
+				@Override
+				protected Properties newProperties() {
+<span class="nc" id="L149">					return createProperties();</span>
+				}
+
+				@Override
+				protected WroModelFactory getDefaultStrategy() {
+<span class="nc" id="L154">					return new XmlModelFactory() {</span>
+						@Override
+						protected InputStream getModelResourceAsStream() throws IOException {
+<span class="nc" id="L157">							return new ByteArrayInputStream(wroXml.getBytes(StandardCharsets.UTF_8));</span>
+						}
+					};
+				}
+			};
+		}
+
+		@Override
+		protected UriLocatorFactory newUriLocatorFactory() {
+<span class="nc" id="L166">			return new ConfigurableLocatorFactory() {</span>
+				@Override
+				public UriLocator getInstance(@Nullable final String uri) {
+<span class="nc" id="L169">					final UriLocator locator = super.getInstance(uri);</span>
+					// ensure standalone context is provided to each locator requiring it for
+					// initialization.
+<span class="nc bnc" id="L172" title="All 2 branches missed.">					if (locator instanceof StandaloneContextAware) {</span>
+<span class="nc" id="L173">						((StandaloneContextAware) locator).initialize(getStandaloneContext());</span>
+					}
+<span class="nc" id="L175">					return locator;</span>
+				}
+
+				@Override
+				protected Properties newProperties() {
+<span class="nc" id="L180">					return createProperties();</span>
+				}
+			};
+		}
+
+		@Override
+		protected Properties createProperties() {
+			try {
+<span class="nc" id="L188">				final Reader reader = new StringReader(properties);</span>
+<span class="nc" id="L189">				final Properties properties = new Properties();</span>
+<span class="nc" id="L190">				properties.load(reader);</span>
+<span class="nc" id="L191">				return properties;</span>
+<span class="nc" id="L192">			} catch (final IOException e) {</span>
+<span class="nc" id="L193">				throw new UncheckedIOException(e);</span>
+			}
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractCachingJdbcEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractCachingJdbcEventSource.java</span></div><h1>AbstractCachingJdbcEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import com.hlag.oversigt.connect.db.DatabaseCache;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.Property;
+
+/**
+ * @author neumaol
+ *
+ */
+public abstract class AbstractCachingJdbcEventSource&lt;X, T extends OversigtEvent&gt; extends AbstractJdbcEventSource&lt;T&gt; {
+<span class="nc" id="L17">	private Optional&lt;DatabaseCache&lt;X&gt;&gt; cache = Optional.empty();</span>
+
+<span class="nc" id="L19">	private long limit = 5;</span>
+
+<span class="nc" id="L21">	protected AbstractCachingJdbcEventSource() {}</span>
+
+	protected synchronized DatabaseCache&lt;X&gt; getCache() {
+<span class="nc bnc" id="L24" title="All 2 branches missed.">		if (!cache.isPresent()) {</span>
+<span class="nc" id="L25">			cache = Optional.of(createCache());</span>
+		}
+<span class="nc" id="L27">		return cache.get();</span>
+	}
+
+	protected abstract DatabaseCache&lt;X&gt; createCache();
+
+	@Property(name = &quot;Max item count&quot;,
+			description = &quot;The maximum number of items to be listed. Set to 0 for unlimited number of items.&quot;)
+	public long getLimit() {
+<span class="nc" id="L35">		return limit;</span>
+	}
+
+	public void setLimit(final long limit) {
+<span class="nc" id="L39">		this.limit = limit;</span>
+<span class="nc" id="L40">	}</span>
+
+	protected Stream&lt;X&gt; stream() {
+<span class="nc" id="L43">		Stream&lt;X&gt; stream = getCache().stream();</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">		if (getLimit() &gt; 0) {</span>
+<span class="nc" id="L45">			stream = stream.limit(getLimit());</span>
+		}
+<span class="nc" id="L47">		return stream;</span>
+	}
+
+	@Override
+	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
+<span class="nc" id="L52">		getCache().getItems(connection);</span>
+<span class="nc" id="L53">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

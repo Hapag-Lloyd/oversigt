@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InternetImageEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">InternetImageEventSource.java</span></div><h1>InternetImageEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.sources.event.StyleEvent;
+
+@EventSource(view = &quot;ImageView&quot;,
+		displayName = &quot;Internet Image&quot;,
+		description = &quot;Load an image from the internet by parsing a web site and show the image in the dashboard.&quot;,
+		dataItems = { &quot;width&quot; },
+		hiddenDataItems = { &quot;more-info&quot; })
+public class InternetImageEventSource extends AbstractDownloadEventSource&lt;StyleEvent&gt; {
+<span class="nc" id="L16">	public InternetImageEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L18">	}</span>
+
+	@Override
+	protected Optional&lt;StyleEvent&gt; produceEvent() throws EventSourceException {
+		try {
+<span class="nc" id="L23">			final DownloadData image = downloadBytes(createConfiguredConnection());</span>
+<span class="nc" id="L24">			return Optional.of(StyleEvent.backgroundImage(image.getContentType(), image.getData()));</span>
+<span class="nc" id="L25">		} catch (final IOException e) {</span>
+<span class="nc" id="L26">			throw new EventSourceException(&quot;Unable to download image&quot;, e);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

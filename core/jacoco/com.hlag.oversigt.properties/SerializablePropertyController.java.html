@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializablePropertyController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.properties</a> &gt; <span class="el_source">SerializablePropertyController.java</span></div><h1>SerializablePropertyController.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.properties;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.properties.SerializableProperty.Description;
+import com.hlag.oversigt.storage.Storage;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Singleton
+public class SerializablePropertyController {
+<span class="nc" id="L28">	private static final Logger LOGGER = LoggerFactory.getLogger(SerializablePropertyController.class);</span>
+
+	private final Map&lt;String, Class&lt;SerializableProperty&gt;&gt; namesToClasses;
+
+<span class="nc" id="L32">	private final Map&lt;Class&lt;? extends SerializableProperty&gt;, SerializableProperty&gt; classToEmpty = new HashMap&lt;&gt;();</span>
+
+	private final Storage storage;
+
+<span class="nc" id="L36">	private final Map&lt;Integer, SerializableProperty&gt; properties = new HashMap&lt;&gt;();</span>
+
+	@Inject
+<span class="nc" id="L39">	public SerializablePropertyController(final Storage storage) {</span>
+<span class="nc" id="L40">		this.storage = storage;</span>
+<span class="nc" id="L41">		namesToClasses = TypeUtils.findClasses(getClass().getPackage(), SerializableProperty.class)</span>
+<span class="nc" id="L42">				.peek(c -&gt; classToEmpty.put(c, createEmptyItem(c)))</span>
+<span class="nc" id="L43">				.collect(Collectors.toMap(Class::getSimpleName, Function.identity()));</span>
+<span class="nc" id="L44">		LOGGER.info(&quot;Loaded serializable property classes: {}&quot;, namesToClasses.keySet().toString());</span>
+
+<span class="nc" id="L46">		properties.putAll(namesToClasses.values()</span>
+<span class="nc" id="L47">				.stream()</span>
+<span class="nc" id="L48">				.flatMap(c -&gt; storage.listProperties(c).stream())</span>
+<span class="nc" id="L49">				.collect(Collectors.toMap(SerializableProperty::getId, Function.identity())));</span>
+<span class="nc" id="L50">	}</span>
+
+	public Collection&lt;String&gt; getNames() {
+<span class="nc" id="L53">		return namesToClasses.keySet();</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public &lt;T extends SerializableProperty&gt; Stream&lt;T&gt; streamProperties(final Class&lt;T&gt; clazz) {
+<span class="nc bnc" id="L58" title="All 2 branches missed.">		return properties.values().stream().filter(p -&gt; p.getClass() == clazz).map(p -&gt; (T) p);</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public &lt;T extends SerializableProperty&gt; T getProperty(final Class&lt;T&gt; clazz, final int id) {
+<span class="nc bnc" id="L63" title="All 2 branches missed.">		return id == 0 ? getEmpty(clazz) : (T) Optional.ofNullable(properties.get(id)).get();</span>
+	}
+
+	public Class&lt;? extends SerializableProperty&gt; getClass(final String name) {
+<span class="nc" id="L67">		return Optional.ofNullable(namesToClasses.get(name)).get();</span>
+	}
+
+	public Set&lt;Class&lt;? extends SerializableProperty&gt;&gt; getClasses() {
+<span class="nc" id="L71">		return classToEmpty.keySet();</span>
+	}
+
+	public String getDescription(final String name) {
+<span class="nc" id="L75">		return getDescription(getClass(name));</span>
+	}
+
+	private String getDescription(@Nullable final Class&lt;? extends SerializableProperty&gt; clazz) {
+<span class="nc" id="L79">		return Optional.ofNullable(clazz)</span>
+<span class="nc" id="L80">				.map(c -&gt; c.getAnnotation(Description.class))</span>
+<span class="nc" id="L81">				.map(Description::value)</span>
+<span class="nc" id="L82">				.orElse(&quot;&quot;);</span>
+	}
+
+	public Collection&lt;SerializablePropertyMember&gt; getMembers(final Class&lt;? extends SerializableProperty&gt; clazz) {
+<span class="nc" id="L86">		return TypeUtils.getSerializablePropertyMembers(clazz);</span>
+	}
+
+	public String toString(@Nullable final SerializableProperty value) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		return value == null ? &quot;0&quot; : Integer.toString(value.getId());</span>
+	}
+
+	public &lt;T extends SerializableProperty&gt; T createProperty(final Class&lt;T&gt; clazz,
+			final String name,
+			final Map&lt;String, Object&gt; parameters) {
+<span class="nc" id="L96">		return createProperty(clazz,</span>
+				name,
+<span class="nc bnc" id="L98" title="All 2 branches missed.">				getMembers(clazz).stream().filter(m -&gt; !&quot;name&quot;.equals(m.getName())).map(m -&gt; {</span>
+					try {
+<span class="nc" id="L100">						return m.createInstance((String) parameters.get(m.getName()));</span>
+<span class="nc" id="L101">					} catch (final MemberMissingException e) {</span>
+<span class="nc" id="L102">						throw new RuntimeException(&quot;Unknown member: &quot; + m.getName(), e);</span>
+					}
+<span class="nc" id="L104">				}).collect(Collectors.toList()));</span>
+	}
+
+	public &lt;T extends SerializableProperty&gt; T createProperty(final Class&lt;T&gt; clazz,
+			final String name,
+			final List&lt;Object&gt; parameters) {
+<span class="nc" id="L110">		final T property = storage.createProperty(clazz, name, parameters.toArray());</span>
+<span class="nc" id="L111">		properties.put(property.getId(), property);</span>
+<span class="nc" id="L112">		return property;</span>
+	}
+
+	public void updateProperty(final SerializableProperty property) {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		if (!properties.values().contains(property)) {</span>
+<span class="nc" id="L117">			final SerializableProperty real = getProperty(property.getClass(), property.getId());</span>
+<span class="nc" id="L118">			TypeUtils.getSerializablePropertyMembers(property.getClass()).forEach(m -&gt; m.set(real, m.get(property)));</span>
+<span class="nc" id="L119">			storage.updateProperty(real);</span>
+<span class="nc" id="L120">		} else {</span>
+<span class="nc" id="L121">			storage.updateProperty(property);</span>
+		}
+<span class="nc" id="L123">	}</span>
+
+	public void deleteProperty(final Class&lt;? extends SerializableProperty&gt; clazz, final int id) {
+<span class="nc" id="L126">		storage.deleteProperty(clazz, id);</span>
+<span class="nc" id="L127">		properties.remove(id);</span>
+<span class="nc" id="L128">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public &lt;T extends SerializableProperty&gt; T getEmpty(final Class&lt;T&gt; clazz) {
+<span class="nc" id="L132">		return (T) classToEmpty.get(clazz);</span>
+	}
+
+	private static SerializableProperty createEmptyItem(final Class&lt;? extends SerializableProperty&gt; clazz) {
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		if (SerializableProperty.class.isAssignableFrom(clazz)) {</span>
+			try {
+<span class="nc" id="L138">				return (SerializableProperty) clazz.getField(&quot;EMPTY&quot;).get(null);</span>
+<span class="nc" id="L139">			} catch (final IllegalArgumentException</span>
+					| IllegalAccessException
+					| NoSuchFieldException
+					| SecurityException e) {
+<span class="nc" id="L143">				throw new RuntimeException(&quot;Unable to get field 'EMPTY' from type &quot; + clazz.getSimpleName(), e);</span>
+			}
+		}
+<span class="nc" id="L146">		throw new RuntimeException(</span>
+<span class="nc" id="L147">				&quot;Type &quot; + clazz.getName() + &quot; is not a &quot; + SerializableProperty.class.getSimpleName());</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

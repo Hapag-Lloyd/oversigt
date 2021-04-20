@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">DashboardResource.java</span></div><h1>DashboardResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static com.hlag.oversigt.web.api.ErrorResponse.badRequest;
+import static com.hlag.oversigt.web.api.ErrorResponse.forbidden;
+import static com.hlag.oversigt.web.api.ErrorResponse.internalServerError;
+import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.validate.UserId;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;Dashboard&quot; })
+@Path(&quot;/dashboards&quot;)
+@Singleton
+public class DashboardResource {
+<span class="nc" id="L75">	private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResource.class);</span>
+
+	@Inject
+	private DashboardController dashboardController;
+
+	@Inject
+	private Authenticator authenticator;
+
+	@Nullable
+	@Context
+	private UriInfo injectedUriInfo;
+
+	private UriInfo getUriInfo() {
+<span class="nc" id="L88">		return Objects.requireNonNull(injectedUriInfo);</span>
+	}
+
+<span class="nc" id="L91">	public DashboardResource() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L93">	}</span>
+
+	@GET
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returning a list of all dashboards&quot;,
+					response = DashboardInfo.class,
+					responseContainer = &quot;List&quot;) })
+	@ApiOperation(value = &quot;List existing dashboards ids&quot;)
+	@NoChangeLog
+	public Response listDashboardIds() {
+<span class="nc" id="L104">		return ok(dashboardController.getDashboardIds()</span>
+<span class="nc" id="L105">				.stream()</span>
+<span class="nc" id="L106">				.map(dashboardController::getDashboard)</span>
+<span class="nc" id="L107">				.map(Optional::get)</span>
+<span class="nc" id="L108">				.map(DashboardInfo::new)</span>
+<span class="nc" id="L109">				.collect(toList())).build();</span>
+	}
+
+	@PUT
+	@ApiResponses({
+			@ApiResponse(code = 201,
+					message = &quot;A new dashboard has been created. The body contains a detailed representation of the newly created dashboard&quot;,
+					response = Dashboard.class),
+			@ApiResponse(code = 303,
+					message = &quot;The dashboard already exists. Sending redirect to dashboard information.&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Create new dashboard&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	public Response createDashboard(@Context final SecurityContext securityContext,
+			@QueryParam(&quot;dashboardId&quot;) @NotNull final String id,
+			@QueryParam(&quot;owner&quot;) @NotNull @UserId final String ownerUserId,
+			@QueryParam(&quot;enabled&quot;) @ApiParam(defaultValue = &quot;false&quot;) final boolean enabled) {
+<span class="nc" id="L126">		final Optional&lt;Dashboard&gt; existingDashboard = dashboardController.getDashboard(id);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">		if (existingDashboard.isPresent()) {</span>
+<span class="nc" id="L128">			return Response.seeOther(URI.create(getUriInfo().getAbsolutePath() + &quot;/&quot; + id)).build();</span>
+		}
+
+<span class="nc" id="L131">		final Optional&lt;Dashboard&gt; createdDashboard = dashboardController.createDashboard(id,</span>
+<span class="nc" id="L132">				Principal.loadPrincipal(authenticator, ownerUserId)</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">						.orElseThrow(() -&gt; new RuntimeException(&quot;Unknown principal for: &quot; + ownerUserId)),</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">				enabled &amp;&amp; securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN));</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (!createdDashboard.isPresent()) {</span>
+<span class="nc" id="L136">			final UUID uuid = UUID.randomUUID();</span>
+<span class="nc" id="L137">			LOGGER.error(&quot;Dashboard {} does not exist, but creation failed, too.&quot;, id);</span>
+<span class="nc" id="L138">			return internalServerError(uuid, &quot;Unable to create dashboard. Details are written to log file.&quot;);</span>
+		}
+<span class="nc" id="L140">		return created(URI.create(getUriInfo().getAbsolutePath() + &quot;/&quot; + createdDashboard.get().getId()))</span>
+<span class="nc" id="L141">				.entity(createdDashboard.get())</span>
+<span class="nc" id="L142">				.type(MediaType.APPLICATION_JSON_TYPE)</span>
+<span class="nc" id="L143">				.build();</span>
+
+		// TODO write a mail to server admins if the dashboard needs to be enabled
+	}
+
+	@GET
+	@Path(&quot;/{dashboardId}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A detailed representation of the requested dashboard&quot;,
+					response = Dashboard.class),
+			@ApiResponse(code = 404,
+					message = &quot;The requested dashboard does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured(mustBeAuthenticated = false)
+	@ApiOperation(value = &quot;Read dashboard details&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@PermitAll
+	public Response readDashboard(@Context final SecurityContext secu, @PathParam(&quot;dashboardId&quot;) final String id) {
+<span class="nc" id="L163">		final Optional&lt;Dashboard&gt; dashboard = dashboardController.getDashboard(id);</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L165">			return notFound(&quot;A dashboard with id '&quot; + id + &quot;' does not exist.&quot;);</span>
+		}
+
+<span class="nc" id="L168">		final Map&lt;String, Object&gt; dashboardMap = dashboard.map(TypeUtils::toMemberMap)</span>
+<span class="nc" id="L169">				.orElseThrow(() -&gt; new RuntimeException(&quot;The dashboard is not present.&quot;));</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">		if (secu.getUserPrincipal() == null) {</span>
+<span class="nc" id="L171">			dashboardMap.remove(&quot;owner&quot;);</span>
+<span class="nc" id="L172">			dashboardMap.remove(&quot;editors&quot;);</span>
+		}
+<span class="nc" id="L174">		return ok(dashboardMap).build();</span>
+	}
+
+	@PATCH
+	@Path(&quot;/{dashboardId}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The dashboard has been updated&quot;, response = Dashboard.class),
+			@ApiResponse(code = 400, message = &quot;The provided information are invalid&quot;, response = ErrorResponse.class),
+			@ApiResponse(code = 403,
+					message = &quot;The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = &quot;The dashboard does not exist&quot;) })
+	@ApiOperation(value = &quot;Partially update dashboard details&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@JwtSecured
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response updateDashboardPartially(@Context final SecurityContext securityContext,
+			@PathParam(&quot;dashboardId&quot;) @NotNull final String id,
+			final Map&lt;String, Object&gt; newDashboardData) {
+		// load current dashboard from storage
+<span class="nc" id="L194">		final Optional&lt;Dashboard&gt; dashboard = dashboardController.getDashboard(id);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L196">			return notFound(&quot;A dashboard with id '&quot; + id + &quot;' does not exist.&quot;);</span>
+		}
+
+		// clone it to work on it
+<span class="nc" id="L200">		final Dashboard newDashboard = dashboard.get().copy();</span>
+
+		// check dashboard id
+<span class="nc bnc" id="L203" title="All 2 branches missed.">		if (newDashboardData.containsKey(&quot;id&quot;)</span>
+<span class="nc bnc" id="L204" title="All 4 branches missed.">				&amp;&amp; (!id.equals(newDashboardData.get(&quot;id&quot;)) || !id.equals(newDashboard.getId()))) {</span>
+<span class="nc" id="L205">			return badRequest(&quot;The dashboard ID does not match&quot;);</span>
+		}
+
+		// check if the change is allowed
+<span class="nc" id="L209">		final List&lt;String&gt; allowedChangeElements = Arrays.asList(&quot;id&quot;, &quot;enabled&quot;);</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">		if (newDashboardData.keySet().stream().anyMatch(key -&gt; !allowedChangeElements.contains(key))) {</span>
+<span class="nc" id="L211">			return badRequest(&quot;Currently the only allowed attribute for change is: 'enabled'&quot;);</span>
+		}
+
+		// Check if the user changed the enabled state of the dashboard. Only server
+		// admins may perform that action
+<span class="nc bnc" id="L216" title="All 2 branches missed.">		if (newDashboardData.containsKey(&quot;enabled&quot;)</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">				&amp;&amp; Boolean.parseBoolean(newDashboardData.get(&quot;enabled&quot;).toString()) != newDashboard.isEnabled()</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">				&amp;&amp; !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {</span>
+<span class="nc" id="L219">			return forbidden(</span>
+					&quot;Only server admins are allowed to change a dashboard's enabled state. Please contact a server admin.&quot;);
+		}
+
+		// // if the owner has changed the user needs to be at least dashboard owner
+		// if (!newDashboardData.getOwners().equals(dashboard.getOwners())
+		// &amp;&amp;
+		// !securityContext.isUserInRole(Role.getDashboardOwnerRole(dashboard.getId()).getName()))
+		// {
+		// return forbidden(&quot;To change the owner of a dashboard you need to be at least
+		// the owner of the dashboard.&quot;);
+		// }
+
+		// update dashboard data
+<span class="nc bnc" id="L233" title="All 2 branches missed.">		if (newDashboardData.containsKey(&quot;enabled&quot;)) {</span>
+<span class="nc" id="L234">			newDashboard.setEnabled(Boolean.parseBoolean(newDashboardData.get(&quot;enabled&quot;).toString()));</span>
+		}
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		if (!dashboardController.updateDashboard(newDashboard)) {</span>
+<span class="nc" id="L237">			return Response.status(Status.INTERNAL_SERVER_ERROR).build();</span>
+		}
+<span class="nc" id="L239">		return ok(dashboardController.getDashboard(id)).build();</span>
+	}
+
+	@PUT
+	@Path(&quot;/{dashboardId}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The dashboard has been updated&quot;, response = Dashboard.class),
+			@ApiResponse(code = 400, message = &quot;The provided information are invalid&quot;, response = ErrorResponse.class),
+			@ApiResponse(code = 403,
+					message = &quot;The user is either not permitted to edit this dashboard or he wants to perform a change that he is not allowed to&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = &quot;The dashboard does not exist&quot;) })
+	@ApiOperation(value = &quot;Update dashboard details&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@JwtSecured
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response updateDashboard(@Context final SecurityContext securityContext,
+			@PathParam(&quot;dashboardId&quot;) @NotNull final String id,
+			final Dashboard newDashboardData) {
+		// load current dashboard from storage
+<span class="nc" id="L259">		final Optional&lt;Dashboard&gt; maybeOriginalDashboard = dashboardController.getDashboard(id);</span>
+
+		// Checks
+		// ======
+
+		// does it exist?
+<span class="nc bnc" id="L265" title="All 2 branches missed.">		if (!maybeOriginalDashboard.isPresent()) {</span>
+<span class="nc" id="L266">			return notFound(&quot;A dashboard with id '&quot; + id + &quot;' does not exist.&quot;);</span>
+		}
+<span class="nc" id="L268">		final Dashboard originalDashboard = maybeOriginalDashboard.get();</span>
+
+		// check dashboard id
+<span class="nc bnc" id="L271" title="All 4 branches missed.">		if (!id.equals(newDashboardData.getId()) || !id.equals(originalDashboard.getId())) {</span>
+<span class="nc" id="L272">			return badRequest(&quot;The dashboard ID does not match&quot;);</span>
+		}
+
+		// Check if the user changed the enabled state of the dashboard. Only server
+		// admins may perform that action
+<span class="nc bnc" id="L277" title="All 2 branches missed.">		if (newDashboardData.isEnabled() != originalDashboard.isEnabled()</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">				&amp;&amp; !securityContext.isUserInRole(Role.ROLE_NAME_SERVER_ADMIN)) {</span>
+<span class="nc" id="L279">			return forbidden(</span>
+					&quot;Only server admins are allowed to change a dashboard's enabled state. Please contact a server admin.&quot;);
+		}
+
+		// if the owner has changed the user needs to be at least dashboard owner
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		if (!newDashboardData.getOwners().equals(originalDashboard.getOwners())</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">				&amp;&amp; !securityContext.isUserInRole(Role.getDashboardOwnerRole(originalDashboard.getId()).getName())) {</span>
+<span class="nc" id="L286">			return forbidden(&quot;To change the owner of a dashboard you need to be at least the owner of the dashboard.&quot;);</span>
+		}
+
+		// check usernames
+<span class="nc" id="L290">		newDashboardData.setOwners(</span>
+<span class="nc" id="L291">				newDashboardData.getOwners().stream().filter(authenticator::isUsernameValid).collect(toList()));</span>
+<span class="nc" id="L292">		newDashboardData.setEditors(</span>
+<span class="nc" id="L293">				newDashboardData.getEditors().stream().filter(authenticator::isUsernameValid).collect(toList()));</span>
+		// TODO notify changed users
+
+		// Prepare changes
+		// ===============
+<span class="nc" id="L298">		final Set&lt;String&gt; users</span>
+<span class="nc" id="L299">				= Stream.concat(originalDashboard.getOwners().stream(), originalDashboard.getEditors().stream())</span>
+<span class="nc" id="L300">						.collect(toSet());</span>
+
+		// update dashboard data
+		// =====================
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		if (!dashboardController.updateDashboard(newDashboardData)) {</span>
+<span class="nc" id="L305">			return Response.status(Status.INTERNAL_SERVER_ERROR).build();</span>
+		}
+
+		// return dashboard info
+		// =====================
+<span class="nc" id="L310">		final Optional&lt;Dashboard&gt; changedDashboard = dashboardController.getDashboard(id);</span>
+
+		// reload user rights
+<span class="nc" id="L313">		users.addAll(</span>
+<span class="nc" id="L314">				Stream.concat(changedDashboard.get().getOwners().stream(), changedDashboard.get().getEditors().stream())</span>
+<span class="nc" id="L315">						.collect(toSet()));</span>
+<span class="nc" id="L316">		users.forEach(authenticator::reloadRoles);</span>
+
+<span class="nc" id="L318">		return ok(changedDashboard).build();</span>
+	}
+
+	@PUT
+	@Path(&quot;/{dashboardId}/positions&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The widget positions has been updated&quot;),
+			@ApiResponse(code = 400, message = &quot;The provided information are invalid&quot;, response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = &quot;The dashboard does not exist&quot;) })
+	@ApiOperation(value = &quot;Update dashboard widget positions&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@JwtSecured
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response updateWidgetPositions(@PathParam(&quot;dashboardId&quot;) @NotNull final String id,
+			final List&lt;WidgetPosition&gt; widgetPositions) {
+		// load current dashboard from storage
+<span class="nc" id="L334">		final Optional&lt;Dashboard&gt; dashboard = dashboardController.getDashboard(id);</span>
+
+		// does it exist?
+<span class="nc bnc" id="L337" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L338">			return notFound(&quot;Dashboard does not exist.&quot;);</span>
+		}
+
+		// Do all given widget positions match a dashboard widget?
+<span class="nc" id="L342">		final Set&lt;String&gt; unmatchedWidgetIds = widgetPositions.stream()</span>
+<span class="nc" id="L343">				.mapToInt(WidgetPosition::getWidgetId)</span>
+<span class="nc bnc" id="L344" title="All 4 branches missed.">				.filter(i -&gt; !dashboard.get().getWidgets().stream().mapToInt(Widget::getId).anyMatch(w -&gt; i == w))</span>
+<span class="nc" id="L345">				.mapToObj(Integer::toString)</span>
+<span class="nc" id="L346">				.collect(Collectors.toSet());</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">		if (!unmatchedWidgetIds.isEmpty()) {</span>
+<span class="nc" id="L348">			return badRequest(&quot;Some widgets ids do not exist in the dashboard&quot;, unmatchedWidgetIds);</span>
+		}
+
+		// Update widget positions
+<span class="nc" id="L352">		widgetPositions.forEach(t -&gt; {</span>
+<span class="nc" id="L353">			final Widget widget = dashboard.get().getWidget(t.getWidgetId());</span>
+<span class="nc" id="L354">			widget.setSizeX(t.getSizeX());</span>
+<span class="nc" id="L355">			widget.setSizeY(t.getSizeY());</span>
+<span class="nc" id="L356">			widget.setPosX(t.getPosX());</span>
+<span class="nc" id="L357">			widget.setPosY(t.getPosY());</span>
+<span class="nc" id="L358">			dashboardController.updateWidget(widget);</span>
+<span class="nc" id="L359">		});</span>
+
+<span class="nc" id="L361">		return ok().build();</span>
+	}
+
+	@DELETE
+	@Path(&quot;/{dashboardId}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The dashboard has been deleted&quot;),
+			@ApiResponse(code = 404, message = &quot;The dashboard does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Delete dashboard&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response deleteDashboard(@PathParam(&quot;dashboardId&quot;) final String id) {
+<span class="nc bnc" id="L374" title="All 2 branches missed.">		if (!dashboardController.deleteDashboard(id)) {</span>
+<span class="nc" id="L375">			return notFound(&quot;A dashboard with id '&quot; + id + &quot;' does not exist.&quot;);</span>
+		}
+<span class="nc" id="L377">		return ok().build();</span>
+	}
+
+	public static class DashboardInfo {
+		public DashboardInfo(final Dashboard dashboard) {
+<span class="nc" id="L382">			this(dashboard.getId(), dashboard.getTitle(), dashboard.isEnabled());</span>
+<span class="nc" id="L383">		}</span>
+
+		public DashboardInfo(@NotNull @NotEmpty @NotBlank final String id,
+				@NotNull @NotEmpty @NotBlank final String title,
+<span class="nc" id="L387">				@NotNull final boolean enabled) {</span>
+<span class="nc" id="L388">			this.id = id;</span>
+<span class="nc" id="L389">			this.title = title;</span>
+<span class="nc" id="L390">			this.enabled = enabled;</span>
+<span class="nc" id="L391">		}</span>
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		private String id;
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		private String title;
+
+		@NotNull
+		private boolean enabled;
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		public String getId() {
+<span class="nc" id="L410">			return id;</span>
+		}
+
+		@NotNull
+		@NotEmpty
+		@NotBlank
+		public String getTitle() {
+<span class="nc" id="L417">			return title;</span>
+		}
+
+		@NotNull
+		public boolean isEnabled() {
+<span class="nc" id="L422">			return enabled;</span>
+		}
+	}
+
+	public static class WidgetPosition {
+<span class="nc" id="L427">		public WidgetPosition() {</span>
+			// no fields to be initialized
+<span class="nc" id="L429">		}</span>
+
+		@NotNull
+		@Min(1)
+		@Positive
+		@JsonPropertyDescription(&quot;The ID of the widget this position applys to&quot;)
+		private int widgetId;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		@JsonPropertyDescription(&quot;The widget's position on the X axis&quot;)
+		private int posX;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		@JsonPropertyDescription(&quot;The widget's position on the Y axis&quot;)
+		private int posY;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		@JsonPropertyDescription(&quot;The widget's width&quot;)
+		private int sizeX;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		@JsonPropertyDescription(&quot;The widget's height&quot;)
+		private int sizeY;
+
+		public int getWidgetId() {
+<span class="nc" id="L462">			return widgetId;</span>
+		}
+
+		public int getPosX() {
+<span class="nc" id="L466">			return posX;</span>
+		}
+
+		public int getPosY() {
+<span class="nc" id="L470">			return posY;</span>
+		}
+
+		public int getSizeX() {
+<span class="nc" id="L474">			return sizeX;</span>
+		}
+
+		public int getSizeY() {
+<span class="nc" id="L478">			return sizeY;</span>
+		}
+
+		public void setWidgetId(final int widgetId) {
+<span class="nc" id="L482">			this.widgetId = widgetId;</span>
+<span class="nc" id="L483">		}</span>
+
+		public void setPosX(final int posX) {
+<span class="nc" id="L486">			this.posX = posX;</span>
+<span class="nc" id="L487">		}</span>
+
+		public void setPosY(final int posY) {
+<span class="nc" id="L490">			this.posY = posY;</span>
+<span class="nc" id="L491">		}</span>
+
+		public void setSizeX(final int sizeX) {
+<span class="nc" id="L494">			this.sizeX = sizeX;</span>
+<span class="nc" id="L495">		}</span>
+
+		public void setSizeY(final int sizeY) {
+<span class="nc" id="L498">			this.sizeY = sizeY;</span>
+<span class="nc" id="L499">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

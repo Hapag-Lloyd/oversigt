@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NightlyService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.eventsource</a> &gt; <span class="el_source">NightlyService.java</span></div><h1>NightlyService.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.eventsource;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.AbstractScheduledService;
+
+/**
+ * Scheduled EventSource - produces events with specified time period.
+ * Basically, based on Guava's
+ * {@link com.google.common.util.concurrent.AbstractScheduledService}
+ *
+ * @author neumaol
+ */
+public abstract class NightlyService extends AbstractScheduledService {
+<span class="nc" id="L17">	protected NightlyService() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L19">	}</span>
+
+	@Override
+	protected final Scheduler scheduler() {
+		final LocalDateTime tomorrowMidnight
+<span class="nc" id="L24">				= LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).plusDays(1);</span>
+<span class="nc" id="L25">		final Duration durationUntilMidnight = Duration.between(LocalDateTime.now(), tomorrowMidnight).abs();</span>
+<span class="nc" id="L26">		return Scheduler.newFixedDelaySchedule(durationUntilMidnight.getSeconds(),</span>
+<span class="nc" id="L27">				Duration.ofDays(1).getSeconds(),</span>
+				TimeUnit.SECONDS);
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractDownloadEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractDownloadEventSource.java</span></div><h1>AbstractDownloadEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logTrace;
+import static com.hlag.oversigt.util.Utils.logWarn;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import org.apache.commons.io.IOUtils;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.HttpProxy;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.util.SSLUtils;
+import com.hlag.oversigt.util.function.ThrowingBiFunction;
+import com.hlag.oversigt.util.text.TextProcessor;
+
+import de.larssh.utils.text.StringConverters;
+
+<span class="nc" id="L52">public abstract class AbstractDownloadEventSource&lt;T extends OversigtEvent&gt; extends AbstractSslAwareEventSource&lt;T&gt; {</span>
+<span class="nc" id="L53">	private static final Pattern PATTERN_URL_MATCHER_REPLACEMENT = Pattern.compile(&quot;\\$\\{([0-9]+)\\.([0-9]+)\\}&quot;);</span>
+
+<span class="nc" id="L55">	private HttpProxy proxy = HttpProxy.EMPTY;</span>
+
+<span class="nc" id="L57">	private InternetAddress[] urls = new InternetAddress[] {</span>
+			new InternetAddress(&quot;http://dilbert.com&quot;,
+					&quot;&lt;img[^&gt;]*src=\&quot;(?:https?:)?(//assets\\.amuniversal\\.com/[a-zA-Z0-9]+)\&quot;[^&gt;]*/?&gt;&quot;),
+			new InternetAddress(&quot;https:${1.1}&quot;, &quot;&quot;) };
+
+<span class="nc" id="L62">	private HttpHeader[] httpHeaders = new HttpHeader[0];</span>
+
+<span class="nc" id="L64">	private Credentials credentials = Credentials.EMPTY;</span>
+
+	@Property(name = &quot;Web Proxy&quot;, description = &quot;The proxy server to be used to contact to the internet.&quot;)
+	public HttpProxy getHttpProxy() {
+<span class="nc" id="L68">		return proxy;</span>
+	}
+
+	public void setHttpProxy(final HttpProxy proxy) {
+<span class="nc" id="L72">		this.proxy = proxy;</span>
+<span class="nc" id="L73">	}</span>
+
+	private TextProcessor createTextProcessor() {
+<span class="nc" id="L76">		return new TextProcessor().registerDatetimeFunctions();</span>
+	}
+
+	private URLConnection createConnection(final String urlString,
+			final Optional&lt;String&gt; cookie,
+			final Collection&lt;LoginData&gt; loginData) throws IOException {
+<span class="nc" id="L82">		final URL url = new URL(urlString);</span>
+<span class="nc" id="L83">		final URLConnection con = url.openConnection(getHttpProxy().getProxy());</span>
+<span class="nc" id="L84">		con.setConnectTimeout(30 * 1000);</span>
+<span class="nc" id="L85">		con.setReadTimeout(30 * 1000);</span>
+<span class="nc" id="L86">		con.setRequestProperty(&quot;User-Agent&quot;,</span>
+<span class="nc" id="L87">				&quot;Mozilla/5.0 Java/&quot; + System.getProperty(&quot;java.version&quot;) + &quot; Oversigt/0.9&quot;);</span>
+
+<span class="nc bnc" id="L89" title="All 4 branches missed.">		if (con instanceof HttpsURLConnection &amp;&amp; !isCheckSSL()) {</span>
+<span class="nc" id="L90">			((HttpsURLConnection) con).setSSLSocketFactory(SSLUtils.getNonCheckingSSLSocketFactory(getEventId()));</span>
+<span class="nc" id="L91">			((HttpsURLConnection) con).setHostnameVerifier((hostname, session) -&gt; true);</span>
+		}
+
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if (con instanceof HttpURLConnection) {</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			for (final HttpHeader httpHeader : getHttpHeaders()) {</span>
+<span class="nc" id="L96">				con.setRequestProperty(httpHeader.getName(), httpHeader.getValue());</span>
+			}
+		}
+
+<span class="nc bnc" id="L100" title="All 2 branches missed.">		if (cookie.isPresent()) {</span>
+<span class="nc" id="L101">			con.setRequestProperty(&quot;Cookie&quot;, cookie.get());</span>
+<span class="nc bnc" id="L102" title="All 4 branches missed.">		} else if (loginData.isEmpty() &amp;&amp; getCredentials() != Credentials.EMPTY) {</span>
+<span class="nc" id="L103">			final String encoded = Base64.getEncoder()</span>
+<span class="nc" id="L104">					.encodeToString((getCredentials().getUsername() + &quot;:&quot; + getCredentials().getPassword())</span>
+<span class="nc" id="L105">							.getBytes(StandardCharsets.UTF_8));</span>
+<span class="nc" id="L106">			con.setRequestProperty(&quot;Authorization&quot;, &quot;Basic &quot; + encoded);</span>
+		}
+
+<span class="nc bnc" id="L109" title="All 4 branches missed.">		if (con instanceof HttpURLConnection &amp;&amp; !loginData.isEmpty()) {</span>
+<span class="nc" id="L110">			final HttpURLConnection hcon = (HttpURLConnection) con;</span>
+<span class="nc" id="L111">			hcon.setDoOutput(true);</span>
+<span class="nc" id="L112">			hcon.setInstanceFollowRedirects(false);</span>
+<span class="nc" id="L113">			hcon.setRequestMethod(&quot;POST&quot;);</span>
+<span class="nc" id="L114">			hcon.setRequestProperty(&quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot;);</span>
+<span class="nc" id="L115">			hcon.setUseCaches(false);</span>
+<span class="nc" id="L116">			try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(hcon.getOutputStream()))) {</span>
+<span class="nc" id="L117">				final List&lt;String&gt; parts = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">				for (final LoginData data : loginData) {</span>
+<span class="nc" id="L119">					parts.add(data.getName());</span>
+<span class="nc" id="L120">					parts.add(data.getValue()</span>
+<span class="nc" id="L121">							.replace(&quot;${domain}&quot;, getCredentials().getDomain())</span>
+<span class="nc" id="L122">							.replace(&quot;${username}&quot;, getCredentials().getUsername())</span>
+<span class="nc" id="L123">							.replace(&quot;${password}&quot;, getCredentials().getPassword()));</span>
+<span class="nc" id="L124">				}</span>
+<span class="nc" id="L125">				final String string = createXWwwUrlEncoded(parts.toArray(new String[0]));</span>
+<span class="nc" id="L126">				writer.append(string);</span>
+			}
+		}
+
+<span class="nc" id="L130">		return con;</span>
+	}
+
+	protected URLConnection createConnection(final String urlString) throws IOException {
+<span class="nc" id="L134">		return createConnection(Arrays.asList(InternetAddress.fromUrl(new URL(urlString))));</span>
+	}
+
+	protected URLConnection createConnection(final URL url) throws IOException {
+<span class="nc" id="L138">		return createConnection(Arrays.asList(InternetAddress.fromUrl(url)));</span>
+	}
+
+	protected URLConnection createConnection(final List&lt;InternetAddress&gt; addresses) throws IOException {
+<span class="nc" id="L142">		final TextProcessor textProcessor = createTextProcessor();</span>
+<span class="nc" id="L143">		final List&lt;List&lt;String&gt;&gt; replacements = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L144">		Optional&lt;URLConnection&gt; connection = Optional.empty();</span>
+<span class="nc" id="L145">		Optional&lt;String&gt; cookie = Optional.empty();</span>
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		for (int i = 0; i &lt; addresses.size(); i += 1) {</span>
+<span class="nc" id="L148">			final InternetAddress internetAddress = addresses.get(i);</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">			if (connection.isPresent()) {</span>
+<span class="nc" id="L150">				logDebug(getLogger(), &quot;Reading cookie from old connection&quot;);</span>
+<span class="nc" id="L151">				final String newCookie = connection.get().getHeaderField(&quot;Set-Cookie&quot;);</span>
+<span class="nc" id="L152">				logTrace(getLogger(), &quot;New Cookie: %s&quot;, cookie);</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">				if (newCookie != null) {</span>
+<span class="nc" id="L154">					cookie = Optional.ofNullable(newCookie);</span>
+				}
+
+<span class="nc" id="L157">				logDebug(getLogger(), &quot;Closing connection&quot;);</span>
+<span class="nc" id="L158">				connection.get().getInputStream().close();</span>
+<span class="nc" id="L159">				connection = Optional.empty();</span>
+			}
+
+<span class="nc" id="L162">			String url = internetAddress.getUrlString();</span>
+<span class="nc" id="L163">			logTrace(getLogger(), &quot;Matching URL: %s&quot;, url);</span>
+<span class="nc" id="L164">			final Matcher repmat = PATTERN_URL_MATCHER_REPLACEMENT.matcher(url);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">			while (repmat.find()) {</span>
+<span class="nc" id="L166">				final int major = Integer.parseInt(repmat.group(1));</span>
+<span class="nc" id="L167">				final int minor = Integer.parseInt(repmat.group(2));</span>
+<span class="nc bnc" id="L168" title="All 4 branches missed.">				if (replacements.size() &lt; major || replacements.get(major - 1).size() &lt; minor) {</span>
+<span class="nc" id="L169">					throw new RuntimeException(&quot;Unable to find replacement ${&quot; + major + &quot;.&quot; + minor + &quot;}&quot;);</span>
+				}
+<span class="nc bnc" id="L171" title="All 4 branches missed.">				if (replacements.get(major - 1) != null &amp;&amp; replacements.get(major - 1).get(minor - 1) != null) {</span>
+<span class="nc" id="L172">					final String search = &quot;${&quot; + major + &quot;.&quot; + minor + &quot;}&quot;;</span>
+<span class="nc" id="L173">					final String replacement = replacements.get(major - 1).get(minor - 1);</span>
+<span class="nc" id="L174">					url = url.replace(search, replacement);</span>
+<span class="nc" id="L175">					logTrace(getLogger(), &quot;Replacing %s with %s to %s&quot;, search, replacement, url);</span>
+				}
+<span class="nc" id="L177">			}</span>
+<span class="nc" id="L178">			logDebug(getLogger(), &quot;Connecting to URL: %s&quot;, url);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">			if (url != null) {</span>
+<span class="nc" id="L180">				url = textProcessor.process(url);</span>
+<span class="nc" id="L181">				connection = Optional.of(createConnection(url, cookie, Arrays.asList(internetAddress.getLoginDatas())));</span>
+<span class="nc" id="L182">				final Optional&lt;Pattern&gt; pattern = internetAddress.getPattern();</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">				if (pattern.isPresent()) {</span>
+<span class="nc" id="L184">					final List&lt;String&gt; reps = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L185">					logDebug(getLogger(), &quot;Downloading content for matcher: %s&quot;, pattern.toString());</span>
+<span class="nc" id="L186">					final String content = downloadString(connection.get());</span>
+<span class="nc" id="L187">					final Matcher matcher = pattern.get().matcher(content);</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">					if (matcher.find()) {</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">						for (int j = 1; j &lt;= matcher.groupCount(); j += 1) {</span>
+<span class="nc" id="L190">							reps.add(matcher.group(j));</span>
+						}
+					}
+<span class="nc" id="L193">					logDebug(getLogger(), &quot;Adding replacements: %s&quot;, (Supplier&lt;String&gt;) () -&gt; reps.toString());</span>
+<span class="nc" id="L194">					replacements.add(reps);</span>
+
+<span class="nc bnc" id="L196" title="All 4 branches missed.">					if (i == addresses.size() - 1 &amp;&amp; replacements.size() == 1) {</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">						if (reps.isEmpty()) {</span>
+<span class="nc" id="L198">							throw new RuntimeException(&quot;Pattern did not match. Unable to call next URL.&quot;);</span>
+						}
+<span class="nc" id="L200">						addresses.add(new InternetAddress(reps.get(0)));</span>
+					}
+				}
+			}
+		}
+<span class="nc" id="L205">		return connection.orElseThrow(() -&gt; new RuntimeException(&quot;Unable to create URLConnection&quot;));</span>
+	}
+
+	protected URLConnection createConfiguredConnection() throws IOException {
+<span class="nc" id="L209">		return createConnection(new ArrayList&lt;&gt;(Arrays.asList(getUrls())));</span>
+	}
+
+	protected DownloadData downloadBytes(final URLConnection connectionToRead) throws IOException {
+<span class="nc" id="L213">		return read(connectionToRead, //</span>
+				(connection, inputStream) -&gt; //
+<span class="nc" id="L215">				new DownloadData(ByteStreams.toByteArray(inputStream), connection.getContentType()));</span>
+	}
+
+	protected String downloadString(final URLConnection connectionToRead) throws IOException {
+<span class="nc" id="L219">		return read(connectionToRead,</span>
+<span class="nc" id="L220">				(connection, inputStream) -&gt; IOUtils.toString(inputStream,</span>
+<span class="nc" id="L221">						Objects.toString(connection.getContentEncoding(), &quot;UTF-8&quot;)));</span>
+	}
+
+	private &lt;R&gt; R read(final URLConnection inputConnection,
+			final ThrowingBiFunction&lt;URLConnection, InputStream, R&gt; inputStreamConsumer) throws IOException {
+<span class="nc" id="L226">		final URLConnection connectionToRead = handleRedirects(inputConnection);</span>
+<span class="nc" id="L227">		try (StartedAction action</span>
+<span class="nc" id="L228">				= getStatisticsCollector().startAction(&quot;Download&quot;, inputConnection.getURL().toExternalForm());</span>
+<span class="nc" id="L229">				InputStream in = connectionToRead.getInputStream()) {</span>
+<span class="nc" id="L230">			return inputStreamConsumer.apply(connectionToRead, in);</span>
+<span class="nc" id="L231">		} catch (final IOException e) {</span>
+<span class="nc" id="L232">			throw e;</span>
+<span class="nc" id="L233">		} catch (final Exception e) {</span>
+<span class="nc" id="L234">			throw new RuntimeException(&quot;Error while reading data from connection.&quot;, e);</span>
+		}
+	}
+
+	private URLConnection handleRedirects(final URLConnection connection) throws IOException {
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		if (connection instanceof HttpURLConnection) {</span>
+<span class="nc" id="L240">			return handleRedirects((HttpURLConnection) connection);</span>
+		}
+<span class="nc" id="L242">		logWarn(getLogger(),</span>
+				&quot;Encountered URLConnection of type [%s]. Unable to handle redirect.&quot;,
+<span class="nc" id="L244">				connection.getClass().getName());</span>
+<span class="nc" id="L245">		return connection;</span>
+	}
+
+	private URLConnection handleRedirects(final HttpURLConnection connection) throws IOException {
+<span class="nc" id="L249">		final Map&lt;String, List&lt;String&gt;&gt; headerParameters</span>
+<span class="nc" id="L250">				= Collections.unmodifiableMap(new LinkedHashMap&lt;&gt;(connection.getRequestProperties()));</span>
+
+<span class="nc" id="L252">		final int status = connection.getResponseCode();</span>
+<span class="nc bnc" id="L253" title="All 4 branches missed.">		if (status &gt;= 200 &amp;&amp; status &lt; 300) /* status == HttpURLConnection.HTTP_OK */ {</span>
+<span class="nc" id="L254">			return connection;</span>
+		}
+
+<span class="nc bnc" id="L257" title="All 10 branches missed.">		if (status == HttpURLConnection.HTTP_MOVED_PERM</span>
+				|| status == HttpURLConnection.HTTP_MOVED_TEMP
+				|| status == HttpURLConnection.HTTP_SEE_OTHER
+				|| status == 307 // temporary redirect
+				|| status == 308 // permanent redirect // TODO safe new URL
+		) {
+			// create new connection new new URL
+			final URI uri;
+			try {
+<span class="nc" id="L266">				uri = new URI(connection.getHeaderField(&quot;Location&quot;));</span>
+<span class="nc" id="L267">			} catch (final URISyntaxException e) {</span>
+<span class="nc" id="L268">				throw new IOException(&quot;Invalid redirect&quot;, e);</span>
+<span class="nc" id="L269">			}</span>
+			final URL url;
+<span class="nc bnc" id="L271" title="All 2 branches missed.">			if (uri.isAbsolute()) {</span>
+<span class="nc" id="L272">				url = uri.toURL();</span>
+			} else {
+<span class="nc" id="L274">				url = new URL(connection.getURL(), connection.getHeaderField(&quot;Location&quot;));</span>
+			}
+
+			// set correct HTTP method
+			final String method;
+<span class="nc" id="L279">			final URLConnection newConnection = url.openConnection(getHttpProxy().getProxy());</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">			if (newConnection instanceof HttpURLConnection) {</span>
+<span class="nc" id="L281">				final HttpURLConnection httpConnection = (HttpURLConnection) newConnection;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">				if (status == HttpURLConnection.HTTP_SEE_OTHER) {</span>
+<span class="nc" id="L283">					httpConnection.setRequestMethod(&quot;GET&quot;);</span>
+				} else {
+<span class="nc" id="L285">					httpConnection.setRequestMethod(connection.getRequestMethod());</span>
+				}
+<span class="nc" id="L287">				method = httpConnection.getRequestMethod();</span>
+<span class="nc" id="L288">			} else {</span>
+<span class="nc" id="L289">				method = null;</span>
+			}
+
+			// copy settings from old connection
+<span class="nc" id="L293">			newConnection.setAllowUserInteraction(connection.getAllowUserInteraction());</span>
+<span class="nc" id="L294">			newConnection.setConnectTimeout(connection.getConnectTimeout());</span>
+<span class="nc" id="L295">			newConnection.setDefaultUseCaches(connection.getDefaultUseCaches());</span>
+<span class="nc" id="L296">			newConnection.setDoInput(connection.getDoInput());</span>
+<span class="nc" id="L297">			newConnection.setDoOutput(connection.getDoOutput());</span>
+<span class="nc" id="L298">			newConnection.setIfModifiedSince(connection.getIfModifiedSince());</span>
+<span class="nc" id="L299">			newConnection.setReadTimeout(connection.getReadTimeout());</span>
+<span class="nc" id="L300">			newConnection.setUseCaches(connection.getUseCaches());</span>
+<span class="nc" id="L301">			headerParameters.entrySet()</span>
+<span class="nc" id="L302">					.stream()</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">					.filter(e -&gt; !Arrays.asList(&quot;Host&quot;, &quot;Connection&quot;).contains(e.getKey()))</span>
+<span class="nc bnc" id="L304" title="All 4 branches missed.">					.filter(e -&gt; method == null || !e.getKey().startsWith(method + &quot; &quot;))</span>
+<span class="nc" id="L305">					.forEach(e -&gt; e.getValue().forEach(v -&gt; newConnection.addRequestProperty(e.getKey(), v)));</span>
+
+			// done
+<span class="nc" id="L308">			return handleRedirects(newConnection);</span>
+		}
+
+<span class="nc" id="L311">		throw new IOException(&quot;Return code &quot; + status + &quot; from URL: &quot; + connection.getURL());</span>
+	}
+
+	@Property(name = &quot;Internet Addresses&quot;,
+			description = &quot;The internet addresses to download. The event source will call all addressed you specify in the given order. Use these addresses to navigate through complex websites and use placeholders like ${1.1} etc. to reference groups from previous urls. If the last address contains a pattern with exactly one capturing group this group will be interpreted as an URL and Oversigt will try to reach that address. If you need to log in to a page: use the placeholders ${domain}, ${username} and ${password} to insert credentials into login data.&quot;)
+	public InternetAddress[] getUrls() {
+<span class="nc" id="L317">		return urls;</span>
+	}
+
+	public void setUrls(final InternetAddress[] urls) {
+<span class="nc" id="L321">		this.urls = urls;</span>
+<span class="nc" id="L322">	}</span>
+
+	@Property(name = &quot;Credentials&quot;, description = &quot;The username and password to be used to access the websites&quot;)
+	public Credentials getCredentials() {
+<span class="nc" id="L326">		return credentials;</span>
+	}
+
+	public void setCredentials(final Credentials credentials) {
+<span class="nc" id="L330">		this.credentials = credentials;</span>
+<span class="nc" id="L331">	}</span>
+
+	@Property(name = &quot;HTTP Headers&quot;, description = &quot;Possible HTTP headers to be sent to the server&quot;)
+	public HttpHeader[] getHttpHeaders() {
+<span class="nc" id="L335">		return httpHeaders;</span>
+	}
+
+	public void setHttpHeaders(final HttpHeader[] httpHeaders) {
+<span class="nc" id="L339">		this.httpHeaders = httpHeaders;</span>
+<span class="nc" id="L340">	}</span>
+
+	private static String createXWwwUrlEncoded(final String... strings) {
+<span class="nc" id="L343">		final StringBuilder builder = new StringBuilder();</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">		for (int index = 0; index &lt; strings.length; index += 2) {</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">			if (index &gt; 0) {</span>
+<span class="nc" id="L346">				builder.append(&quot;&amp;&quot;);</span>
+			}
+<span class="nc" id="L348">			builder.append(strings[index]).append(&quot;=&quot;).append(StringConverters.encodeUrl(strings[index + 1]));</span>
+		}
+<span class="nc" id="L350">		return builder.toString();</span>
+	}
+
+	@JsonHint(headerTemplate = &quot;URL #{{i1}}&quot;, arrayStyle = ArrayStyle.GRID)
+	public static class InternetAddress {
+		static InternetAddress fromUrl(final URL url) {
+<span class="nc" id="L356">			return new InternetAddress(url.toString());</span>
+		}
+
+		private final String address;
+
+		private final String pattern;
+
+<span class="nc" id="L363">		private LoginData[] loginDatas = new LoginData[0];</span>
+
+<span class="nc" id="L365">		public InternetAddress(final String urlString) {</span>
+<span class="nc" id="L366">			address = urlString;</span>
+<span class="nc" id="L367">			pattern = &quot;&quot;;</span>
+<span class="nc" id="L368">		}</span>
+
+		@JsonCreator
+		public InternetAddress(@JsonProperty(&quot;urlString&quot;) final String urlString,
+<span class="nc" id="L372">				@JsonProperty(&quot;pattern&quot;) final String patternString) {</span>
+<span class="nc" id="L373">			address = urlString;</span>
+<span class="nc" id="L374">			pattern = patternString;</span>
+<span class="nc" id="L375">		}</span>
+
+		public String getUrlString() {
+<span class="nc" id="L378">			return address;</span>
+		}
+
+		public Optional&lt;Pattern&gt; getPattern() {
+<span class="nc" id="L382">			return Optional.ofNullable(Strings.emptyToNull(pattern)).map(p -&gt; Pattern.compile(p, Pattern.DOTALL));</span>
+		}
+
+		public LoginData[] getLoginDatas() {
+<span class="nc" id="L386">			return Optional.ofNullable(loginDatas).orElse(new LoginData[0]);</span>
+		}
+	}
+
+	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = &quot;{{self.name}}&quot;)
+	public static class LoginData {
+		private final String name;
+
+		private final String value;
+
+		@JsonCreator
+<span class="nc" id="L397">		public LoginData(@JsonProperty(&quot;name&quot;) final String name, @JsonProperty(&quot;value&quot;) final String value) {</span>
+<span class="nc" id="L398">			this.name = name;</span>
+<span class="nc" id="L399">			this.value = value;</span>
+<span class="nc" id="L400">		}</span>
+
+		public String getName() {
+<span class="nc" id="L403">			return name;</span>
+		}
+
+		public String getValue() {
+<span class="nc" id="L407">			return value;</span>
+		}
+	}
+
+	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = &quot;{{self.name}}&quot;)
+	public static class HttpHeader {
+		private final String name;
+
+		private final String value;
+
+		@JsonCreator
+<span class="nc" id="L418">		public HttpHeader(@JsonProperty(&quot;name&quot;) final String name, @JsonProperty(&quot;value&quot;) final String value) {</span>
+<span class="nc" id="L419">			this.name = name;</span>
+<span class="nc" id="L420">			this.value = value;</span>
+<span class="nc" id="L421">		}</span>
+
+		public String getName() {
+<span class="nc" id="L424">			return name;</span>
+		}
+
+		public String getValue() {
+<span class="nc" id="L428">			return value;</span>
+		}
+	}
+
+	protected static final class DownloadData {
+		private final byte[] data;
+
+		private final String contentType;
+
+<span class="nc" id="L437">		private DownloadData(final byte[] data, final String contentType) {</span>
+<span class="nc" id="L438">			this.data = data;</span>
+<span class="nc" id="L439">			this.contentType = contentType;</span>
+<span class="nc" id="L440">		}</span>
+
+		public String getContentType() {
+<span class="nc" id="L443">			return contentType;</span>
+		}
+
+		public byte[] getData() {
+<span class="nc" id="L447">			return data;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

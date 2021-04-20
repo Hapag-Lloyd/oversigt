@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Roles.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.security</a> &gt; <span class="el_source">Roles.java</span></div><h1>Roles.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.security;
+
+import java.util.Optional;
+
+import com.google.common.base.Ascii;
+
+<span class="nc" id="L7">public enum Roles {</span>
+<span class="nc" id="L8">	ADMIN(&quot;Server Admin&quot;, &quot;server.admin&quot;, Role.SERVER_ADMIN),</span>
+<span class="nc" id="L9">	DASHBOARD_OWNER(&quot;Owner&quot;, &quot;server.dashboard.owner&quot;, Role.DASHBOARD_OWNER),</span>
+<span class="nc" id="L10">	DASHBOARD_EDITOR(&quot;Editor&quot;, &quot;server.dashboard.editor&quot;, Role.DASHBOARD_EDITOR);</span>
+
+	private final String displayName;
+
+	private final String name;
+
+	private final Role role;
+
+<span class="nc" id="L18">	Roles(final String displayName, final String name, final Role role) {</span>
+<span class="nc" id="L19">		this.displayName = displayName;</span>
+<span class="nc" id="L20">		this.name = name;</span>
+<span class="nc" id="L21">		this.role = role;</span>
+<span class="nc" id="L22">	}</span>
+
+	public String getDisplayName() {
+<span class="nc" id="L25">		return displayName;</span>
+	}
+
+	String getName() {
+<span class="nc" id="L29">		return name;</span>
+	}
+
+	public Role getRole() {
+<span class="nc" id="L33">		return role;</span>
+	}
+
+	public static Optional&lt;Roles&gt; fromString(final String string) {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">		for (final Roles roles : values()) {</span>
+<span class="nc bnc" id="L38" title="All 4 branches missed.">			if (Ascii.equalsIgnoreCase(roles.name(), string) || Ascii.equalsIgnoreCase(roles.name, string)) {</span>
+<span class="nc" id="L39">				return Optional.of(roles);</span>
+			}
+		}
+<span class="nc" id="L42">		return Optional.empty();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

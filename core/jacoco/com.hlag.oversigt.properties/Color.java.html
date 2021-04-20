@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Color.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.properties</a> &gt; <span class="el_source">Color.java</span></div><h1>Color.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.properties;
+
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+import de.larssh.utils.collection.Maps;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+public class Color {
+<span class="nc" id="L21">	private static final Map&lt;String, Color&gt; CSS_COLORS</span>
+<span class="nc" id="L22">			= Maps.builder(new TreeMap&lt;String, Color&gt;(String.CASE_INSENSITIVE_ORDER))</span>
+<span class="nc" id="L23">					.put(&quot;AliceBlue&quot;, parseString(&quot;#F0F8FF&quot;))</span>
+<span class="nc" id="L24">					.put(&quot;AntiqueWhite&quot;, parseString(&quot;#FAEBD7&quot;))</span>
+<span class="nc" id="L25">					.put(&quot;Aqua&quot;, parseString(&quot;#00FFFF&quot;))</span>
+<span class="nc" id="L26">					.put(&quot;AquaMarine&quot;, parseString(&quot;#7FFFD4&quot;))</span>
+<span class="nc" id="L27">					.put(&quot;Azure&quot;, parseString(&quot;#F0FFFF&quot;))</span>
+<span class="nc" id="L28">					.put(&quot;Beige&quot;, parseString(&quot;#F5F5DC&quot;))</span>
+<span class="nc" id="L29">					.put(&quot;Bisque&quot;, parseString(&quot;#FFE4C4&quot;))</span>
+<span class="nc" id="L30">					.put(&quot;Black&quot;, parseString(&quot;#000000&quot;))</span>
+<span class="nc" id="L31">					.put(&quot;BlanchedAlmond&quot;, parseString(&quot;#FFEBCD&quot;))</span>
+<span class="nc" id="L32">					.put(&quot;Blue&quot;, parseString(&quot;#0000FF&quot;))</span>
+<span class="nc" id="L33">					.put(&quot;BlueViolet&quot;, parseString(&quot;#8A2BE2&quot;))</span>
+<span class="nc" id="L34">					.put(&quot;Brown&quot;, parseString(&quot;#A52A2A&quot;))</span>
+<span class="nc" id="L35">					.put(&quot;BurlyWood&quot;, parseString(&quot;#DEB887&quot;))</span>
+<span class="nc" id="L36">					.put(&quot;CadetBlue&quot;, parseString(&quot;#5F9EA0&quot;))</span>
+<span class="nc" id="L37">					.put(&quot;Chartreuse&quot;, parseString(&quot;#7FFF00&quot;))</span>
+<span class="nc" id="L38">					.put(&quot;Chocolate&quot;, parseString(&quot;#D2691E&quot;))</span>
+<span class="nc" id="L39">					.put(&quot;Coral&quot;, parseString(&quot;#FF7F50&quot;))</span>
+<span class="nc" id="L40">					.put(&quot;CornflowerBlue&quot;, parseString(&quot;#6495ED&quot;))</span>
+<span class="nc" id="L41">					.put(&quot;Cornsilk&quot;, parseString(&quot;#FFF8DC&quot;))</span>
+<span class="nc" id="L42">					.put(&quot;Crimson&quot;, parseString(&quot;#DC143C&quot;))</span>
+<span class="nc" id="L43">					.put(&quot;Cyan&quot;, parseString(&quot;#00FFFF&quot;))</span>
+<span class="nc" id="L44">					.put(&quot;DarkBlue&quot;, parseString(&quot;#00008B&quot;))</span>
+<span class="nc" id="L45">					.put(&quot;DarkCyan&quot;, parseString(&quot;#008B8B&quot;))</span>
+<span class="nc" id="L46">					.put(&quot;DarkGoldenRod&quot;, parseString(&quot;#B8860B&quot;))</span>
+<span class="nc" id="L47">					.put(&quot;DarkGray&quot;, parseString(&quot;#A9A9A9&quot;))</span>
+<span class="nc" id="L48">					.put(&quot;DarkGrey&quot;, parseString(&quot;#A9A9A9&quot;))</span>
+<span class="nc" id="L49">					.put(&quot;DarkGreen&quot;, parseString(&quot;#006400&quot;))</span>
+<span class="nc" id="L50">					.put(&quot;DarkKhaki&quot;, parseString(&quot;#BDB76B&quot;))</span>
+<span class="nc" id="L51">					.put(&quot;DarkMagenta&quot;, parseString(&quot;#8B008B&quot;))</span>
+<span class="nc" id="L52">					.put(&quot;DarkOliveGreen&quot;, parseString(&quot;#556B2F&quot;))</span>
+<span class="nc" id="L53">					.put(&quot;DarkOrange&quot;, parseString(&quot;#FF8C00&quot;))</span>
+<span class="nc" id="L54">					.put(&quot;DarkOrchid&quot;, parseString(&quot;#9932CC&quot;))</span>
+<span class="nc" id="L55">					.put(&quot;DarkRed&quot;, parseString(&quot;#8B0000&quot;))</span>
+<span class="nc" id="L56">					.put(&quot;DarkSalmon&quot;, parseString(&quot;#E9967A&quot;))</span>
+<span class="nc" id="L57">					.put(&quot;DarkSeaGreen&quot;, parseString(&quot;#8FBC8F&quot;))</span>
+<span class="nc" id="L58">					.put(&quot;DarkSlateBlue&quot;, parseString(&quot;#483D8B&quot;))</span>
+<span class="nc" id="L59">					.put(&quot;DarkSlateGray&quot;, parseString(&quot;#2F4F4F&quot;))</span>
+<span class="nc" id="L60">					.put(&quot;DarkSlateGrey&quot;, parseString(&quot;#2F4F4F&quot;))</span>
+<span class="nc" id="L61">					.put(&quot;DarkTurquoise&quot;, parseString(&quot;#00CED1&quot;))</span>
+<span class="nc" id="L62">					.put(&quot;DarkViolet&quot;, parseString(&quot;#9400D3&quot;))</span>
+<span class="nc" id="L63">					.put(&quot;DeepPink&quot;, parseString(&quot;#FF1493&quot;))</span>
+<span class="nc" id="L64">					.put(&quot;DeepSkyBlue&quot;, parseString(&quot;#00BFFF&quot;))</span>
+<span class="nc" id="L65">					.put(&quot;DimGray&quot;, parseString(&quot;#696969&quot;))</span>
+<span class="nc" id="L66">					.put(&quot;DimGrey&quot;, parseString(&quot;#696969&quot;))</span>
+<span class="nc" id="L67">					.put(&quot;DodgerBlue&quot;, parseString(&quot;#1E90FF&quot;))</span>
+<span class="nc" id="L68">					.put(&quot;FireBrick&quot;, parseString(&quot;#B22222&quot;))</span>
+<span class="nc" id="L69">					.put(&quot;FloralWhite&quot;, parseString(&quot;#FFFAF0&quot;))</span>
+<span class="nc" id="L70">					.put(&quot;ForestGreen&quot;, parseString(&quot;#228B22&quot;))</span>
+<span class="nc" id="L71">					.put(&quot;Fuchsia&quot;, parseString(&quot;#FF00FF&quot;))</span>
+<span class="nc" id="L72">					.put(&quot;Gainsboro&quot;, parseString(&quot;#DCDCDC&quot;))</span>
+<span class="nc" id="L73">					.put(&quot;GhostWhite&quot;, parseString(&quot;#F8F8FF&quot;))</span>
+<span class="nc" id="L74">					.put(&quot;Gold&quot;, parseString(&quot;#FFD700&quot;))</span>
+<span class="nc" id="L75">					.put(&quot;GoldenRod&quot;, parseString(&quot;#DAA520&quot;))</span>
+<span class="nc" id="L76">					.put(&quot;Gray&quot;, parseString(&quot;#808080&quot;))</span>
+<span class="nc" id="L77">					.put(&quot;Grey&quot;, parseString(&quot;#808080&quot;))</span>
+<span class="nc" id="L78">					.put(&quot;Green&quot;, parseString(&quot;#008000&quot;))</span>
+<span class="nc" id="L79">					.put(&quot;GreenYellow&quot;, parseString(&quot;#ADFF2F&quot;))</span>
+<span class="nc" id="L80">					.put(&quot;HoneyDew&quot;, parseString(&quot;#F0FFF0&quot;))</span>
+<span class="nc" id="L81">					.put(&quot;HotPink&quot;, parseString(&quot;#FF69B4&quot;))</span>
+<span class="nc" id="L82">					.put(&quot;IndianRed&quot;, parseString(&quot;#CD5C5C&quot;))</span>
+<span class="nc" id="L83">					.put(&quot;Indigo&quot;, parseString(&quot;#4B0082&quot;))</span>
+<span class="nc" id="L84">					.put(&quot;Ivory&quot;, parseString(&quot;#FFFFF0&quot;))</span>
+<span class="nc" id="L85">					.put(&quot;Khaki&quot;, parseString(&quot;#F0E68C&quot;))</span>
+<span class="nc" id="L86">					.put(&quot;Lavender&quot;, parseString(&quot;#E6E6FA&quot;))</span>
+<span class="nc" id="L87">					.put(&quot;LavenderBlush&quot;, parseString(&quot;#FFF0F5&quot;))</span>
+<span class="nc" id="L88">					.put(&quot;LawnGreen&quot;, parseString(&quot;#7CFC00&quot;))</span>
+<span class="nc" id="L89">					.put(&quot;LemonChiffon&quot;, parseString(&quot;#FFFACD&quot;))</span>
+<span class="nc" id="L90">					.put(&quot;LightBlue&quot;, parseString(&quot;#ADD8E6&quot;))</span>
+<span class="nc" id="L91">					.put(&quot;LightCoral&quot;, parseString(&quot;#F08080&quot;))</span>
+<span class="nc" id="L92">					.put(&quot;LightCyan&quot;, parseString(&quot;#E0FFFF&quot;))</span>
+<span class="nc" id="L93">					.put(&quot;LightGoldenRodYellow&quot;, parseString(&quot;#FAFAD2&quot;))</span>
+<span class="nc" id="L94">					.put(&quot;LightGray&quot;, parseString(&quot;#D3D3D3&quot;))</span>
+<span class="nc" id="L95">					.put(&quot;LightGrey&quot;, parseString(&quot;#D3D3D3&quot;))</span>
+<span class="nc" id="L96">					.put(&quot;LightGreen&quot;, parseString(&quot;#90EE90&quot;))</span>
+<span class="nc" id="L97">					.put(&quot;LightPink&quot;, parseString(&quot;#FFB6C1&quot;))</span>
+<span class="nc" id="L98">					.put(&quot;LightSalmon&quot;, parseString(&quot;#FFA07A&quot;))</span>
+<span class="nc" id="L99">					.put(&quot;LightSeaGreen&quot;, parseString(&quot;#20B2AA&quot;))</span>
+<span class="nc" id="L100">					.put(&quot;LightSkyBlue&quot;, parseString(&quot;#87CEFA&quot;))</span>
+<span class="nc" id="L101">					.put(&quot;LightSlateGray&quot;, parseString(&quot;#778899&quot;))</span>
+<span class="nc" id="L102">					.put(&quot;LightSlateGrey&quot;, parseString(&quot;#778899&quot;))</span>
+<span class="nc" id="L103">					.put(&quot;LightSteelBlue&quot;, parseString(&quot;#B0C4DE&quot;))</span>
+<span class="nc" id="L104">					.put(&quot;LightYellow&quot;, parseString(&quot;#FFFFE0&quot;))</span>
+<span class="nc" id="L105">					.put(&quot;Lime&quot;, parseString(&quot;#00FF00&quot;))</span>
+<span class="nc" id="L106">					.put(&quot;LimeGreen&quot;, parseString(&quot;#32CD32&quot;))</span>
+<span class="nc" id="L107">					.put(&quot;Linen&quot;, parseString(&quot;#FAF0E6&quot;))</span>
+<span class="nc" id="L108">					.put(&quot;Magenta&quot;, parseString(&quot;#FF00FF&quot;))</span>
+<span class="nc" id="L109">					.put(&quot;Maroon&quot;, parseString(&quot;#800000&quot;))</span>
+<span class="nc" id="L110">					.put(&quot;MediumAquaMarine&quot;, parseString(&quot;#66CDAA&quot;))</span>
+<span class="nc" id="L111">					.put(&quot;MediumBlue&quot;, parseString(&quot;#0000CD&quot;))</span>
+<span class="nc" id="L112">					.put(&quot;MediumOrchid&quot;, parseString(&quot;#BA55D3&quot;))</span>
+<span class="nc" id="L113">					.put(&quot;MediumPurple&quot;, parseString(&quot;#9370DB&quot;))</span>
+<span class="nc" id="L114">					.put(&quot;MediumSeaGreen&quot;, parseString(&quot;#3CB371&quot;))</span>
+<span class="nc" id="L115">					.put(&quot;MediumSlateBlue&quot;, parseString(&quot;#7B68EE&quot;))</span>
+<span class="nc" id="L116">					.put(&quot;MediumSpringGreen&quot;, parseString(&quot;#00FA9A&quot;))</span>
+<span class="nc" id="L117">					.put(&quot;MediumTurquoise&quot;, parseString(&quot;#48D1CC&quot;))</span>
+<span class="nc" id="L118">					.put(&quot;MediumVioletRed&quot;, parseString(&quot;#C71585&quot;))</span>
+<span class="nc" id="L119">					.put(&quot;MidnightBlue&quot;, parseString(&quot;#191970&quot;))</span>
+<span class="nc" id="L120">					.put(&quot;MintCream&quot;, parseString(&quot;#F5FFFA&quot;))</span>
+<span class="nc" id="L121">					.put(&quot;MistyRose&quot;, parseString(&quot;#FFE4E1&quot;))</span>
+<span class="nc" id="L122">					.put(&quot;Moccasin&quot;, parseString(&quot;#FFE4B5&quot;))</span>
+<span class="nc" id="L123">					.put(&quot;NavajoWhite&quot;, parseString(&quot;#FFDEAD&quot;))</span>
+<span class="nc" id="L124">					.put(&quot;Navy&quot;, parseString(&quot;#000080&quot;))</span>
+<span class="nc" id="L125">					.put(&quot;OldLace&quot;, parseString(&quot;#FDF5E6&quot;))</span>
+<span class="nc" id="L126">					.put(&quot;Olive&quot;, parseString(&quot;#808000&quot;))</span>
+<span class="nc" id="L127">					.put(&quot;OliveDrab&quot;, parseString(&quot;#6B8E23&quot;))</span>
+<span class="nc" id="L128">					.put(&quot;Orange&quot;, parseString(&quot;#FFA500&quot;))</span>
+<span class="nc" id="L129">					.put(&quot;OrangeRed&quot;, parseString(&quot;#FF4500&quot;))</span>
+<span class="nc" id="L130">					.put(&quot;Orchid&quot;, parseString(&quot;#DA70D6&quot;))</span>
+<span class="nc" id="L131">					.put(&quot;PaleGoldenRod&quot;, parseString(&quot;#EEE8AA&quot;))</span>
+<span class="nc" id="L132">					.put(&quot;PaleGreen&quot;, parseString(&quot;#98FB98&quot;))</span>
+<span class="nc" id="L133">					.put(&quot;PaleTurquoise&quot;, parseString(&quot;#AFEEEE&quot;))</span>
+<span class="nc" id="L134">					.put(&quot;PaleVioletRed&quot;, parseString(&quot;#DB7093&quot;))</span>
+<span class="nc" id="L135">					.put(&quot;PapayaWhip&quot;, parseString(&quot;#FFEFD5&quot;))</span>
+<span class="nc" id="L136">					.put(&quot;PeachPuff&quot;, parseString(&quot;#FFDAB9&quot;))</span>
+<span class="nc" id="L137">					.put(&quot;Peru&quot;, parseString(&quot;#CD853F&quot;))</span>
+<span class="nc" id="L138">					.put(&quot;Pink&quot;, parseString(&quot;#FFC0CB&quot;))</span>
+<span class="nc" id="L139">					.put(&quot;Plum&quot;, parseString(&quot;#DDA0DD&quot;))</span>
+<span class="nc" id="L140">					.put(&quot;PowderBlue&quot;, parseString(&quot;#B0E0E6&quot;))</span>
+<span class="nc" id="L141">					.put(&quot;Purple&quot;, parseString(&quot;#800080&quot;))</span>
+<span class="nc" id="L142">					.put(&quot;RebeccaPurple&quot;, parseString(&quot;#663399&quot;))</span>
+<span class="nc" id="L143">					.put(&quot;Red&quot;, parseString(&quot;#FF0000&quot;))</span>
+<span class="nc" id="L144">					.put(&quot;RosyBrown&quot;, parseString(&quot;#BC8F8F&quot;))</span>
+<span class="nc" id="L145">					.put(&quot;RoyalBlue&quot;, parseString(&quot;#4169E1&quot;))</span>
+<span class="nc" id="L146">					.put(&quot;SaddleBrown&quot;, parseString(&quot;#8B4513&quot;))</span>
+<span class="nc" id="L147">					.put(&quot;Salmon&quot;, parseString(&quot;#FA8072&quot;))</span>
+<span class="nc" id="L148">					.put(&quot;SandyBrown&quot;, parseString(&quot;#F4A460&quot;))</span>
+<span class="nc" id="L149">					.put(&quot;SeaGreen&quot;, parseString(&quot;#2E8B57&quot;))</span>
+<span class="nc" id="L150">					.put(&quot;SeaShell&quot;, parseString(&quot;#FFF5EE&quot;))</span>
+<span class="nc" id="L151">					.put(&quot;Sienna&quot;, parseString(&quot;#A0522D&quot;))</span>
+<span class="nc" id="L152">					.put(&quot;Silver&quot;, parseString(&quot;#C0C0C0&quot;))</span>
+<span class="nc" id="L153">					.put(&quot;SkyBlue&quot;, parseString(&quot;#87CEEB&quot;))</span>
+<span class="nc" id="L154">					.put(&quot;SlateBlue&quot;, parseString(&quot;#6A5ACD&quot;))</span>
+<span class="nc" id="L155">					.put(&quot;SlateGray&quot;, parseString(&quot;#708090&quot;))</span>
+<span class="nc" id="L156">					.put(&quot;SlateGrey&quot;, parseString(&quot;#708090&quot;))</span>
+<span class="nc" id="L157">					.put(&quot;Snow&quot;, parseString(&quot;#FFFAFA&quot;))</span>
+<span class="nc" id="L158">					.put(&quot;SpringGreen&quot;, parseString(&quot;#00FF7F&quot;))</span>
+<span class="nc" id="L159">					.put(&quot;SteelBlue&quot;, parseString(&quot;#4682B4&quot;))</span>
+<span class="nc" id="L160">					.put(&quot;Tan&quot;, parseString(&quot;#D2B48C&quot;))</span>
+<span class="nc" id="L161">					.put(&quot;Teal&quot;, parseString(&quot;#008080&quot;))</span>
+<span class="nc" id="L162">					.put(&quot;Thistle&quot;, parseString(&quot;#D8BFD8&quot;))</span>
+<span class="nc" id="L163">					.put(&quot;Tomato&quot;, parseString(&quot;#FF6347&quot;))</span>
+<span class="nc" id="L164">					.put(&quot;Turquoise&quot;, parseString(&quot;#40E0D0&quot;))</span>
+<span class="nc" id="L165">					.put(&quot;Violet&quot;, parseString(&quot;#EE82EE&quot;))</span>
+<span class="nc" id="L166">					.put(&quot;Wheat&quot;, parseString(&quot;#F5DEB3&quot;))</span>
+<span class="nc" id="L167">					.put(&quot;White&quot;, parseString(&quot;#FFFFFF&quot;))</span>
+<span class="nc" id="L168">					.put(&quot;WhiteSmoke&quot;, parseString(&quot;#F5F5F5&quot;))</span>
+<span class="nc" id="L169">					.put(&quot;Yellow&quot;, parseString(&quot;#FFFF00&quot;))</span>
+<span class="nc" id="L170">					.put(&quot;YellowGreen&quot;, parseString(&quot;#9ACD32&quot;))</span>
+<span class="nc" id="L171">					.get();</span>
+
+	public static Color random() {
+<span class="nc" id="L174">		return CSS_COLORS.values().stream().skip((long) (Math.random() * CSS_COLORS.size())).findAny().get();</span>
+	}
+
+	public static Color parse(final String string) {
+<span class="nc" id="L178">		return CSS_COLORS.computeIfAbsent(string, s -&gt; parseString(string));</span>
+	}
+
+	private static Color parseString(final String string) {
+<span class="nc bnc" id="L182" title="All 2 branches missed.">		if (string.length() == 0) {</span>
+<span class="nc" id="L183">			return BLACK;</span>
+		}
+<span class="nc bnc" id="L185" title="All 3 branches missed.">		switch (string.charAt(0)) {</span>
+		case '#':
+<span class="nc" id="L187">			return parseHexColor(string.substring(1));</span>
+		case 'r':
+		case 'h':
+<span class="nc" id="L190">			return parseFunctionColor(string);</span>
+		default:
+<span class="nc" id="L192">			throw new RuntimeException(&quot;Unable to parse color: &quot; + string);</span>
+		}
+	}
+
+	private static Color parseHexColor(final String string) {
+<span class="nc bnc" id="L197" title="All 2 branches missed.">		if (string.length() == 3) {</span>
+<span class="nc" id="L198">			final String r = string.substring(0, 1);</span>
+<span class="nc" id="L199">			final String g = string.substring(1, 2);</span>
+<span class="nc" id="L200">			final String b = string.substring(2, 3);</span>
+<span class="nc" id="L201">			return new Color(Integer.parseInt(r + r, 16),</span>
+<span class="nc" id="L202">					Integer.parseInt(g + g, 16),</span>
+<span class="nc" id="L203">					Integer.parseInt(b + b, 16),</span>
+					1.0);
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		} else if (string.length() == 6) {</span>
+<span class="nc" id="L206">			final String r = string.substring(0, 2);</span>
+<span class="nc" id="L207">			final String g = string.substring(2, 4);</span>
+<span class="nc" id="L208">			final String b = string.substring(4, 6);</span>
+<span class="nc" id="L209">			return new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16), 1.0);</span>
+		} else {
+<span class="nc" id="L211">			throw new RuntimeException(&quot;Unable to parse color: &quot; + string);</span>
+		}
+	}
+
+<span class="nc" id="L215">	private static final Pattern FUNCTION_PATTERN = Pattern.compile(</span>
+			&quot;([a-z]+)\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*%?\\s*,\\s*([0-9]+)\\s*%?\\s*(?:,\\s*([0-9\\.]+)\\s*%?\\s*)?\\)&quot;,
+			Pattern.CASE_INSENSITIVE);
+
+	@SuppressFBWarnings(value = &quot;IMPROPER_UNICODE&quot;,
+			justification = &quot;comparing lower cased string with ASCII characters only&quot;)
+	private static Color parseFunctionColor(final String string) {
+<span class="nc" id="L222">		final Matcher matcher = FUNCTION_PATTERN.matcher(string);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">		if (matcher.find()) {</span>
+<span class="nc" id="L224">			final String function = matcher.group(1);</span>
+<span class="nc" id="L225">			final String r = matcher.group(2);</span>
+<span class="nc" id="L226">			final String g = matcher.group(3);</span>
+<span class="nc" id="L227">			final String b = matcher.group(4);</span>
+<span class="nc" id="L228">			final String a = matcher.group(5);</span>
+
+<span class="nc bnc" id="L230" title="All 4 branches missed.">			switch (function.toLowerCase()) {</span>
+			case &quot;rgb&quot;:
+<span class="nc" id="L232">				return new Color(Integer.parseInt(r), Integer.parseInt(g), Integer.parseInt(b), 1.0);</span>
+			case &quot;rgba&quot;:
+<span class="nc" id="L234">				return new Color(Integer.parseInt(r), Integer.parseInt(g), Integer.parseInt(b), Double.parseDouble(a));</span>
+			case &quot;hsl&quot;:
+			case &quot;hsla&quot;:
+<span class="nc" id="L237">				final int[] rgb = hslToRgb(Integer.parseInt(r), Integer.parseInt(r), Integer.parseInt(b));</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">				return new Color(rgb[0], rgb[1], rgb[2], a != null ? Double.parseDouble(a) : 1.0);</span>
+			default:
+				// throw below exception
+			}
+		}
+<span class="nc" id="L243">		throw new RuntimeException(&quot;Unable to parse color: &quot; + string);</span>
+	}
+
+	public static int[] hslToRgb(final int h, final int s, final int l) {
+<span class="nc" id="L247">		return hslToRgb(h / 255f, s / 255f, l / 255f);</span>
+	}
+
+	/**
+	 * Converts an HSL color value to RGB. Conversion formula adapted from
+	 * http://en.wikipedia.org/wiki/HSL_color_space. Assumes h, s, and l are
+	 * contained in the set [0, 1] and returns r, g, and b in the set [0, 255].
+	 *
+	 * @param h The hue
+	 * @param s The saturation
+	 * @param l The lightness
+	 * @return int array, the RGB representation
+	 */
+	public static int[] hslToRgb(final float h, final float s, final float l) {
+		final float r;
+		final float g;
+		final float b;
+
+		// achromatic
+<span class="nc bnc" id="L266" title="All 2 branches missed.">		if (s == 0f) {</span>
+<span class="nc" id="L267">			r = l;</span>
+<span class="nc" id="L268">			g = l;</span>
+<span class="nc" id="L269">			b = l;</span>
+		} else {
+<span class="nc bnc" id="L271" title="All 2 branches missed.">			final float q = l &lt; 0.5f ? l * (1 + s) : l + s - l * s;</span>
+<span class="nc" id="L272">			final float p = 2 * l - q;</span>
+<span class="nc" id="L273">			r = hueToRgb(p, q, h + 1f / 3f);</span>
+<span class="nc" id="L274">			g = hueToRgb(p, q, h);</span>
+<span class="nc" id="L275">			b = hueToRgb(p, q, h - 1f / 3f);</span>
+		}
+<span class="nc" id="L277">		return new int[] { (int) (r * 255), (int) (g * 255), (int) (b * 255) };</span>
+	}
+
+	private static float hueToRgb(final float p, final float q, final float t) {
+<span class="nc" id="L281">		float tt = t;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">		if (tt &lt; 0f) {</span>
+<span class="nc" id="L283">			tt += 1f;</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		} else if (tt &gt; 1f) {</span>
+<span class="nc" id="L285">			tt -= 1f;</span>
+		}
+<span class="nc bnc" id="L287" title="All 2 branches missed.">		if (tt &lt; 1f / 6f) {</span>
+<span class="nc" id="L288">			return p + (q - p) * 6f * tt;</span>
+		}
+<span class="nc bnc" id="L290" title="All 2 branches missed.">		if (tt &lt; 1f / 2f) {</span>
+<span class="nc" id="L291">			return q;</span>
+		}
+<span class="nc bnc" id="L293" title="All 2 branches missed.">		if (tt &lt; 2f / 3f) {</span>
+<span class="nc" id="L294">			return p + (q - p) * (2f / 3f - tt) * 6f;</span>
+		}
+<span class="nc" id="L296">		return p;</span>
+	}
+
+	public static Color smooth(final Color start, final Color end, final double progress) {
+<span class="nc" id="L300">		final int r = smooth(start.getRed(), end.getRed(), progress);</span>
+<span class="nc" id="L301">		final int g = smooth(start.getGreen(), end.getGreen(), progress);</span>
+<span class="nc" id="L302">		final int b = smooth(start.getBlue(), end.getBlue(), progress);</span>
+<span class="nc" id="L303">		return new Color(r, g, b);</span>
+	}
+
+	private static int smooth(final int start, final int end, final double progress) {
+<span class="nc" id="L307">		return (int) (start + (end - start) * Math.max(0.0, Math.min(1.0, progress)));</span>
+	}
+
+<span class="nc" id="L310">	public static final Color ALICE_BLUE = parse(&quot;#F0F8FF&quot;);</span>
+
+<span class="nc" id="L312">	public static final Color ANTIQUE_WHITE = parse(&quot;#FAEBD7&quot;);</span>
+
+<span class="nc" id="L314">	public static final Color AQUA = parse(&quot;#00FFFF&quot;);</span>
+
+<span class="nc" id="L316">	public static final Color AQUA_MARINE = parse(&quot;#7FFFD4&quot;);</span>
+
+<span class="nc" id="L318">	public static final Color AZURE = parse(&quot;#F0FFFF&quot;);</span>
+
+<span class="nc" id="L320">	public static final Color BEIGE = parse(&quot;#F5F5DC&quot;);</span>
+
+<span class="nc" id="L322">	public static final Color BISQUE = parse(&quot;#FFE4C4&quot;);</span>
+
+<span class="nc" id="L324">	public static final Color BLACK = parse(&quot;#000000&quot;);</span>
+
+<span class="nc" id="L326">	public static final Color BLANCHED_ALMOND = parse(&quot;#FFEBCD&quot;);</span>
+
+<span class="nc" id="L328">	public static final Color BLUE = parse(&quot;#0000FF&quot;);</span>
+
+<span class="nc" id="L330">	public static final Color BLUE_VIOLET = parse(&quot;#8A2BE2&quot;);</span>
+
+<span class="nc" id="L332">	public static final Color BROWN = parse(&quot;#A52A2A&quot;);</span>
+
+<span class="nc" id="L334">	public static final Color BURLY_WOOD = parse(&quot;#DEB887&quot;);</span>
+
+<span class="nc" id="L336">	public static final Color CADET_BLUE = parse(&quot;#5F9EA0&quot;);</span>
+
+<span class="nc" id="L338">	public static final Color CHARTREUSE = parse(&quot;#7FFF00&quot;);</span>
+
+<span class="nc" id="L340">	public static final Color CHOCOLATE = parse(&quot;#D2691E&quot;);</span>
+
+<span class="nc" id="L342">	public static final Color CORAL = parse(&quot;#FF7F50&quot;);</span>
+
+<span class="nc" id="L344">	public static final Color CORNFLOWER_BLUE = parse(&quot;#6495ED&quot;);</span>
+
+<span class="nc" id="L346">	public static final Color CORNSILK = parse(&quot;#FFF8DC&quot;);</span>
+
+<span class="nc" id="L348">	public static final Color CRIMSON = parse(&quot;#DC143C&quot;);</span>
+
+<span class="nc" id="L350">	public static final Color CYAN = parse(&quot;#00FFFF&quot;);</span>
+
+<span class="nc" id="L352">	public static final Color DARK_BLUE = parse(&quot;#00008B&quot;);</span>
+
+<span class="nc" id="L354">	public static final Color DARK_CYAN = parse(&quot;#008B8B&quot;);</span>
+
+<span class="nc" id="L356">	public static final Color DARK_GOLDEN_ROD = parse(&quot;#B8860B&quot;);</span>
+
+<span class="nc" id="L358">	public static final Color DARK_GRAY = parse(&quot;#A9A9A9&quot;);</span>
+
+<span class="nc" id="L360">	public static final Color DARK_GREY = parse(&quot;#A9A9A9&quot;);</span>
+
+<span class="nc" id="L362">	public static final Color DARK_GREEN = parse(&quot;#006400&quot;);</span>
+
+<span class="nc" id="L364">	public static final Color DARK_KHAKI = parse(&quot;#BDB76B&quot;);</span>
+
+<span class="nc" id="L366">	public static final Color DARK_MAGENTA = parse(&quot;#8B008B&quot;);</span>
+
+<span class="nc" id="L368">	public static final Color DARK_OLIVE_GREEN = parse(&quot;#556B2F&quot;);</span>
+
+<span class="nc" id="L370">	public static final Color DARK_ORANGE = parse(&quot;#FF8C00&quot;);</span>
+
+<span class="nc" id="L372">	public static final Color DARK_ORCHID = parse(&quot;#9932CC&quot;);</span>
+
+<span class="nc" id="L374">	public static final Color DARK_RED = parse(&quot;#8B0000&quot;);</span>
+
+<span class="nc" id="L376">	public static final Color DARK_SALMON = parse(&quot;#E9967A&quot;);</span>
+
+<span class="nc" id="L378">	public static final Color DARK_SEA_GREEN = parse(&quot;#8FBC8F&quot;);</span>
+
+<span class="nc" id="L380">	public static final Color DARK_SLATE_BLUE = parse(&quot;#483D8B&quot;);</span>
+
+<span class="nc" id="L382">	public static final Color DARK_SLATE_GRAY = parse(&quot;#2F4F4F&quot;);</span>
+
+<span class="nc" id="L384">	public static final Color DARK_SLATE_GREY = parse(&quot;#2F4F4F&quot;);</span>
+
+<span class="nc" id="L386">	public static final Color DARK_TURQUOISE = parse(&quot;#00CED1&quot;);</span>
+
+<span class="nc" id="L388">	public static final Color DARK_VIOLET = parse(&quot;#9400D3&quot;);</span>
+
+<span class="nc" id="L390">	public static final Color DEEP_PINK = parse(&quot;#FF1493&quot;);</span>
+
+<span class="nc" id="L392">	public static final Color DEEP_SKY_BLUE = parse(&quot;#00BFFF&quot;);</span>
+
+<span class="nc" id="L394">	public static final Color DIM_GRAY = parse(&quot;#696969&quot;);</span>
+
+<span class="nc" id="L396">	public static final Color DIM_GREY = parse(&quot;#696969&quot;);</span>
+
+<span class="nc" id="L398">	public static final Color DODGER_BLUE = parse(&quot;#1E90FF&quot;);</span>
+
+<span class="nc" id="L400">	public static final Color FIRE_BRICK = parse(&quot;#B22222&quot;);</span>
+
+<span class="nc" id="L402">	public static final Color FLORAL_WHITE = parse(&quot;#FFFAF0&quot;);</span>
+
+<span class="nc" id="L404">	public static final Color FOREST_GREEN = parse(&quot;#228B22&quot;);</span>
+
+<span class="nc" id="L406">	public static final Color FUCHSIA = parse(&quot;#FF00FF&quot;);</span>
+
+<span class="nc" id="L408">	public static final Color GAINSBORO = parse(&quot;#DCDCDC&quot;);</span>
+
+<span class="nc" id="L410">	public static final Color GHOST_WHITE = parse(&quot;#F8F8FF&quot;);</span>
+
+<span class="nc" id="L412">	public static final Color GOLD = parse(&quot;#FFD700&quot;);</span>
+
+<span class="nc" id="L414">	public static final Color GOLDEN_ROD = parse(&quot;#DAA520&quot;);</span>
+
+<span class="nc" id="L416">	public static final Color GRAY = parse(&quot;#808080&quot;);</span>
+
+<span class="nc" id="L418">	public static final Color GREY = parse(&quot;#808080&quot;);</span>
+
+<span class="nc" id="L420">	public static final Color GREEN = parse(&quot;#008000&quot;);</span>
+
+<span class="nc" id="L422">	public static final Color GREEN_YELLOW = parse(&quot;#ADFF2F&quot;);</span>
+
+<span class="nc" id="L424">	public static final Color HONEY_DEW = parse(&quot;#F0FFF0&quot;);</span>
+
+<span class="nc" id="L426">	public static final Color HOT_PINK = parse(&quot;#FF69B4&quot;);</span>
+
+<span class="nc" id="L428">	public static final Color INDIAN_RED = parse(&quot;#CD5C5C&quot;);</span>
+
+<span class="nc" id="L430">	public static final Color INDIGO = parse(&quot;#4B0082&quot;);</span>
+
+<span class="nc" id="L432">	public static final Color IVORY = parse(&quot;#FFFFF0&quot;);</span>
+
+<span class="nc" id="L434">	public static final Color KHAKI = parse(&quot;#F0E68C&quot;);</span>
+
+<span class="nc" id="L436">	public static final Color LAVENDER = parse(&quot;#E6E6FA&quot;);</span>
+
+<span class="nc" id="L438">	public static final Color LAVENDER_BLUSH = parse(&quot;#FFF0F5&quot;);</span>
+
+<span class="nc" id="L440">	public static final Color LAWN_GREEN = parse(&quot;#7CFC00&quot;);</span>
+
+<span class="nc" id="L442">	public static final Color LEMON_CHIFFON = parse(&quot;#FFFACD&quot;);</span>
+
+<span class="nc" id="L444">	public static final Color LIGHT_BLUE = parse(&quot;#ADD8E6&quot;);</span>
+
+<span class="nc" id="L446">	public static final Color LIGHT_CORAL = parse(&quot;#F08080&quot;);</span>
+
+<span class="nc" id="L448">	public static final Color LIGHT_CYAN = parse(&quot;#E0FFFF&quot;);</span>
+
+<span class="nc" id="L450">	public static final Color LIGHT_GOLDEN_ROD_YELLOW = parse(&quot;#FAFAD2&quot;);</span>
+
+<span class="nc" id="L452">	public static final Color LIGHT_GRAY = parse(&quot;#D3D3D3&quot;);</span>
+
+<span class="nc" id="L454">	public static final Color LIGHT_GREY = parse(&quot;#D3D3D3&quot;);</span>
+
+<span class="nc" id="L456">	public static final Color LIGHT_GREEN = parse(&quot;#90EE90&quot;);</span>
+
+<span class="nc" id="L458">	public static final Color LIGHT_PINK = parse(&quot;#FFB6C1&quot;);</span>
+
+<span class="nc" id="L460">	public static final Color LIGHT_SALMON = parse(&quot;#FFA07A&quot;);</span>
+
+<span class="nc" id="L462">	public static final Color LIGHT_SEA_GREEN = parse(&quot;#20B2AA&quot;);</span>
+
+<span class="nc" id="L464">	public static final Color LIGHT_SKY_BLUE = parse(&quot;#87CEFA&quot;);</span>
+
+<span class="nc" id="L466">	public static final Color LIGHT_SLATE_GRAY = parse(&quot;#778899&quot;);</span>
+
+<span class="nc" id="L468">	public static final Color LIGHT_SLATE_GREY = parse(&quot;#778899&quot;);</span>
+
+<span class="nc" id="L470">	public static final Color LIGHT_STEEL_BLUE = parse(&quot;#B0C4DE&quot;);</span>
+
+<span class="nc" id="L472">	public static final Color LIGHT_YELLOW = parse(&quot;#FFFFE0&quot;);</span>
+
+<span class="nc" id="L474">	public static final Color LIME = parse(&quot;#00FF00&quot;);</span>
+
+<span class="nc" id="L476">	public static final Color LIME_GREEN = parse(&quot;#32CD32&quot;);</span>
+
+<span class="nc" id="L478">	public static final Color LINEN = parse(&quot;#FAF0E6&quot;);</span>
+
+<span class="nc" id="L480">	public static final Color MAGENTA = parse(&quot;#FF00FF&quot;);</span>
+
+<span class="nc" id="L482">	public static final Color MAROON = parse(&quot;#800000&quot;);</span>
+
+<span class="nc" id="L484">	public static final Color MEDIUM_AQUA_MARINE = parse(&quot;#66CDAA&quot;);</span>
+
+<span class="nc" id="L486">	public static final Color MEDIUM_BLUE = parse(&quot;#0000CD&quot;);</span>
+
+<span class="nc" id="L488">	public static final Color MEDIUM_ORCHID = parse(&quot;#BA55D3&quot;);</span>
+
+<span class="nc" id="L490">	public static final Color MEDIUM_PURPLE = parse(&quot;#9370DB&quot;);</span>
+
+<span class="nc" id="L492">	public static final Color MEDIUM_SEA_GREEN = parse(&quot;#3CB371&quot;);</span>
+
+<span class="nc" id="L494">	public static final Color MEDIUM_SLATE_BLUE = parse(&quot;#7B68EE&quot;);</span>
+
+<span class="nc" id="L496">	public static final Color MEDIUM_SPRING_GREEN = parse(&quot;#00FA9A&quot;);</span>
+
+<span class="nc" id="L498">	public static final Color MEDIUM_TURQUOISE = parse(&quot;#48D1CC&quot;);</span>
+
+<span class="nc" id="L500">	public static final Color MEDIUM_VIOLET_RED = parse(&quot;#C71585&quot;);</span>
+
+<span class="nc" id="L502">	public static final Color MIDNIGHT_BLUE = parse(&quot;#191970&quot;);</span>
+
+<span class="nc" id="L504">	public static final Color MINT_CREAM = parse(&quot;#F5FFFA&quot;);</span>
+
+<span class="nc" id="L506">	public static final Color MISTY_ROSE = parse(&quot;#FFE4E1&quot;);</span>
+
+<span class="nc" id="L508">	public static final Color MOCCASIN = parse(&quot;#FFE4B5&quot;);</span>
+
+<span class="nc" id="L510">	public static final Color NAVAJO_WHITE = parse(&quot;#FFDEAD&quot;);</span>
+
+<span class="nc" id="L512">	public static final Color NAVY = parse(&quot;#000080&quot;);</span>
+
+<span class="nc" id="L514">	public static final Color OLD_LACE = parse(&quot;#FDF5E6&quot;);</span>
+
+<span class="nc" id="L516">	public static final Color OLIVE = parse(&quot;#808000&quot;);</span>
+
+<span class="nc" id="L518">	public static final Color OLIVE_DRAB = parse(&quot;#6B8E23&quot;);</span>
+
+<span class="nc" id="L520">	public static final Color ORANGE = parse(&quot;#FFA500&quot;);</span>
+
+<span class="nc" id="L522">	public static final Color ORANGE_RED = parse(&quot;#FF4500&quot;);</span>
+
+<span class="nc" id="L524">	public static final Color ORCHID = parse(&quot;#DA70D6&quot;);</span>
+
+<span class="nc" id="L526">	public static final Color PALE_GOLDEN_ROD = parse(&quot;#EEE8AA&quot;);</span>
+
+<span class="nc" id="L528">	public static final Color PALE_GREEN = parse(&quot;#98FB98&quot;);</span>
+
+<span class="nc" id="L530">	public static final Color PALE_TURQUOISE = parse(&quot;#AFEEEE&quot;);</span>
+
+<span class="nc" id="L532">	public static final Color PALE_VIOLET_RED = parse(&quot;#DB7093&quot;);</span>
+
+<span class="nc" id="L534">	public static final Color PAPAYA_WHIP = parse(&quot;#FFEFD5&quot;);</span>
+
+<span class="nc" id="L536">	public static final Color PEACH_PUFF = parse(&quot;#FFDAB9&quot;);</span>
+
+<span class="nc" id="L538">	public static final Color PERU = parse(&quot;#CD853F&quot;);</span>
+
+<span class="nc" id="L540">	public static final Color PINK = parse(&quot;#FFC0CB&quot;);</span>
+
+<span class="nc" id="L542">	public static final Color PLUM = parse(&quot;#DDA0DD&quot;);</span>
+
+<span class="nc" id="L544">	public static final Color POWDER_BLUE = parse(&quot;#B0E0E6&quot;);</span>
+
+<span class="nc" id="L546">	public static final Color PURPLE = parse(&quot;#800080&quot;);</span>
+
+<span class="nc" id="L548">	public static final Color REBECCA_PURPLE = parse(&quot;#663399&quot;);</span>
+
+<span class="nc" id="L550">	public static final Color RED = parse(&quot;#FF0000&quot;);</span>
+
+<span class="nc" id="L552">	public static final Color ROSY_BROWN = parse(&quot;#BC8F8F&quot;);</span>
+
+<span class="nc" id="L554">	public static final Color ROYAL_BLUE = parse(&quot;#4169E1&quot;);</span>
+
+<span class="nc" id="L556">	public static final Color SADDLE_BROWN = parse(&quot;#8B4513&quot;);</span>
+
+<span class="nc" id="L558">	public static final Color SALMON = parse(&quot;#FA8072&quot;);</span>
+
+<span class="nc" id="L560">	public static final Color SANDY_BROWN = parse(&quot;#F4A460&quot;);</span>
+
+<span class="nc" id="L562">	public static final Color SEA_GREEN = parse(&quot;#2E8B57&quot;);</span>
+
+<span class="nc" id="L564">	public static final Color SEA_SHELL = parse(&quot;#FFF5EE&quot;);</span>
+
+<span class="nc" id="L566">	public static final Color SIENNA = parse(&quot;#A0522D&quot;);</span>
+
+<span class="nc" id="L568">	public static final Color SILVER = parse(&quot;#C0C0C0&quot;);</span>
+
+<span class="nc" id="L570">	public static final Color SKY_BLUE = parse(&quot;#87CEEB&quot;);</span>
+
+<span class="nc" id="L572">	public static final Color SLATE_BLUE = parse(&quot;#6A5ACD&quot;);</span>
+
+<span class="nc" id="L574">	public static final Color SLATE_GRAY = parse(&quot;#708090&quot;);</span>
+
+<span class="nc" id="L576">	public static final Color SLATE_GREY = parse(&quot;#708090&quot;);</span>
+
+<span class="nc" id="L578">	public static final Color SNOW = parse(&quot;#FFFAFA&quot;);</span>
+
+<span class="nc" id="L580">	public static final Color SPRING_GREEN = parse(&quot;#00FF7F&quot;);</span>
+
+<span class="nc" id="L582">	public static final Color STEEL_BLUE = parse(&quot;#4682B4&quot;);</span>
+
+<span class="nc" id="L584">	public static final Color TAN = parse(&quot;#D2B48C&quot;);</span>
+
+<span class="nc" id="L586">	public static final Color TEAL = parse(&quot;#008080&quot;);</span>
+
+<span class="nc" id="L588">	public static final Color THISTLE = parse(&quot;#D8BFD8&quot;);</span>
+
+<span class="nc" id="L590">	public static final Color TOMATO = parse(&quot;#FF6347&quot;);</span>
+
+<span class="nc" id="L592">	public static final Color TURQUOISE = parse(&quot;#40E0D0&quot;);</span>
+
+<span class="nc" id="L594">	public static final Color VIOLET = parse(&quot;#EE82EE&quot;);</span>
+
+<span class="nc" id="L596">	public static final Color WHEAT = parse(&quot;#F5DEB3&quot;);</span>
+
+<span class="nc" id="L598">	public static final Color WHITE = parse(&quot;#FFFFFF&quot;);</span>
+
+<span class="nc" id="L600">	public static final Color WHITE_SMOKE = parse(&quot;#F5F5F5&quot;);</span>
+
+<span class="nc" id="L602">	public static final Color YELLOW = parse(&quot;#FFFF00&quot;);</span>
+
+<span class="nc" id="L604">	public static final Color YELLOW_GREEN = parse(&quot;#9ACD32&quot;);</span>
+
+	private final int red;
+
+	private final int green;
+
+	private final int blue;
+
+	private final double alpha;
+
+	public Color(final int red, final int green, final int blue) {
+<span class="nc" id="L615">		this(red, green, blue, 1.0);</span>
+<span class="nc" id="L616">	}</span>
+
+<span class="nc" id="L618">	public Color(final int red, final int green, final int blue, final double alpha) {</span>
+<span class="nc" id="L619">		this.red = red;</span>
+<span class="nc" id="L620">		this.green = green;</span>
+<span class="nc" id="L621">		this.blue = blue;</span>
+<span class="nc" id="L622">		this.alpha = alpha;</span>
+<span class="nc" id="L623">	}</span>
+
+	@JsonPropertyDescription(&quot;Determines how translucent the color will be. The higher the value the more opaque the color will be.&quot;)
+	@DecimalMin(value = &quot;0.0&quot;, inclusive = true)
+	@DecimalMax(value = &quot;1.0&quot;, inclusive = true)
+	@NotNull
+	public double getAlpha() {
+<span class="nc" id="L630">		return alpha;</span>
+	}
+
+	@JsonPropertyDescription(&quot;Determines the blue component of the current color.&quot;)
+	@Min(value = 0)
+	@Max(value = 255)
+	@NotNull
+	public int getBlue() {
+<span class="nc" id="L638">		return blue;</span>
+	}
+
+	@JsonPropertyDescription(&quot;Determines the green component of the current color.&quot;)
+	@Min(value = 0)
+	@Max(value = 255)
+	@NotNull
+	public int getGreen() {
+<span class="nc" id="L646">		return green;</span>
+	}
+
+	@JsonPropertyDescription(&quot;Determines the red component of the current color.&quot;)
+	@Min(value = 0)
+	@Max(value = 255)
+	@NotNull
+	public int getRed() {
+<span class="nc" id="L654">		return red;</span>
+	}
+
+	private static String hex(final int i) {
+<span class="nc" id="L658">		final String h = Integer.toHexString(i);</span>
+<span class="nc bnc" id="L659" title="All 2 branches missed.">		return h.length() &gt; 1 ? h : &quot;0&quot; + h;</span>
+	}
+
+	@JsonIgnore
+	public String getHexRed() {
+<span class="nc" id="L664">		return hex(getRed());</span>
+	}
+
+	@JsonIgnore
+	public String getHexGreen() {
+<span class="nc" id="L669">		return hex(getGreen());</span>
+	}
+
+	@JsonIgnore
+	public String getHexBlue() {
+<span class="nc" id="L674">		return hex(getBlue());</span>
+	}
+
+	@JsonIgnore
+	public String getHexColor() {
+<span class="nc" id="L679">		return &quot;#&quot; + getHexRed() + getHexGreen() + getHexBlue();</span>
+	}
+
+	@JsonIgnore
+	public int getPerceivedBrightness() {
+<span class="nc" id="L684">		return (int) (getRed() * 0.299 + getGreen() * 0.587 + getBlue() * 0.114);</span>
+	}
+
+	public boolean shouldUseWhiteFontColor() {
+<span class="nc bnc" id="L688" title="All 2 branches missed.">		return getPerceivedBrightness() &lt; 186;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L693">		return getHexColor();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

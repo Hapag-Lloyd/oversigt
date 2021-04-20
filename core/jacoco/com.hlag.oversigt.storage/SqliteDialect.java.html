@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SqliteDialect.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.storage</a> &gt; <span class="el_source">SqliteDialect.java</span></div><h1>SqliteDialect.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.storage;
+
+import static java.util.stream.Collectors.joining;
+
+import java.time.Duration;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class SqliteDialect implements SqlDialect {
+<span class="fc" id="L12">	public SqliteDialect() {</span>
+		// no fields to be initialized
+<span class="fc" id="L14">	}</span>
+
+	@Override
+	public String getDriverClassName() {
+<span class="fc" id="L18">		return &quot;org.sqlite.JDBC&quot;;</span>
+	}
+
+	@Override
+	public String getJdbcConnectionUrl(final String location,
+			@SuppressWarnings(&quot;unused&quot;) final String schemaName,
+			@SuppressWarnings(&quot;unused&quot;) final String username,
+			@SuppressWarnings(&quot;unused&quot;) final String password) {
+<span class="fc" id="L26">		return &quot;jdbc:sqlite:&quot; + location;</span>
+	}
+
+	@Override
+	public String select(final String tableName,
+			final Collection&lt;String&gt; select,
+			final Collection&lt;String&gt; where,
+			final Optional&lt;String&gt; columnIn,
+			final boolean notIn,
+			final long inValues) {
+<span class="fc" id="L36">		String sql = &quot;SELECT &quot;;</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">		if (!select.isEmpty()) {</span>
+<span class="fc" id="L38">			sql += select.stream().collect(Collectors.joining(&quot;,&quot;));</span>
+		} else {
+<span class="fc" id="L40">			sql += &quot;*&quot;;</span>
+		}
+<span class="fc" id="L42">		return sql + getFromAndWhere(tableName, where, columnIn, notIn, inValues);</span>
+	}
+
+	private String getFromAndWhere(final String tableName,
+			final Collection&lt;String&gt; where,
+			final Optional&lt;String&gt; columnIn,
+			final boolean notIn,
+			final long inValues) {
+		// from
+<span class="fc" id="L51">		final StringBuilder sql = new StringBuilder(&quot; FROM &quot; + tableName);</span>
+
+		// where
+<span class="pc bpc" id="L54" title="1 of 6 branches missed.">		if (!where.isEmpty() || columnIn.isPresent() &amp;&amp; inValues &gt; 0) {</span>
+<span class="fc" id="L55">			sql.append(&quot; WHERE &quot;);</span>
+
+			// equals
+			final boolean needAnd;
+<span class="fc bfc" id="L59" title="All 2 branches covered.">			if (!where.isEmpty()) {</span>
+<span class="fc" id="L60">				sql.append(where.stream().map(s -&gt; s + &quot; = ?&quot;).collect(Collectors.joining(&quot; AND &quot;)));</span>
+<span class="fc" id="L61">				needAnd = true;</span>
+			} else {
+<span class="fc" id="L63">				needAnd = false;</span>
+			}
+
+			// in
+<span class="pc bpc" id="L67" title="1 of 4 branches missed.">			if (columnIn.isPresent() &amp;&amp; inValues &gt; 0) {</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">				if (needAnd) {</span>
+<span class="fc" id="L69">					sql.append(&quot; AND &quot;);</span>
+				}
+<span class="fc bfc" id="L71" title="All 2 branches covered.">				if (notIn) {</span>
+<span class="fc" id="L72">					sql.append(&quot; NOT &quot;);</span>
+				}
+<span class="fc" id="L74">				sql.append(columnIn.get()</span>
+						+ &quot; IN (&quot;
+<span class="fc" id="L76">						+ Stream.generate(() -&gt; &quot;?&quot;).limit(inValues).collect(Collectors.joining(&quot;, &quot;))</span>
+						+ &quot;)&quot;);
+			}
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">		} else if (inValues == -1) {</span>
+<span class="nc" id="L80">			sql.append(&quot; WHERE 1 &lt;&gt; 1 -- IN values are not set&quot;);</span>
+		}
+<span class="fc" id="L82">		return sql.toString();</span>
+	}
+
+	@Override
+	public String selectWithOneLike(final String tableName,
+			final Collection&lt;String&gt; select,
+			final Collection&lt;String&gt; columnsToCheck,
+			final String columnWithLike) {
+<span class="fc" id="L90">		String sql = &quot;SELECT &quot;;</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">		if (!select.isEmpty()) {</span>
+<span class="fc" id="L92">			sql += select.stream().collect(Collectors.joining(&quot;,&quot;));</span>
+		} else {
+<span class="nc" id="L94">			sql += &quot;*&quot;;</span>
+		}
+<span class="fc" id="L96">		sql += &quot; FROM &quot; + tableName;</span>
+<span class="fc" id="L97">		sql += &quot; WHERE &quot;;</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">		if (!columnsToCheck.isEmpty()) {</span>
+<span class="fc" id="L99">			sql += columnsToCheck.stream().map(s -&gt; s + &quot;=?&quot;).collect(Collectors.joining(&quot; AND &quot;, &quot;&quot;, &quot; AND &quot;));</span>
+		}
+<span class="fc" id="L101">		sql += columnWithLike + &quot; LIKE ?&quot;;</span>
+<span class="fc" id="L102">		return sql;</span>
+	}
+
+	@Override
+	public String insert(final String tableName, final Collection&lt;String&gt; columns) {
+<span class="fc" id="L107">		String sql = &quot;INSERT INTO &quot; + tableName + &quot; (&quot;;</span>
+<span class="fc" id="L108">		sql += columns.stream().collect(joining(&quot;,&quot;));</span>
+<span class="fc" id="L109">		sql += &quot;) VALUES (&quot;;</span>
+<span class="fc" id="L110">		sql += columns.stream().map(s -&gt; &quot;?&quot;).collect(joining(&quot;,&quot;));</span>
+<span class="fc" id="L111">		sql += &quot;)&quot;;</span>
+<span class="fc" id="L112">		return sql;</span>
+	}
+
+	@Override
+	public String update(final String tableName,
+			final Collection&lt;String&gt; valueNames,
+			final Collection&lt;String&gt; whereNames) {
+<span class="fc" id="L119">		String sql = &quot;UPDATE &quot; + tableName + &quot; SET &quot;;</span>
+<span class="fc" id="L120">		sql += valueNames.stream().map(k -&gt; k + &quot;=?&quot;).collect(joining(&quot;,&quot;));</span>
+<span class="fc" id="L121">		sql += &quot; WHERE &quot;;</span>
+<span class="fc" id="L122">		sql += whereNames.stream().map(s -&gt; s + &quot;=?&quot;).collect(joining(&quot; AND &quot;));</span>
+<span class="fc" id="L123">		return sql;</span>
+	}
+
+	@Override
+	public String delete(final String tableName, final Collection&lt;String&gt; whereNames) {
+<span class="fc" id="L128">		String sql = &quot;DELETE FROM &quot; + tableName + &quot; WHERE &quot;;</span>
+<span class="fc" id="L129">		sql += whereNames.stream().map(k -&gt; k + &quot; = ? &quot;).collect(Collectors.joining(&quot; AND &quot;));</span>
+<span class="fc" id="L130">		return sql;</span>
+	}
+
+	@Override
+	public String delete(final String tableName,
+			final Collection&lt;String&gt; where,
+			final Optional&lt;String&gt; columnIn,
+			final boolean notIn,
+			final long inValues) {
+<span class="fc" id="L139">		return &quot;DELETE&quot; + getFromAndWhere(tableName, where, columnIn, notIn, inValues);</span>
+	}
+
+	@Override
+	public String createTable(final String name, final ColumnOptions... columns) {
+<span class="fc" id="L144">		String sql = &quot;CREATE TABLE &quot; + name + &quot; (&quot;;</span>
+<span class="fc" id="L145">		final long pkColumnCount = Stream.of(columns).filter(c -&gt; c.isPrimaryKey()).count();</span>
+<span class="fc" id="L146">		final boolean hasUnique = Stream.of(columns).filter(c -&gt; c.isUnique()).findAny().isPresent();</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">		sql += Stream.of(columns).map(c -&gt; getColumnDefinition(c, pkColumnCount == 1)).collect(Collectors.joining(&quot;,&quot;));</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">		if (pkColumnCount &gt; 1) {</span>
+<span class="nc" id="L149">			sql += &quot;, PRIMARY KEY (&quot;</span>
+<span class="nc" id="L150">					+ Stream.of(columns)</span>
+<span class="nc" id="L151">							.filter(c -&gt; c.isPrimaryKey())</span>
+<span class="nc" id="L152">							.map(c -&gt; c.getName())</span>
+<span class="nc" id="L153">							.collect(Collectors.joining(&quot;,&quot;))</span>
+					+ &quot;)&quot;;
+		}
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">		if (hasUnique) {</span>
+<span class="nc" id="L157">			sql += &quot;, UNIQUE (&quot;</span>
+<span class="nc" id="L158">					+ Stream.of(columns)</span>
+<span class="nc" id="L159">							.filter(c -&gt; c.isUnique())</span>
+<span class="nc" id="L160">							.map(c -&gt; c.getName())</span>
+<span class="nc" id="L161">							.collect(Collectors.joining(&quot;,&quot;))</span>
+					+ &quot;)&quot;;
+		}
+<span class="fc" id="L164">		sql += &quot;)&quot;;</span>
+<span class="fc" id="L165">		return sql;</span>
+	}
+
+	@Override
+	public String alterTableAddColumn(final String tableName, final ColumnOptions option) {
+<span class="fc" id="L170">		String sql</span>
+<span class="fc" id="L171">				= &quot;ALTER TABLE &quot; + tableName + &quot; ADD COLUMN &quot; + option.getName() + &quot; &quot; + getTypeName(option.getType());</span>
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">		if (!option.isNullable()) {</span>
+<span class="fc" id="L173">			sql += &quot; NOT NULL&quot;;</span>
+		}
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">		if (option.getDefaultValue() != null) {</span>
+<span class="fc" id="L176">			sql += &quot; DEFAULT &quot;;</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">			if (option.getDefaultValue() instanceof String) {</span>
+<span class="fc" id="L178">				sql += &quot;'&quot; + option.getDefaultValue() + &quot;'&quot;;</span>
+			} else {
+<span class="nc" id="L180">				sql += option.getDefaultValue();</span>
+			}
+		}
+<span class="fc" id="L183">		return sql;</span>
+	}
+
+	@SuppressWarnings(&quot;unused&quot;)
+	@Override
+	public String alterTableDropColumn(final String tableName, final String columnName) {
+<span class="fc" id="L189">		throw new UnsupportedOperationException(&quot;DROP COLUMN is not supported by SQLite&quot;);</span>
+	}
+
+	@Override
+	public Object convertValue(final Object object) {
+<span class="fc bfc" id="L194" title="All 2 branches covered.">		if (object instanceof Boolean) {</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">			return (Boolean) object ? 1 : 0;</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">		} else if (object instanceof Duration) {</span>
+<span class="fc" id="L197">			return ((Duration) object).getSeconds();</span>
+		} else {
+<span class="nc" id="L199">			return object;</span>
+		}
+	}
+
+	private String getColumnDefinition(final ColumnOptions column, final boolean withPrimaryKey) {
+<span class="fc" id="L204">		String sql = column.getName() + &quot; &quot; + getTypeName(column.getType());</span>
+<span class="pc bpc" id="L205" title="1 of 4 branches missed.">		if (withPrimaryKey &amp;&amp; column.isPrimaryKey()) {</span>
+<span class="fc" id="L206">			sql += &quot; PRIMARY KEY&quot;;</span>
+		}
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">		if (column.isAutoincrement()) {</span>
+<span class="nc" id="L209">			sql += &quot; AUTOINCREMENT&quot;;</span>
+		}
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">		if (column.isNullable()) {</span>
+<span class="nc" id="L212">			sql += &quot; NULL&quot;;</span>
+		} else {
+<span class="fc" id="L214">			sql += &quot; NOT NULL&quot;;</span>
+		}
+<span class="pc bpc" id="L216" title="2 of 6 branches missed.">		if (column.getDefaultValue() != null &amp;&amp; !column.isPrimaryKey() &amp;&amp; !column.isUnique()) {</span>
+<span class="fc" id="L217">			sql += &quot; DEFAULT &quot;;</span>
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">			if (column.getDefaultValue() instanceof String) {</span>
+<span class="fc" id="L219">				sql += &quot;'&quot; + column.getDefaultValue() + &quot;'&quot;;</span>
+			} else {
+<span class="nc" id="L221">				sql += column.getDefaultValue();</span>
+			}
+		}
+<span class="fc" id="L224">		return sql;</span>
+	}
+
+	private String getTypeName(final ColumnType type) {
+<span class="pc bpc" id="L228" title="6 of 8 branches missed.">		switch (type) {</span>
+		case Text:
+<span class="fc" id="L230">			return &quot;TEXT&quot;;</span>
+		case Float:
+<span class="nc" id="L232">			return &quot;REAL&quot;;</span>
+		case Integer:
+<span class="fc" id="L234">			return &quot;INTEGER&quot;;</span>
+		case BigInteger:
+<span class="nc" id="L236">			return &quot;BIGINT&quot;;</span>
+		case Timestamp:
+<span class="nc" id="L238">			return &quot;TIMESTAMP&quot;;</span>
+		case Boolean:
+<span class="nc" id="L240">			return &quot;INTEGER(1)&quot;;</span>
+		case Date:
+		case Time:
+<span class="nc" id="L243">			return &quot;TEXT&quot;;</span>
+		default:
+<span class="nc" id="L245">			throw new RuntimeException(&quot;Unknown column type: &quot; + type.name());</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

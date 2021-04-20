@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiApplication.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiApplication.java</span></div><h1>ApiApplication.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import static com.hlag.oversigt.core.HttpHandlers.MAPPING_API;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.ws.rs.core.Application;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.web.resources.Authentication;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.swagger.converter.ModelConverter;
+import io.swagger.converter.ModelConverterContext;
+import io.swagger.converter.ModelConverters;
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.models.Model;
+import io.swagger.models.properties.Property;
+import io.swagger.models.properties.PropertyBuilder;
+import io.swagger.util.Json;
+
+@Singleton
+public class ApiApplication extends Application {
+	@Inject
+<span class="nc" id="L39">	public ApiApplication(@Named(&quot;hostname&quot;) final String hostname) {</span>
+		// Initialize Swagger settings
+		final URL url;
+		try {
+<span class="nc" id="L43">			url = new URL(hostname);</span>
+<span class="nc" id="L44">		} catch (final MalformedURLException e) {</span>
+<span class="nc" id="L45">			throw new RuntimeException(e);</span>
+<span class="nc" id="L46">		}</span>
+		// Configure Swagger
+<span class="nc" id="L48">		final BeanConfig beanConfig = new BeanConfig();</span>
+<span class="nc" id="L49">		beanConfig.setSchemes(new String[] { url.getProtocol() });</span>
+<span class="nc" id="L50">		beanConfig.setHost(url.getHost()</span>
+<span class="nc bnc" id="L51" title="All 4 branches missed.">				+ (url.getPort() != -1 &amp;&amp; url.getPort() != url.getDefaultPort() ? &quot;:&quot; + url.getPort() : &quot;&quot;));</span>
+<span class="nc" id="L52">		beanConfig.setBasePath(MAPPING_API);</span>
+<span class="nc" id="L53">		beanConfig.setResourcePackage(</span>
+<span class="nc" id="L54">				Authentication.class.getPackage().getName() + &quot;,&quot; + Api.class.getPackage().getName());</span>
+<span class="nc" id="L55">		beanConfig.setScan(true);</span>
+
+		// Change model display for swagger
+<span class="nc" id="L58">		ModelConverters.getInstance().addConverter(new ColorConverter());</span>
+<span class="nc" id="L59">		ModelConverters.getInstance().addConverter(new DurationConverter());</span>
+<span class="nc" id="L60">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public Set&lt;Class&lt;?&gt;&gt; getClasses() {
+<span class="nc" id="L65">		final Set&lt;Class&lt;?&gt;&gt; classes = new HashSet&lt;&gt;();</span>
+
+		// Add Swagger Resources
+<span class="nc" id="L68">		classes.add(io.swagger.jaxrs.listing.ApiListingResource.class);</span>
+<span class="nc" id="L69">		classes.add(io.swagger.jaxrs.listing.SwaggerSerializers.class);</span>
+
+		// All other resources will be found by Guice module in ApiBootstrapListener
+
+<span class="nc" id="L73">		return classes;</span>
+	}
+
+	private static final class ColorConverter implements ModelConverter {
+		private ColorConverter() {
+			// no fields to be initialized
+		}
+
+		@Nullable
+		@Override
+		public Property resolveProperty(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Annotation[] annotations,
+				@Nullable final Iterator&lt;ModelConverter&gt; chain) {
+<span class="nc" id="L87">			final JavaType jType = Json.mapper().constructType(type);</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">			if (jType == null) {</span>
+<span class="nc" id="L89">				return null;</span>
+			}
+<span class="nc" id="L91">			final Class&lt;?&gt; cls = jType.getRawClass();</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">			if (!cls.equals(Color.class)) {</span>
+<span class="nc" id="L93">				return Objects.requireNonNull(chain).next().resolveProperty(type, context, annotations, chain);</span>
+			}
+<span class="nc" id="L95">			final Map&lt;PropertyBuilder.PropertyId, Object&gt; map = new HashMap&lt;&gt;();</span>
+			// map.put(PropertyBuilder.PropertyId.FORMAT, &quot;#rrggbbaa&quot;);
+<span class="nc" id="L97">			map.put(PropertyBuilder.PropertyId.TYPE, &quot;string&quot;);</span>
+<span class="nc" id="L98">			map.put(PropertyBuilder.PropertyId.EXAMPLE, &quot;#11223344&quot;);</span>
+<span class="nc" id="L99">			return PropertyBuilder.build(&quot;string&quot;, &quot;#rrggbbaa&quot;, map);</span>
+		}
+
+		@Nullable
+		@Override
+		public Model resolve(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Iterator&lt;ModelConverter&gt; chain) {
+<span class="nc" id="L107">			return Objects.requireNonNull(chain).next().resolve(type, context, chain);</span>
+		}
+	}
+
+	private static final class DurationConverter implements ModelConverter {
+		private DurationConverter() {
+			// no fields to be initialized
+		}
+
+		@Nullable
+		@Override
+		public Property resolveProperty(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Annotation[] annotations,
+				@Nullable final Iterator&lt;ModelConverter&gt; chain) {
+<span class="nc" id="L122">			final JavaType jType = Json.mapper().constructType(type);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">			if (jType == null) {</span>
+<span class="nc" id="L124">				return null;</span>
+			}
+<span class="nc" id="L126">			final Class&lt;?&gt; cls = jType.getRawClass();</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">			if (!cls.equals(Duration.class)) {</span>
+<span class="nc" id="L128">				return Objects.requireNonNull(chain).next().resolveProperty(type, context, annotations, chain);</span>
+			}
+<span class="nc" id="L130">			final Map&lt;PropertyBuilder.PropertyId, Object&gt; map = new HashMap&lt;&gt;();</span>
+			// map.put(PropertyBuilder.PropertyId.FORMAT, &quot;#rrggbbaa&quot;);
+<span class="nc" id="L132">			map.put(PropertyBuilder.PropertyId.TYPE, &quot;string&quot;);</span>
+<span class="nc" id="L133">			map.put(PropertyBuilder.PropertyId.EXAMPLE, &quot;PT1H&quot;);</span>
+<span class="nc" id="L134">			map.put(PropertyBuilder.PropertyId.PATTERN,</span>
+					&quot;^P(?:(0+)Y)?(?:(0+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$&quot;);
+<span class="nc" id="L136">			return PropertyBuilder.build(&quot;string&quot;, null, map);</span>
+		}
+
+		@Nullable
+		@Override
+		public Model resolve(@Nullable final Type type,
+				@Nullable final ModelConverterContext context,
+				@Nullable final Iterator&lt;ModelConverter&gt; chain) {
+<span class="nc" id="L144">			return Objects.requireNonNull(chain).next().resolve(type, context, chain);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractJdbcConnector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.storage</a> &gt; <span class="el_source">AbstractJdbcConnector.java</span></div><h1>AbstractJdbcConnector.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.storage;
+
+import static com.hlag.oversigt.util.Utils.map;
+import static java.util.stream.Collectors.toList;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+import com.google.inject.Singleton;
+
+import de.larssh.utils.collection.Maps;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Singleton
+public abstract class AbstractJdbcConnector implements Closeable {
+<span class="fc" id="L37">	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcConnector.class);</span>
+
+	protected abstract Connection getConnection();
+
+	protected abstract SqlDialect getDialect();
+
+<span class="fc" id="L43">	protected AbstractJdbcConnector() {}</span>
+
+	@Override
+	public void close() throws IOException {
+		try {
+<span class="nc" id="L48">			getConnection().close();</span>
+<span class="nc" id="L49">		} catch (final SQLException e) {</span>
+<span class="nc" id="L50">			throw new IOException(&quot;Unable to close dastabase&quot;, e);</span>
+<span class="nc" id="L51">		}</span>
+<span class="nc" id="L52">	}</span>
+
+	private PreparedStatement prepare(final String sql, final Object... values) throws SQLException {
+<span class="fc" id="L55">		return prepare(sql, false, values);</span>
+	}
+
+	private PreparedStatement prepare(final String sql, final boolean returnGeneratedKeys, final Object... values)
+			throws SQLException {
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">		if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L61">			LOGGER.debug(&quot;Preparing statement: {}&quot;, sql);</span>
+		}
+<span class="fc" id="L63">		final PreparedStatement statement</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">				= getConnection().prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : 0);</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">		for (int i = 0; i &lt; values.length; i += 1) {</span>
+<span class="nc" id="L66">			statement.setObject(i + 1, getDialect().convertValue(values[i]));</span>
+		}
+<span class="fc" id="L68">		return statement;</span>
+	}
+
+	protected Map&lt;String, Object&gt; readColumnValues(final ResultSet rs, final String[] columnNames) throws SQLException {
+<span class="fc" id="L72">		final Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">		for (final String columnName : columnNames) {</span>
+			try {
+<span class="fc" id="L75">				map.put(columnName, readColumnValue(rs, columnName));</span>
+<span class="nc" id="L76">			} catch (final SQLException e) {</span>
+<span class="nc" id="L77">				throw new SQLException(&quot;Unable to read column '&quot; + columnName + &quot;'&quot;, e);</span>
+<span class="fc" id="L78">			}</span>
+		}
+<span class="fc" id="L80">		return map;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	protected static &lt;T&gt; T readColumnValue(final ResultSet rs, final String columnName) throws SQLException {
+<span class="fc" id="L85">		return (T) rs.getObject(columnName);</span>
+	}
+
+	protected &lt;T&gt; Optional&lt;T&gt; insert(final String table,
+			final Optional&lt;ThrowingFunction&lt;ResultSet, T&gt;&gt; getGeneratedKey,
+			final Object... parameters) {
+<span class="nc" id="L91">		return insert(table, getGeneratedKey, map(parameters));</span>
+	}
+
+	protected &lt;T&gt; Optional&lt;T&gt; insert(final String table,
+			final Optional&lt;ThrowingFunction&lt;ResultSet, T&gt;&gt; getGeneratedKey,
+			final Map&lt;String, ?&gt; values) {
+<span class="nc" id="L97">		final String sql = getDialect().insert(table, values.keySet());</span>
+		try {
+<span class="nc" id="L99">			return executeInsert(sql, getGeneratedKey, values.values().toArray());</span>
+<span class="nc" id="L100">		} catch (final SQLException e) {</span>
+<span class="nc" id="L101">			throw new DatabaseException(&quot;Unable to execute INSERT&quot;, sql, e);</span>
+		}
+	}
+
+	protected int updateByOneKey(final String table,
+			final String mainName,
+			final Object mainValue,
+			final Object... whereValues) {
+<span class="nc" id="L109">		return update(table,</span>
+<span class="nc" id="L110">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L111">						.put(mainName, mainValue)</span>
+<span class="nc" id="L112">						.get(),</span>
+<span class="nc" id="L113">				map(whereValues));</span>
+	}
+
+	protected int updateByTwoKey(final String table,
+			final String mainName,
+			final Object mainValue,
+			final String subName,
+			final Object subValue,
+			final Object... whereValues) {
+<span class="nc" id="L122">		return update(table,</span>
+<span class="nc" id="L123">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L124">						.put(mainName, mainValue)</span>
+<span class="nc" id="L125">						.put(subName, subValue)</span>
+<span class="nc" id="L126">						.get(),</span>
+<span class="nc" id="L127">				map(whereValues));</span>
+	}
+
+	protected int updateByThreeKey(final String table,
+			final String oneName,
+			final Object oneValue,
+			final String twoName,
+			final Object twoValue,
+			final String threeName,
+			final Object threeValue,
+			final Object... whereValues) {
+<span class="nc" id="L138">		return update(table,</span>
+<span class="nc" id="L139">				Maps.&lt;String, Object&gt;builder()</span>
+<span class="nc" id="L140">						.put(oneName, oneValue)</span>
+<span class="nc" id="L141">						.put(twoName, twoValue)</span>
+<span class="nc" id="L142">						.put(threeName, threeValue)</span>
+<span class="nc" id="L143">						.get(),</span>
+<span class="nc" id="L144">				map(whereValues));</span>
+	}
+
+	protected int update(final String table, final Map&lt;String, Object&gt; where, final Map&lt;String, Object&gt; values) {
+<span class="nc" id="L148">		final String sql = getDialect().update(table, values.keySet(), where.keySet());</span>
+		try {
+<span class="nc" id="L150">			return executeUpdate(sql,</span>
+<span class="nc" id="L151">					Stream.concat(values.values().stream(), where.values().stream()).collect(toList()));</span>
+<span class="nc" id="L152">		} catch (final SQLException e) {</span>
+<span class="nc" id="L153">			throw new DatabaseException(&quot;Unable to execute UPDATE\nWHERE: &quot; + where + &quot;\nVALUES: &quot; + values, sql, e);</span>
+		}
+	}
+
+	protected int delete(final String table, final Object... keysAndValues) {
+<span class="nc" id="L158">		return delete(table, map(keysAndValues));</span>
+	}
+
+	protected int delete(final String table, final Map&lt;String, Object&gt; keysAndValues) {
+<span class="nc" id="L162">		final String sql = getDialect().delete(table, keysAndValues.keySet());</span>
+		try {
+<span class="nc" id="L164">			final int count = executeUpdate(sql, keysAndValues.values());</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">			if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L166">				LOGGER.debug(&quot;Deleted {} rows&quot;, count);</span>
+			}
+<span class="nc" id="L168">			return count;</span>
+<span class="nc" id="L169">		} catch (final SQLException e) {</span>
+<span class="nc" id="L170">			throw new DatabaseException(&quot;Unable to execute DELETE&quot;, sql, e);</span>
+		}
+	}
+
+	protected int executeUpdate(final String sql, final Collection&lt;Object&gt; values) throws SQLException {
+<span class="nc" id="L175">		return executeUpdate(sql, values.toArray());</span>
+	}
+
+	protected int executeUpdate(final String sql, final Object... values) throws SQLException {
+<span class="nc" id="L179">		try (PreparedStatement stmt = prepare(sql, values)) {</span>
+<span class="nc" id="L180">			final int count = stmt.executeUpdate();</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">			if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L182">				LOGGER.debug(&quot;Executed UPDATE ({} lines)&quot;, count);</span>
+			}
+<span class="nc" id="L184">			return count;</span>
+		}
+	}
+
+	protected &lt;T&gt; Optional&lt;T&gt; executeInsert(final String sql,
+			final Optional&lt;ThrowingFunction&lt;ResultSet, T&gt;&gt; getGeneratedKey,
+			final Object... values) throws SQLException {
+<span class="nc" id="L191">		try (PreparedStatement stmt = prepare(sql, true, values)) {</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">			if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L193">				LOGGER.debug(&quot;Executing INSERT&quot;);</span>
+			}
+<span class="nc" id="L195">			stmt.executeUpdate();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">			if (!getGeneratedKey.isPresent()) {</span>
+<span class="nc" id="L197">				return Optional.empty();</span>
+			}
+<span class="nc" id="L199">			try (ResultSet gkrs = stmt.getGeneratedKeys()) {</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">				if (gkrs.next()) {</span>
+<span class="nc" id="L201">					return Optional.of(getGeneratedKey.get().apply(gkrs));</span>
+				}
+<span class="nc" id="L203">				throw new DatabaseException(&quot;Unable to get generated keys. ResultSet is empty.&quot;, sql);</span>
+			}
+		}
+	}
+
+	protected static &lt;T&gt; T first(final Collection&lt;T&gt; objects) {
+<span class="nc" id="L209">		return objects.stream().findFirst().orElse(null);</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	protected &lt;T&gt; List&lt;T&gt; loadWithOneLike(final String table,
+			final String columnToRead,
+			final String[] columnsToCheck,
+			final Object[] valuesToCheck,
+			final String columnToCheckWithLike,
+			final String likeValue) {
+<span class="nc" id="L219">		return load(getDialect().selectWithOneLike(table,</span>
+<span class="nc" id="L220">				Arrays.asList(columnToRead),</span>
+<span class="nc" id="L221">				Arrays.asList(columnsToCheck),</span>
+<span class="nc" id="L222">				columnToCheckWithLike), rs -&gt; (T) rs.getObject(1), simplify(valuesToCheck, likeValue));</span>
+	}
+
+	protected List&lt;Map&lt;String, Object&gt;&gt; loadValues(final String table,
+			final String columnToRead,
+			final Optional&lt;String&gt; columnToCheck,
+			final Collection&lt;Object&gt; values,
+			final String[] columnNames) {
+<span class="nc" id="L230">		return loadValues(table, columnToRead, columnToCheck, values.toArray(), columnNames);</span>
+	}
+
+	protected List&lt;Map&lt;String, Object&gt;&gt; loadValues(final String table,
+			final String columnToRead,
+			final Optional&lt;String&gt; columnToCheck,
+			final Object[] values,
+			final String[] columnNames) {
+<span class="nc bnc" id="L238" title="All 2 branches missed.">		if (values.length == 1) {</span>
+<span class="nc" id="L239">			return load(table, columnToRead, columnToCheck, values[0], rs -&gt; readColumnValues(rs, columnNames));</span>
+		}
+<span class="nc" id="L241">		final String sql = getDialect()</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">				.select(table, Lists.newArrayList(&quot;*&quot;), columnToCheck, values.length == 0 ? -1 : values.length);</span>
+<span class="nc" id="L243">		return load(sql, rs -&gt; readColumnValues(rs, columnNames), values);</span>
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final String table, final String columnToRead) {
+<span class="fc" id="L247">		return load(table, columnToRead, Optional.empty(), null);</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	protected &lt;T&gt; List&lt;T&gt; load(final String table,
+			final String columnToRead,
+			final Optional&lt;String&gt; columnToCheck,
+			@Nullable final Object value) {
+<span class="fc" id="L255">		return load(table, columnToRead, columnToCheck, value, rs -&gt; (T) rs.getObject(1));</span>
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final String table,
+			final String columnToRead,
+			final String columnToCheckA,
+			final Object valueA,
+			final String columnToCheckB,
+			final Object valueB,
+			final ThrowingFunction&lt;ResultSet, T&gt; converter) {
+<span class="nc" id="L265">		final String sql = getDialect().select(table,</span>
+<span class="nc" id="L266">				Arrays.asList(columnToRead),</span>
+<span class="nc" id="L267">				Arrays.asList(Objects.requireNonNull(columnToCheckA), Objects.requireNonNull(columnToCheckB)));</span>
+<span class="nc" id="L268">		return load(sql, converter, valueA, valueB);</span>
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final String table,
+			final String columnToRead,
+			final Optional&lt;String&gt; columnToCheck,
+			@Nullable final Object value,
+			final ThrowingFunction&lt;ResultSet, T&gt; converter) {
+<span class="fc" id="L276">		final String sql = getDialect().select(table,</span>
+<span class="fc" id="L277">				Arrays.asList(columnToRead),</span>
+<span class="pc" id="L278">				columnToCheck.map(Arrays::asList).orElse(Collections.emptyList()));</span>
+<span class="pc bpc" id="L279" title="1 of 2 branches missed.">		return load(sql, converter, columnToCheck.isPresent() ? new Object[] { value } : new Object[0]);</span>
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final String sql,
+			final ThrowingFunction&lt;ResultSet, T&gt; converter,
+			final Object... values) {
+<span class="fc" id="L285">		try (PreparedStatement stmt = prepare(sql, values)) {</span>
+<span class="fc" id="L286">			return load(stmt, converter);</span>
+<span class="nc" id="L287">		} catch (final Exception e) {</span>
+<span class="nc" id="L288">			throw new DatabaseException(&quot;Unable to read&quot;, sql, e);</span>
+		}
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final String sql, final ThrowingFunction&lt;ResultSet, T&gt; converter) {
+<span class="nc" id="L293">		try (PreparedStatement stmt = prepare(sql)) {</span>
+<span class="nc" id="L294">			return load(stmt, converter);</span>
+<span class="nc" id="L295">		} catch (final Exception e) {</span>
+<span class="nc" id="L296">			throw new DatabaseException(&quot;Unable to read data&quot;, sql, e);</span>
+		}
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final PreparedStatement stmt, final ThrowingFunction&lt;ResultSet, T&gt; converter)
+			throws SQLException {
+<span class="fc" id="L302">		try (ResultSet resultSet = stmt.executeQuery()) {</span>
+<span class="fc" id="L303">			return load(resultSet, converter);</span>
+		}
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; load(final ResultSet resultSet, final ThrowingFunction&lt;ResultSet, T&gt; converter)
+			throws SQLException {
+<span class="fc" id="L309">		final List&lt;T&gt; items = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">		while (resultSet.next()) {</span>
+<span class="fc" id="L311">			final T item = converter.apply(resultSet);</span>
+<span class="fc" id="L312">			items.add(item);</span>
+<span class="fc" id="L313">		}</span>
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">		if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L315">			LOGGER.debug(&quot;Executed SELECT ({} lines)&quot;, items.size());</span>
+		}
+<span class="fc" id="L317">		return items;</span>
+	}
+
+	private Object[] simplify(final Object... objects) {
+<span class="nc" id="L321">		final List&lt;Object&gt; out = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">		for (final Object object : objects) {</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">			if (object instanceof Object[]) {</span>
+<span class="nc" id="L324">				out.addAll(Arrays.asList((Object[]) object));</span>
+			} else {
+<span class="nc" id="L326">				out.add(object);</span>
+			}
+		}
+<span class="nc" id="L329">		return out.toArray();</span>
+	}
+
+	protected &lt;T&gt; List&lt;T&gt; getList(final ResultSet rs, final ThrowingFunction&lt;ResultSet, T&gt; converter)
+			throws SQLException {
+<span class="fc" id="L334">		final List&lt;T&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">		while (rs.next()) {</span>
+<span class="fc" id="L336">			list.add(converter.apply(rs));</span>
+		}
+<span class="fc" id="L338">		return list;</span>
+	}
+
+	protected static Timestamp now() {
+<span class="nc" id="L342">		return new Timestamp(ZonedDateTime.now().toInstant().toEpochMilli());</span>
+	}
+
+	@FunctionalInterface
+	protected interface ThrowingRunnable {
+		void run() throws SQLException;
+	}
+
+	@FunctionalInterface
+	protected interface ThrowingFunction&lt;I, O&gt; {
+		O apply(I argument) throws SQLException;
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

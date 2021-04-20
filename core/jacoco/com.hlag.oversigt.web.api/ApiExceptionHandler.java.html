@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiExceptionHandler.java</span></div><h1>ApiExceptionHandler.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Ascii;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import de.larssh.utils.SneakyException;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Provider
+public class ApiExceptionHandler implements ExceptionMapper&lt;Exception&gt; {
+<span class="nc" id="L30">	private static final Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);</span>
+
+	private final boolean debug;
+
+	@Inject
+<span class="nc" id="L35">	public ApiExceptionHandler(@Named(&quot;debug&quot;) final boolean debug) {</span>
+<span class="nc" id="L36">		this.debug = debug;</span>
+<span class="nc" id="L37">	}</span>
+
+	@Nullable
+	@Context
+	private HttpServletRequest injectedRequest;
+
+<span class="nc" id="L43">	private static final Pattern PATTERN_COMMA = Pattern.compile(&quot;,&quot;);</span>
+
+<span class="nc" id="L45">	private static final Pattern PATTERN_SEMICOLON = Pattern.compile(&quot;;&quot;);</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public Response toResponse(@Nullable final Exception nullableException) {
+<span class="nc" id="L50">		final Exception exception = Objects.requireNonNull(nullableException);</span>
+
+<span class="nc" id="L52">		final UUID uuid = UUID.randomUUID();</span>
+<span class="nc" id="L53">		LOGGER.error(&quot;Error while calling API method - &quot; + uuid.toString(), exception);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">		if (exception instanceof ApiValidationException) {</span>
+<span class="nc" id="L55">			final ApiValidationException ave = (ApiValidationException) exception;</span>
+<span class="nc" id="L56">			return ErrorResponse.badRequest(uuid,</span>
+					&quot;Unable to validate input parameters.&quot;,
+<span class="nc" id="L58">					ave.getViolations()</span>
+<span class="nc" id="L59">							.stream()</span>
+<span class="nc" id="L60">							.map(v -&gt; v.getPropertyPath() + &quot; &quot; + v.getMessage())</span>
+<span class="nc" id="L61">							.collect(Collectors.toList()));</span>
+		}
+<span class="nc bnc" id="L63" title="All 2 branches missed.">		if (!debug) {</span>
+<span class="nc" id="L64">			return ErrorResponse.internalServerError(uuid,</span>
+					&quot;Internal server error. More details can be found in the server log file.&quot;);
+		}
+<span class="nc" id="L67">		final String[] accepts = PATTERN_COMMA.split(Objects.requireNonNull(injectedRequest).getHeader(&quot;accept&quot;), 0);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">		for (final String accept : accepts) {</span>
+<span class="nc" id="L69">			final String[] parts = PATTERN_SEMICOLON.split(accept, 0);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">			switch (Ascii.toLowerCase(parts[0].trim())) {</span>
+			case &quot;application/json&quot;:
+			case &quot;application/xml&quot;:
+<span class="nc" id="L73">				final StringWriter sw = new StringWriter();</span>
+<span class="nc" id="L74">				final PrintWriter pw = new PrintWriter(sw);</span>
+<span class="nc" id="L75">				pw.println(&quot;ID: &quot; + uuid.toString());</span>
+<span class="nc" id="L76">				pw.println();</span>
+<span class="nc" id="L77">				exception.printStackTrace(pw);</span>
+<span class="nc" id="L78">				return Response.status(Status.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L79">						.entity(sw.toString())</span>
+<span class="nc" id="L80">						.type(MediaType.TEXT_PLAIN_TYPE)</span>
+<span class="nc" id="L81">						.build();</span>
+			default:
+			}
+		}
+<span class="nc" id="L85">		throw new SneakyException(exception);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardWidgetResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">DashboardWidgetResource.java</span></div><h1>DashboardWidgetResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
+
+import java.net.URI;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.EventSourceInstanceResource.FullEventSourceInstanceInfo;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;Dashboard-Widget&quot; })
+@Path(&quot;/dashboards/{dashboardId}/widgets&quot;)
+@Singleton
+public class DashboardWidgetResource {
+	@Inject
+	private DashboardController controller;
+
+	@Inject
+	private EventSourceInstanceResource eventSourceInstanceResource;
+
+	@Nullable
+	@Context
+	private UriInfo injectedUriInfo;
+
+	private UriInfo getUriInfo() {
+<span class="nc" id="L75">		return Objects.requireNonNull(injectedUriInfo);</span>
+	}
+
+<span class="nc" id="L78">	public DashboardWidgetResource() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L80">	}</span>
+
+	@GET
+	@Path(&quot;/&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returning a list of all widgets&quot;,
+					response = WidgetShortInfo.class,
+					responseContainer = &quot;List&quot;),
+			@ApiResponse(code = 404, message = &quot;The dashboard does not exist&quot;) })
+	@JwtSecured(mustBeAuthenticated = false)
+	@ApiOperation(value = &quot;List widgets of a dashboard&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@PermitAll
+	@NoChangeLog
+	public Response listWidgets(@Context final SecurityContext secu,
+			@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@QueryParam(&quot;containing&quot;) @ApiParam(required = false,
+					value = &quot;Only show widgets containing this text&quot;) final String containing) {
+<span class="nc" id="L99">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L101">			return ErrorResponse.notFound(&quot;The dashboard does not exist&quot;);</span>
+		}
+
+		final Predicate&lt;Widget&gt; filterName;
+<span class="nc bnc" id="L105" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(containing)) {</span>
+<span class="nc" id="L106">			filterName = w -&gt; true;</span>
+		} else {
+<span class="nc" id="L108">			final String lower = containing.trim().toLowerCase();</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">			filterName = w -&gt; w.getName().toLowerCase().contains(lower)</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">					|| w.getTitle().toLowerCase().contains(lower)</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">					|| w.getBackgroundColor().getHexColor().toLowerCase().contains(lower)</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">					|| w.getStyle().toLowerCase().contains(lower)</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">					|| w.getType().toLowerCase().contains(lower)</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">					|| w.getView().toLowerCase().contains(lower)</span>
+<span class="nc" id="L115">					|| w.getEventSourceInstance()</span>
+<span class="nc" id="L116">							.getDescriptor()</span>
+<span class="nc" id="L117">							.getDataItems()</span>
+<span class="nc" id="L118">							.stream()</span>
+<span class="nc" id="L119">							.filter(w::hasWidgetData)</span>
+<span class="nc" id="L120">							.map(w::getWidgetData)</span>
+<span class="nc" id="L121">							.map(String::toLowerCase)</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">							.anyMatch(s -&gt; s.contains(lower));</span>
+		}
+
+		final Predicate&lt;Widget&gt; filterSecu;
+<span class="nc bnc" id="L126" title="All 2 branches missed.">		if (secu.getUserPrincipal() != null) {</span>
+<span class="nc" id="L127">			filterSecu = w -&gt; true;</span>
+		} else {
+<span class="nc" id="L129">			filterSecu = Widget::isEnabled;</span>
+		}
+
+<span class="nc" id="L132">		return ok(dashboard.get()</span>
+<span class="nc" id="L133">				.getWidgets()</span>
+<span class="nc" id="L134">				.stream()</span>
+<span class="nc" id="L135">				.filter(filterName)</span>
+<span class="nc" id="L136">				.filter(filterSecu)</span>
+<span class="nc" id="L137">				.map(WidgetShortInfo::new)</span>
+<span class="nc" id="L138">				.toArray()).build();</span>
+	}
+
+	@POST
+	@Path(&quot;/&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 201, message = &quot;Widget created&quot;, response = WidgetDetails.class),
+			@ApiResponse(code = 400,
+					message = &quot;The data provided by the client is invalid&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404, message = &quot;Required data does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Create widget&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response createWidget(@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@QueryParam(&quot;eventSource&quot;) @ApiParam(required = true) @NotBlank final String eventSourceInstanceId) {
+<span class="nc" id="L155">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L157">			return ErrorResponse.notFound(&quot;The dashboard does not exist&quot;);</span>
+		}
+
+		final Widget widget;
+		try {
+<span class="nc" id="L162">			widget = controller.createWidgetForDashboard(dashboard.get(), eventSourceInstanceId);</span>
+<span class="nc" id="L163">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L164">			return ErrorResponse.notFound(&quot;The event source instance does not exist&quot;);</span>
+<span class="nc" id="L165">		}</span>
+
+<span class="nc" id="L167">		return created(URI.create(getUriInfo().getAbsolutePath() + &quot;/&quot; + widget.getId()))</span>
+<span class="nc" id="L168">				.entity(new WidgetDetails(widget, false))</span>
+<span class="nc" id="L169">				.build();</span>
+	}
+
+	@GET
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Returning a list of all widgets&quot;, response = WidgetDetails.class),
+			@ApiResponse(code = 404, message = &quot;The data does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured(mustBeAuthenticated = false)
+	@ApiOperation(value = &quot;Read widget&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@PermitAll
+	@NoChangeLog
+	public Response readWidget(@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@PathParam(&quot;id&quot;) @Positive final int widgetId,
+			@QueryParam(&quot;showAllProperties&quot;) @DefaultValue(&quot;true&quot;) @ApiParam(defaultValue = &quot;true&quot;,
+					value = &quot;false to show only properties defined for this specific widget. true to additionally show all properties inherited from the underlaying event source.&quot;) final boolean all) {
+<span class="nc" id="L186">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L188">			return ErrorResponse.notFound(&quot;The dashboard does not exist&quot;);</span>
+		}
+
+		try {
+<span class="nc" id="L192">			return ok(new WidgetDetails(dashboard.get().getWidget(widgetId), all)).build();</span>
+<span class="nc" id="L193">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L194">			return ErrorResponse.notFound(&quot;The widget does not exist in this dashboard&quot;);</span>
+		}
+	}
+
+	@GET
+	@Path(&quot;/{id}/event-source-instance&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;The event source instance information for the specified widget&quot;,
+					response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 404, message = &quot;Data does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read event source instance for widget&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response readEventSourceInstanceForWidget(@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@PathParam(&quot;id&quot;) @Positive final int widgetId) {
+<span class="nc" id="L211">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc" id="L212">		final Widget widget = dashboard.get().getWidget(widgetId);</span>
+<span class="nc" id="L213">		final FullEventSourceInstanceInfo info</span>
+<span class="nc" id="L214">				= eventSourceInstanceResource.getInstanceInfo(widget.getEventSourceInstance().getId());</span>
+<span class="nc" id="L215">		return ok(info).build();</span>
+	}
+
+	@PUT
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Widget has been updated&quot;, response = WidgetDetails.class),
+			@ApiResponse(code = 404, message = &quot;Data does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Update widget&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response updateWidget(@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@PathParam(&quot;id&quot;) @Positive final int widgetId,
+			@NotNull final WidgetDetails details) {
+<span class="nc" id="L230">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L232">			return ErrorResponse.notFound(&quot;The dashboard does not exist&quot;);</span>
+		}
+
+		final Widget widget;
+		try {
+<span class="nc" id="L237">			widget = dashboard.get().getWidget(widgetId);</span>
+<span class="nc" id="L238">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L239">			return ErrorResponse.notFound(&quot;The widget does not exist&quot;);</span>
+<span class="nc" id="L240">		}</span>
+
+<span class="nc bnc" id="L242" title="All 4 branches missed.">		if (widget.getId() != details.getId() || details.getId() != widgetId) {</span>
+<span class="nc" id="L243">			return ErrorResponse.badRequest(&quot;The ID does not match&quot;);</span>
+		}
+<span class="nc bnc" id="L245" title="All 2 branches missed.">		if (!widget.getEventSourceInstance().getId().equals(details.getEventSourceInstanceId())) {</span>
+<span class="nc" id="L246">			return ErrorResponse.badRequest(&quot;The event source instance id does not match&quot;);</span>
+		}
+<span class="nc" id="L248">		final Set&lt;String&gt; unnessaccaryDataItems = new HashSet&lt;&gt;(details.getData().keySet());</span>
+<span class="nc" id="L249">		unnessaccaryDataItems.removeAll(widget.getEventSourceInstance()</span>
+<span class="nc" id="L250">				.getDescriptor()</span>
+<span class="nc" id="L251">				.getDataItems()</span>
+<span class="nc" id="L252">				.stream()</span>
+<span class="nc" id="L253">				.map(EventSourceProperty::getName)</span>
+<span class="nc" id="L254">				.collect(Collectors.toSet()));</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		if (!unnessaccaryDataItems.isEmpty()) {</span>
+<span class="nc" id="L256">			return ErrorResponse.badRequest(&quot;Some data items are unknown&quot;, unnessaccaryDataItems);</span>
+		}
+
+		final Widget newWidget;
+		try {
+<span class="nc" id="L261">			newWidget = new Widget(details.getId(),</span>
+<span class="nc" id="L262">					widget.getEventSourceInstance(),</span>
+<span class="nc" id="L263">					details.getTitle(),</span>
+<span class="nc" id="L264">					details.getName(),</span>
+<span class="nc" id="L265">					details.isEnabled(),</span>
+<span class="nc" id="L266">					details.getPosX(),</span>
+<span class="nc" id="L267">					details.getPosY(),</span>
+<span class="nc" id="L268">					details.getSizeX(),</span>
+<span class="nc" id="L269">					details.getSizeY(),</span>
+<span class="nc" id="L270">					details.getBackgroundColor(),</span>
+<span class="nc" id="L271">					details.getStyle());</span>
+<span class="nc" id="L272">			newWidget.getEventSourceInstance().getDescriptor().getDataItems().forEach(p -&gt; {</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">				if (details.getData().containsKey(p.getName())) {</span>
+<span class="nc" id="L274">					newWidget.setWidgetData(p, details.getData().get(p.getName()));</span>
+				} else {
+<span class="nc" id="L276">					newWidget.removeWidgetData(p);</span>
+				}
+<span class="nc" id="L278">			});</span>
+<span class="nc" id="L279">		} catch (final Exception e) {</span>
+<span class="nc" id="L280">			return ErrorResponse.badRequest(&quot;Invalid event source instance values&quot;, e);</span>
+<span class="nc" id="L281">		}</span>
+
+<span class="nc" id="L283">		controller.updateWidget(newWidget);</span>
+<span class="nc" id="L284">		return ok(new WidgetDetails(newWidget, false)).build();</span>
+	}
+
+	@DELETE
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The widget has been deleted&quot;),
+			@ApiResponse(code = 404, message = &quot;The widget does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Delete widget&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(&quot;dashboard.{dashboardId}.editor&quot;)
+	public Response deleteWidget(@PathParam(&quot;dashboardId&quot;) @NotNull final String dashboardId,
+			@PathParam(&quot;id&quot;) @Positive final int widgetId) {
+<span class="nc" id="L298">		final Optional&lt;Dashboard&gt; dashboard = controller.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L300">			return ErrorResponse.notFound(&quot;The dashboard does not exist&quot;);</span>
+		}
+
+		final Widget widget;
+		try {
+<span class="nc" id="L305">			widget = dashboard.get().getWidget(widgetId);</span>
+<span class="nc" id="L306">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L307">			return ErrorResponse.notFound(&quot;The widget does not exist&quot;);</span>
+<span class="nc" id="L308">		}</span>
+
+<span class="nc" id="L310">		controller.deleteWidget(widget);</span>
+<span class="nc" id="L311">		return ok().build();</span>
+	}
+
+	public static class WidgetShortInfo {
+		public WidgetShortInfo(final Widget widget) {
+<span class="nc" id="L316">			this(widget.getId(),</span>
+<span class="nc" id="L317">					widget.getName(),</span>
+<span class="nc" id="L318">					widget.getView(),</span>
+<span class="nc" id="L319">					widget.isEnabled(),</span>
+<span class="nc" id="L320">					widget.getPosX(),</span>
+<span class="nc" id="L321">					widget.getPosY(),</span>
+<span class="nc" id="L322">					widget.getSizeX(),</span>
+<span class="nc" id="L323">					widget.getSizeY());</span>
+<span class="nc" id="L324">		}</span>
+
+		public WidgetShortInfo(@NotNull @Positive final int id,
+				@NotBlank @NotNull final String name,
+				final String view,
+				final boolean enabled,
+				@NotNull @PositiveOrZero final int posX,
+				@NotNull @PositiveOrZero final int posY,
+				@NotNull @Min(1) @Positive final int sizeX,
+<span class="nc" id="L333">				@NotNull @Min(1) @Positive final int sizeY) {</span>
+<span class="nc" id="L334">			this.id = id;</span>
+<span class="nc" id="L335">			this.name = name;</span>
+<span class="nc" id="L336">			this.view = view;</span>
+<span class="nc" id="L337">			this.enabled = enabled;</span>
+<span class="nc" id="L338">			this.posX = posX;</span>
+<span class="nc" id="L339">			this.posY = posY;</span>
+<span class="nc" id="L340">			this.sizeX = sizeX;</span>
+<span class="nc" id="L341">			this.sizeY = sizeY;</span>
+<span class="nc" id="L342">		}</span>
+
+		@NotNull
+		@Positive
+		private final int id;
+
+		@NotBlank
+		@NotNull
+		private final String name;
+
+		private final String view;
+
+		private final boolean enabled;
+
+		@NotNull
+		@PositiveOrZero
+		private final int posX;
+
+		@NotNull
+		@PositiveOrZero
+		private final int posY;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		private final int sizeX;
+
+		@NotNull
+		@Min(1)
+		@Positive
+		private final int sizeY;
+
+		/**
+		 * @return the id
+		 */
+		public int getId() {
+<span class="nc" id="L378">			return id;</span>
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+<span class="nc" id="L385">			return name;</span>
+		}
+
+		/**
+		 * @return the view
+		 */
+		public String getView() {
+<span class="nc" id="L392">			return view;</span>
+		}
+
+		/**
+		 * @return the enabled
+		 */
+		public boolean isEnabled() {
+<span class="nc" id="L399">			return enabled;</span>
+		}
+
+		/**
+		 * @return the posX
+		 */
+		public int getPosX() {
+<span class="nc" id="L406">			return posX;</span>
+		}
+
+		/**
+		 * @return the posY
+		 */
+		public int getPosY() {
+<span class="nc" id="L413">			return posY;</span>
+		}
+
+		/**
+		 * @return the sizeX
+		 */
+		public int getSizeX() {
+<span class="nc" id="L420">			return sizeX;</span>
+		}
+
+		/**
+		 * @return the sizeY
+		 */
+		public int getSizeY() {
+<span class="nc" id="L427">			return sizeY;</span>
+		}
+	}
+
+	public static class WidgetDetails {
+<span class="nc" id="L432">		@NotNull</span>
+		@Positive
+		private int id = 0;
+
+<span class="nc" id="L436">		@NotBlank</span>
+		@NotNull
+		private String eventSourceInstanceId = &quot;&quot;;
+
+<span class="nc" id="L440">		@NotNull</span>
+		private String type = &quot;&quot;;
+
+<span class="nc" id="L443">		@NotNull</span>
+		private String title = &quot;&quot;;
+
+<span class="nc" id="L446">		@NotBlank</span>
+		@NotNull
+		private String name = &quot;&quot;;
+
+<span class="nc" id="L450">		@NotNull</span>
+		@NotBlank
+		private String view = &quot;&quot;;
+
+<span class="nc" id="L454">		@NotNull</span>
+		private boolean enabled = false;
+
+<span class="nc" id="L457">		@NotNull</span>
+		@PositiveOrZero
+		private int posX = 0;
+
+<span class="nc" id="L461">		@NotNull</span>
+		@PositiveOrZero
+		private int posY = 0;
+
+<span class="nc" id="L465">		@NotNull</span>
+		@Min(1)
+		@Positive
+		private int sizeX = 1;
+
+<span class="nc" id="L470">		@NotNull</span>
+		@Min(1)
+		@Positive
+		private int sizeY = 1;
+
+<span class="nc" id="L475">		@NotNull</span>
+		private Color backgroundColor = Color.BLACK;
+
+<span class="nc" id="L478">		@NotNull</span>
+		private String style = &quot;&quot;;
+
+<span class="nc" id="L481">		@NotNull</span>
+		private Map&lt;@NotBlank String, @NotBlank String&gt; data = new HashMap&lt;&gt;();
+
+<span class="nc" id="L484">		WidgetDetails() {}</span>
+
+		WidgetDetails(final Widget widget, final boolean showAllDatas) {
+<span class="nc" id="L487">			this(widget.getId(),</span>
+<span class="nc" id="L488">					widget.getEventSourceInstance().getId(),</span>
+<span class="nc" id="L489">					widget.getType(),</span>
+<span class="nc" id="L490">					widget.getTitle(),</span>
+<span class="nc" id="L491">					widget.getName(),</span>
+<span class="nc" id="L492">					widget.getView(),</span>
+<span class="nc" id="L493">					widget.isEnabled(),</span>
+<span class="nc" id="L494">					widget.getPosX(),</span>
+<span class="nc" id="L495">					widget.getPosY(),</span>
+<span class="nc" id="L496">					widget.getSizeX(),</span>
+<span class="nc" id="L497">					widget.getSizeY(),</span>
+<span class="nc" id="L498">					widget.getBackgroundColor(),</span>
+<span class="nc" id="L499">					widget.getStyle(),</span>
+<span class="nc" id="L500">					EventSourceInstanceResource.getValueMap(</span>
+<span class="nc bnc" id="L501" title="All 4 branches missed.">							widget.getEventSourceInstance().getDescriptor().getDataItems().stream(),</span>
+							showAllDatas ? widget::getWidgetDataForDashboard : widget::getWidgetData,
+							showAllDatas ? widget::hasWidgetDataForDashboard : widget::hasWidgetData,
+							true));
+<span class="nc" id="L505">		}</span>
+
+		WidgetDetails(final int id,
+				final String eventSourceInstanceId,
+				final String type,
+				final String title,
+				final String name,
+				final String view,
+				final boolean enabled,
+				final int posX,
+				final int posY,
+				final int sizeX,
+				final int sizeY,
+				final Color backgroundColor,
+				final String style,
+<span class="nc" id="L520">				final Map&lt;String, String&gt; data) {</span>
+<span class="nc" id="L521">			this.id = id;</span>
+<span class="nc" id="L522">			this.eventSourceInstanceId = eventSourceInstanceId;</span>
+<span class="nc" id="L523">			this.type = type;</span>
+<span class="nc" id="L524">			this.title = title;</span>
+<span class="nc" id="L525">			this.name = name;</span>
+<span class="nc" id="L526">			this.view = view;</span>
+<span class="nc" id="L527">			this.enabled = enabled;</span>
+<span class="nc" id="L528">			this.posX = posX;</span>
+<span class="nc" id="L529">			this.posY = posY;</span>
+<span class="nc" id="L530">			this.sizeX = sizeX;</span>
+<span class="nc" id="L531">			this.sizeY = sizeY;</span>
+<span class="nc" id="L532">			this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L533">			this.style = style;</span>
+<span class="nc" id="L534">			this.data = new LinkedHashMap&lt;&gt;(data);</span>
+<span class="nc" id="L535">		}</span>
+
+		/**
+		 * @return the id
+		 */
+		public int getId() {
+<span class="nc" id="L541">			return id;</span>
+		}
+
+		/**
+		 * @return the eventSourceInstanceId
+		 */
+		public String getEventSourceInstanceId() {
+<span class="nc" id="L548">			return eventSourceInstanceId;</span>
+		}
+
+		/**
+		 * @return the type
+		 */
+		public String getType() {
+<span class="nc" id="L555">			return type;</span>
+		}
+
+		/**
+		 * @return the title
+		 */
+		public String getTitle() {
+<span class="nc" id="L562">			return title;</span>
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+<span class="nc" id="L569">			return name;</span>
+		}
+
+		/**
+		 * @return the view
+		 */
+		public String getView() {
+<span class="nc" id="L576">			return view;</span>
+		}
+
+		/**
+		 * @return the enabled
+		 */
+		public boolean isEnabled() {
+<span class="nc" id="L583">			return enabled;</span>
+		}
+
+		/**
+		 * @return the posX
+		 */
+		public int getPosX() {
+<span class="nc" id="L590">			return posX;</span>
+		}
+
+		/**
+		 * @return the posY
+		 */
+		public int getPosY() {
+<span class="nc" id="L597">			return posY;</span>
+		}
+
+		/**
+		 * @return the sizeX
+		 */
+		public int getSizeX() {
+<span class="nc" id="L604">			return sizeX;</span>
+		}
+
+		/**
+		 * @return the sizeY
+		 */
+		public int getSizeY() {
+<span class="nc" id="L611">			return sizeY;</span>
+		}
+
+		/**
+		 * @return the backgroundColor
+		 */
+		public Color getBackgroundColor() {
+<span class="nc" id="L618">			return backgroundColor;</span>
+		}
+
+		/**
+		 * @return the style
+		 */
+		public String getStyle() {
+<span class="nc" id="L625">			return style;</span>
+		}
+
+		/**
+		 * @return the data
+		 */
+		public Map&lt;String, String&gt; getData() {
+<span class="nc" id="L632">			return data;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

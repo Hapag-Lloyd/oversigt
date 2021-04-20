@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ThrowingIntFunction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util.function</a> &gt; <span class="el_source">ThrowingIntFunction.java</span></div><h1>ThrowingIntFunction.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util.function;
+
+import java.util.function.IntFunction;
+
+import de.larssh.utils.SneakyException;
+
+@FunctionalInterface
+public interface ThrowingIntFunction&lt;T&gt; extends IntFunction&lt;T&gt; {
+	static &lt;T&gt; IntFunction&lt;T&gt; sneakyInt(final ThrowingIntFunction&lt;T&gt; function) {
+<span class="nc" id="L10">		return function;</span>
+	}
+
+	@Override
+	default T apply(final int value) {
+		try {
+<span class="nc" id="L16">			return applyThrowing(value);</span>
+<span class="nc" id="L17">		} catch (final Exception e) {</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">			throw e instanceof RuntimeException ? (RuntimeException) e : new SneakyException(e);</span>
+		}
+	}
+
+	T applyThrowing(int value) throws Exception;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

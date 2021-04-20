@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExchangeRoomAvailabilityEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">ExchangeRoomAvailabilityEventSource.java</span></div><h1>ExchangeRoomAvailabilityEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static java.util.stream.Collectors.joining;
+
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import com.google.common.base.Strings;
+import com.hlag.oversigt.connect.exchange.Meeting;
+import com.hlag.oversigt.connect.exchange.Room;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.ExchangeRoomAvailabilityEventSource.RoomAvailabilityListEvent;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+/**
+ * @author Olaf Neumann
+ */
+@EventSource(view = &quot;MeetingRooms&quot;,
+		displayName = &quot;Microsoft Exchange Meeting Room Availability&quot;,
+		description = &quot;Shows the room availability from Microsoft Exchange for a configurable collection of rooms.&quot;,
+		hiddenDataItems = { &quot;moreinfo&quot; })
+public class ExchangeRoomAvailabilityEventSource extends AbstractExchangeEventSource&lt;RoomAvailabilityListEvent&gt; {
+<span class="nc" id="L40">	public ExchangeRoomAvailabilityEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L42">	}</span>
+
+	@Override
+	protected Optional&lt;RoomAvailabilityListEvent&gt; produceExchangeEvent() throws Exception {
+<span class="nc" id="L46">		final ZonedDateTime now = ZonedDateTime.now(getZoneId());</span>
+		final Map&lt;Room, List&lt;Meeting&gt;&gt; meetings;
+<span class="nc" id="L48">		try (StartedAction action = getStatisticsCollector().startAction(&quot;Exchange read meetings&quot;,</span>
+<span class="nc" id="L49">				Arrays.asList(getRooms()).stream().map(Object::toString).collect(joining(&quot;, &quot;)))) {</span>
+<span class="nc" id="L50">			meetings = getExchangeClient().getMeetings(Arrays.asList(getRooms()), now.toLocalDate(), getZoneId());</span>
+		}
+
+<span class="nc" id="L53">		final List&lt;RoomAvailabilityItem&gt; unsortedItems = meetings.entrySet()</span>
+<span class="nc" id="L54">				.stream()</span>
+<span class="nc" id="L55">				.map(e -&gt; checkRoomAvailability(now, e.getKey(), e.getValue()))</span>
+<span class="nc" id="L56">				.filter(Objects::nonNull)</span>
+<span class="nc" id="L57">				.collect(Collectors.toList());</span>
+
+		final List&lt;RoomAvailabilityItem&gt; sortedItems;
+<span class="nc bnc" id="L60" title="All 2 branches missed.">		if (isAvailableRoomsToTop()) {</span>
+<span class="nc" id="L61">			final Comparator&lt;RoomAvailabilityItem&gt; compareByFree = (a, b) -&gt; Boolean.compare(b.free, a.free);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">			final Comparator&lt;RoomAvailabilityItem&gt; compareByUntil = (a, b) -&gt; (a.free ? -1 : 1)</span>
+<span class="nc" id="L63">					* a.until.orElse(LocalTime.MAX).compareTo(b.until.orElse(LocalTime.MAX));</span>
+<span class="nc" id="L64">			final Comparator&lt;RoomAvailabilityItem&gt; compareByIndex</span>
+<span class="nc" id="L65">					= (a, b) -&gt; unsortedItems.indexOf(a) - unsortedItems.indexOf(b);</span>
+
+<span class="nc" id="L67">			sortedItems = unsortedItems.stream()</span>
+<span class="nc" id="L68">					.sorted(compareByFree.thenComparing(compareByUntil).thenComparing(compareByIndex))</span>
+<span class="nc" id="L69">					.collect(Collectors.toList());</span>
+<span class="nc" id="L70">		} else {</span>
+<span class="nc" id="L71">			sortedItems = unsortedItems;</span>
+		}
+
+<span class="nc" id="L74">		return Optional.of(new RoomAvailabilityListEvent(sortedItems));</span>
+	}
+
+	private RoomAvailabilityItem checkRoomAvailability(final ZonedDateTime when,
+			final Room room,
+			final Collection&lt;Meeting&gt; meetings) {
+<span class="nc" id="L80">		final BusyState bs = new BusyState();</span>
+<span class="nc" id="L81">		meetings.forEach(meeting -&gt; bs.add(meeting.getStart(), meeting.getEnd()));</span>
+<span class="nc" id="L82">		final DateTimeFormatter formatter = getDateFormatter();</span>
+<span class="nc" id="L83">		return new RoomAvailabilityItem(room,</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">				!bs.isBusy(when),</span>
+<span class="nc" id="L85">				bs.currentStateUntil(when)</span>
+<span class="nc" id="L86">						.filter(when.toLocalDate() //</span>
+<span class="nc" id="L87">								.plusDays(1)</span>
+<span class="nc" id="L88">								.atStartOfDay(getZoneId())::isAfter)</span>
+<span class="nc" id="L89">						.map(ZonedDateTime::toLocalTime),</span>
+				formatter);
+	}
+
+<span class="nc" id="L93">	private Room[] rooms = new Room[] { new Room() };</span>
+
+<span class="nc" id="L95">	private boolean availableRoomsToTop = false;</span>
+
+<span class="nc" id="L97">	private String dateFormat = &quot;HH:mm&quot;;</span>
+
+	@Property(name = &quot;Rooms&quot;, description = &quot;The rooms to be checked and to be displayed in the widget.&quot;)
+	public Room[] getRooms() {
+<span class="nc" id="L101">		return rooms;</span>
+	}
+
+	public void setRooms(final Room[] rooms) {
+<span class="nc" id="L105">		this.rooms = rooms;</span>
+<span class="nc" id="L106">	}</span>
+
+	public boolean isAvailableRoomsToTop() {
+<span class="nc" id="L109">		return availableRoomsToTop;</span>
+	}
+
+	@Property(name = &quot;Available Rooms To Top&quot;,
+			description = &quot;If selected the available rooms will be moved to the top of the room list.&quot;)
+	public void setAvailableRoomsToTop(final boolean availableRoomsToTop) {
+<span class="nc" id="L115">		this.availableRoomsToTop = availableRoomsToTop;</span>
+<span class="nc" id="L116">	}</span>
+
+	@Property(name = &quot;Date Format&quot;, description = &quot;How to display the date in the widget&quot;)
+	public String getDateFormatString() {
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		return Strings.isNullOrEmpty(dateFormat) ? &quot;HH:mm&quot; : dateFormat;</span>
+	}
+
+	public DateTimeFormatter getDateFormatter() {
+<span class="nc" id="L124">		return DateTimeFormatter.ofPattern(getDateFormatString());</span>
+	}
+
+	public void setDateFormatString(final String dateFormat) {
+<span class="nc" id="L128">		this.dateFormat = dateFormat;</span>
+<span class="nc" id="L129">	}</span>
+
+	public static final class RoomAvailabilityListEvent extends OversigtEvent {
+		private final List&lt;RoomAvailabilityItem&gt; items;
+
+<span class="nc" id="L134">		public RoomAvailabilityListEvent(final List&lt;RoomAvailabilityItem&gt; items) {</span>
+<span class="nc" id="L135">			this.items = items;</span>
+<span class="nc" id="L136">		}</span>
+
+		public List&lt;RoomAvailabilityItem&gt; getItems() {
+<span class="nc" id="L139">			return items;</span>
+		}
+	}
+
+	public static final class RoomAvailabilityItem {
+		private final String clazz;
+
+		private final String name;
+
+		private final String number;
+
+		private final String status;
+
+		private final boolean free;
+
+		private final Optional&lt;LocalTime&gt; until;
+
+		public RoomAvailabilityItem(final Room room,
+				final boolean free,
+				final Optional&lt;LocalTime&gt; until,
+<span class="nc" id="L159">				final DateTimeFormatter formatter) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">			clazz = free ? &quot;free&quot; : &quot;occupied&quot;;</span>
+<span class="nc" id="L161">			name = room.getName();</span>
+<span class="nc" id="L162">			number = room.getRoomNumber();</span>
+<span class="nc" id="L163">			this.free = free;</span>
+<span class="nc" id="L164">			this.until = until;</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">			status = (free ? &quot;Free&quot; : &quot;Busy&quot;)</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">					+ (!until.isPresent() ? &quot; Today&quot; : &quot; until &quot; + formatter.format(until.get()));</span>
+<span class="nc" id="L167">		}</span>
+
+		/**
+		 * @return the clazz
+		 */
+		public String getClazz() {
+<span class="nc" id="L173">			return clazz;</span>
+		}
+
+		/**
+		 * @return the name
+		 */
+		public String getName() {
+<span class="nc" id="L180">			return name;</span>
+		}
+
+		/**
+		 * @return the number
+		 */
+		public String getNumber() {
+<span class="nc" id="L187">			return number;</span>
+		}
+
+		/**
+		 * @return the status
+		 */
+		public String getStatus() {
+<span class="nc" id="L194">			return status;</span>
+		}
+
+		/**
+		 * @return the free
+		 */
+		public boolean isFree() {
+<span class="nc" id="L201">			return free;</span>
+		}
+
+		/**
+		 * @return the until
+		 */
+		public Optional&lt;LocalTime&gt; getUntil() {
+<span class="nc" id="L208">			return until;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L213">			return String.format(&quot;RoomAvailabilityItem [%s, %s, %s, %s]&quot;, clazz, name, number, status);</span>
+		}
+	}
+
+	private static final class BusyState {
+<span class="nc" id="L218">		private SortedSet&lt;TimeSlice&gt; slices = new TreeSet&lt;&gt;();</span>
+
+<span class="nc" id="L220">		private BusyState() {</span>
+			// no fields to be initialized
+<span class="nc" id="L222">		}</span>
+
+		synchronized boolean isBusy(final ZonedDateTime dt) {
+<span class="nc" id="L225">			return slices.stream().anyMatch(s -&gt; s.contains(dt));</span>
+		}
+
+		synchronized Optional&lt;ZonedDateTime&gt; currentStateUntil(final ZonedDateTime dt) {
+<span class="nc" id="L229">			return slices.stream()</span>
+<span class="nc" id="L230">					.filter(s -&gt; s.isBefore(dt))</span>
+<span class="nc" id="L231">					.findFirst()</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">					.map(s -&gt; s.start.isBefore(dt) ? s.end : s.start);</span>
+		}
+
+		void add(final ZonedDateTime start, final ZonedDateTime end) {
+<span class="nc" id="L236">			add(new TimeSlice(start, end));</span>
+<span class="nc" id="L237">		}</span>
+
+		synchronized void add(final TimeSlice nts) {
+			// is the new slice completely within an existing?
+<span class="nc bnc" id="L241" title="All 2 branches missed.">			for (final TimeSlice slice : slices) {</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">				if (slice.containsCompletely(nts)) {</span>
+<span class="nc" id="L243">					return;</span>
+				}
+<span class="nc" id="L245">			}</span>
+
+			// does the new slice contain another completely?
+<span class="nc" id="L248">			final Iterator&lt;TimeSlice&gt; it = slices.iterator();</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">			while (it.hasNext()) {</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">				if (nts.containsCompletely(it.next())) {</span>
+<span class="nc" id="L251">					it.remove();</span>
+				}
+			}
+
+			// does the new slice interfere with something?
+<span class="nc" id="L256">			boolean expandedSomething = false;</span>
+
+			// does the new slice interfere with the previous slice?
+<span class="nc" id="L259">			final List&lt;TimeSlice&gt; befores = getTimeSlicesCompletlyBefore(nts.end);</span>
+<span class="nc" id="L260">			TimeSlice prev = null;</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			if (!befores.isEmpty()) {</span>
+<span class="nc" id="L262">				prev = befores.get(befores.size() - 1);</span>
+<span class="nc bnc" id="L263" title="All 4 branches missed.">				if (prev.end.isAfter(nts.start) || prev.end.isEqual(nts.start)) {</span>
+<span class="nc" id="L264">					prev.end = nts.end;</span>
+<span class="nc" id="L265">					expandedSomething = true;</span>
+				}
+			}
+
+			// does the new slice interfere with the next slice?
+<span class="nc" id="L270">			final List&lt;TimeSlice&gt; afters = getTimeSlicesCompletlyAfter(nts.start);</span>
+<span class="nc" id="L271">			TimeSlice next = null;</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (!afters.isEmpty()) {</span>
+<span class="nc" id="L273">				next = afters.get(0);</span>
+<span class="nc bnc" id="L274" title="All 4 branches missed.">				if (next.start.isBefore(nts.end) || next.start.isEqual(nts.end)) {</span>
+<span class="nc" id="L275">					next.start = nts.start;</span>
+<span class="nc" id="L276">					expandedSomething = true;</span>
+				}
+			}
+
+			// maybe add new slice
+<span class="nc bnc" id="L281" title="All 2 branches missed.">			if (!expandedSomething) {</span>
+<span class="nc" id="L282">				slices.add(nts);</span>
+<span class="nc bnc" id="L283" title="All 8 branches missed.">			} else if (prev != null &amp;&amp; next != null &amp;&amp; (prev.end.isEqual(next.start) || prev.end.isAfter(next.start))) {</span>
+				// combine both slices
+<span class="nc" id="L285">				slices.remove(prev);</span>
+<span class="nc" id="L286">				slices.remove(next);</span>
+<span class="nc" id="L287">				slices.add(new TimeSlice(prev.start, next.end));</span>
+			}
+<span class="nc" id="L289">		}</span>
+
+		List&lt;TimeSlice&gt; getTimeSlicesCompletlyBefore(final ZonedDateTime point) {
+<span class="nc" id="L292">			return getFilteredTimeSlices(s -&gt; s.end.isBefore(point));</span>
+		}
+
+		List&lt;TimeSlice&gt; getTimeSlicesCompletlyAfter(final ZonedDateTime point) {
+<span class="nc" id="L296">			return getFilteredTimeSlices(s -&gt; s.start.isAfter(point));</span>
+		}
+
+		private List&lt;TimeSlice&gt; getFilteredTimeSlices(final Predicate&lt;? super TimeSlice&gt; predicate) {
+<span class="nc" id="L300">			return slices.stream().filter(predicate).collect(Collectors.toList());</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L305">			return slices.toString();</span>
+		}
+	}
+
+	private static final class TimeSlice implements Comparable&lt;TimeSlice&gt; {
+		private ZonedDateTime start;
+
+		private ZonedDateTime end;
+
+<span class="nc" id="L314">		private TimeSlice(final ZonedDateTime start, final ZonedDateTime end) {</span>
+<span class="nc" id="L315">			this.start = start;</span>
+<span class="nc" id="L316">			this.end = end;</span>
+<span class="nc" id="L317">		}</span>
+
+		boolean containsCompletely(final TimeSlice that) {
+<span class="nc bnc" id="L320" title="All 4 branches missed.">			return contains(that.start) &amp;&amp; contains(that.end);</span>
+		}
+
+		boolean contains(final ZonedDateTime that) {
+<span class="nc bnc" id="L324" title="All 4 branches missed.">			return start.isBefore(that) &amp;&amp; end.isAfter(that);</span>
+		}
+
+		boolean isBefore(final ZonedDateTime dt) {
+<span class="nc" id="L328">			return end.isAfter(dt);</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L333">			final StringBuilder builder = new StringBuilder();</span>
+<span class="nc" id="L334">			builder.append(&quot;&lt;&lt;&quot;);</span>
+<span class="nc" id="L335">			builder.append(start);</span>
+<span class="nc" id="L336">			builder.append(&quot; - &quot;);</span>
+<span class="nc" id="L337">			builder.append(end);</span>
+<span class="nc" id="L338">			builder.append(&quot;&gt;&gt;&quot;);</span>
+<span class="nc" id="L339">			return builder.toString();</span>
+		}
+
+		@Override
+		public int compareTo(@Nullable final TimeSlice that) {
+<span class="nc" id="L344">			return start.compareTo(Optional.ofNullable(that).map(ts -&gt; ts.start).orElse(null));</span>
+		}
+
+		@Override
+		public int hashCode() {
+<span class="nc" id="L349">			final int prime = 31;</span>
+<span class="nc" id="L350">			int result = 1;</span>
+<span class="nc" id="L351">			result = prime * result + end.hashCode();</span>
+<span class="nc" id="L352">			result = prime * result + start.hashCode();</span>
+<span class="nc" id="L353">			return result;</span>
+		}
+
+		@Override
+		public boolean equals(@Nullable final Object obj) {
+<span class="nc bnc" id="L358" title="All 2 branches missed.">			if (this == obj) {</span>
+<span class="nc" id="L359">				return true;</span>
+			}
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			if (obj == null) {</span>
+<span class="nc" id="L362">				return false;</span>
+			}
+<span class="nc bnc" id="L364" title="All 2 branches missed.">			if (getClass() != obj.getClass()) {</span>
+<span class="nc" id="L365">				return false;</span>
+			}
+<span class="nc" id="L367">			final TimeSlice other = (TimeSlice) obj;</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">			if (!end.equals(other.end)) {</span>
+<span class="nc" id="L369">				return false;</span>
+			}
+<span class="nc bnc" id="L371" title="All 2 branches missed.">			if (!start.equals(other.start)) {</span>
+<span class="nc" id="L372">				return false;</span>
+			}
+<span class="nc" id="L374">			return true;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UnlimitedExchangeClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.exchange</a> &gt; <span class="el_source">UnlimitedExchangeClient.java</span></div><h1>UnlimitedExchangeClient.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.exchange;
+
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
+import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.enumeration.search.FolderTraversal;
+import microsoft.exchange.webservices.data.core.enumeration.search.SortDirection;
+import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceRequestException;
+import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceResponseException;
+import microsoft.exchange.webservices.data.core.response.AttendeeAvailability;
+import microsoft.exchange.webservices.data.core.service.folder.CalendarFolder;
+import microsoft.exchange.webservices.data.core.service.item.Appointment;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.core.service.item.Item;
+import microsoft.exchange.webservices.data.core.service.item.Task;
+import microsoft.exchange.webservices.data.core.service.schema.FolderSchema;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+import microsoft.exchange.webservices.data.credential.WebCredentials;
+import microsoft.exchange.webservices.data.misc.availability.AttendeeInfo;
+import microsoft.exchange.webservices.data.misc.availability.GetUserAvailabilityResults;
+import microsoft.exchange.webservices.data.misc.availability.TimeWindow;
+import microsoft.exchange.webservices.data.property.complex.FolderId;
+import microsoft.exchange.webservices.data.property.complex.Mailbox;
+import microsoft.exchange.webservices.data.search.CalendarView;
+import microsoft.exchange.webservices.data.search.FindFoldersResults;
+import microsoft.exchange.webservices.data.search.FindItemsResults;
+import microsoft.exchange.webservices.data.search.FolderView;
+import microsoft.exchange.webservices.data.search.ItemView;
+import microsoft.exchange.webservices.data.search.filter.SearchFilter;
+
+/**
+ * Exchange client that does not have restrictions.
+ *
+ * @author neumaol
+ *
+ */
+public class UnlimitedExchangeClient implements ExchangeClient {
+<span class="nc" id="L60">	private static final Logger LOGGER = LoggerFactory.getLogger(UnlimitedExchangeClient.class);</span>
+
+	private static final int NUMBER_OF_ITEMS_TO_LOAD_IN_ONE_CHUNK = 50;
+
+	private static final boolean FAIL_SAFE = true;
+
+	private final ExchangeService service;
+
+	/**
+	 * Create an exchange client using the specified connection details
+	 *
+	 * @param exchangeServerUri the URI of the exchange server web interface
+	 * @param username          the username to be used
+	 * @param password          the password of the user
+	 */
+<span class="nc" id="L75">	UnlimitedExchangeClient(final URI exchangeServerUri, final String username, final String password) {</span>
+<span class="nc" id="L76">		service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);</span>
+<span class="nc" id="L77">		service.setCredentials(new WebCredentials(username, password));</span>
+<span class="nc" id="L78">		service.setUrl(exchangeServerUri);</span>
+<span class="nc" id="L79">	}</span>
+
+	private ExchangeService getService() {
+<span class="nc" id="L82">		return service;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public void close() throws IOException {
+<span class="nc" id="L88">		getService().close();</span>
+<span class="nc" id="L89">	}</span>
+
+	private FolderId getFolderId(final WellKnownFolderName searchRoot, final String folderName) throws Exception {
+<span class="nc" id="L92">		final SearchFilter searchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, folderName);</span>
+<span class="nc" id="L93">		final FolderView folderView = new FolderView(2);</span>
+<span class="nc" id="L94">		folderView.setTraversal(FolderTraversal.Deep);</span>
+<span class="nc" id="L95">		final FindFoldersResults folders = getService().findFolders(searchRoot, searchFilter, folderView);</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		if (folders.getTotalCount() != 1) {</span>
+<span class="nc" id="L97">			throw new RuntimeException(String.format(&quot;Folder '%s' wasn't found. Found %s folders matching the name.&quot;,</span>
+					folderName,
+<span class="nc" id="L99">					folders.getTotalCount()));</span>
+		}
+<span class="nc" id="L101">		return folders.getFolders().get(0).getId();</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public List&lt;Mail&gt; loadMails(final String folderName) throws Exception {
+<span class="nc" id="L107">		return loadItems(EmailMessage.class, WellKnownFolderName.MsgFolderRoot, folderName, SortDirection.Ascending)</span>
+<span class="nc" id="L108">				.stream()</span>
+<span class="nc" id="L109">				.map(Mail::create)</span>
+<span class="nc" id="L110">				.filter(Optional::isPresent)</span>
+<span class="nc" id="L111">				.map(Optional::get)</span>
+<span class="nc" id="L112">				.collect(toList());</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public List&lt;Task&gt; loadTasks() throws Exception {
+<span class="nc" id="L118">		return loadItems(Task.class, WellKnownFolderName.Root, &quot;Dashboard&quot;, SortDirection.Descending).stream()</span>
+<span class="nc" id="L119">				.filter(t -&gt; {</span>
+					try {
+<span class="nc bnc" id="L121" title="All 2 branches missed.">						return !t.getIsComplete();</span>
+<span class="nc" id="L122">					} catch (final Exception e) {</span>
+<span class="nc" id="L123">						throw new RuntimeException(&quot;Unable to read complete status of task&quot;, e);</span>
+					}
+				})
+<span class="nc" id="L126">				.collect(toList());</span>
+	}
+
+	private &lt;T&gt; List&lt;T&gt; loadItems(final Class&lt;T&gt; clazz,
+			final WellKnownFolderName searchRoot,
+			final String folderName,
+			final SortDirection sortDirection) throws Exception {
+<span class="nc" id="L133">		final List&lt;T&gt; result = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L135">		final ItemView view = new ItemView(NUMBER_OF_ITEMS_TO_LOAD_IN_ONE_CHUNK);</span>
+<span class="nc" id="L136">		view.getOrderBy().add(ItemSchema.DateTimeCreated, sortDirection);</span>
+		FindItemsResults&lt;Item&gt; findResults;
+		do {
+<span class="nc" id="L139">			final FolderId folderId = getFolderId(searchRoot, folderName);</span>
+<span class="nc" id="L140">			findResults = getService().findItems(folderId, view);</span>
+<span class="nc" id="L141">			result.addAll(findResults.getItems()</span>
+<span class="nc" id="L142">					.stream()</span>
+<span class="nc bnc" id="L143" title="All 4 branches missed.">					.filter(item -&gt; item != null &amp;&amp; clazz.isAssignableFrom(item.getClass()))</span>
+<span class="nc" id="L144">					.map(clazz::cast)</span>
+<span class="nc" id="L145">					.collect(toList()));</span>
+<span class="nc" id="L146">			view.setOffset(view.getOffset() + NUMBER_OF_ITEMS_TO_LOAD_IN_ONE_CHUNK);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		} while (findResults.isMoreAvailable());</span>
+
+<span class="nc" id="L149">		return result;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public List&lt;Appointment&gt; loadAppointments(final ZonedDateTime from, final ZonedDateTime until) {
+<span class="nc" id="L155">		final CalendarView calendarView = getCalendarView(from, until);</span>
+
+		final FindItemsResults&lt;Appointment&gt; findResults;
+		try {
+<span class="nc" id="L159">			findResults = getService().findAppointments(WellKnownFolderName.Calendar, calendarView);</span>
+<span class="nc" id="L160">		} catch (final Exception e) {</span>
+<span class="nc" id="L161">			throw new RuntimeException(&quot;Unable to find appointments&quot;, e);</span>
+<span class="nc" id="L162">		}</span>
+<span class="nc" id="L163">		return new ArrayList&lt;&gt;(findResults.getItems());</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public Map&lt;Room, List&lt;Meeting&gt;&gt; getMeetings(final List&lt;Room&gt; rooms, final LocalDate day, final ZoneId zoneId)
+			throws Exception {
+		if (FAIL_SAFE) {
+<span class="nc" id="L171">			return getMeetingsViaAttendeeInfo(rooms,</span>
+<span class="nc" id="L172">					day.atStartOfDay(zoneId),</span>
+<span class="nc" id="L173">					day.plusDays(1).atStartOfDay(zoneId),</span>
+					zoneId);
+		}
+		return rooms.stream()
+<span class="nc" id="L177">				.collect(Collectors.toMap(Function.identity(), room -&gt; getMeetingsViaAppointment(room, day, zoneId)));</span>
+	}
+
+	private List&lt;Meeting&gt; getMeetingsViaAppointment(final Room room, final LocalDate day, final ZoneId zoneId) {
+		try {
+<span class="nc" id="L182">			final CalendarFolder cf = CalendarFolder.bind(getService(),</span>
+<span class="nc" id="L183">					new FolderId(WellKnownFolderName.Calendar, new Mailbox(room.getSmtpAddress())));</span>
+<span class="nc" id="L184">			final CalendarView cv = getCalendarView(day.atStartOfDay(zoneId), day.atStartOfDay(zoneId).plusDays(1));</span>
+
+<span class="nc" id="L186">			final FindItemsResults&lt;Appointment&gt; apps = cf.findAppointments(cv);</span>
+<span class="nc" id="L187">			final List&lt;Meeting&gt; meetings = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">			for (final Appointment app : apps) {</span>
+<span class="nc" id="L189">				meetings.add(new Meeting(room, app.getStart(), app.getEnd(), zoneId));</span>
+<span class="nc" id="L190">			}</span>
+<span class="nc" id="L191">			return meetings;</span>
+<span class="nc" id="L192">		} catch (final Exception e) {</span>
+<span class="nc bnc" id="L193" title="All 4 branches missed.">			if (e instanceof ServiceRequestException &amp;&amp; &quot;The request failed. 40&quot;.equals(e.getMessage())) {</span>
+				// Happens sometimes. Ignore it
+<span class="nc" id="L195">				return new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">			} else if (e instanceof ServiceResponseException</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">					&amp;&amp; &quot;The specified folder could not be found in the store.&quot;.equals(e.getMessage())) {</span>
+<span class="nc" id="L198">				LOGGER.warn(&quot;Unable to get Meetings for &quot; + room.getName() + &quot;. &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L199">				return new ArrayList&lt;&gt;();</span>
+			}
+<span class="nc" id="L201">			throw new RuntimeException(&quot;Unable to get appointments&quot;, e);</span>
+		}
+	}
+
+	private Map&lt;Room, List&lt;Meeting&gt;&gt; getMeetingsViaAttendeeInfo(final List&lt;Room&gt; rooms,
+			final ZonedDateTime from,
+			final ZonedDateTime to,
+			final ZoneId zoneId) throws Exception {
+<span class="nc" id="L209">		final Instant fromInstant = from.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();</span>
+<span class="nc" id="L210">		final Instant toInstant = to.toLocalDateTime().atZone(ZoneId.systemDefault()).toInstant();</span>
+
+<span class="nc" id="L212">		final List&lt;AttendeeInfo&gt; attendees</span>
+<span class="nc" id="L213">				= rooms.stream().map(r -&gt; new AttendeeInfo(r.getSmtpAddress())).collect(Collectors.toList());</span>
+
+<span class="nc" id="L215">		final GetUserAvailabilityResults result = getService()</span>
+<span class="nc" id="L216">				.getUserAvailability(attendees, getTimeWindow(from, to, zoneId), AvailabilityData.FreeBusy);</span>
+
+<span class="nc" id="L218">		int index = 0;</span>
+<span class="nc" id="L219">		final Map&lt;Room, List&lt;Meeting&gt;&gt; meetings = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">		for (final AttendeeAvailability availability : result.getAttendeesAvailability()) {</span>
+<span class="nc" id="L221">			final Room room = rooms.get(index);</span>
+<span class="nc" id="L222">			meetings.put(room,</span>
+<span class="nc" id="L223">					availability.getCalendarEvents()</span>
+<span class="nc" id="L224">							.stream()</span>
+<span class="nc" id="L225">							.filter(event -&gt; event.getStartTime().toInstant().isBefore(toInstant))</span>
+<span class="nc" id="L226">							.filter(event -&gt; event.getEndTime().toInstant().isAfter(fromInstant))</span>
+<span class="nc" id="L227">							.map(event -&gt; new Meeting(room, event.getStartTime(), event.getEndTime(), zoneId))</span>
+<span class="nc" id="L228">							.collect(Collectors.toList()));</span>
+<span class="nc" id="L229">			index += 1;</span>
+<span class="nc" id="L230">		}</span>
+
+<span class="nc" id="L232">		return meetings;</span>
+	}
+
+	private static CalendarView getCalendarView(final ZonedDateTime start, final ZonedDateTime end) {
+<span class="nc" id="L236">		return new CalendarView(Date.from(start.toInstant()), Date.from(end.toInstant()));</span>
+	}
+
+	private static TimeWindow getTimeWindow(final ZonedDateTime fromTime,
+			final ZonedDateTime toTime,
+			final ZoneId zoneId) {
+<span class="nc bnc" id="L242" title="All 2 branches missed.">		if (!fromTime.isBefore(toTime)) {</span>
+<span class="nc" id="L243">			throw new RuntimeException();</span>
+		}
+
+<span class="nc" id="L246">		final LocalDate fromDate = fromTime.toLocalDate();</span>
+<span class="nc" id="L247">		LocalDate toDate = toTime.toLocalDate();</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">		if (toTime.isAfter(toDate.atStartOfDay(zoneId)) || fromDate.isEqual(toDate)) {</span>
+<span class="nc" id="L249">			toDate = toDate.plusDays(1);</span>
+		}
+
+		// Following the UTC conversion at
+		// TimeWindow.writeToXmlUnscopedDatesOnly(EwsServiceXmlWriter, String)
+<span class="nc" id="L254">		final Date start = Date.from(fromDate.atStartOfDay(ZoneOffset.UTC).toInstant());</span>
+<span class="nc" id="L255">		final Date end = Date.from(toDate.atStartOfDay(ZoneOffset.UTC).toInstant());</span>
+
+<span class="nc" id="L257">		return new TimeWindow(start, end);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

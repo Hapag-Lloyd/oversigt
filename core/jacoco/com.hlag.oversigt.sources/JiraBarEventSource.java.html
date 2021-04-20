@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JiraBarEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">JiraBarEventSource.java</span></div><h1>JiraBarEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.sources.data.DisplayOption;
+import com.hlag.oversigt.sources.event.HlBarChartEvent;
+import com.hlag.oversigt.sources.event.HlBarChartEvent.Category;
+import com.hlag.oversigt.sources.event.HlBarChartEvent.Serie;
+
+@EventSource(view = &quot;HlBarChart&quot;, displayName = &quot;Jira Tickets (as Bar)&quot;)
+public class JiraBarEventSource extends AbstractJiraEventSource&lt;HlBarChartEvent&gt; {
+<span class="nc" id="L24">	private int serieMinimum = 3;</span>
+
+<span class="nc" id="L26">	private double minimumHeight = 0.35;</span>
+
+<span class="nc" id="L28">	public JiraBarEventSource() {</span>
+		// no fields to be initialized manually
+<span class="nc" id="L30">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	protected Optional&lt;HlBarChartEvent&gt; produceEvent() throws EventSourceException {
+<span class="nc" id="L35">		final Map&lt;DisplayOption, Set&lt;Issue&gt;&gt; issues = getJiraTickets();</span>
+<span class="nc" id="L36">		final int maxMailsPerCategory</span>
+<span class="nc" id="L37">				= Math.max(getSerieMinimum(), issues.values().stream().mapToInt(Collection::size).max().orElse(0));</span>
+<span class="nc" id="L38">		final long sumMails = issues.values().stream().flatMap(Set::stream).distinct().count();</span>
+
+<span class="nc" id="L40">		final List&lt;Category&gt; categories = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">		for (final Entry&lt;DisplayOption, Set&lt;Issue&gt;&gt; entry : issues.entrySet()) {</span>
+<span class="nc" id="L42">			final DisplayOption displayOption = entry.getKey();</span>
+<span class="nc" id="L43">			final int count = entry.getValue().size();</span>
+
+<span class="nc" id="L45">			final Serie serie = getSerie(displayOption.getColor(), count, maxMailsPerCategory);</span>
+<span class="nc" id="L46">			categories.add(new Category(Integer.toString(count),</span>
+<span class="nc" id="L47">					displayOption.formatDisplayValue(count),</span>
+<span class="nc" id="L48">					Arrays.asList(serie)));</span>
+<span class="nc" id="L49">		}</span>
+
+<span class="nc" id="L51">		return Optional.of(new HlBarChartEvent(categories, Long.toString(sumMails)));</span>
+	}
+
+	private Serie getSerie(final Color color, final int value, final int maximum) {
+<span class="nc" id="L55">		double height = 0;</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">		if (value &gt; 0 &amp;&amp; maximum &gt; 1) {</span>
+<span class="nc" id="L57">			height = getMinimumHeight() + (double) (value - 1) / (maximum - 1) * (1 - getMinimumHeight());</span>
+		}
+<span class="nc" id="L59">		return new Serie(color, height);</span>
+	}
+
+	@Property(name = &quot;Minimum Height&quot;)
+	public double getMinimumHeight() {
+<span class="nc" id="L64">		return minimumHeight;</span>
+	}
+
+	public void setMinimumHeight(final double minimumHeight) {
+<span class="nc" id="L68">		this.minimumHeight = minimumHeight;</span>
+<span class="nc" id="L69">	}</span>
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = &quot;Min Series Value&quot;)
+	public int getSerieMinimum() {
+<span class="nc" id="L74">		return serieMinimum;</span>
+	}
+
+	public void setSerieMinimum(final int serieMinimum) {
+<span class="nc" id="L78">		this.serieMinimum = serieMinimum;</span>
+<span class="nc" id="L79">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

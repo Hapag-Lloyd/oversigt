@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AsynchronousHttpClientFactory.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Oversigt Core</a> &gt; <a href="../index.html" class="el_bundle">jira-rest-java-client-fix</a> &gt; <a href="index.source.html" class="el_package">com.atlassian.jira.rest.client.internal.async</a> &gt; <span class="el_source">AsynchronousHttpClientFactory.java</span></div><h1>AsynchronousHttpClientFactory.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (C) 2012 Atlassian
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+/**
+ * This class has been copied to overwrite the SocketTimeout option.
+ */
+package com.atlassian.jira.rest.client.internal.async;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Date;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nonnull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.atlassian.event.api.EventPublisher;
+import com.atlassian.httpclient.apache.httpcomponents.DefaultHttpClientFactory;
+import com.atlassian.httpclient.api.HttpClient;
+import com.atlassian.httpclient.api.factory.HttpClientOptions;
+import com.atlassian.jira.rest.client.api.AuthenticationHandler;
+import com.atlassian.sal.api.ApplicationProperties;
+import com.atlassian.sal.api.UrlMode;
+import com.atlassian.sal.api.executor.ThreadLocalContextManager;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
+
+import de.larssh.utils.annotations.PackagePrivate;
+import de.larssh.utils.function.ThrowingRunnable;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+/**
+ * Factory for asynchronous http clients.
+ *
+ * &lt;p&gt;
+ * This class has been copied to overwrite the SocketTimeout option.
+ *
+ * @since v2.0
+ */
+@SuppressWarnings({
+		&quot;checkstyle:JavadocVariable&quot;,
+		&quot;checkstyle:MissingJavadocMethod&quot;,
+		&quot;checkstyle:MissingJavadocType&quot;,
+		&quot;javadoc&quot;,
+		&quot;PMD.CommentRequired&quot; })
+public class AsynchronousHttpClientFactory {
+<span class="nc" id="L64">	public AsynchronousHttpClientFactory() {</span>
+		// nothing to do
+<span class="nc" id="L66">	}</span>
+
+	public DisposableHttpClient createClient(final URI serverUri, final AuthenticationHandler authenticationHandler) {
+<span class="nc" id="L69">		final HttpClientOptions options = new HttpClientOptions();</span>
+<span class="nc" id="L70">		options.setSocketTimeout(JiraConfigurationProvider.getSocketTimeout(), TimeUnit.SECONDS);</span>
+
+<span class="nc" id="L72">		final DefaultHttpClientFactory&lt;?&gt; defaultHttpClientFactory</span>
+<span class="nc" id="L73">				= new DefaultHttpClientFactory&lt;&gt;(NoOpEventPublisher.INSTANCE,</span>
+<span class="nc" id="L74">						RestClientApplicationProperties.create(serverUri),</span>
+<span class="nc" id="L75">						NoOpThreadLocalContextManager.INSTANCE);</span>
+<span class="nc" id="L76">		final HttpClient httpClient = defaultHttpClientFactory.create(options);</span>
+
+<span class="nc" id="L78">		return DisposableAtlassianHttpClientDecorator.create(httpClient, authenticationHandler, () -&gt; {</span>
+<span class="nc" id="L79">			defaultHttpClientFactory.dispose(httpClient);</span>
+<span class="nc" id="L80">		});</span>
+	}
+
+	public DisposableHttpClient createClient(final HttpClient httpClient) {
+<span class="nc" id="L84">		return DisposableAtlassianHttpClientDecorator.create(httpClient, //</span>
+				builder -&gt; {
+					// no op authentication handler
+<span class="nc" id="L87">				},</span>
+				() -&gt; {
+					// This should never be implemented. This is simply creation of a wrapper
+					// for AtlassianHttpClient which is extended by a destroy method.
+					// Destroy method should never be called for AtlassianHttpClient coming from
+					// a client! Imagine you create a RestClient, pass your own HttpClient there
+					// and it gets destroyed.
+<span class="nc" id="L94">				});</span>
+	}
+
+	private static final class DisposableAtlassianHttpClientDecorator extends AtlassianHttpClientDecorator {
+		@PackagePrivate
+		static DisposableAtlassianHttpClientDecorator create(final HttpClient httpClient,
+				final AuthenticationHandler authenticationHandler,
+				final ThrowingRunnable onDestroy) {
+<span class="nc" id="L102">			return new DisposableAtlassianHttpClientDecorator(httpClient, authenticationHandler, onDestroy);</span>
+		}
+
+		private final ThrowingRunnable onDestroy;
+
+		private DisposableAtlassianHttpClientDecorator(final HttpClient httpClient,
+				final AuthenticationHandler authenticationHandler,
+				final ThrowingRunnable onDestroy) {
+<span class="nc" id="L110">			super(httpClient, authenticationHandler);</span>
+
+<span class="nc" id="L112">			this.onDestroy = onDestroy;</span>
+<span class="nc" id="L113">		}</span>
+
+		@Override
+		public void destroy() throws Exception {
+<span class="nc" id="L117">			onDestroy.runThrowing();</span>
+<span class="nc" id="L118">		}</span>
+	}
+
+	private static final class MavenUtils {
+<span class="nc" id="L122">		private static final Logger LOGGER = LoggerFactory.getLogger(MavenUtils.class);</span>
+
+		private static final String UNKNOWN_VERSION = &quot;unknown&quot;;
+
+		@PackagePrivate
+		@SuppressWarnings(&quot;checkstyle:OperatorWrap&quot;)
+		@SuppressFBWarnings(
+				value = {
+						&quot;CRLF_INJECTION_LOGS&quot;,
+						&quot;NP_LOAD_OF_KNOWN_NULL_VALUE&quot;,
+						&quot;RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE&quot; },
+				justification = &quot;secure arguments source&quot;)
+		static String getVersion(final String groupId, final String artifactId) {
+<span class="nc" id="L135">			final String propertiesName = String.format(&quot;/META-INF/maven/%s/%s/pom.properties&quot;, groupId, artifactId);</span>
+<span class="nc" id="L136">			try (InputStream resourceAsStream = MavenUtils.class.getResourceAsStream(propertiesName)) {</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">				if (resourceAsStream != null) {</span>
+<span class="nc" id="L138">					final Properties props = new Properties();</span>
+<span class="nc" id="L139">					props.load(resourceAsStream);</span>
+<span class="nc" id="L140">					return props.getProperty(&quot;version&quot;, UNKNOWN_VERSION);</span>
+				}
+<span class="nc" id="L142">				return UNKNOWN_VERSION;</span>
+<span class="nc" id="L143">			} catch (final IOException e) {</span>
+<span class="nc" id="L144">				LOGGER.debug(&quot;Could not find version for maven artifact {}:{}&quot;, groupId, artifactId);</span>
+<span class="nc" id="L145">				LOGGER.debug(&quot;Got the following exception&quot;, e);</span>
+<span class="nc" id="L146">				return UNKNOWN_VERSION;</span>
+			}
+		}
+
+		@SuppressWarnings(&quot;PMD.AvoidThrowingRawExceptionTypes&quot;)
+<span class="nc" id="L151">		private MavenUtils() {</span>
+<span class="nc" id="L152">			throw new RuntimeException();</span>
+		}
+	}
+
+	private static final class NoOpEventPublisher implements EventPublisher {
+<span class="nc" id="L157">		private static final NoOpEventPublisher INSTANCE = new NoOpEventPublisher();</span>
+
+		private NoOpEventPublisher() {
+			// nothing to do
+		}
+
+		@Override
+		public void publish(@SuppressWarnings(&quot;unused&quot;) @Nullable final Object object) {
+			// empty by design
+<span class="nc" id="L166">		}</span>
+
+		@Override
+		public void register(@SuppressWarnings(&quot;unused&quot;) @Nullable final Object object) {
+			// empty by design
+<span class="nc" id="L171">		}</span>
+
+		@Override
+		public void unregister(@SuppressWarnings(&quot;unused&quot;) @Nullable final Object object) {
+			// empty by design
+<span class="nc" id="L176">		}</span>
+
+		@Override
+		public void unregisterAll() {
+			// empty by design
+<span class="nc" id="L181">		}</span>
+	}
+
+	private static final class NoOpThreadLocalContextManager implements ThreadLocalContextManager&lt;Object&gt; {
+<span class="nc" id="L185">		private static final NoOpThreadLocalContextManager INSTANCE = new NoOpThreadLocalContextManager();</span>
+
+		private NoOpThreadLocalContextManager() {
+			// nothing to do
+		}
+
+		@Nullable
+		@Override
+		public Object getThreadLocalContext() {
+<span class="nc" id="L194">			return null;</span>
+		}
+
+		@Override
+		public void setThreadLocalContext(@SuppressWarnings(&quot;unused&quot;) @Nullable final Object context) {
+			// empty by design
+<span class="nc" id="L200">		}</span>
+
+		@Override
+		public void clearThreadLocalContext() {
+			// empty by design
+<span class="nc" id="L205">		}</span>
+	}
+
+	/**
+	 * These properties are used to present JRJC as a User-Agent during http
+	 * requests.
+	 */
+	private static final class RestClientApplicationProperties implements ApplicationProperties {
+		@PackagePrivate
+		static RestClientApplicationProperties create(final URI jiraUri) {
+<span class="nc" id="L215">			return new RestClientApplicationProperties(jiraUri.getPath());</span>
+		}
+
+		private final String baseUrl;
+
+<span class="nc" id="L220">		private RestClientApplicationProperties(final String baseUrl) {</span>
+<span class="nc" id="L221">			this.baseUrl = baseUrl;</span>
+<span class="nc" id="L222">		}</span>
+
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated since 2.10. This implementation is application-specific, and
+		 *             unreliable for a cross product plugin. Use
+		 *             {@link #getBaseUrl(UrlMode)} instead.
+		 */
+		@Deprecated
+		@Override
+		public String getBaseUrl() {
+<span class="nc" id="L234">			return baseUrl;</span>
+		}
+
+		/**
+		 * We'll always have an absolute URL as a client.
+		 */
+		@Nonnull
+		@Override
+		public String getBaseUrl(@SuppressWarnings(&quot;unused&quot;) @Nullable final UrlMode urlMode) {
+<span class="nc" id="L243">			return baseUrl;</span>
+		}
+
+		@Nonnull
+		@Override
+		public String getDisplayName() {
+<span class="nc" id="L249">			return &quot;Atlassian JIRA Rest Java Client&quot;;</span>
+		}
+
+		@Nonnull
+		@Override
+		public String getPlatformId() {
+<span class="nc" id="L255">			return ApplicationProperties.PLATFORM_JIRA;</span>
+		}
+
+		@Nonnull
+		@Override
+		public String getVersion() {
+<span class="nc" id="L261">			return MavenUtils.getVersion(&quot;com.atlassian.jira&quot;, &quot;jira-rest-java-com.atlassian.jira.rest.client&quot;);</span>
+		}
+
+		@Nonnull
+		@Override
+		public Date getBuildDate() {
+<span class="nc" id="L267">			throw new UnsupportedOperationException();</span>
+		}
+
+		@Nonnull
+		@Override
+		public String getBuildNumber() {
+<span class="nc" id="L273">			return String.valueOf(0);</span>
+		}
+
+		@Override
+		public File getHomeDirectory() {
+<span class="nc" id="L278">			return new File(&quot;.&quot;);</span>
+		}
+
+		/**
+		 * {@inheritDoc}
+		 *
+		 * @deprecated As of SAL 2.7.
+		 */
+		@Deprecated
+		@Override
+		public String getPropertyValue(@SuppressWarnings(&quot;unused&quot;) @Nullable final String propertyName) {
+<span class="nc" id="L289">			throw new UnsupportedOperationException(&quot;Not implemented&quot;);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

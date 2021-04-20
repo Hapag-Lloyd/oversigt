@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SqlGraphEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">SqlGraphEventSource.java</span></div><h1>SqlGraphEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static java.util.stream.Collectors.toList;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
+import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.util.function.ThrowingIntFunction;
+
+@EventSource(displayName = &quot;SQL Graph&quot;, view = &quot;Rickshawgraph&quot;)
+public class SqlGraphEventSource extends AbstractJdbcEventSource&lt;ComplexGraphEvent&gt; {
+<span class="nc" id="L33">	private int historyLength = 10;</span>
+
+<span class="nc" id="L35">	private String labelFormat = &quot;&quot;;</span>
+
+<span class="nc" id="L37">	private String sqlStatement = &quot;&quot;;</span>
+
+<span class="nc" id="L39">	private String[] titles = new String[0];</span>
+
+<span class="nc" id="L41">	private int columnCount = 0;</span>
+
+<span class="nc" id="L43">	private final SortedMap&lt;ZonedDateTime, List&lt;Long&gt;&gt; values = new TreeMap&lt;&gt;();</span>
+
+<span class="nc" id="L45">	public SqlGraphEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L47">	}</span>
+
+	@Override
+	protected Optional&lt;ComplexGraphEvent&gt; produceEventFromData() {
+<span class="nc" id="L51">		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);</span>
+
+		// Remove too old history
+<span class="nc" id="L54">		values.keySet().removeIf(now.minusMinutes(getHistoryLength())::isAfter);</span>
+
+		// Calculate graph values
+<span class="nc" id="L57">		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();</span>
+<span class="nc" id="L58">		final List&lt;Series&gt; series = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L59">		IntStream.range(0, columnCount).forEach(column -&gt; {</span>
+<span class="nc" id="L60">			final List&lt;Point&gt; points = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L62" title="All 2 branches missed.">			if (!values.isEmpty()) {</span>
+				// Get maximum value of each series to normalize
+<span class="nc" id="L64">				final OptionalLong optionalMaxValue = values.values().stream().mapToLong(v -&gt; v.get(column)).max();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">				final long maxValue = optionalMaxValue.getAsLong() == 0 ? 1 : optionalMaxValue.getAsLong();</span>
+
+<span class="nc" id="L67">				points.addAll(values.entrySet()</span>
+<span class="nc" id="L68">						.stream()</span>
+<span class="nc" id="L69">						.map(e -&gt; new Point(e.getKey().toEpochSecond() - secondsOffset,</span>
+<span class="nc" id="L70">								100 * e.getValue().get(column) / maxValue))</span>
+<span class="nc" id="L71">						.collect(Collectors.toList()));</span>
+			}
+
+<span class="nc bnc" id="L74" title="All 2 branches missed.">			series.add(new Series(titles.length &gt; column ? titles[column] : &quot;&quot;, points));</span>
+<span class="nc" id="L75">		});</span>
+
+<span class="nc" id="L77">		Collections.reverse(series);</span>
+
+<span class="nc" id="L79">		final List&lt;Long&gt; displayValues = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">		if (!values.isEmpty()) {</span>
+<span class="nc" id="L81">			displayValues.addAll(values.get(values.lastKey()));</span>
+		}
+<span class="nc" id="L83">		String text = &quot;&quot;;</span>
+		try {
+<span class="nc" id="L85">			text = String.format(labelFormat, displayValues.toArray());</span>
+<span class="nc" id="L86">		} catch (final IllegalFormatException e) {</span>
+<span class="nc" id="L87">			getLogger().warn(&quot;Unable to fill format: &quot; + getLabelFormat(), e);</span>
+<span class="nc" id="L88">		}</span>
+<span class="nc" id="L89">		return Optional.of(new ComplexGraphEvent(series, text));</span>
+	}
+
+	@Override
+	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
+<span class="nc" id="L94">		final List&lt;List&lt;Long&gt;&gt; data = readFromDatabase(connection,</span>
+<span class="nc" id="L95">				rs -&gt; IntStream.range(1, rs.getMetaData().getColumnCount() + 1)</span>
+<span class="nc" id="L96">						.mapToObj(ThrowingIntFunction.sneakyInt(rs::getLong))</span>
+<span class="nc" id="L97">						.collect(toList()),</span>
+<span class="nc" id="L98">				getSqlStatement());</span>
+
+<span class="nc bnc" id="L100" title="All 2 branches missed.">		if (!data.isEmpty()) {</span>
+<span class="nc" id="L101">			values.put(ZonedDateTime.now(ZoneOffset.UTC), data.get(0));</span>
+<span class="nc" id="L102">			columnCount = data.get(0).size();</span>
+<span class="nc" id="L103">			Utils.logInfo(getSpecialLogger(),</span>
+					&quot;%s&quot;,
+<span class="nc" id="L105">					(Supplier&lt;String&gt;) () -&gt; IntStream.range(0, columnCount)</span>
+<span class="nc" id="L106">							.mapToObj((final int column) -&gt; String</span>
+<span class="nc" id="L107">									.format(&quot;%s: %d&quot;, titles[column], data.get(0).get(column)))</span>
+<span class="nc" id="L108">							.collect(Collectors.joining(&quot;, &quot;)));</span>
+		} else {
+<span class="nc" id="L110">			getLogger().error(&quot;Failed with empty result set.&quot;);</span>
+		}
+<span class="nc" id="L112">	}</span>
+
+	@Property(name = &quot;History length&quot;, description = &quot;in minutes&quot;)
+	public int getHistoryLength() {
+<span class="nc" id="L116">		return historyLength;</span>
+	}
+
+	public void setHistoryLength(final int historyLength) {
+<span class="nc" id="L120">		this.historyLength = historyLength;</span>
+<span class="nc" id="L121">	}</span>
+
+	@Property(name = &quot;Label format&quot;,
+			description = &quot;Values of the latest SQL execution can be used as String.format parameters (type: long)&quot;)
+	public String getLabelFormat() {
+<span class="nc" id="L126">		return labelFormat;</span>
+	}
+
+	public void setLabelFormat(final String labelFormat) {
+<span class="nc" id="L130">		this.labelFormat = labelFormat;</span>
+<span class="nc" id="L131">	}</span>
+
+	@Property(name = &quot;SQL&quot;, description = &quot;SQL Statement returning one row&quot;, type = &quot;sql&quot;)
+	public String getSqlStatement() {
+<span class="nc" id="L135">		return sqlStatement;</span>
+	}
+
+	public void setSqlStatement(final String sqlStatement) {
+<span class="nc" id="L139">		this.sqlStatement = sqlStatement;</span>
+<span class="nc" id="L140">	}</span>
+
+	@Property(name = &quot;Titles&quot;, description = &quot;Names of the values to display&quot;)
+	public String[] getTitles() {
+<span class="nc" id="L144">		return titles;</span>
+	}
+
+	@JsonHint(arrayStyle = ArrayStyle.TABLE)
+	public void setTitles(final String[] titles) {
+<span class="nc" id="L149">		this.titles = titles;</span>
+<span class="nc" id="L150">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

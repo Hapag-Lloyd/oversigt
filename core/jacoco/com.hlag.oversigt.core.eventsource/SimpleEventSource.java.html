@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SimpleEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.eventsource</a> &gt; <span class="el_source">SimpleEventSource.java</span></div><h1>SimpleEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.eventsource;
+
+import java.util.Objects;
+
+import javax.inject.Inject;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+/**
+ * @author Andrei Varabyeu
+ */
+<span class="nc" id="L14">abstract class SimpleEventSource&lt;T extends OversigtEvent&gt; extends AbstractExecutionThreadService {</span>
+	/**
+	 * EventBus to send events
+	 */
+	@Inject
+	private EventBus eventBus;
+
+	/**
+	 * ID of event this event source bound to
+	 */
+	@EventId
+	@Inject
+	private String eventId;
+
+	protected final void sendEvent(final T event) {
+<span class="nc" id="L29">		Objects.requireNonNull(event, &quot;The event must not be null.&quot;);</span>
+<span class="nc" id="L30">		event.setId(eventId);</span>
+<span class="nc" id="L31">		this.eventBus.post(event);</span>
+<span class="nc" id="L32">	}</span>
+
+	@Override
+	protected void startUp() throws Exception {
+		/* no any lifecycle-related logic */
+<span class="nc" id="L37">	}</span>
+
+	@Override
+	protected void shutDown() throws Exception {
+		/* no any lifecycle-related logic */
+<span class="nc" id="L42">	}</span>
+
+	@Override
+	protected String serviceName() {
+<span class="nc" id="L46">		return &quot;SimpleEventSource[eventID=&quot; + eventId + &quot;]&quot;;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

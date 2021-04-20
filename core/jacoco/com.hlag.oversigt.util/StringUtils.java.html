@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StringUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">StringUtils.java</span></div><h1>StringUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+
+/**
+ * Set of useful stuff for working with strings
+ *
+ * @author avarabyeu
+ */
+public final class StringUtils {
+	private StringUtils() {}
+
+	/**
+	 * Returns substring before provided string
+	 *
+	 * @param str       String to be truncated
+	 * @param separator Separator
+	 * @return Null of initial string is Null, empty if provided string is empty,
+	 *         otherwise substring before
+	 */
+	public static String substringBefore(final String str, final String separator) {
+<span class="nc bnc" id="L28" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(str)) {</span>
+<span class="nc" id="L29">			return str;</span>
+		}
+<span class="nc" id="L31">		final int pos = str.indexOf(separator);</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">		if (pos == -1) {</span>
+<span class="nc" id="L33">			return str;</span>
+		}
+<span class="nc" id="L35">		return str.substring(0, pos);</span>
+	}
+
+	public static List&lt;String&gt; list(final Optional&lt;String&gt; string) {
+<span class="nc" id="L39">		return string.map(Splitter.on(Pattern.compile(&quot;\\s*,+\\s*&quot;)).omitEmptyStrings()::splitToList)</span>
+<span class="nc" id="L40">				.orElse(Collections.emptyList());</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

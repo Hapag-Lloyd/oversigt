@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoleProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.security</a> &gt; <span class="el_source">RoleProvider.java</span></div><h1>RoleProvider.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.security;
+
+import static java.util.stream.Collectors.toSet;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.storage.Storage;
+
+@Singleton
+public class RoleProvider {
+	@Inject
+	@Named(&quot;serverAdmins&quot;)
+	private List&lt;String&gt; adminUserIds;
+
+	@Inject
+	private Storage storage;
+
+	@Inject
+	private DashboardController controller;
+
+<span class="nc" id="L29">	public RoleProvider() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L31">	}</span>
+
+	public Set&lt;Role&gt; getRoles(final String userid) {
+<span class="nc" id="L34">		final Set&lt;Role&gt; roles = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L36" title="All 2 branches missed.">		if (adminUserIds.contains(userid.toLowerCase().trim())) {</span>
+<span class="nc" id="L37">			roles.add(Role.SERVER_ADMIN);</span>
+<span class="nc" id="L38">			roles.add(Role.DASHBOARD_OWNER);</span>
+<span class="nc" id="L39">			roles.add(Role.DASHBOARD_EDITOR);</span>
+<span class="nc" id="L40">			addWithDefaultRole(roles,</span>
+<span class="nc" id="L41">					controller.getDashboardIds().stream().map(Role::getDashboardOwnerRole),</span>
+					Role.DASHBOARD_OWNER);
+<span class="nc" id="L43">			addWithDefaultRole(roles,</span>
+<span class="nc" id="L44">					controller.getDashboardIds().stream().map(Role::getDashboardEditorRole),</span>
+					Role.DASHBOARD_EDITOR);
+		} else {
+<span class="nc" id="L47">			addWithDefaultRole(roles,</span>
+<span class="nc" id="L48">					storage.getOwnedDashboardIds(userid).stream().map(Role::getDashboardOwnerRole),</span>
+					Role.DASHBOARD_OWNER);
+<span class="nc" id="L50">			addWithDefaultRole(roles,</span>
+<span class="nc" id="L51">					storage.getOwnedDashboardIds(userid).stream().map(Role::getDashboardEditorRole),</span>
+					Role.DASHBOARD_EDITOR);
+
+<span class="nc" id="L54">			addWithDefaultRole(roles,</span>
+<span class="nc" id="L55">					storage.getEditableDashboardIds(userid).stream().map(Role::getDashboardEditorRole),</span>
+					Role.DASHBOARD_EDITOR);
+		}
+
+<span class="nc" id="L59">		return roles;</span>
+	}
+
+	private static void addWithDefaultRole(final Collection&lt;Role&gt; roles,
+			final Stream&lt;Role&gt; rolesToAdd,
+			final Role defaultRole) {
+<span class="nc" id="L65">		addWithDefaultRole(roles, rolesToAdd.collect(toSet()), defaultRole);</span>
+<span class="nc" id="L66">	}</span>
+
+	private static void addWithDefaultRole(final Collection&lt;Role&gt; roles,
+			final Collection&lt;Role&gt; rolesToAdd,
+			final Role defaultRole) {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">		if (!rolesToAdd.isEmpty()) {</span>
+<span class="nc" id="L72">			roles.addAll(rolesToAdd);</span>
+<span class="nc" id="L73">			roles.add(defaultRole);</span>
+		}
+<span class="nc" id="L75">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProgressBarEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">ProgressBarEvent.java</span></div><h1>ProgressBarEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import java.util.Collection;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class ProgressBarEvent extends OversigtEvent {
+	private Collection&lt;Item&gt; progressItems;
+
+<span class="nc" id="L12">	public ProgressBarEvent(@Nullable final String title, final Collection&lt;Item&gt; items) {</span>
+<span class="nc" id="L13">		setTitle(title);</span>
+<span class="nc" id="L14">		progressItems = items;</span>
+<span class="nc" id="L15">	}</span>
+
+	public ProgressBarEvent(final Collection&lt;Item&gt; items) {
+<span class="nc" id="L18">		this(null, items);</span>
+<span class="nc" id="L19">	}</span>
+
+	public Collection&lt;Item&gt; getItems() {
+<span class="nc" id="L22">		return progressItems;</span>
+	}
+
+	public void setItems(final Collection&lt;Item&gt; items) {
+<span class="nc" id="L26">		progressItems = items;</span>
+<span class="nc" id="L27">	}</span>
+
+	public static class Item {
+		private String name;
+
+		private byte progress;
+
+<span class="nc" id="L34">		public Item(final String name, final byte progress) {</span>
+<span class="nc" id="L35">			this.name = name;</span>
+<span class="nc" id="L36">			this.progress = progress;</span>
+<span class="nc" id="L37">		}</span>
+
+		public String getName() {
+<span class="nc" id="L40">			return name;</span>
+		}
+
+		public void setName(final String name) {
+<span class="nc" id="L44">			this.name = name;</span>
+<span class="nc" id="L45">		}</span>
+
+		public byte getProgress() {
+<span class="nc" id="L48">			return progress;</span>
+		}
+
+		public void setProgress(final byte progress) {
+<span class="nc" id="L52">			this.progress = progress;</span>
+<span class="nc" id="L53">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

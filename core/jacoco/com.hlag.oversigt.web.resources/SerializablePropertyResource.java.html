@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializablePropertyResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">SerializablePropertyResource.java</span></div><h1>SerializablePropertyResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static com.hlag.oversigt.util.JsonUtils.removePasswords;
+import static com.hlag.oversigt.util.TypeUtils.toMemberMap;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember;
+import com.hlag.oversigt.util.TypeUtils.SerializablePropertyMember.MemberMissingException;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;SerializableValue&quot; })
+@Path(&quot;/serializable-values&quot;)
+@Singleton
+public class SerializablePropertyResource {
+	@Inject
+	private EventSourceInstanceController esiController;
+
+	@Inject
+	private SerializablePropertyController spController;
+
+<span class="nc" id="L61">	public SerializablePropertyResource() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L63">	}</span>
+
+	@GET
+	@Path(&quot;/type&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of available types&quot;,
+					response = SerializablePropertyDescription.class,
+					responseContainer = &quot;List&quot;) })
+	@ApiOperation(value = &quot;List available property types&quot;)
+	@NoChangeLog
+	public List&lt;SerializablePropertyDescription&gt; listPropertyTypes() {
+<span class="nc" id="L75">		return spController.getClasses()</span>
+<span class="nc" id="L76">				.stream()</span>
+<span class="nc" id="L77">				.map(c -&gt; new SerializablePropertyDescription(c.getSimpleName(),</span>
+<span class="nc" id="L78">						spController.getDescription(c.getSimpleName())))</span>
+<span class="nc" id="L79">				.collect(Collectors.toList());</span>
+	}
+
+	@GET
+	@Path(&quot;/type/{name}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns details of the requested serializable property&quot;,
+					response = SerializablePropertyMember.class,
+					responseContainer = &quot;List&quot;),
+			@ApiResponse(code = 404,
+					message = &quot;The requested serializable property type does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read serializable property details&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	public Response readMembers(@PathParam(&quot;name&quot;) @NotBlank final String className) {
+		try {
+<span class="nc" id="L98">			return ok(spController.getMembers(spController.getClass(className))).build();</span>
+<span class="nc" id="L99">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L100">			return ErrorResponse.notFound(&quot;Serializable property '&quot; + className + &quot;' does not exist.&quot;);</span>
+		}
+	}
+
+	@GET
+	@Path(&quot;/value/{type}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of all values of the requested serializable property&quot;,
+					response = Map.class,
+					responseContainer = &quot;List&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read serializable property values&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	public Response listProperties(@PathParam(&quot;type&quot;) @NotBlank final String className) {
+		try {
+<span class="nc" id="L117">			return ok(spController.streamProperties(spController.getClass(className))</span>
+<span class="nc" id="L118">					.map(SerializablePropertyResource::toMapWithoutPassword)</span>
+<span class="nc" id="L119">					.collect(Collectors.toList())).build();</span>
+<span class="nc" id="L120">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L121">			return ErrorResponse.notFound(&quot;Serializable property type '&quot; + className + &quot;' does not exist.&quot;);</span>
+		}
+	}
+
+	@POST
+	@Path(&quot;/value/{type}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 201, message = &quot;Serializable property has been created&quot;, response = Map.class),
+			@ApiResponse(code = 404,
+					message = &quot;Serializable property type does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Create serializable property values&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response createProperty(@Context final UriInfo uri,
+			@PathParam(&quot;type&quot;) @NotBlank final String className,
+			@NotEmpty final Map&lt;@NotBlank String, @NotNull Object&gt; map) {
+		final Class&lt;? extends SerializableProperty&gt; clazz;
+		try {
+<span class="nc" id="L141">			clazz = spController.getClass(className);</span>
+<span class="nc" id="L142">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L143">			return ErrorResponse.notFound(&quot;Serializable property type '&quot; + className + &quot;' does not exist.&quot;);</span>
+<span class="nc" id="L144">		}</span>
+
+<span class="nc" id="L146">		final List&lt;String&gt; errors = checkMembers(clazz, map);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		if (!errors.isEmpty()) {</span>
+<span class="nc" id="L148">			return ErrorResponse.badRequest(&quot;Cannot create serializable property&quot;, errors);</span>
+		}
+
+		try {
+<span class="nc" id="L152">			final SerializableProperty prop = spController.createProperty(clazz, (String) map.get(&quot;name&quot;), map);</span>
+			// TODO change to proper Location-header returning response
+<span class="nc" id="L154">			return status(Status.CREATED).entity(toMapWithoutPassword(prop))</span>
+<span class="nc" id="L155">					.type(MediaType.APPLICATION_JSON_TYPE)</span>
+<span class="nc" id="L156">					.link(uri.getAbsolutePath() + &quot;/&quot; + prop.getId(), &quot;self&quot;)</span>
+<span class="nc" id="L157">					.build();</span>
+<span class="nc" id="L158">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L159">			return ErrorResponse.notFound(&quot;Serializable property '&quot; + className + &quot;' does not exist.&quot;);</span>
+		}
+	}
+
+	@GET
+	@Path(&quot;/value/{type}/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of all values of the requested serializable property&quot;,
+					response = Map.class),
+			@ApiResponse(code = 404, message = &quot;Property does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read serializable property values&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	public Response readProperty(@PathParam(&quot;type&quot;) @NotBlank final String className,
+			@PathParam(&quot;id&quot;) @Positive final int id) {
+		final Class&lt;? extends SerializableProperty&gt; clazz;
+		try {
+<span class="nc" id="L178">			clazz = spController.getClass(className);</span>
+<span class="nc" id="L179">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L180">			return ErrorResponse.notFound(&quot;Serializable property type '&quot; + className + &quot;' does not exist.&quot;);</span>
+<span class="nc" id="L181">		}</span>
+<span class="nc" id="L182">		final SerializableProperty prop = spController.getProperty(clazz, id);</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		if (prop.getId() == id) {</span>
+<span class="nc" id="L184">			return ok(toMapWithoutPassword(prop)).build();</span>
+		}
+<span class="nc" id="L186">		return ErrorResponse</span>
+<span class="nc" id="L187">				.notFound(&quot;Serializable property of type '&quot; + className + &quot;' with id &quot; + id + &quot; does not exist.&quot;);</span>
+	}
+
+	@PUT
+	@Path(&quot;/value/{type}/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of all values of the requested serializable property&quot;,
+					response = Map.class),
+			@ApiResponse(code = 404, message = &quot;Property does not exist&quot;, response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Update serializable property values&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response updateProperty(@Context final UriInfo uri,
+			@PathParam(&quot;type&quot;) @NotBlank final String className,
+			@PathParam(&quot;id&quot;) @Positive final int id,
+			@NotNull final Map&lt;@NotBlank String, @NotNull Object&gt; map) {
+		final Class&lt;? extends SerializableProperty&gt; clazz;
+		try {
+<span class="nc" id="L207">			clazz = spController.getClass(className);</span>
+<span class="nc" id="L208">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L209">			return ErrorResponse.notFound(&quot;Serializable property type '&quot; + className + &quot;' does not exist.&quot;);</span>
+<span class="nc" id="L210">		}</span>
+<span class="nc" id="L211">		final SerializableProperty prop = spController.getProperty(clazz, id);</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">		if (prop.getId() != id) {</span>
+<span class="nc" id="L213">			return ErrorResponse</span>
+<span class="nc" id="L214">					.notFound(&quot;Serializable property of type '&quot; + className + &quot;' with id &quot; + id + &quot; does not exist.&quot;);</span>
+		}
+
+<span class="nc" id="L217">		final List&lt;String&gt; errors = checkMembers(clazz, map);</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">		if (!errors.isEmpty()) {</span>
+<span class="nc" id="L219">			return ErrorResponse.badRequest(&quot;Cannot update serializable property&quot;, errors);</span>
+		}
+
+		// TODO make change in a copy of the property and then write changes to real
+		// object
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		for (final SerializablePropertyMember member : spController.getMembers(clazz)) {</span>
+			try {
+<span class="nc" id="L226">				member.set(prop, map.get(member.getName()).toString());</span>
+<span class="nc" id="L227">			} catch (final MemberMissingException e) {</span>
+<span class="nc" id="L228">				throw new RuntimeException(&quot;Cannot find member: &quot; + member.getName(), e);</span>
+<span class="nc" id="L229">			}</span>
+<span class="nc" id="L230">		}</span>
+<span class="nc" id="L231">		spController.updateProperty(prop);</span>
+<span class="nc" id="L232">		esiController.restartInstancesUsingSerializableProperty(prop);</span>
+
+<span class="nc" id="L234">		return ok(toMapWithoutPassword(prop)).link(uri.getAbsolutePath() + &quot;/&quot; + prop.getId(), &quot;self&quot;).build();</span>
+	}
+
+	@DELETE
+	@Path(&quot;/value/{type}/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Serializable property has been deleted&quot;),
+			@ApiResponse(code = 404,
+					message = &quot;Serializable property does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Delete serializable property values&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response deleteProperty(@PathParam(&quot;type&quot;) @NotBlank final String className,
+			@PathParam(&quot;id&quot;) @Positive final int id) {
+		final Class&lt;? extends SerializableProperty&gt; clazz;
+		try {
+<span class="nc" id="L252">			clazz = spController.getClass(className);</span>
+<span class="nc" id="L253">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L254">			return ErrorResponse.notFound(&quot;Serializable property type '&quot; + className + &quot;' does not exist.&quot;);</span>
+<span class="nc" id="L255">		}</span>
+		try {
+<span class="nc" id="L257">			spController.getProperty(clazz, id);</span>
+<span class="nc" id="L258">			spController.deleteProperty(clazz, id);</span>
+<span class="nc" id="L259">			return Response.ok().build();</span>
+<span class="nc" id="L260">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L261">			return ErrorResponse</span>
+<span class="nc" id="L262">					.notFound(&quot;Serializable property of type '&quot; + className + &quot;' with id &quot; + id + &quot; does not exist.&quot;);</span>
+		}
+	}
+
+	private List&lt;String&gt; checkMembers(final Class&lt;? extends SerializableProperty&gt; clazz,
+			final Map&lt;String, Object&gt; map) {
+<span class="nc" id="L268">		final List&lt;String&gt; errors = new ArrayList&lt;&gt;();</span>
+		// Are all members in the map?
+<span class="nc" id="L270">		final Collection&lt;SerializablePropertyMember&gt; members = spController.getMembers(clazz);</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">		for (final SerializablePropertyMember m : members) {</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (!map.containsKey(m.getName())) {</span>
+<span class="nc" id="L273">				errors.add(&quot;Member '&quot; + m.getName() + &quot;' is missing&quot;);</span>
+			}
+<span class="nc" id="L275">		}</span>
+		// Are only members in the map?
+<span class="nc bnc" id="L277" title="All 2 branches missed.">		if (map.size() != members.size()) {</span>
+<span class="nc" id="L278">			members.stream().map(SerializablePropertyMember::getName).forEach(map::remove);</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">			for (final String n : map.keySet()) {</span>
+<span class="nc" id="L280">				errors.add(&quot;'&quot; + n + &quot;' is not a member of &quot; + clazz.getSimpleName());</span>
+<span class="nc" id="L281">			}</span>
+		}
+<span class="nc" id="L283">		return errors;</span>
+	}
+
+	static Map&lt;String, Object&gt; toMapWithoutPassword(final SerializableProperty property) {
+<span class="nc" id="L287">		return removePasswords(toMemberMap(property));</span>
+	}
+
+	/**
+	 * Class describing a {@link SerializableProperty} class.
+	 *
+	 * @author Olaf Neumann
+	 */
+	public static class SerializablePropertyDescription {
+		private final String name;
+
+		private final String description;
+
+<span class="nc" id="L300">		public SerializablePropertyDescription(final String name, final String description) {</span>
+<span class="nc" id="L301">			this.name = name;</span>
+<span class="nc" id="L302">			this.description = description;</span>
+<span class="nc" id="L303">		}</span>
+
+		public String getName() {
+<span class="nc" id="L306">			return name;</span>
+		}
+
+		public String getDescription() {
+<span class="nc" id="L310">			return description;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

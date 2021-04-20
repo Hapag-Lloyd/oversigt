@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SimpleReadWriteLock.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">SimpleReadWriteLock.java</span></div><h1>SimpleReadWriteLock.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+
+public class SimpleReadWriteLock {
+<span class="nc" id="L8">	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);</span>
+
+<span class="nc" id="L10">	public SimpleReadWriteLock() {</span>
+		// no fields to be initialized
+<span class="nc" id="L12">	}</span>
+
+	public &lt;T&gt; T read(final Supplier&lt;T&gt; supplier) {
+<span class="nc" id="L15">		lock.readLock().lock();</span>
+		try {
+<span class="nc" id="L17">			return supplier.get();</span>
+		} finally {
+<span class="nc" id="L19">			lock.readLock().unlock();</span>
+		}
+	}
+
+	public void write(final Runnable runnable) {
+<span class="nc" id="L24">		lock.writeLock().lock();</span>
+		try {
+<span class="nc" id="L26">			runnable.run();</span>
+		} finally {
+<span class="nc" id="L28">			lock.writeLock().unlock();</span>
+		}
+<span class="nc" id="L30">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

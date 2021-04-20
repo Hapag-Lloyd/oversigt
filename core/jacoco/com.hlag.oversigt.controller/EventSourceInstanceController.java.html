@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceInstanceController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.controller</a> &gt; <span class="el_source">EventSourceInstanceController.java</span></div><h1>EventSourceInstanceController.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.controller;
+
+import static com.hlag.oversigt.util.Utils.copyProperties;
+import static java.util.stream.Collectors.toSet;
+
+import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.function.Consumer;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.Listener;
+import com.google.common.util.concurrent.Service.State;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
+import com.hlag.oversigt.core.eventsource.EventId;
+import com.hlag.oversigt.core.eventsource.EventSource.NOP;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.storage.Storage;
+import com.hlag.oversigt.util.SimpleReadWriteLock;
+import com.hlag.oversigt.util.TypeUtils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Singleton
+public class EventSourceInstanceController {
+<span class="nc" id="L57">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceController.class);</span>
+
+	@Inject
+	private Storage storage;
+
+	@Inject
+	private EventSourceNameGenerator nameGenerator;
+
+	@Inject
+	private Injector injector;
+
+	@Inject
+	private EventSourceDescriptorController descriptorController;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
+
+	// access to this map is synchronized through the lock object
+<span class="nc" id="L75">	private final SimpleReadWriteLock eventSourceInstancesLock = new SimpleReadWriteLock();</span>
+
+<span class="nc" id="L77">	private volatile Map&lt;EventSourceInstance, Service&gt; eventSourceInstancesInternal = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L79">	private List&lt;Consumer&lt;EventSourceInstance&gt;&gt; eventSourceInstanceUpdatedEventHandlers = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L81">	public EventSourceInstanceController() {</span>
+		// nothing to do
+<span class="nc" id="L83">	}</span>
+
+	public void registerEventSourceInstanceUpdatedEventHandler(final Consumer&lt;EventSourceInstance&gt; eventHandler) {
+<span class="nc" id="L86">		eventSourceInstanceUpdatedEventHandlers.add(eventHandler);</span>
+<span class="nc" id="L87">	}</span>
+
+	private void fireEventSourceInstanceUpdatedEvent(final EventSourceInstance instance) {
+<span class="nc" id="L90">		eventSourceInstanceUpdatedEventHandlers.forEach(consumer -&gt; consumer.accept(instance));</span>
+<span class="nc" id="L91">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private &lt;S extends Service&gt; Optional&lt;S&gt; getService(final EventSourceInstance instance) {
+<span class="nc" id="L95">		return eventSourceInstancesLock.read(() -&gt; Optional.ofNullable((S) eventSourceInstancesInternal.get(instance)));</span>
+	}
+
+	private void setService(final EventSourceInstance instance, final Service service) {
+<span class="nc" id="L99">		eventSourceInstancesLock.write(() -&gt; eventSourceInstancesInternal.put(instance, service));</span>
+<span class="nc" id="L100">	}</span>
+
+	private void unsetService(final EventSourceInstance instance) {
+<span class="nc" id="L103">		eventSourceInstancesLock.write(() -&gt; eventSourceInstancesInternal.put(instance, null));</span>
+<span class="nc" id="L104">	}</span>
+
+	private void removeEventSourceInstance(final EventSourceInstance instance) {
+<span class="nc" id="L107">		eventSourceInstancesLock.write(() -&gt; {</span>
+			/*
+			 * This method is a work around because (why ever)
+			 * &lt;code&gt;eventSourceInstances_internal.remove(instance);&lt;/code&gt; didn't work and
+			 * did not remove the instance from the map.
+			 */
+<span class="nc" id="L113">			final Map&lt;EventSourceInstance, Service&gt; newMap = eventSourceInstancesInternal.entrySet()</span>
+<span class="nc" id="L114">					.stream()</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">					.filter(e -&gt; !e.getKey().equals(instance))</span>
+<span class="nc" id="L116">					.collect(LinkedHashMap::new, (m, v) -&gt; m.put(v.getKey(), v.getValue()), LinkedHashMap::putAll);</span>
+<span class="nc" id="L117">			eventSourceInstancesInternal.clear();</span>
+<span class="nc" id="L118">			eventSourceInstancesInternal.putAll(newMap);</span>
+<span class="nc" id="L119">		});</span>
+<span class="nc" id="L120">	}</span>
+
+	public Collection&lt;EventSourceInstance&gt; getEventSourceInstances() {
+<span class="nc" id="L123">		return eventSourceInstancesLock.read(() -&gt; new HashSet&lt;&gt;(eventSourceInstancesInternal.keySet()));</span>
+	}
+
+	public EventSourceInstance getEventSourceInstance(final String id) {
+		// TODO replace by optional
+<span class="nc" id="L128">		return eventSourceInstancesLock.read(</span>
+<span class="nc" id="L129">				() -&gt; eventSourceInstancesInternal.keySet().stream().filter(i -&gt; id.equals(i.getId())).findAny().get());</span>
+	}
+
+	public void updateEventSourceInstance(final EventSourceInstance updatedInstance) {
+<span class="nc" id="L133">		final EventSourceInstance origInstance = getEventSourceInstance(updatedInstance.getId());</span>
+
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (origInstance != updatedInstance) {</span>
+<span class="nc" id="L136">			copyProperties(updatedInstance, origInstance);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">			for (final EventSourceProperty p : origInstance.getDescriptor().getProperties()) {</span>
+<span class="nc" id="L138">				origInstance.setProperty(p, updatedInstance.getPropertyValue(p));</span>
+<span class="nc" id="L139">			}</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">			for (final EventSourceProperty p : origInstance.getDescriptor().getDataItems()) {</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">				if (updatedInstance.hasPropertyValue(p)) {</span>
+<span class="nc" id="L142">					origInstance.setProperty(p, updatedInstance.getPropertyValue(p));</span>
+				} else {
+<span class="nc" id="L144">					origInstance.removeProperty(p);</span>
+				}
+<span class="nc" id="L146">			}</span>
+		}
+
+<span class="nc" id="L149">		storage.persistEventSourceInstance(origInstance);</span>
+<span class="nc" id="L150">		final boolean running = isRunning(origInstance);</span>
+<span class="nc" id="L151">		boolean hasStopped = false;</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">		if (!origInstance.isEnabled() &amp;&amp; running) {</span>
+<span class="nc" id="L153">			stopInstance(origInstance.getId());</span>
+<span class="nc" id="L154">			hasStopped = true;</span>
+		}
+<span class="nc bnc" id="L156" title="All 4 branches missed.">		if (running &amp;&amp; origInstance.isEnabled()) {</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">			if (!hasStopped) {</span>
+<span class="nc" id="L158">				stopInstance(origInstance.getId());</span>
+			}
+<span class="nc" id="L160">			startInstance(origInstance.getId(), false);</span>
+<span class="nc" id="L161">			fireEventSourceInstanceUpdatedEvent(origInstance);</span>
+		}
+<span class="nc" id="L163">	}</span>
+
+	public void initialize() {
+<span class="nc" id="L166">		descriptorController.initialize();</span>
+<span class="nc" id="L167">		LOGGER.info(&quot;Loading event source instances&quot;);</span>
+<span class="nc" id="L168">		storage.getEventSourcesIds().stream().map(this::loadEventSourceInstance).forEach(this::unsetService);</span>
+<span class="nc" id="L169">	}</span>
+
+	private String createUniqueId(final EventSourceDescriptor descriptor) {
+<span class="nc" id="L172">		final Set&lt;String&gt; existingIds = Collections</span>
+<span class="nc" id="L173">				.unmodifiableSet(getEventSourceInstances().stream().map(EventSourceInstance::getId).collect(toSet()));</span>
+
+		String id;
+		do {
+<span class="nc" id="L177">			id = descriptor.getServiceClass().map(Class::getSimpleName).orElse(descriptor.getView())</span>
+					+ &quot;__&quot;
+<span class="nc" id="L179">					+ UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;_&quot;);</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">		} while (existingIds.contains(id));</span>
+<span class="nc" id="L181">		return id;</span>
+	}
+
+	private EventSourceInstance loadEventSourceInstance(@NotBlank final String id) {
+		try {
+<span class="nc" id="L186">			final EventSourceInstance instance = storage.loadEventSourceInstance(id, (c, v) -&gt; {</span>
+<span class="nc" id="L187">				final EventSourceKey key = EventSourceKey.fromClassOrView(c,</span>
+<span class="nc" id="L188">						Optional.ofNullable(v).map(Strings::emptyToNull).orElseGet(() -&gt; getView(id)));</span>
+<span class="nc" id="L189">				return descriptorController.getEventSourceDescriptor(key);</span>
+			});
+<span class="nc" id="L191">			final Map&lt;String, String&gt; propertyStrings = storage.getEventSourceInstanceProperties(id);</span>
+<span class="nc" id="L192">			final Map&lt;String, String&gt; dataItemStrings = storage.getEventSourceInstanceDataItems(id);</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">			if (instance.getDescriptor().getServiceClass().isPresent()) {</span>
+<span class="nc" id="L195">				adoptDefaultEventSourceInstanceProperties(instance, instance.getDescriptor());</span>
+			}
+<span class="nc" id="L197">			instance.getDescriptor()</span>
+<span class="nc" id="L198">					.getProperties()</span>
+<span class="nc" id="L199">					.stream()</span>
+<span class="nc" id="L200">					.filter(p -&gt; propertyStrings.containsKey(p.getName()))</span>
+<span class="nc" id="L201">					.forEach(p -&gt; instance.setPropertyString(p, propertyStrings.get(p.getName())));</span>
+<span class="nc" id="L202">			instance.getDescriptor()</span>
+<span class="nc" id="L203">					.getDataItems()</span>
+<span class="nc" id="L204">					.stream()</span>
+<span class="nc" id="L205">					.filter(p -&gt; dataItemStrings.containsKey(p.getName()))</span>
+<span class="nc" id="L206">					.forEach(p -&gt; instance.setPropertyString(p, dataItemStrings.get(p.getName())));</span>
+
+<span class="nc" id="L208">			return instance;</span>
+<span class="nc" id="L209">		} catch (final Exception e) {</span>
+<span class="nc" id="L210">			throw new RuntimeException(&quot;Unable to load event source instance: &quot; + id, e);</span>
+		}
+	}
+
+	private static String getView(final String id) {
+<span class="nc bnc" id="L215" title="All 2 branches missed.">		return id.substring(0, id.indexOf(id.contains(&quot;:&quot;) ? &quot;:&quot; : &quot;__&quot;));</span>
+	}
+
+	@SuppressWarnings(&quot;checkstyle:XIllegalCatchCustom&quot;)
+	private void adoptDefaultEventSourceInstanceProperties(final EventSourceInstance instance,
+			final EventSourceDescriptor descriptor) {
+		// Create a new object of the source to retrieve the default values
+<span class="nc" id="L222">		final Service service = createServiceInstance(</span>
+<span class="nc" id="L223">				descriptor.getServiceClass()</span>
+<span class="nc" id="L224">						.orElseThrow(() -&gt; new NullPointerException(&quot;Service class must not be null&quot;)),</span>
+<span class="nc" id="L225">				descriptor.getModuleClass(),</span>
+				&quot;dummy&quot;);
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		for (final EventSourceProperty property : instance.getDescriptor().getProperties()) {</span>
+			try {
+<span class="nc" id="L229">				final Object defaultValue = Objects.requireNonNull(property.getGetter().get().invoke(service),</span>
+						&quot;The default value of a property must not be null.&quot;);
+<span class="nc" id="L231">				instance.setProperty(property, defaultValue);</span>
+<span class="nc" id="L232">			} catch (final IllegalAccessException</span>
+					| IllegalArgumentException
+					| InvocationTargetException
+					| NullPointerException e) {
+<span class="nc" id="L236">				throw new RuntimeException(&quot;Unable to set property: &quot; + property.getName(), e);</span>
+<span class="nc" id="L237">			}</span>
+<span class="nc" id="L238">		}</span>
+<span class="nc" id="L239">	}</span>
+
+	private &lt;T extends Service&gt; T createServiceInstance(final Class&lt;T&gt; serviceClass,
+			final Class&lt;? extends Module&gt; moduleClass,
+			final String id) {
+<span class="nc" id="L244">		final Injector childInjector = injector.createChildInjector(binder -&gt; {</span>
+<span class="nc" id="L245">			binder.bind(String.class).annotatedWith(EventId.class).toInstance(id);</span>
+<span class="nc" id="L246">			binder.bind(serviceClass);</span>
+<span class="nc" id="L247">		}, createChildModule(moduleClass));</span>
+<span class="nc" id="L248">		return childInjector.getInstance(serviceClass);</span>
+	}
+
+	private static Module createChildModule(final Class&lt;? extends Module&gt; moduleClass) {
+<span class="nc bnc" id="L252" title="All 2 branches missed.">		if (moduleClass == NOP.class) {</span>
+<span class="nc" id="L253">			return Modules.EMPTY_MODULE;</span>
+		}
+<span class="nc" id="L255">		return TypeUtils.createInstance(moduleClass);</span>
+	}
+
+	public void startAllInstances() {
+<span class="nc" id="L259">		getEventSourceInstances().stream()</span>
+<span class="nc" id="L260">				.filter(i -&gt; i.getDescriptor().getServiceClass().isPresent())</span>
+<span class="nc" id="L261">				.filter(EventSourceInstance::isEnabled)</span>
+<span class="nc" id="L262">				.map(EventSourceInstance::getId)</span>
+<span class="nc" id="L263">				.forEach(id -&gt; startInstance(id, false));</span>
+<span class="nc" id="L264">	}</span>
+
+	public void startInstance(final String id, final boolean automaticallyStarted) {
+<span class="nc" id="L267">		final EventSourceInstance instance = getEventSourceInstance(id);</span>
+
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		if (!instance.isEnabled()) {</span>
+<span class="nc" id="L270">			throw new RuntimeException(&quot;Instance &quot; + id + &quot; is not enabled.&quot;);</span>
+		}
+
+<span class="nc" id="L273">		synchronized (instance) {</span>
+			// check everything
+<span class="nc bnc" id="L275" title="All 2 branches missed.">			if (getService(instance).isPresent()) {</span>
+<span class="nc" id="L276">				throw new RuntimeException(&quot;Instance &quot; + id + &quot; is already started.&quot;);</span>
+			}
+<span class="nc bnc" id="L278" title="All 2 branches missed.">			if (!instance.getDescriptor().getServiceClass().isPresent()) {</span>
+<span class="nc" id="L279">				throw new RuntimeException(&quot;Instance &quot; + id + &quot; does not have a service class.&quot;);</span>
+			}
+<span class="nc bnc" id="L281" title="All 2 branches missed.">			if (!instance.isEnabled()) {</span>
+<span class="nc" id="L282">				throw new RuntimeException(&quot;Instance &quot; + id + &quot; is not enabled.&quot;);</span>
+			}
+
+<span class="nc" id="L285">			final Optional&lt;Service&gt; service = createAndConfigureServiceInstance(instance);</span>
+
+<span class="nc bnc" id="L287" title="All 2 branches missed.">			if (service.isPresent()) {</span>
+				// start service
+<span class="nc" id="L289">				LOGGER.info(&quot;Starting event source: &quot;</span>
+						+ id
+						+ &quot; (&quot;
+<span class="nc" id="L292">						+ instance.getName()</span>
+						+ &quot;). Automatically: &quot;
+						+ automaticallyStarted);
+				// TODO better error handling for IllegalStateExceptions
+<span class="nc" id="L296">				service.get().startAsync();</span>
+<span class="nc" id="L297">				service.get().awaitRunning();</span>
+<span class="nc" id="L298">				setService(instance, service.get());</span>
+<span class="nc" id="L299">				service.get().addListener(new Listener() {</span>
+					@Override
+					public void stopping(@SuppressWarnings(&quot;unused&quot;) @Nullable final State from) {
+<span class="nc bnc" id="L302" title="All 2 branches missed.">						if (service.get() instanceof ScheduledEventSource) {</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">							if (((ScheduledEventSource&lt;?&gt;) service.get()).isStoppedBecauseOfError()) {</span>
+<span class="nc" id="L304">								unsetService(instance);</span>
+							}
+						}
+<span class="nc" id="L307">					}</span>
+<span class="nc" id="L308">				}, MoreExecutors.directExecutor());</span>
+<span class="nc" id="L309">				statisticsManager.getEventSourceStatistics(id).setAutomaticallyStarted(automaticallyStarted);</span>
+<span class="nc" id="L310">				LOGGER.info(&quot;Started event source: &quot; + id + &quot; (&quot; + instance.getName() + &quot;)&quot;);</span>
+			} else {
+<span class="nc" id="L312">				throw new RuntimeException(&quot;Service could not be started.&quot;); // TODO</span>
+			}
+<span class="nc" id="L314">		}</span>
+<span class="nc" id="L315">	}</span>
+
+	public EventSourceInstance createEventSourceInstance(@NotNull final EventSourceDescriptor descriptor,
+			final Principal createdBy) {
+<span class="nc" id="L319">		final String id = createUniqueId(descriptor);</span>
+<span class="nc" id="L320">		final String name = nameGenerator.createEventSourceInstanceName(descriptor);</span>
+<span class="nc" id="L321">		final boolean enabled = false;</span>
+<span class="nc" id="L322">		final Duration frequency = Duration.ofMinutes(15);</span>
+
+<span class="nc" id="L324">		final EventSourceInstance instance = new EventSourceInstance(descriptor,</span>
+				id,
+				name,
+				enabled,
+				frequency,
+<span class="nc" id="L329">				createdBy.getUsername(),</span>
+<span class="nc" id="L330">				createdBy.getUsername());</span>
+
+<span class="nc bnc" id="L332" title="All 2 branches missed.">		if (descriptor.getServiceClass().isPresent()) {</span>
+<span class="nc" id="L333">			adoptDefaultEventSourceInstanceProperties(instance, descriptor);</span>
+		}
+
+<span class="nc" id="L336">		unsetService(instance);</span>
+<span class="nc" id="L337">		storage.persistEventSourceInstance(instance);</span>
+
+<span class="nc" id="L339">		return instance;</span>
+	}
+
+	private Optional&lt;Service&gt; createAndConfigureServiceInstance(final EventSourceInstance instance) {
+		// create class instance
+<span class="nc" id="L344">		final Service service = createServiceInstance(instance.getDescriptor().getServiceClass().get(),</span>
+<span class="nc" id="L345">				instance.getDescriptor().getModuleClass(),</span>
+<span class="nc" id="L346">				instance.getId());</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">		if (service instanceof ScheduledEventSource) {</span>
+<span class="nc" id="L348">			((ScheduledEventSource&lt;?&gt;) service).setFrequency(instance.getFrequency());</span>
+		}
+
+		// set property values
+<span class="nc" id="L352">		instance//</span>
+<span class="nc" id="L353">				.getDescriptor()</span>
+<span class="nc" id="L354">				.getProperties()</span>
+<span class="nc" id="L355">				.stream()</span>
+<span class="nc" id="L356">				.filter(instance::hasPropertyValue)</span>
+<span class="nc" id="L357">				.filter(property -&gt; property.getSetter().isPresent())</span>
+<span class="nc" id="L358">				.forEach(property -&gt; {</span>
+					try {
+<span class="nc" id="L360">						property.getSetter().get().invoke(service, instance.getPropertyValue(property));</span>
+<span class="nc" id="L361">					} catch (final IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {</span>
+<span class="nc" id="L362">						throw new RuntimeException(&quot;Unable to set property: &quot; + property.getName(), e);</span>
+<span class="nc" id="L363">					}</span>
+<span class="nc" id="L364">				});</span>
+
+<span class="nc" id="L366">		return Optional.of(service);</span>
+	}
+
+	public void stopAllInstances() {
+<span class="nc" id="L370">		getEventSourceInstances().stream()</span>
+<span class="nc" id="L371">				.filter(i -&gt; i.getDescriptor().getServiceClass().isPresent())</span>
+<span class="nc" id="L372">				.filter(this::isRunning)</span>
+<span class="nc" id="L373">				.map(EventSourceInstance::getId)</span>
+<span class="nc" id="L374">				.forEach(this::stopInstance);</span>
+<span class="nc" id="L375">	}</span>
+
+	public void stopInstance(final String id) {
+<span class="nc" id="L378">		final EventSourceInstance instance = getEventSourceInstance(id);</span>
+
+<span class="nc" id="L380">		synchronized (instance) {</span>
+<span class="nc" id="L381">			final Service service = getService(instance)</span>
+<span class="nc" id="L382">					.orElseThrow(() -&gt; new RuntimeException(&quot;Instance &quot; + id + &quot; is not running&quot;));</span>
+
+			// stop service
+<span class="nc bnc" id="L385" title="All 4 branches missed.">			if (service.state() != State.TERMINATED &amp;&amp; service.state() != State.STOPPING) {</span>
+<span class="nc" id="L386">				LOGGER.info(&quot;Stopping event source: &quot; + id + &quot; (&quot; + instance.getName() + &quot;)&quot;);</span>
+<span class="nc" id="L387">				service.stopAsync();</span>
+			}
+<span class="nc bnc" id="L389" title="All 2 branches missed.">			if (service.state() != State.TERMINATED) {</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">				if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L391">					LOGGER.debug(&quot;Awaiting termination: &quot; + id + &quot; (&quot; + instance.getName() + &quot;)&quot;);</span>
+				}
+<span class="nc" id="L393">				service.awaitTerminated();</span>
+			}
+<span class="nc" id="L395">			unsetService(instance);</span>
+<span class="nc" id="L396">			LOGGER.info(&quot;Stopped event source: &quot; + id + &quot; (&quot; + instance.getName() + &quot;)&quot;);</span>
+<span class="nc" id="L397">		}</span>
+<span class="nc" id="L398">	}</span>
+
+	public void restartInstance(final String id, final boolean wait) {
+<span class="nc" id="L401">		final ForkJoinTask&lt;?&gt; task = ForkJoinPool.commonPool().submit(() -&gt; {</span>
+<span class="nc" id="L402">			stopInstance(id);</span>
+<span class="nc" id="L403">			startInstance(id, false);</span>
+<span class="nc" id="L404">		});</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">		if (wait) {</span>
+<span class="nc" id="L406">			task.join();</span>
+		}
+<span class="nc" id="L408">	}</span>
+
+	public void restartInstancesUsingSerializableProperty(final SerializableProperty changedProperty) {
+<span class="nc" id="L411">		getEventSourceInstances().stream()</span>
+<span class="nc" id="L412">				.filter(this::isRunning)</span>
+<span class="nc" id="L413">				.filter(instance -&gt; instance.getDescriptor()</span>
+<span class="nc" id="L414">						.getProperties()</span>
+<span class="nc" id="L415">						.stream()</span>
+<span class="nc" id="L416">						.filter(property -&gt; property.getClazz().isPresent())</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">						.anyMatch(property -&gt; property.getClazz().get() == changedProperty.getClass()</span>
+<span class="nc" id="L418">								&amp;&amp; ((SerializableProperty) instance.getPropertyValue(property))</span>
+<span class="nc bnc" id="L419" title="All 2 branches missed.">										.getId() == changedProperty.getId()))</span>
+<span class="nc" id="L420">				.map(EventSourceInstance::getId)</span>
+<span class="nc" id="L421">				.forEach(id -&gt; restartInstance(id, false));</span>
+<span class="nc" id="L422">	}</span>
+
+	public boolean isRunning(final EventSourceInstance instance) {
+<span class="nc" id="L425">		return getService(instance).isPresent();</span>
+	}
+
+	public void disableEventSourceInstance(final String id) {
+<span class="nc" id="L429">		final EventSourceInstance instance = getEventSourceInstance(id);</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">		if (isRunning(instance)) {</span>
+<span class="nc" id="L431">			stopInstance(id);</span>
+		}
+<span class="nc" id="L433">		instance.setEnabled(false);</span>
+<span class="nc" id="L434">		updateEventSourceInstance(instance);</span>
+<span class="nc" id="L435">	}</span>
+
+	public void enableEventSourceInstance(final String id) {
+<span class="nc" id="L438">		final EventSourceInstance instance = getEventSourceInstance(id);</span>
+<span class="nc" id="L439">		instance.setEnabled(true);</span>
+<span class="nc" id="L440">		updateEventSourceInstance(instance);</span>
+<span class="nc" id="L441">	}</span>
+
+	void deleteEventSourceInstance(final String eventSourceId) {
+<span class="nc" id="L444">		final EventSourceInstance instance = getEventSourceInstance(eventSourceId);</span>
+
+<span class="nc bnc" id="L446" title="All 2 branches missed.">		if (isRunning(instance)) {</span>
+<span class="nc" id="L447">			stopInstance(eventSourceId);</span>
+		}
+
+<span class="nc" id="L450">		storage.deleteEventSourceInstance(eventSourceId);</span>
+<span class="nc" id="L451">		removeEventSourceInstance(instance);</span>
+<span class="nc" id="L452">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

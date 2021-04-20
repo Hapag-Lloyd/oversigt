@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceDescriptionResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">EventSourceDescriptionResource.java</span></div><h1>EventSourceDescriptionResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static javax.ws.rs.core.Response.ok;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.util.ImageUtil;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;EventSource&quot; },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Path(&quot;/event-source/descriptions&quot;)
+@Singleton
+public class EventSourceDescriptionResource {
+<span class="nc" id="L39">	public EventSourceDescriptionResource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L41">	}</span>
+
+	@Inject
+	private EventSourceDescriptorController eventSourceDescriptorController;
+
+	@GET
+	@Path(&quot;/&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of available event sources&quot;,
+					response = EventSourceInfo.class,
+					responseContainer = &quot;List&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;List available event sources&quot;)
+	@NoChangeLog
+	public Response listAvailableEventSources() {
+<span class="nc" id="L57">		return ok(eventSourceDescriptorController.getEventSourceKeys()</span>
+<span class="nc" id="L58">				.stream()</span>
+<span class="nc" id="L59">				.map(eventSourceDescriptorController::getEventSourceDescriptor)</span>
+<span class="nc" id="L60">				.map(EventSourceInfo::new)</span>
+<span class="nc" id="L61">				.collect(Collectors.toList())).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/{key}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;The details of the requested event source descriptor&quot;,
+					response = EventSourceDescriptor.class),
+			@ApiResponse(code = 404,
+					message = &quot;The requested event source descriptor does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read event source description&quot;)
+	@NoChangeLog
+	public Response getEventSourceDetails(@PathParam(&quot;key&quot;) final String key) {
+		try {
+<span class="nc" id="L78">			final EventSourceDescriptor descriptor</span>
+<span class="nc" id="L79">					= eventSourceDescriptorController.getEventSourceDescriptor(EventSourceKey.fromKeyString(key));</span>
+<span class="nc" id="L80">			return ok(descriptor).build();</span>
+<span class="nc" id="L81">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException | InvalidKeyException ignore) {</span>
+<span class="nc" id="L82">			return notFound(&quot;The event source descriptor does not exist.&quot;);</span>
+		}
+	}
+
+	public static class EventSourceInfo {
+		private final EventSourceDescriptor descriptor;
+
+<span class="nc" id="L89">		EventSourceInfo(final EventSourceDescriptor descriptor) {</span>
+<span class="nc" id="L90">			this.descriptor = descriptor;</span>
+<span class="nc" id="L91">		}</span>
+
+		@NotNull
+		public String getKey() {
+<span class="nc" id="L95">			return descriptor.getKey().getKey();</span>
+		}
+
+		@NotNull
+		public String getName() {
+<span class="nc" id="L100">			return descriptor.getDisplayName();</span>
+		}
+
+		public Optional&lt;String&gt; getDescription() {
+<span class="nc" id="L104">			return descriptor.getDescription();</span>
+		}
+
+		@NotNull
+		public String getImage() {
+<span class="nc" id="L109">			return ImageUtil.getPreviewImageUrl(descriptor);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

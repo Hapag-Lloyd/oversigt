@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CpuUsageGraphEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">CpuUsageGraphEventSource.java</span></div><h1>CpuUsageGraphEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+
+import com.hlag.oversigt.connect.ssh.SshConnection;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.properties.JsonBasedData;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent.Series;
+import com.hlag.oversigt.util.Utils;
+
+import de.larssh.utils.Nullables;
+import de.larssh.utils.text.Strings;
+
+@EventSource(view = &quot;Rickshawgraph&quot;, displayName = &quot;CPU Usage&quot;)
+public class CpuUsageGraphEventSource extends ScheduledEventSource&lt;ComplexGraphEvent&gt; {
+<span class="nc" id="L34">	private final Map&lt;ZonedDateTime, Map&lt;Server, Integer&gt;&gt; values = new TreeMap&lt;&gt;();</span>
+
+<span class="nc" id="L36">	private Server[] servers = new Server[] { new Server() };</span>
+
+<span class="nc" id="L38">	private int historyLength = 10;</span>
+
+<span class="nc" id="L40">	public CpuUsageGraphEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L42">	}</span>
+
+	@Override
+	protected Optional&lt;ComplexGraphEvent&gt; produceEvent() {
+<span class="nc" id="L46">		final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);</span>
+
+		// get usages from hosts
+<span class="nc" id="L49">		final Map&lt;Server, Integer&gt; usages = Arrays.stream(getServers())</span>
+<span class="nc" id="L50">				.parallel()</span>
+<span class="nc" id="L51">				.collect(Collectors.toMap(Function.identity(), this::getCpuUsage));</span>
+<span class="nc" id="L52">		values.put(now, usages);</span>
+
+		// remove old values
+<span class="nc" id="L55">		values.keySet().removeIf(now.minusMinutes(getHistoryLength())::isAfter);</span>
+
+		// graphen berechnen
+<span class="nc" id="L58">		final long secondsOffset = now.withHour(0).withMinute(0).withSecond(0).toEpochSecond();</span>
+<span class="nc" id="L59">		final Map&lt;String, Series&gt; series = new TreeMap&lt;&gt;(String.CASE_INSENSITIVE_ORDER.reversed());</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">		for (final Server server : getServers()) {</span>
+<span class="nc" id="L61">			final List&lt;Point&gt; points = values.entrySet()</span>
+<span class="nc" id="L62">					.stream()</span>
+<span class="nc" id="L63">					.map(e -&gt; new Point(e.getKey().toEpochSecond() - secondsOffset,</span>
+<span class="nc" id="L64">							e.getValue().get(server).longValue()))</span>
+<span class="nc" id="L65">					.collect(Collectors.toList());</span>
+<span class="nc" id="L66">			series.put(server.hostname, new Series(server.getDisplayName(), points));</span>
+		}
+
+<span class="nc" id="L69">		return Optional.of(new ComplexGraphEvent(new ArrayList&lt;&gt;(series.values())));</span>
+	}
+
+	private int getCpuUsage(final Server server) {
+		final int usage;
+<span class="nc" id="L74">		try (StartedAction action = getStatisticsCollector().startAction(&quot;Retreive CPU usage&quot;, server.hostname)) {</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">			switch (server.operatingSystem) {</span>
+			case Linux:
+			case Aix:
+<span class="nc" id="L78">				usage = getUnixCpuUsage(server);</span>
+<span class="nc" id="L79">				break;</span>
+			// case Windows:
+			// usage = getWindowsCpuUsage(server);
+			// break;
+			default:
+<span class="nc" id="L84">				throw new RuntimeException(&quot;Unknown operating system: &quot; + server.operatingSystem.name());</span>
+			}
+		}
+<span class="nc" id="L87">		Utils.logInfo(getSpecialLogger(), &quot;%s: %s&quot;, server.hostname, usage);</span>
+<span class="nc" id="L88">		return usage;</span>
+	}
+
+	private int getUnixCpuUsage(final Server server) {
+<span class="nc" id="L92">		final double usage = SshConnection.getConnection(server.hostname, server.port, server.username, server.password)</span>
+<span class="nc" id="L93">				.getCpuUsage();</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if (Double.isNaN(usage)) {</span>
+<span class="nc" id="L95">			return 0;</span>
+		}
+<span class="nc" id="L97">		int percent = (int) (100 * usage + 0.5);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">		if (percent &lt; 0) {</span>
+<span class="nc" id="L99">			percent = 0;</span>
+		}
+<span class="nc bnc" id="L101" title="All 2 branches missed.">		if (percent &gt; 100) {</span>
+<span class="nc" id="L102">			percent = 100;</span>
+		}
+<span class="nc" id="L104">		return percent;</span>
+	}
+
+	@Property(name = &quot;Servers&quot;, description = &quot;The servers to check.&quot;)
+	public Server[] getServers() {
+<span class="nc" id="L109">		return Nullables.orElseGet(servers, () -&gt; new Server[0]);</span>
+	}
+
+	public void setServers(final Server[] servers) {
+<span class="nc" id="L113">		this.servers = servers;</span>
+<span class="nc" id="L114">	}</span>
+
+	@Property(name = &quot;History Length&quot;, description = &quot;How long should data from the past be displayed (in minutes)?&quot;)
+	public int getHistoryLength() {
+<span class="nc" id="L118">		return historyLength;</span>
+	}
+
+	public void setHistoryLength(final int historyLength) {
+<span class="nc" id="L122">		this.historyLength = historyLength;</span>
+<span class="nc" id="L123">	}</span>
+
+	@JsonHint(headerTemplate = &quot;{{ self.name }}&quot;, arrayStyle = ArrayStyle.TABS)
+	private static final class Server implements JsonBasedData {
+<span class="nc" id="L127">		@NotNull</span>
+		private String name = &quot;DisplayName&quot;;
+
+<span class="nc" id="L130">		@NotNull</span>
+		private String hostname = &quot;hostname&quot;;
+
+<span class="nc" id="L133">		@NotNull</span>
+		private int port = 22;
+
+<span class="nc" id="L136">		@NotNull</span>
+		private String username = &quot;username&quot;;
+
+<span class="nc" id="L139">		@NotNull</span>
+		private String password = &quot;password&quot;;
+
+<span class="nc" id="L142">		@NotNull</span>
+		private OperatingSystem operatingSystem = OperatingSystem.Aix;
+
+<span class="nc" id="L145">		private Server() {</span>
+			// no fields to be initialized
+<span class="nc" id="L147">		}</span>
+
+		private String getDisplayName() {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">			return Strings.isBlank(name) ? hostname + &quot;:&quot; + port : name;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L155">			return String.format(&quot;Server [name=%s, hostname=%s, port=%s]&quot;, name, hostname, port);</span>
+		}
+	}
+
+<span class="nc" id="L159">	private enum OperatingSystem {</span>
+<span class="nc" id="L160">		Aix,</span>
+<span class="nc" id="L161">		Linux</span>
+		// Windows
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

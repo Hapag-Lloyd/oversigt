@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OversigtEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.event</a> &gt; <span class="el_source">OversigtEvent.java</span></div><h1>OversigtEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.event;
+
+import static java.time.LocalDateTime.now;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hlag.oversigt.util.JsonUtils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+/**
+ * Base Event for all Oversigt events
+ *
+ * @author avarabyeu
+ */
+public class OversigtEvent implements Comparable&lt;OversigtEvent&gt; {
+<span class="nc" id="L24">	private static final Duration DEFAULT_LIFETIME = Duration.ofHours(1);</span>
+
+<span class="nc" id="L26">	@Nullable</span>
+	private String applicationId = null;
+
+<span class="nc" id="L29">	@Nullable</span>
+	private String id = null;
+
+<span class="nc" id="L32">	private final long updatedAt = Instant.now().getEpochSecond();</span>
+
+<span class="nc" id="L34">	@Nullable</span>
+	private String moreinfo = null;
+
+<span class="nc" id="L37">	private final transient LocalDateTime createdOn = now();</span>
+
+<span class="nc" id="L39">	@Nullable</span>
+	private transient Duration lifetime = null;
+
+	/* Do not populate if you don't need dynamic title */
+	@Nullable
+	private String title;
+
+<span class="nc" id="L46">	public OversigtEvent() {</span>
+		// nothing to do
+<span class="nc" id="L48">	}</span>
+
+	@Nullable
+	public String getId() {
+<span class="nc" id="L52">		return id;</span>
+	}
+
+	public void setId(final String id) {
+<span class="nc" id="L56">		this.id = id;</span>
+<span class="nc" id="L57">	}</span>
+
+	public void setLifetime(final Duration lifetime) {
+<span class="nc" id="L60">		this.lifetime = lifetime;</span>
+<span class="nc" id="L61">	}</span>
+
+	@Nullable
+	Duration getLifetime() {
+<span class="nc" id="L65">		return lifetime;</span>
+	}
+
+	boolean isValid() {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		return createdOn.plus(lifetime != null ? lifetime : DEFAULT_LIFETIME).isAfter(now());</span>
+	}
+
+	void setApplicationId(final String applicationId) {
+<span class="nc" id="L73">		this.applicationId = applicationId;</span>
+<span class="nc" id="L74">	}</span>
+
+	@Nullable
+	String getApplicationId() {
+<span class="nc" id="L78">		return applicationId;</span>
+	}
+
+	public long getUpdatedAt() {
+<span class="nc" id="L82">		return updatedAt;</span>
+	}
+
+	@Nullable
+	public String getTitle() {
+<span class="nc" id="L87">		return title;</span>
+	}
+
+	public void setTitle(@Nullable final String title) {
+<span class="nc" id="L91">		this.title = title;</span>
+<span class="nc" id="L92">	}</span>
+
+	@Nullable
+	public String getMoreinfo() {
+<span class="nc" id="L96">		return moreinfo;</span>
+	}
+
+	public void setMoreinfo(final String moreinfo) {
+<span class="nc" id="L100">		this.moreinfo = moreinfo;</span>
+<span class="nc" id="L101">	}</span>
+
+	@JsonIgnore
+	public LocalDateTime getCreatedOn() {
+<span class="nc" id="L105">		return createdOn;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L110">		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);</span>
+	}
+
+	@Override
+	public boolean equals(@Nullable final Object object) {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		if (!(object instanceof OversigtEvent)) {</span>
+<span class="nc" id="L116">			return false;</span>
+		}
+<span class="nc" id="L118">		return Objects.equals(getId(), ((OversigtEvent) object).getId());</span>
+	}
+
+	@Override
+	public int hashCode() {
+<span class="nc" id="L123">		return Objects.hashCode(getId());</span>
+	}
+
+	@Override
+	public int compareTo(@Nullable final OversigtEvent that) {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">		if (that == null) {</span>
+<span class="nc" id="L129">			return 1;</span>
+		}
+<span class="nc bnc" id="L131" title="All 4 branches missed.">		if (id == null &amp;&amp; that.id == null) {</span>
+<span class="nc" id="L132">			return 0;</span>
+		}
+<span class="nc bnc" id="L134" title="All 2 branches missed.">		if (id == null) {</span>
+<span class="nc" id="L135">			return -1;</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		} else if (that.id == null) {</span>
+<span class="nc" id="L137">			return 1;</span>
+		} else {
+<span class="nc" id="L139">			return Objects.requireNonNull(id).compareTo(that.id);</span>
+		}
+	}
+
+	public String toJson() {
+<span class="nc" id="L144">		return JsonUtils.toJson(this);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

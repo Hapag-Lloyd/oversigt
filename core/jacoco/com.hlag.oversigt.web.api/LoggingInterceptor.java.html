@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoggingInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">LoggingInterceptor.java</span></div><h1>LoggingInterceptor.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.annotation.Priority;
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.MatrixParam;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Priorities;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.util.Utils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Provider
+@Priority(Priorities.USER)
+public class LoggingInterceptor implements ContainerRequestFilter, ContainerResponseFilter {
+<span class="nc" id="L38">	private static final Logger LOGGER = LoggerFactory.getLogger(LoggingInterceptor.class);</span>
+
+<span class="nc" id="L40">	@Nullable</span>
+	@Context
+	private ResourceInfo injectedResourceInfo = null;
+
+<span class="nc" id="L44">	static final ThreadLocal&lt;Object[]&gt; PARAMETERS = new ThreadLocal&lt;&gt;();</span>
+
+<span class="nc" id="L46">	public LoggingInterceptor() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L48">	}</span>
+
+	@Override
+	public void filter(@SuppressWarnings(&quot;unused&quot;) @Nullable final ContainerRequestContext requestContext)
+			throws IOException {
+<span class="nc" id="L53">		PARAMETERS.set(null);</span>
+<span class="nc" id="L54">	}</span>
+
+	@Override
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext,
+			@Nullable final ContainerResponseContext nullableResponseContext) throws IOException {
+<span class="nc" id="L59">		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);</span>
+<span class="nc" id="L60">		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);</span>
+<span class="nc" id="L61">		final ContainerResponseContext responseContext = Objects.requireNonNull(nullableResponseContext);</span>
+
+<span class="nc" id="L63">		final Method method = resourceInfo.getResourceMethod();</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">		if (method != null) {</span>
+<span class="nc bnc" id="L65" title="All 4 branches missed.">			if (method.isAnnotationPresent(JwtSecured.class) &amp;&amp; !method.isAnnotationPresent(NoChangeLog.class)) {</span>
+<span class="nc" id="L66">				final Principal principal = (Principal) requestContext.getSecurityContext().getUserPrincipal();</span>
+
+<span class="nc bnc" id="L68" title="All 2 branches missed.">				if (principal != null) {</span>
+<span class="nc" id="L69">					final List&lt;String&gt; values = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L70">					final Parameter[] parameters = method.getParameters();</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">					for (int i = 0; i &lt; parameters.length; i += 1) {</span>
+<span class="nc bnc" id="L72" title="All 4 branches missed.">						if (!values.isEmpty() || isApiParameter(parameters[i])) {</span>
+<span class="nc" id="L73">							values.add(</span>
+<span class="nc" id="L74">									getApiParameterName(parameters[i]) + &quot;=&quot; + LoggingInterceptor.PARAMETERS.get()[i]);</span>
+						}
+					}
+<span class="nc" id="L77">					Utils.logChange(principal,</span>
+							&quot;Called method %s.%s(%s)&quot;,
+<span class="nc" id="L79">							method.getDeclaringClass().getSimpleName(),</span>
+<span class="nc" id="L80">							method.getName(),</span>
+<span class="nc" id="L81">							values.stream().collect(Collectors.joining(&quot;, &quot;)));</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">				} else if (responseContext.getStatus() == 401) {</span>
+					// 401 means UNAUTHORIZED
+<span class="nc" id="L84">					Utils.logChange(&quot;somebody&quot;,</span>
+							&quot;Failed calling %s.%s()&quot;,
+<span class="nc" id="L86">							method.getDeclaringClass().getSimpleName(),</span>
+<span class="nc" id="L87">							method.getName());</span>
+				} else {
+<span class="nc" id="L89">					throw new RuntimeException(&quot;A @&quot;</span>
+<span class="nc" id="L90">							+ JwtSecured.class.getSimpleName()</span>
+							+ &quot; annotated class does not have a Principal in the context parameters&quot;);
+				}
+<span class="nc" id="L93">			} else {</span>
+<span class="nc" id="L94">				Utils.logChange(&quot;somebody&quot;, &quot;called method: %s&quot;, method.toString());</span>
+			}
+		} else {
+<span class="nc" id="L97">			Utils.logWarn(LOGGER,</span>
+					&quot;Request with method[%s] to URI[%s]&quot;,
+<span class="nc" id="L99">					requestContext.getMethod(),</span>
+<span class="nc" id="L100">					requestContext.getUriInfo().getAbsolutePath());</span>
+		}
+
+<span class="nc" id="L103">		PARAMETERS.set(null);</span>
+<span class="nc" id="L104">	}</span>
+
+	private static boolean isApiParameter(final Parameter parameter) {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		return parameter.isAnnotationPresent(PathParam.class)</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">				|| parameter.isAnnotationPresent(QueryParam.class)</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">				|| parameter.isAnnotationPresent(HeaderParam.class)</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">				|| parameter.isAnnotationPresent(CookieParam.class)</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">				|| parameter.isAnnotationPresent(FormParam.class)</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">				|| parameter.isAnnotationPresent(MatrixParam.class);</span>
+	}
+
+	private static String getApiParameterName(final Parameter parameter) {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		if (parameter.isAnnotationPresent(PathParam.class)) {</span>
+<span class="nc" id="L117">			return parameter.getAnnotation(PathParam.class).value();</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">		} else if (parameter.isAnnotationPresent(QueryParam.class)) {</span>
+<span class="nc" id="L119">			return parameter.getAnnotation(QueryParam.class).value();</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		} else if (parameter.isAnnotationPresent(HeaderParam.class)) {</span>
+<span class="nc" id="L121">			return parameter.getAnnotation(HeaderParam.class).value();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		} else if (parameter.isAnnotationPresent(CookieParam.class)) {</span>
+<span class="nc" id="L123">			return parameter.getAnnotation(CookieParam.class).value();</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">		} else if (parameter.isAnnotationPresent(FormParam.class)) {</span>
+<span class="nc" id="L125">			return parameter.getAnnotation(FormParam.class).value();</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">		} else if (parameter.isAnnotationPresent(MatrixParam.class)) {</span>
+<span class="nc" id="L127">			return parameter.getAnnotation(MatrixParam.class).value();</span>
+		} else {
+<span class="nc" id="L129">			return &quot;[body]&quot;;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

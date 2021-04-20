@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RegularExpressionFunction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util.text</a> &gt; <span class="el_source">RegularExpressionFunction.java</span></div><h1>RegularExpressionFunction.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util.text;
+
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.google.common.base.Strings;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+class RegularExpressionFunction implements Function&lt;String, String&gt; {
+	private final String value;
+
+<span class="nc" id="L15">	RegularExpressionFunction(final String value) {</span>
+<span class="nc" id="L16">		this.value = value;</span>
+<span class="nc" id="L17">	}</span>
+
+	@Override
+	public String apply(@Nullable final String regex) {
+<span class="nc" id="L21">		Objects.requireNonNull(regex, &quot;Input for a Regex must be non null&quot;);</span>
+<span class="nc" id="L22">		final Matcher matcher = Pattern.compile(regex).matcher(value); // TODO: Cache pattern statically</span>
+
+		// Return empty string if not found
+<span class="nc bnc" id="L25" title="All 2 branches missed.">		if (!matcher.find()) {</span>
+<span class="nc" id="L26">			return &quot;&quot;;</span>
+		}
+
+		// Return either the group &quot;return&quot; or the matched string
+		String result;
+		try {
+<span class="nc" id="L32">			result = matcher.group(&quot;return&quot;);</span>
+<span class="nc" id="L33">		} catch (@SuppressWarnings(&quot;unused&quot;) final IllegalArgumentException e) {</span>
+<span class="nc" id="L34">			result = matcher.group();</span>
+<span class="nc" id="L35">		}</span>
+
+		// Making sure to differentiate between no result and empty result.
+<span class="nc bnc" id="L38" title="All 2 branches missed.">		return Strings.isNullOrEmpty(result) ? &quot; &quot; : result;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

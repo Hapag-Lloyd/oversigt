@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">FileUtils.java</span></div><h1>FileUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import static java.util.stream.Collectors.toList;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Ascii;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
+import com.google.common.io.Resources;
+
+import de.larssh.utils.SneakyException;
+import de.larssh.utils.SystemUtils;
+import de.larssh.utils.function.ThrowingConsumer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+public final class FileUtils {
+<span class="nc" id="L43">	private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);</span>
+
+	public static Stream&lt;Path&gt; closedPathStream(final Stream&lt;Path&gt; stream) {
+<span class="nc" id="L46">		try (Stream&lt;Path&gt; paths = stream) {</span>
+<span class="nc" id="L47">			return paths.collect(Collectors.toList()).stream();</span>
+		}
+	}
+
+	public static void deleteFolderOnExit(final Path root) {
+<span class="nc" id="L52">		Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; deleteFolder(root), &quot;DeleteOnExit:&quot; + root.toString()));</span>
+<span class="nc" id="L53">	}</span>
+
+	public static void deleteFolder(final Path root) {
+		try {
+<span class="nc" id="L57">			LOGGER.info(&quot;Deleting folder [{}]&quot;, root.toAbsolutePath().toString());</span>
+<span class="nc" id="L58">			Files.walk(root)</span>
+<span class="nc" id="L59">					.sorted(Comparator.reverseOrder())</span>
+<span class="nc" id="L60">					.forEach(ThrowingConsumer.throwing(Files::deleteIfExists));</span>
+<span class="nc" id="L61">		} catch (final IOException e) {</span>
+<span class="nc" id="L62">			throw new SneakyException(e);</span>
+<span class="nc" id="L63">		}</span>
+<span class="nc" id="L64">	}</span>
+
+	public static Path getPath(final URI uri) {
+<span class="nc bnc" id="L67" title="All 2 branches missed.">		if (Ascii.equalsIgnoreCase(uri.getScheme(), &quot;jar&quot;)) {</span>
+<span class="nc" id="L68">			final String uriString = uri.toString();</span>
+<span class="nc" id="L69">			final List&lt;String&gt; jarPathParts = Splitter.on('!').limit(2).splitToList(uriString);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">			if (jarPathParts.size() == 2) {</span>
+<span class="nc" id="L71">				return getFileSystem(URI.create(jarPathParts.get(0))).getPath(jarPathParts.get(1));</span>
+			}
+<span class="nc" id="L73">			throw new RuntimeException(&quot;Unable to interpret path: &quot; + uri);</span>
+		}
+<span class="nc" id="L75">		return Paths.get(uri);</span>
+	}
+
+	public static Optional&lt;URL&gt; getResourceUrl(final String path) {
+		try {
+<span class="nc" id="L80">			return Optional.of(Resources.getResource(path));</span>
+<span class="nc" id="L81">		} catch (@SuppressWarnings(&quot;unused&quot;) final IllegalArgumentException ignore) {</span>
+<span class="nc" id="L82">			return Optional.empty();</span>
+		}
+	}
+
+	public static FileSystem getFileSystem(final URI uri) {
+		try {
+<span class="nc" id="L88">			return FileSystems.getFileSystem(uri);</span>
+<span class="nc" id="L89">		} catch (@SuppressWarnings(&quot;unused&quot;) final FileSystemNotFoundException e) {</span>
+			try {
+<span class="nc" id="L91">				return FileSystems.newFileSystem(uri, Collections.emptyMap());</span>
+<span class="nc" id="L92">			} catch (final IOException ioException) {</span>
+<span class="nc" id="L93">				throw new UncheckedIOException(ioException);</span>
+			}
+		}
+	}
+
+	public static Stream&lt;Path&gt; streamResourcesFromClasspath() {
+<span class="nc" id="L99">		return getClasspathEntries().stream().map(Paths::get).flatMap(FileUtils::streamResources);</span>
+	}
+
+	private static Stream&lt;Path&gt; streamResources(final Path classpathEntry) {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		if (!Files.isRegularFile(classpathEntry)) {</span>
+<span class="nc" id="L104">			return streamResourcesFromDirectory(classpathEntry);</span>
+		}
+<span class="nc" id="L106">		final Optional&lt;String&gt; extension = getExtension(classpathEntry);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		if (extension.isPresent()) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">			switch (Ascii.toLowerCase(extension.get())) {</span>
+			case &quot;jar&quot;:
+			case &quot;zip&quot;:
+<span class="nc" id="L111">				return listResourcesFromJar(classpathEntry).stream();</span>
+			default:
+				// nothing
+			}
+		}
+<span class="nc" id="L116">		throw new RuntimeException(&quot;Unable to handle file for resource scanning: &quot; + classpathEntry);</span>
+	}
+
+	@SuppressWarnings(&quot;resource&quot;)
+	private static List&lt;Path&gt; listResourcesFromJar(final Path zip) {
+<span class="nc" id="L121">		final String uriString = &quot;jar:&quot; + zip.toUri().toString();</span>
+
+<span class="nc" id="L123">		final FileSystem fileSystem = getFileSystem(URI.create(uriString));</span>
+<span class="nc" id="L124">		final LinkedList&lt;Path&gt; paths = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L125">		try (JarInputStream jarInputStream = new JarInputStream(Files.newInputStream(zip))) {</span>
+<span class="nc" id="L126">			JarEntry entry = null;</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">			while ((entry = jarInputStream.getNextJarEntry()) != null) {</span>
+<span class="nc" id="L128">				paths.add(fileSystem.getPath(entry.getName()));</span>
+			}
+
+			// take the JAR entry...
+<span class="nc" id="L132">			Optional.of(jarInputStream)</span>
+					// ... and extract the manifest entry...
+<span class="nc" id="L134">					.map(JarInputStream::getManifest)</span>
+					// ... read its main attributes ...
+<span class="nc" id="L136">					.map(Manifest::getMainAttributes)</span>
+					// ... take the ClassPath entry ...
+<span class="nc" id="L138">					.map(attributes -&gt; attributes.getValue(&quot;Class-Path&quot;))</span>
+					// ... split it on whitespaces. Then you have a list of new relative class path
+					// entries.
+<span class="nc" id="L141">					.map(classpath -&gt; Splitter.on(CharMatcher.whitespace()).omitEmptyStrings().splitToList(classpath))</span>
+					// take them, resolve the corresponding files and recursivly call this method
+<span class="nc" id="L143">					.map(jarClasspathEntries -&gt; jarClasspathEntries.stream()</span>
+<span class="nc" id="L144">							.map(zip.toAbsolutePath().getParent()::resolve)</span>
+<span class="nc" id="L145">							.filter(Files::exists)</span>
+<span class="nc" id="L146">							.map(FileUtils::listResourcesFromJar)</span>
+<span class="nc" id="L147">							.flatMap(Collection::stream)</span>
+<span class="nc" id="L148">							.collect(toList()))</span>
+<span class="nc" id="L149">					.ifPresent(paths::addAll);</span>
+<span class="nc" id="L150">		} catch (final IOException e) {</span>
+<span class="nc" id="L151">			throw new UncheckedIOException(e);</span>
+<span class="nc" id="L152">		}</span>
+
+<span class="nc" id="L154">		return paths;</span>
+	}
+
+	private static Stream&lt;Path&gt; streamResourcesFromDirectory(final Path directory) {
+		try {
+<span class="nc" id="L159">			return closedPathStream(Files.walk(directory));</span>
+<span class="nc" id="L160">		} catch (final IOException e) {</span>
+<span class="nc" id="L161">			throw new UncheckedIOException(e);</span>
+		}
+	}
+
+	private static List&lt;String&gt; getClasspathEntries() {
+<span class="nc" id="L166">		return Splitter.on(File.pathSeparatorChar)</span>
+<span class="nc" id="L167">				.omitEmptyStrings()</span>
+<span class="nc" id="L168">				.trimResults()</span>
+<span class="nc" id="L169">				.splitToList(System.getProperty(&quot;java.class.path&quot;));</span>
+	}
+
+	public static Optional&lt;String&gt; getExtension(final Path path) {
+<span class="nc bnc" id="L173" title="All 2 branches missed.">		if (Files.isRegularFile(path)) {</span>
+<span class="nc" id="L174">			return getExtension(path.getFileName().toString());</span>
+		}
+<span class="nc" id="L176">		return Optional.empty();</span>
+	}
+
+	public static Optional&lt;String&gt; getExtension(final String filename) {
+<span class="nc" id="L180">		final int lastIndex = filename.lastIndexOf('.');</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">		if (lastIndex &lt; 0) {</span>
+<span class="nc" id="L182">			return Optional.empty();</span>
+		}
+<span class="nc" id="L184">		return Optional.of(filename.substring(lastIndex + 1));</span>
+	}
+
+	private static final String REGEX_META_CHARS = &quot;.^$+{[]|()&quot;;
+
+	private static final String GLOB_META_CHARS = &quot;\\*?[{&quot;;
+
+	private static final char EOL = 0; // TBD
+
+	private static boolean isRegexMeta(final char c) {
+<span class="nc bnc" id="L194" title="All 2 branches missed.">		return REGEX_META_CHARS.indexOf(c) != -1;</span>
+	}
+
+	private static boolean isGlobMeta(final char c) {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">		return GLOB_META_CHARS.indexOf(c) != -1;</span>
+	}
+
+	private static char next(final String glob, final int i) {
+<span class="nc bnc" id="L202" title="All 2 branches missed.">		if (i &lt; glob.length()) {</span>
+<span class="nc" id="L203">			return glob.charAt(i);</span>
+		}
+<span class="nc" id="L205">		return EOL;</span>
+	}
+
+	/**
+	 * Creates a regex pattern from the given glob expression.
+	 *
+	 * @param globPattern the glob to turn into a regex
+	 * @param isDos       whether to use DOS/ windows specific syntax or not
+	 * @return the converted regex
+	 * @throws PatternSyntaxException if the given syntax has errors
+	 * @see &lt;a href=
+	 *      &quot;https://github.com/rtyley/globs-for-java/blob/master/src/main/java/com/madgag/globs/openjdk/Globs.java&quot;&gt;OpenJDK&lt;/a&gt;
+	 */
+	@SuppressWarnings({ &quot;checkstyle:DescendantToken&quot;, &quot;checkstyle:InnerAssignment&quot; })
+	@SuppressFBWarnings(value = &quot;CC_CYCLOMATIC_COMPLEXITY&quot;, justification = &quot;copied from OpenJDK as is&quot;)
+	private static String toRegexPattern(final String globPattern, final boolean isDos) {
+<span class="nc" id="L221">		boolean inGroup = false;</span>
+		// final StringBuilder regex = new StringBuilder(&quot;^&quot;);
+<span class="nc" id="L223">		final StringBuilder regex = new StringBuilder();</span>
+
+<span class="nc" id="L225">		int i = 0;</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">		while (i &lt; globPattern.length()) {</span>
+<span class="nc" id="L227">			char c = globPattern.charAt(i++);</span>
+<span class="nc bnc" id="L228" title="All 9 branches missed.">			switch (c) {</span>
+			case '\\':
+				// escape special characters
+<span class="nc bnc" id="L231" title="All 2 branches missed.">				if (i == globPattern.length()) {</span>
+<span class="nc" id="L232">					throw new PatternSyntaxException(&quot;No character to escape&quot;, globPattern, i - 1);</span>
+				}
+<span class="nc" id="L234">				final char next = globPattern.charAt(i++);</span>
+<span class="nc bnc" id="L235" title="All 4 branches missed.">				if (isGlobMeta(next) || isRegexMeta(next)) {</span>
+<span class="nc" id="L236">					regex.append('\\');</span>
+				}
+<span class="nc" id="L238">				regex.append(next);</span>
+<span class="nc" id="L239">				break;</span>
+			case '/':
+<span class="nc bnc" id="L241" title="All 2 branches missed.">				if (isDos) {</span>
+<span class="nc" id="L242">					regex.append(&quot;\\\\&quot;);</span>
+				} else {
+<span class="nc" id="L244">					regex.append(c);</span>
+				}
+<span class="nc" id="L246">				break;</span>
+			case '[':
+				// don't match name separator in class
+<span class="nc bnc" id="L249" title="All 2 branches missed.">				if (isDos) {</span>
+<span class="nc" id="L250">					regex.append(&quot;[[^\\\\]&amp;&amp;[&quot;);</span>
+				} else {
+<span class="nc" id="L252">					regex.append(&quot;[[^/]&amp;&amp;[&quot;);</span>
+				}
+<span class="nc bnc" id="L254" title="All 2 branches missed.">				if (next(globPattern, i) == '^') {</span>
+					// escape the regex negation char if it appears
+<span class="nc" id="L256">					regex.append(&quot;\\^&quot;);</span>
+<span class="nc" id="L257">					i += 1;</span>
+				} else {
+					// negation
+<span class="nc bnc" id="L260" title="All 2 branches missed.">					if (next(globPattern, i) == '!') {</span>
+<span class="nc" id="L261">						regex.append('^');</span>
+<span class="nc" id="L262">						i += 1;</span>
+					}
+					// hyphen allowed at start
+<span class="nc bnc" id="L265" title="All 2 branches missed.">					if (next(globPattern, i) == '-') {</span>
+<span class="nc" id="L266">						regex.append('-');</span>
+<span class="nc" id="L267">						i += 1;</span>
+					}
+				}
+<span class="nc" id="L270">				boolean hasRangeStart = false;</span>
+<span class="nc" id="L271">				char last = 0;</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">				while (i &lt; globPattern.length()) {</span>
+<span class="nc" id="L273">					c = globPattern.charAt(i++);</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">					if (c == ']') {</span>
+<span class="nc" id="L275">						break;</span>
+					}
+<span class="nc bnc" id="L277" title="All 6 branches missed.">					if (c == '/' || isDos &amp;&amp; c == '\\') {</span>
+<span class="nc" id="L278">						throw new PatternSyntaxException(&quot;Explicit 'name separator' in class&quot;, globPattern, i - 1);</span>
+					}
+					// TBD: how to specify ']' in a class?
+<span class="nc bnc" id="L281" title="All 8 branches missed.">					if (c == '\\' || c == '[' || c == '&amp;' &amp;&amp; next(globPattern, i) == '&amp;') {</span>
+						// escape '\', '[' or &quot;&amp;&amp;&quot; for regex class
+<span class="nc" id="L283">						regex.append('\\');</span>
+					}
+<span class="nc" id="L285">					regex.append(c);</span>
+
+<span class="nc bnc" id="L287" title="All 2 branches missed.">					if (c == '-') {</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">						if (!hasRangeStart) {</span>
+<span class="nc" id="L289">							throw new PatternSyntaxException(&quot;Invalid range&quot;, globPattern, i - 1);</span>
+						}
+<span class="nc bnc" id="L291" title="All 4 branches missed.">						if ((c = next(globPattern, i++)) == EOL || c == ']') {</span>
+<span class="nc" id="L292">							break;</span>
+						}
+<span class="nc bnc" id="L294" title="All 2 branches missed.">						if (c &lt; last) {</span>
+<span class="nc" id="L295">							throw new PatternSyntaxException(&quot;Invalid range&quot;, globPattern, i - 3);</span>
+						}
+<span class="nc" id="L297">						regex.append(c);</span>
+<span class="nc" id="L298">						hasRangeStart = false;</span>
+					} else {
+<span class="nc" id="L300">						hasRangeStart = true;</span>
+<span class="nc" id="L301">						last = c;</span>
+					}
+				}
+<span class="nc bnc" id="L304" title="All 2 branches missed.">				if (c != ']') {</span>
+<span class="nc" id="L305">					throw new PatternSyntaxException(&quot;Missing ']&quot;, globPattern, i - 1);</span>
+				}
+<span class="nc" id="L307">				regex.append(&quot;]]&quot;);</span>
+<span class="nc" id="L308">				break;</span>
+			case '{':
+<span class="nc bnc" id="L310" title="All 2 branches missed.">				if (inGroup) {</span>
+<span class="nc" id="L311">					throw new PatternSyntaxException(&quot;Cannot nest groups&quot;, globPattern, i - 1);</span>
+				}
+<span class="nc" id="L313">				regex.append(&quot;(?:(?:&quot;);</span>
+<span class="nc" id="L314">				inGroup = true;</span>
+<span class="nc" id="L315">				break;</span>
+			case '}':
+<span class="nc bnc" id="L317" title="All 2 branches missed.">				if (inGroup) {</span>
+<span class="nc" id="L318">					regex.append(&quot;))&quot;);</span>
+<span class="nc" id="L319">					inGroup = false;</span>
+				} else {
+<span class="nc" id="L321">					regex.append('}');</span>
+				}
+<span class="nc" id="L323">				break;</span>
+			case ',':
+<span class="nc bnc" id="L325" title="All 2 branches missed.">				if (inGroup) {</span>
+<span class="nc" id="L326">					regex.append(&quot;)|(?:&quot;);</span>
+				} else {
+<span class="nc" id="L328">					regex.append(',');</span>
+				}
+<span class="nc" id="L330">				break;</span>
+			case '*':
+<span class="nc bnc" id="L332" title="All 2 branches missed.">				if (next(globPattern, i) == '*') {</span>
+					// crosses directory boundaries
+<span class="nc" id="L334">					regex.append(&quot;.*&quot;);</span>
+<span class="nc" id="L335">					i += 1;</span>
+				} else {
+					// within directory boundary
+<span class="nc bnc" id="L338" title="All 2 branches missed.">					if (isDos) {</span>
+<span class="nc" id="L339">						regex.append(&quot;[^\\\\]*&quot;);</span>
+					} else {
+<span class="nc" id="L341">						regex.append(&quot;[^/]*&quot;);</span>
+					}
+				}
+<span class="nc" id="L344">				break;</span>
+			case '?':
+<span class="nc bnc" id="L346" title="All 2 branches missed.">				if (isDos) {</span>
+<span class="nc" id="L347">					regex.append(&quot;[^\\\\]&quot;);</span>
+				} else {
+<span class="nc" id="L349">					regex.append(&quot;[^/]&quot;);</span>
+				}
+<span class="nc" id="L351">				break;</span>
+			default:
+<span class="nc bnc" id="L353" title="All 2 branches missed.">				if (isRegexMeta(c)) {</span>
+<span class="nc" id="L354">					regex.append('\\');</span>
+				}
+<span class="nc" id="L356">				regex.append(c);</span>
+				break;
+			}
+<span class="nc" id="L359">		}</span>
+
+<span class="nc bnc" id="L361" title="All 2 branches missed.">		if (inGroup) {</span>
+<span class="nc" id="L362">			throw new PatternSyntaxException(&quot;Missing '}&quot;, globPattern, i - 1);</span>
+		}
+
+<span class="nc" id="L365">		return regex.append('$').toString();</span>
+	}
+
+	public static String toUnixRegexPattern(final String globPattern) {
+<span class="nc" id="L369">		return toRegexPattern(globPattern, false);</span>
+	}
+
+	public static String toWindowsRegexPattern(final String globPattern) {
+<span class="nc" id="L373">		return toRegexPattern(globPattern, true);</span>
+	}
+
+	public static String toRegex(final String globPattern) {
+<span class="nc bnc" id="L377" title="All 2 branches missed.">		if (SystemUtils.isWindows()) {</span>
+<span class="nc" id="L378">			return toWindowsRegexPattern(globPattern);</span>
+		}
+<span class="nc" id="L380">		return toUnixRegexPattern(globPattern);</span>
+	}
+
+<span class="nc" id="L383">	private FileUtils() {</span>
+<span class="nc" id="L384">		throw new UnsupportedOperationException();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

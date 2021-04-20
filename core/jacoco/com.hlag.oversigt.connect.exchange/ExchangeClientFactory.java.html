@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExchangeClientFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.exchange</a> &gt; <span class="el_source">ExchangeClientFactory.java</span></div><h1>ExchangeClientFactory.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.exchange;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.ServerConnection;
+
+/**
+ * Factory creating the exchange clients hiding the implementation details.
+ *
+ * @author neumaol
+ *
+ */
+public final class ExchangeClientFactory {
+	/** hidden constructor so nobody instantiates this class */
+<span class="nc" id="L19">	private ExchangeClientFactory() {</span>
+<span class="nc" id="L20">		throw new RuntimeException();</span>
+	}
+
+	/**
+	 * Create an exchange client using the specified connection details and
+	 * credentials
+	 *
+	 * @param connection  the connection details to use for the exchange server
+	 * @param credentials the credentials for logging in to exchange
+	 * @return the created exchange client. This method does not return
+	 *         &lt;code&gt;null&lt;/code&gt;.
+	 * @throws MalformedURLException if the server connection contains bad
+	 *                               information
+	 * @throws URISyntaxException    if the server connection contains bad
+	 *                               information
+	 */
+	public static ExchangeClient createExchangeClient(final ServerConnection connection, final Credentials credentials)
+			throws MalformedURLException, URISyntaxException {
+<span class="nc bnc" id="L38" title="All 2 branches missed.">		if (connection == ServerConnection.EMPTY) {</span>
+<span class="nc" id="L39">			throw new RuntimeException(&quot;No server connection configured.&quot;);</span>
+		}
+<span class="nc bnc" id="L41" title="All 2 branches missed.">		if (credentials == Credentials.EMPTY) {</span>
+<span class="nc" id="L42">			throw new RuntimeException(&quot;No credentials configured.&quot;);</span>
+		}
+<span class="nc" id="L44">		return createExchangeClient(new URL(connection.getUrl()).toURI(),</span>
+<span class="nc" id="L45">				credentials.getUsername(),</span>
+<span class="nc" id="L46">				credentials.getPassword());</span>
+	}
+
+	/**
+	 * Create an exchange client using the specified URI and credentials
+	 *
+	 * @param exchangeServerUri the URI of the exchange server web UI
+	 * @param username          the username to use
+	 * @param password          the password of the user
+	 * @return the created exchange client. This method does not return
+	 *         &lt;code&gt;null&lt;/code&gt;.
+	 */
+	public static ExchangeClient createExchangeClient(final URI exchangeServerUri,
+			final String username,
+			final String password) {
+<span class="nc" id="L61">		return new UnlimitedExchangeClient(exchangeServerUri, username, password);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

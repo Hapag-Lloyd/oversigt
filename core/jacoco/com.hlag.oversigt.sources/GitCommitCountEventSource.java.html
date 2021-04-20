@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GitCommitCountEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">GitCommitCountEventSource.java</span></div><h1>GitCommitCountEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.io.IOException;
+import java.util.Optional;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.sources.event.NumberEvent;
+
+@EventSource(displayName = &quot;GIT Commit Count&quot;, view = &quot;Number&quot;)
+public class GitCommitCountEventSource extends AbstractGitCommitEventSource&lt;OversigtEvent&gt; {
+<span class="nc" id="L15">	private long lastCommitCount = 0;</span>
+
+<span class="nc" id="L17">	public GitCommitCountEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L19">	}</span>
+
+	@Override
+	protected Optional&lt;OversigtEvent&gt; produceEvent() throws EventSourceException {
+		final long commitCount;
+		try {
+<span class="nc" id="L25">			commitCount = streamLog(s -&gt; s.count());</span>
+<span class="nc" id="L26">		} catch (final GitAPIException | IOException e) {</span>
+<span class="nc" id="L27">			throw new EventSourceException(&quot;Unable to retreive GIT information&quot;, e);</span>
+<span class="nc" id="L28">		}</span>
+<span class="nc" id="L29">		final NumberEvent event = new NumberEvent((int) commitCount, (int) lastCommitCount);</span>
+<span class="nc" id="L30">		lastCommitCount = commitCount;</span>
+<span class="nc" id="L31">		return Optional.of(event);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

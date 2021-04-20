@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Widget.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.model</a> &gt; <span class="el_source">Widget.java</span></div><h1>Widget.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.model;
+
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hlag.oversigt.properties.Color;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class Widget implements Comparable&lt;Widget&gt; {
+<span class="nc" id="L22">	private static final Comparator&lt;Widget&gt; COMPARE_BY_NAME</span>
+<span class="nc" id="L23">			= (a, b) -&gt; String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName());</span>
+
+<span class="nc" id="L25">	private static final Comparator&lt;Widget&gt; COMPARE_BY_ID = (a, b) -&gt; Integer.compare(a.getId(), b.getId());</span>
+
+<span class="nc" id="L27">	private static final Comparator&lt;Widget&gt; COMPARE = COMPARE_BY_NAME.thenComparing(COMPARE_BY_ID);</span>
+
+	@JsonIgnore
+	private final EventSourceInstance eventSourceInstance;
+
+<span class="nc" id="L32">	@NotNull</span>
+	private int id = -1;
+
+	@NotBlank
+	private String title;
+
+	@NotBlank
+	private String name;
+
+<span class="nc" id="L41">	@NotNull</span>
+	private boolean enabled = false;
+
+<span class="nc" id="L44">	@NotNull</span>
+	private int posX = 1;
+
+<span class="nc" id="L47">	@NotNull</span>
+	private int posY = 1;
+
+<span class="nc" id="L50">	@NotNull</span>
+	@Min(1)
+	private int sizeX = 3;
+
+<span class="nc" id="L54">	@NotNull</span>
+	@Min(1)
+	private int sizeY = 3;
+
+<span class="nc" id="L58">	@NotNull</span>
+<span class="nc" id="L59">	private Color backgroundColor = Color.random();</span>
+
+<span class="nc" id="L61">	private String style = &quot;&quot;;</span>
+
+<span class="nc" id="L63">	private final Map&lt;EventSourceProperty, String&gt; data = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L65">	public Widget(final EventSourceInstance eventSourceInstance) {</span>
+<span class="nc" id="L66">		this.eventSourceInstance = eventSourceInstance;</span>
+<span class="nc" id="L67">		name = eventSourceInstance.getName();</span>
+<span class="nc" id="L68">		title = eventSourceInstance.getName();</span>
+<span class="nc" id="L69">	}</span>
+
+	@JsonCreator
+	public Widget(@JsonProperty(&quot;id&quot;) @NotNull final int id,
+			@JsonProperty(&quot;eventSource&quot;) final EventSourceInstance eventSource,
+			@JsonProperty(&quot;title&quot;) @NotBlank final String title,
+			@JsonProperty(&quot;name&quot;) @NotBlank final String name,
+			@JsonProperty(&quot;enabled&quot;) @NotNull final boolean enabled,
+			@JsonProperty(&quot;posX&quot;) @NotNull final int posX,
+			@JsonProperty(&quot;posY&quot;) @NotNull final int posY,
+			@JsonProperty(&quot;sizeX&quot;) @NotNull @Min(1) final int sizeX,
+			@JsonProperty(&quot;sizeY&quot;) @NotNull @Min(1) final int sizeY,
+			@JsonProperty(&quot;backgroundColor&quot;) @NotNull final Color backgroundColor,
+<span class="nc" id="L82">			@JsonProperty(&quot;style&quot;) final String style) {</span>
+<span class="nc" id="L83">		this.id = id;</span>
+<span class="nc" id="L84">		eventSourceInstance = eventSource;</span>
+<span class="nc" id="L85">		this.title = title;</span>
+<span class="nc" id="L86">		this.name = name;</span>
+<span class="nc" id="L87">		this.enabled = enabled;</span>
+<span class="nc" id="L88">		this.posX = posX;</span>
+<span class="nc" id="L89">		this.posY = posY;</span>
+<span class="nc" id="L90">		this.sizeX = sizeX;</span>
+<span class="nc" id="L91">		this.sizeY = sizeY;</span>
+<span class="nc" id="L92">		this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L93">		this.style = style;</span>
+<span class="nc" id="L94">	}</span>
+
+	public int getId() {
+<span class="nc" id="L97">		return id;</span>
+	}
+
+	public void setId(final int id) {
+<span class="nc" id="L101">		this.id = id;</span>
+<span class="nc" id="L102">	}</span>
+
+	public String getName() {
+<span class="nc" id="L105">		return name;</span>
+	}
+
+	public String getTitle() {
+<span class="nc" id="L109">		return title;</span>
+	}
+
+	@JsonIgnore
+	public String getView() {
+<span class="nc" id="L114">		return eventSourceInstance.getDescriptor().getView();</span>
+	}
+
+	@JsonIgnore
+	public String getType() {
+<span class="nc" id="L119">		return eventSourceInstance.getDescriptor().getServiceClass().map(Class::getSimpleName).orElse(&quot;&quot;);</span>
+	}
+
+	public EventSourceInstance getEventSourceInstance() {
+<span class="nc" id="L123">		return eventSourceInstance;</span>
+	}
+
+	public int getPosX() {
+<span class="nc" id="L127">		return posX;</span>
+	}
+
+	public int getPosY() {
+<span class="nc" id="L131">		return posY;</span>
+	}
+
+	public int getSizeX() {
+<span class="nc" id="L135">		return sizeX;</span>
+	}
+
+	public int getSizeY() {
+<span class="nc" id="L139">		return sizeY;</span>
+	}
+
+	public Color getBackgroundColor() {
+<span class="nc" id="L143">		return backgroundColor;</span>
+	}
+
+	public String getStyle() {
+<span class="nc" id="L147">		return style;</span>
+	}
+
+	public boolean isEnabled() {
+<span class="nc" id="L151">		return enabled;</span>
+	}
+
+	public void setPosX(final int posX) {
+<span class="nc" id="L155">		this.posX = posX;</span>
+<span class="nc" id="L156">	}</span>
+
+	public void setPosY(final int posY) {
+<span class="nc" id="L159">		this.posY = posY;</span>
+<span class="nc" id="L160">	}</span>
+
+	public void setSizeX(final int sizeX) {
+<span class="nc" id="L163">		this.sizeX = sizeX;</span>
+<span class="nc" id="L164">	}</span>
+
+	public void setSizeY(final int sizeY) {
+<span class="nc" id="L167">		this.sizeY = sizeY;</span>
+<span class="nc" id="L168">	}</span>
+
+	public void setEnabled(final boolean enabled) {
+<span class="nc" id="L171">		this.enabled = enabled;</span>
+<span class="nc" id="L172">	}</span>
+
+	public void setBackgroundColor(final Color backgroundColor) {
+<span class="nc" id="L175">		this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L176">	}</span>
+
+	public void setStyle(final String style) {
+<span class="nc" id="L179">		this.style = style;</span>
+<span class="nc" id="L180">	}</span>
+
+	public void setName(final String name) {
+<span class="nc" id="L183">		this.name = name;</span>
+<span class="nc" id="L184">	}</span>
+
+	public void setTitle(final String title) {
+<span class="nc" id="L187">		this.title = title;</span>
+<span class="nc" id="L188">	}</span>
+
+	@Nullable
+	public String getWidgetData(final EventSourceProperty property) {
+<span class="nc" id="L192">		return data.get(property);</span>
+	}
+
+	public void setWidgetData(final EventSourceProperty property, final String value) {
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (!property.isCustomValuesAllowed()</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">				&amp;&amp; !property.getAllowedValues().isEmpty()</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">				&amp;&amp; !property.getAllowedValues().contains(value)) {</span>
+<span class="nc" id="L199">			throw new RuntimeException(&quot;The value '&quot; + value + &quot;' is not allowed for property &quot; + property.getName());</span>
+		}
+<span class="nc" id="L201">		data.put(property, value);</span>
+<span class="nc" id="L202">	}</span>
+
+	public boolean hasWidgetData(final EventSourceProperty property) {
+<span class="nc" id="L205">		return data.containsKey(property);</span>
+	}
+
+	public void removeWidgetData(final EventSourceProperty property) {
+<span class="nc" id="L209">		data.remove(property);</span>
+<span class="nc" id="L210">	}</span>
+
+	public String getWidgetDataForDashboard(final EventSourceProperty property) {
+<span class="nc bnc" id="L213" title="All 2 branches missed.">		return getEventSourceInstance().hasPropertyValue(property)</span>
+<span class="nc" id="L214">				? getEventSourceInstance().getPropertyValueString(property)</span>
+<span class="nc" id="L215">				: data.get(property);</span>
+	}
+
+	public boolean hasWidgetDataForDashboard(final EventSourceProperty property) {
+<span class="nc bnc" id="L219" title="All 4 branches missed.">		return getEventSourceInstance().hasPropertyValue(property) || data.containsKey(property);</span>
+	}
+
+	@Override
+	public int compareTo(@Nullable final Widget that) {
+<span class="nc" id="L224">		return COMPARE.compare(this, that);</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public String toString() {
+<span class="nc" id="L230">		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

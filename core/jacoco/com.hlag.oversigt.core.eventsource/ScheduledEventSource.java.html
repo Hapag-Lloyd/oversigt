@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScheduledEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.eventsource</a> &gt; <span class="el_source">ScheduledEventSource.java</span></div><h1>ScheduledEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.eventsource;
+
+import static com.hlag.oversigt.util.Utils.logError;
+import static com.hlag.oversigt.util.Utils.logTrace;
+import static com.hlag.oversigt.util.Utils.logWarn;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
+import com.hlag.oversigt.core.event.ErrorEvent;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector;
+
+/**
+ * Scheduled EventSource - produces events with specified time period.
+ * Basically, based on Guava's
+ * {@link com.google.common.util.concurrent.AbstractScheduledService}
+ *
+ * @author avarabyeu
+ */
+<span class="nc" id="L34">public abstract class ScheduledEventSource&lt;T extends OversigtEvent&gt; extends AbstractScheduledService {</span>
+	private static final int ALLOWED_NUMBER_OF_FAILED_CALLS = 5;
+
+<span class="nc" id="L37">	private static final Map&lt;String, Logger&gt; LOGGERS = Collections.synchronizedMap(new HashMap&lt;&gt;());</span>
+
+	/**
+	 * Time period between sending events
+	 */
+<span class="nc" id="L42">	private Duration frequency = Duration.ofMinutes(1);</span>
+
+	/**
+	 * ID of event this event source bound to
+	 */
+	@Inject
+	@EventId
+	private String eventId;
+
+	/**
+	 * EventBus to send events
+	 */
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
+
+<span class="nc" id="L60">	private final AtomicInteger numberOfFailedRuns = new AtomicInteger(0);</span>
+
+<span class="nc" id="L62">	private final AtomicBoolean stoppedBecauseOfError = new AtomicBoolean(false);</span>
+
+	public boolean isStoppedBecauseOfError() {
+<span class="nc" id="L65">		return stoppedBecauseOfError.get();</span>
+	}
+
+	protected String getEventId() {
+<span class="nc" id="L69">		return eventId;</span>
+	}
+
+<span class="nc" id="L72">	private Optional&lt;StatisticsCollector&gt; collector = Optional.empty();</span>
+
+	protected StatisticsCollector getStatisticsCollector() {
+<span class="nc" id="L75">		return collector.orElseThrow(() -&gt; new RuntimeException(&quot;The statistics collector has not been created.&quot;));</span>
+	}
+
+	private EventSourceStatistics getEventSourceStatistics() {
+<span class="nc" id="L79">		return statisticsManager.getEventSourceStatistics(getEventId());</span>
+	}
+
+	/**
+	 * Executes one iteration of
+	 * {@link com.google.common.util.concurrent.AbstractScheduledService} Sends
+	 * event to event bus
+	 */
+	@Override
+	@SuppressWarnings(&quot;checkstyle:XIllegalCatchDefault&quot;)
+	protected final void runOneIteration() {
+<span class="nc" id="L90">		stoppedBecauseOfError.set(false);</span>
+<span class="nc" id="L91">		logTrace(getLogger(), &quot;Run one iteration&quot;);</span>
+
+		try {
+<span class="nc" id="L94">			logTrace(getLogger(), &quot;Produce event&quot;);</span>
+<span class="nc" id="L95">			collector = Optional.of(statisticsManager.createCollector(getEventId()));</span>
+<span class="nc" id="L96">			final OversigtEvent event = produceEvent()</span>
+<span class="nc" id="L97">					.orElseThrow(() -&gt; new EventSourceException(&quot;Event source was unable to produce event.&quot;));</span>
+<span class="nc" id="L98">			getStatisticsCollector().success();</span>
+
+<span class="nc" id="L100">			logTrace(getLogger(), &quot;Send event&quot;);</span>
+<span class="nc" id="L101">			sendEvent(event);</span>
+<span class="nc" id="L102">			logTrace(getLogger(), &quot;Done with iteration&quot;);</span>
+<span class="nc" id="L103">			numberOfFailedRuns.set(0);</span>
+<span class="nc" id="L104">		} catch (final Throwable e) {</span>
+<span class="nc" id="L105">			logError(getLogger(), &quot;Error while producing event.&quot;, e);</span>
+<span class="nc" id="L106">			numberOfFailedRuns.incrementAndGet();</span>
+
+			// prepare error messages
+			final String message;
+			final Optional&lt;Throwable&gt; cause;
+<span class="nc bnc" id="L111" title="All 2 branches missed.">			if (e instanceof EventSourceException) {</span>
+<span class="nc" id="L112">				message = e.getMessage(); // an EventSourceException always has an exception</span>
+<span class="nc" id="L113">				cause = Optional.ofNullable(e.getCause());</span>
+			} else {
+<span class="nc" id="L115">				message = &quot;Event source did not catch exception properly.&quot;;</span>
+<span class="nc" id="L116">				cause = Optional.of(e);</span>
+			}
+			// collect stats
+<span class="nc" id="L119">			getStatisticsCollector().failure(message, cause);</span>
+<span class="nc" id="L120">			logTrace(getLogger(), &quot;Send error event&quot;);</span>
+<span class="nc" id="L121">			sendEvent(new ErrorEvent(message, cause));</span>
+
+			// clear cache
+<span class="nc" id="L124">			logTrace(getLogger(), &quot;Remove event from cache: &quot; + eventId);</span>
+<span class="nc" id="L125">			removeLastEvent();</span>
+
+			// count failures
+<span class="nc bnc" id="L128" title="All 2 branches missed.">			if (getEventSourceStatistics().isAutomticallyStarted()) {</span>
+<span class="nc" id="L129">				logWarn(getLogger(), &quot;Nightly restart resulted in error. Stopping again.&quot;);</span>
+<span class="nc" id="L130">				stopAsync();</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">			} else if (numberOfFailedRuns.get() &gt; ALLOWED_NUMBER_OF_FAILED_CALLS) {</span>
+<span class="nc" id="L132">				logWarn(getLogger(),</span>
+						&quot;Running the event source resulted in %s errors in a row. Maximum allowed errors in a row is %s. Stopping service.&quot;,
+<span class="nc" id="L134">						numberOfFailedRuns.get(),</span>
+<span class="nc" id="L135">						ALLOWED_NUMBER_OF_FAILED_CALLS);</span>
+<span class="nc" id="L136">				stoppedBecauseOfError.set(true);</span>
+<span class="nc" id="L137">				stopAsync();</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">			} else if (!(e instanceof Exception)) /* Throwable is some kind of Error or similar - stop immediately */ {</span>
+<span class="nc" id="L139">				logError(getLogger(), &quot;Error occurred. Stopping service immediately.&quot;);</span>
+<span class="nc" id="L140">				stoppedBecauseOfError.set(true);</span>
+<span class="nc" id="L141">				stopAsync();</span>
+			}
+<span class="nc" id="L143">		}</span>
+<span class="nc" id="L144">	}</span>
+
+	protected abstract Optional&lt;T&gt; produceEvent() throws EventSourceException;
+
+	protected final void sendEvent(final OversigtEvent event) {
+<span class="nc" id="L149">		event.setId(eventId);</span>
+		try {
+<span class="nc" id="L151">			event.setLifetime(getEventLifetime());</span>
+<span class="nc" id="L152">		} catch (final Exception e) {</span>
+<span class="nc" id="L153">			logWarn(getLogger(), &quot;Unable to compute event life time&quot;, e);</span>
+<span class="nc" id="L154">		}</span>
+<span class="nc" id="L155">		this.eventBus.post(event);</span>
+<span class="nc" id="L156">	}</span>
+
+	protected final void removeLastEvent() {
+<span class="nc" id="L159">		this.eventBus.post(eventId);</span>
+<span class="nc" id="L160">	}</span>
+
+	@Override
+	protected final Scheduler scheduler() {
+<span class="nc" id="L164">		return Scheduler.newFixedDelaySchedule(1, getFrequency().toMillis(), TimeUnit.MILLISECONDS);</span>
+	}
+
+	@Override
+	protected final String serviceName() {
+<span class="nc" id="L169">		return getClass().getSimpleName() + &quot;[eventID=&quot; + eventId + &quot;]&quot;;</span>
+	}
+
+	protected final Logger getLogger() {
+<span class="nc" id="L173">		return LOGGERS.computeIfAbsent(getClass().getName(), LoggerFactory::getLogger);</span>
+	}
+
+	protected Logger getSpecialLogger() {
+<span class="nc" id="L177">		return LOGGERS.computeIfAbsent(&quot;special.&quot; + eventId, LoggerFactory::getLogger);</span>
+	}
+
+	protected Duration getEventLifetime() {
+<span class="nc" id="L181">		return getFrequency().multipliedBy(3);</span>
+	}
+
+	public final Duration getFrequency() {
+<span class="nc" id="L185">		return frequency;</span>
+	}
+
+	public final void setFrequency(final Duration frequency) {
+<span class="nc" id="L189">		this.frequency = frequency;</span>
+<span class="nc" id="L190">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

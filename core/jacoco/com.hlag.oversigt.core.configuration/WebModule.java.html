@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebModule.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.configuration</a> &gt; <span class="el_source">WebModule.java</span></div><h1>WebModule.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.configuration;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.ws.rs.core.Application;
+
+import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.security.OversigtIdentityManager;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.validate.UserId;
+import com.hlag.oversigt.web.api.ApiApplication;
+import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import freemarker.cache.ClassTemplateLoader;
+import freemarker.template.TemplateExceptionHandler;
+import io.undertow.security.idm.IdentityManager;
+
+public class WebModule extends AbstractModule {
+<span class="nc" id="L33">	public WebModule() {</span>
+		// nothing to initialize
+<span class="nc" id="L35">	}</span>
+
+	@Override
+	protected void configure() {
+		// REST API
+<span class="nc" id="L40">		bind(IdentityManager.class).to(OversigtIdentityManager.class);</span>
+<span class="nc" id="L41">		bind(Application.class).to(ApiApplication.class);</span>
+<span class="nc" id="L42">		bind(ApiAuthenticationUtils.class);</span>
+
+		// Object validation
+<span class="nc" id="L45">		TypeUtils.bindClasses(UserId.class.getPackage(), ConstraintValidator.class::isAssignableFrom, binder());</span>
+<span class="nc" id="L46">		final GuiceConstraintValidatorFactory constraintValidatorFactory = new GuiceConstraintValidatorFactory();</span>
+<span class="nc" id="L47">		requestInjection(constraintValidatorFactory);</span>
+<span class="nc" id="L48">		final Validator validator = Validation.buildDefaultValidatorFactory()</span>
+<span class="nc" id="L49">				.usingContext()</span>
+<span class="nc" id="L50">				.constraintValidatorFactory(constraintValidatorFactory)</span>
+<span class="nc" id="L51">				.getValidator();</span>
+<span class="nc" id="L52">		bind(Validator.class).toInstance(validator);</span>
+<span class="nc" id="L53">	}</span>
+
+	/**
+	 * Create the configuration for the template engine used to render HTML output
+	 *
+	 * @param templateNumberFormat the number format to be used by the rendering
+	 *                             engine
+	 * @return the configuration
+	 */
+	@Singleton
+	@Provides
+	@Inject
+	freemarker.template.Configuration provideTemplateConfiguration(
+			@Named(&quot;templateNumberFormat&quot;) final String templateNumberFormat) {
+<span class="nc" id="L67">		final freemarker.template.Configuration configuration</span>
+				= new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_23);
+<span class="nc" id="L69">		configuration.setTemplateLoader(new ClassTemplateLoader(Oversigt.class, &quot;/&quot;));</span>
+<span class="nc" id="L70">		configuration.setNumberFormat(templateNumberFormat);</span>
+<span class="nc" id="L71">		configuration.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);</span>
+<span class="nc" id="L72">		return configuration;</span>
+	}
+
+	/**
+	 * Constraint validator to check each the API calls for valid values
+	 */
+	class GuiceConstraintValidatorFactory implements ConstraintValidatorFactory {
+		@Inject
+		private Injector injector;
+
+<span class="nc" id="L82">		GuiceConstraintValidatorFactory() {</span>
+			// no fields to be initialized manually, some will be injected
+<span class="nc" id="L84">		}</span>
+
+		/** {@inheritDoc} */
+		@Override
+		public &lt;T extends ConstraintValidator&lt;?, ?&gt;&gt; T getInstance(@Nullable final Class&lt;T&gt; key) {
+			/*
+			 * By default, all beans are in prototype scope, so new instance will be
+			 * obtained each time. Validator implementer may declare it as singleton and
+			 * manually maintain internal state (to re-use validators and simplify life for
+			 * GC)
+			 */
+<span class="nc" id="L95">			final boolean bound = injector.getBindings()//</span>
+<span class="nc" id="L96">					.keySet()</span>
+<span class="nc" id="L97">					.stream()</span>
+<span class="nc" id="L98">					.map(k -&gt; k.getTypeLiteral().getRawType())</span>
+<span class="nc bnc" id="L99" title="All 4 branches missed.">					.anyMatch(k -&gt; key != null &amp;&amp; key.equals(k));</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">			if (bound) {</span>
+<span class="nc" id="L101">				return injector.getInstance(key);</span>
+			}
+<span class="nc" id="L103">			return run(NewInstance.action(key, &quot;ConstraintValidator&quot;));</span>
+		}
+
+		/** {@inheritDoc} */
+		@Override
+		public void releaseInstance(@SuppressWarnings(&quot;unused&quot;) @Nullable final ConstraintValidator&lt;?, ?&gt; instance) {
+			/* Garbage collector will do it */
+<span class="nc" id="L110">		}</span>
+
+		private &lt;T&gt; T run(final PrivilegedAction&lt;T&gt; action) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

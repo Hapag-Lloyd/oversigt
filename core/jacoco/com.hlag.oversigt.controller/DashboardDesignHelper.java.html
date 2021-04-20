@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardDesignHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.controller</a> &gt; <span class="el_source">DashboardDesignHelper.java</span></div><h1>DashboardDesignHelper.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.controller;
+
+import static com.hlag.oversigt.properties.Color.smooth;
+
+import java.util.Optional;
+
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardColorScheme;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.properties.Color;
+
+public final class DashboardDesignHelper {
+	private static int computeRows(final Dashboard dashboard) {
+<span class="nc" id="L14">		return dashboard.getScreenHeight() / dashboard.getComputedTileHeight();</span>
+	}
+
+	public static boolean isAddCssColorsToWidgets(final Dashboard dashboard) {
+<span class="nc bnc" id="L18" title="All 2 branches missed.">		return dashboard.getColorScheme() != DashboardColorScheme.COLORED;</span>
+	}
+
+	private static StyleAddon getStyleAddon(final Dashboard dashboard,
+			final int px,
+			final int py,
+			final int sx,
+			final int sy) {
+<span class="nc bnc" id="L26" title="All 7 branches missed.">		switch (dashboard.getColorScheme()) {</span>
+		case COLORED:
+<span class="nc" id="L28">			return new StyleAddon(&quot;&quot;, Optional.empty());</span>
+		case SINGLE_COLOR:
+<span class="nc" id="L30">			return new StyleAddon(getCssSolidBackgroundColor(dashboard.getForegroundColorStart()),</span>
+<span class="nc" id="L31">					Optional.of(dashboard.getForegroundColorStart()));</span>
+		case TILED_VERTICAL_GRADIENT:
+<span class="nc" id="L33">			Color color = computeColor(dashboard, py, sy, computeRows(dashboard));</span>
+<span class="nc" id="L34">			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));</span>
+		case TILED_HORIZONTAL_GRADIENT:
+<span class="nc" id="L36">			color = computeColor(dashboard, px, sx, dashboard.getColumns());</span>
+<span class="nc" id="L37">			return new StyleAddon(getCssSolidBackgroundColor(color), Optional.of(color));</span>
+		case VERTICAL_GRADIENT:
+<span class="nc" id="L39">			Color[] colors = computeColors(dashboard, py, sy, computeRows(dashboard));</span>
+<span class="nc" id="L40">			return new StyleAddon(getCssGradientBackgroundColor(&quot;bottom&quot;, colors[0], colors[1]),</span>
+<span class="nc" id="L41">					Optional.of(computeColor(dashboard, py, sy, computeRows(dashboard))));</span>
+		case HORIZONTAL_GRADIENT:
+<span class="nc" id="L43">			colors = computeColors(dashboard, px, sx, dashboard.getColumns());</span>
+<span class="nc" id="L44">			return new StyleAddon(getCssGradientBackgroundColor(&quot;right&quot;, colors[0], colors[1]),</span>
+<span class="nc" id="L45">					Optional.of(computeColor(dashboard, px, sx, dashboard.getColumns())));</span>
+		default:
+<span class="nc" id="L47">			throw new RuntimeException(&quot;Unknown color scheme: &quot; + dashboard.getColorScheme());</span>
+		}
+	}
+
+	private static String getCssSolidBackgroundColor(final Color color) {
+<span class="nc" id="L52">		return &quot;;background-color:&quot; + color + &quot;;&quot;;</span>
+	}
+
+	private static String getCssGradientBackgroundColor(final String direction, final Color start, final Color end) {
+<span class="nc" id="L56">		return &quot;;background:&quot;</span>
+				+ start
+				+ &quot;;background:linear-gradient(to &quot;
+				+ direction
+				+ &quot;, &quot;
+				+ start
+				+ &quot;, &quot;
+				+ end
+				+ &quot;);&quot;;
+	}
+
+	public static String getDisplayClass(final Widget widget) {
+<span class="nc" id="L68">		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		if (!isAddCssColorsToWidgets(dashboard)) {</span>
+<span class="nc" id="L70">			return &quot;&quot;;</span>
+		}
+
+<span class="nc" id="L73">		final StyleAddon addon</span>
+<span class="nc" id="L74">				= getStyleAddon(dashboard, widget.getPosX(), widget.getPosY(), widget.getSizeX(), widget.getSizeY());</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		if (addon.getBackgroundColor()</span>
+<span class="nc" id="L76">				.map(Color::shouldUseWhiteFontColor)</span>
+<span class="nc" id="L77">				.orElseGet(() -&gt; widget.getBackgroundColor().shouldUseWhiteFontColor())) {</span>
+<span class="nc" id="L78">			return &quot;light-foreground&quot;;</span>
+		}
+<span class="nc" id="L80">		return &quot;dark-foreground&quot;;</span>
+	}
+
+	public static String getDisplayStyle(final Widget widget) {
+<span class="nc" id="L84">		final Dashboard dashboard = DashboardController.getInstance().getDashboard(widget);</span>
+<span class="nc" id="L85">		final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L86">		sb.append(widget.getStyle());</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">		if (isAddCssColorsToWidgets(dashboard)) {</span>
+<span class="nc" id="L88">			final StyleAddon addon = getStyleAddon(dashboard,</span>
+<span class="nc" id="L89">					widget.getPosX(),</span>
+<span class="nc" id="L90">					widget.getPosY(),</span>
+<span class="nc" id="L91">					widget.getSizeX(),</span>
+<span class="nc" id="L92">					widget.getSizeY());</span>
+<span class="nc" id="L93">			sb.append(&quot;;background-color:&quot;).append(widget.getBackgroundColor().getHexColor());</span>
+<span class="nc" id="L94">			sb.append(addon.getCss());</span>
+		}
+<span class="nc" id="L96">		return sb.toString();</span>
+	}
+
+	private static Color computeColor(final Dashboard dashboard, final int position, final int size, final int total) {
+<span class="nc" id="L100">		final double dt = total - 1.0;</span>
+<span class="nc" id="L101">		final double point = position - 1 + (size - 1.0) * 0.5;</span>
+<span class="nc" id="L102">		return smooth(dashboard.getForegroundColorStart(), dashboard.getForegroundColorEnd(), point / dt);</span>
+	}
+
+	private static Color[] computeColors(final Dashboard dashboard,
+			final int position,
+			final int size,
+			final int total) {
+<span class="nc" id="L109">		return new Color[] {</span>
+<span class="nc" id="L110">				smooth(dashboard.getForegroundColorStart(),</span>
+<span class="nc" id="L111">						dashboard.getForegroundColorEnd(),</span>
+						(position - 1) / (double) total),
+<span class="nc" id="L113">				smooth(dashboard.getForegroundColorStart(),</span>
+<span class="nc" id="L114">						dashboard.getForegroundColorEnd(),</span>
+						(position - 1 + size) / (double) total) };
+	}
+
+<span class="nc" id="L118">	private DashboardDesignHelper() {</span>
+<span class="nc" id="L119">		throw new UnsupportedOperationException();</span>
+	}
+
+	public static class StyleAddon {
+		private final String css;
+
+		private final Optional&lt;Color&gt; backgroundColor;
+
+<span class="nc" id="L127">		public StyleAddon(final String css, final Optional&lt;Color&gt; backgroundColor) {</span>
+<span class="nc" id="L128">			this.css = css;</span>
+<span class="nc" id="L129">			this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L130">		}</span>
+
+		public Optional&lt;Color&gt; getBackgroundColor() {
+<span class="nc" id="L133">			return backgroundColor;</span>
+		}
+
+		public String getCss() {
+<span class="nc" id="L137">			return css;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

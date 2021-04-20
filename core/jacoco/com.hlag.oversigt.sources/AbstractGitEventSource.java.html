@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractGitEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractGitEventSource.java</span></div><h1>AbstractGitEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
+import org.eclipse.jgit.internal.JGitText;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialItem.InformationalMessage;
+import org.eclipse.jgit.transport.CredentialItem.Password;
+import org.eclipse.jgit.transport.CredentialItem.Username;
+import org.eclipse.jgit.transport.CredentialItem.YesNoType;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.URIish;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.LazyInitializedReference;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+<span class="nc" id="L50">public abstract class AbstractGitEventSource&lt;E extends OversigtEvent&gt; extends AbstractSslAwareEventSource&lt;E&gt; {</span>
+<span class="nc" id="L51">	private String repositoryUrl = &quot;&quot;;</span>
+
+<span class="nc" id="L53">	private Credentials credentials = Credentials.EMPTY;</span>
+
+<span class="nc" id="L55">	private TemporalAmount lookBack = Period.ofWeeks(1);</span>
+
+<span class="nc" id="L57">	private final LazyInitializedReference&lt;Git&gt; git = new LazyInitializedReference&lt;&gt;(this::createGitRepository);</span>
+
+	@Property(name = &quot;Look Back&quot;,
+			description = &quot;The amount of time to look into the past. Leave emtpy to use all commits.&quot;)
+	public TemporalAmount getLookBack() {
+<span class="nc" id="L62">		return lookBack;</span>
+	}
+
+	public void setLookBack(final TemporalAmount lookBack) {
+<span class="nc" id="L66">		this.lookBack = lookBack;</span>
+<span class="nc" id="L67">	}</span>
+
+	@Property(name = &quot;Repository URL&quot;, description = &quot;The URL to the repository to inspect.&quot;)
+	public String getRepositoryUrl() {
+<span class="nc" id="L71">		return repositoryUrl;</span>
+	}
+
+	public void setRepositoryUrl(final String repositoryUrl) {
+<span class="nc" id="L75">		this.repositoryUrl = repositoryUrl;</span>
+<span class="nc" id="L76">	}</span>
+
+	@Property(name = &quot;Git Credentials&quot;,
+			description = &quot;The credentials to be used for logging in to the git repository.&quot;)
+	public Credentials getCredentials() {
+<span class="nc" id="L81">		return credentials;</span>
+	}
+
+	public void setCredentials(final Credentials credentials) {
+<span class="nc" id="L85">		this.credentials = credentials;</span>
+<span class="nc" id="L86">	}</span>
+
+	@Override
+	protected void shutDown() throws Exception {
+<span class="nc" id="L90">		git.peek().ifPresent(Git::close);</span>
+<span class="nc" id="L91">		super.shutDown();</span>
+<span class="nc" id="L92">	}</span>
+
+	private Optional&lt;Instant&gt; getEarliestPointToTakeIntoAccount() {
+<span class="nc" id="L95">		return Optional.ofNullable(getLookBack())</span>
+<span class="nc" id="L96">				.map(ta -&gt; ZonedDateTime.now(ZoneId.of(&quot;UTC&quot;)).minus(ta))</span>
+<span class="nc" id="L97">				.map(ChronoZonedDateTime::toInstant);</span>
+	}
+
+	protected Git getGit() {
+<span class="nc" id="L101">		return git.get();</span>
+	}
+
+	private synchronized Stream&lt;RevCommit&gt; streamLog() throws GitAPIException, IOException {
+<span class="nc" id="L105">		try (StartedAction action = getStatisticsCollector().startAction(&quot;GIT fetch&quot;, getRepositoryUrl())) {</span>
+<span class="nc" id="L106">			fetch();</span>
+		}
+<span class="nc" id="L108">		return StreamSupport.stream(getGit().log().all().call().spliterator(), true)</span>
+<span class="nc" id="L109">				.filter(isCommitAfter(getEarliestPointToTakeIntoAccount()));</span>
+	}
+
+	protected synchronized &lt;R&gt; R streamLog(final Function&lt;Stream&lt;RevCommit&gt;, R&gt; function)
+			throws NoHeadException, GitAPIException, IOException {
+<span class="nc" id="L114">		return function.apply(streamLog());</span>
+	}
+
+	protected Predicate&lt;RevCommit&gt; isCommitAfter(final Optional&lt;Instant&gt; from) {
+<span class="nc" id="L118">		return from//</span>
+<span class="nc" id="L119">				.map(instant -&gt; this</span>
+<span class="nc" id="L120">						.&lt;RevCommit&gt;between(r -&gt; Instant.ofEpochSecond(r.getCommitTime()), instant, Optional.empty()))</span>
+<span class="nc" id="L121">				.orElse(x -&gt; true);</span>
+		// if (from == null) {
+		// return x -&gt; true;
+		// }
+		// return between(r -&gt; Instant.ofEpochSecond(r.getCommitTime()), from,
+		// Optional.empty());
+	}
+
+	protected &lt;T&gt; Predicate&lt;T&gt; between(final Function&lt;T, Instant&gt; getTimeFunction,
+			final Instant from,
+			final Optional&lt;Instant&gt; to) {
+<span class="nc" id="L132">		return r -&gt; {</span>
+<span class="nc" id="L133">			final Instant time = getTimeFunction.apply(r);</span>
+<span class="nc bnc" id="L134" title="All 4 branches missed.">			return to.map(time::isBefore).orElse(true) &amp;&amp; time.isAfter(from);</span>
+		};
+	}
+
+	private synchronized void fetch() {
+		try {
+<span class="nc" id="L140">			getLogger().info(&quot;Pulling updates of GIT repository [{}]&quot;,</span>
+<span class="nc" id="L141">					getGit().getRepository().getDirectory().getAbsolutePath());</span>
+<span class="nc" id="L142">			withCredentials(getGit().fetch()).call();</span>
+<span class="nc" id="L143">			final PullResult pullResult = withCredentials(getGit().pull()).call();</span>
+<span class="nc" id="L144">			getLogger().info(&quot;Fetched from [{}]. Result [{}]&quot;, pullResult.getFetchedFrom(), pullResult.isSuccessful());</span>
+<span class="nc" id="L145">		} catch (final GitAPIException e) {</span>
+<span class="nc" id="L146">			getLogger().error(String.format(&quot;Cannot PULL repository [%s]&quot;,</span>
+<span class="nc" id="L147">					getGit().getRepository().getDirectory().getAbsolutePath()), e);</span>
+<span class="nc" id="L148">		}</span>
+<span class="nc" id="L149">	}</span>
+
+	@SuppressFBWarnings(value = &quot;IMPROPER_UNICODE&quot;,
+			justification = &quot;comparing lower cased string with ASCII characters only&quot;)
+	private Git createGitRepository() throws IOException, GitAPIException {
+<span class="nc bnc" id="L154" title="All 2 branches missed.">		if (getLogger().isDebugEnabled()) {</span>
+<span class="nc" id="L155">			getLogger().debug(&quot;Creating Git object for: &quot; + getRepositoryUrl());</span>
+		}
+<span class="nc bnc" id="L157" title="All 2 branches missed.">		if (getRepositoryUrl().contains(&quot;:&quot;)) {</span>
+<span class="nc" id="L158">			final String protocol = getRepositoryUrl().substring(0, getRepositoryUrl().indexOf(&quot;:&quot;)).toLowerCase();</span>
+<span class="nc bnc" id="L159" title="All 3 branches missed.">			switch (protocol) {</span>
+			case &quot;http&quot;:
+			case &quot;https&quot;:
+			case &quot;git&quot;:
+<span class="nc" id="L163">				return createRemoteGitRepository(getRepositoryUrl());</span>
+			case &quot;file&quot;:
+<span class="nc" id="L165">				return createLocalGitRepository(getRepositoryUrl());</span>
+			default:
+			}
+		}
+<span class="nc" id="L169">		throw new RuntimeException(&quot;Cannot recognize url: &quot; + getRepositoryUrl());</span>
+	}
+
+	@SuppressWarnings(&quot;resource&quot;)
+	private Git createLocalGitRepository(final String repositoryUrl) throws IOException {
+<span class="nc" id="L174">		getLogger().info(&quot;Creating local repository [{}]: &quot;, repositoryUrl);</span>
+<span class="nc" id="L175">		final FileRepositoryBuilder builder = new FileRepositoryBuilder();</span>
+<span class="nc" id="L176">		final Repository repo = builder.setGitDir(new File(repositoryUrl)).setMustExist(true).build();</span>
+<span class="nc" id="L177">		return new Git(repo);</span>
+	}
+
+	private Git createRemoteGitRepository(final String repositoryUrl) throws GitAPIException, IOException {
+<span class="nc" id="L181">		getLogger().info(&quot;Creating remote repository [{}] &quot;, repositoryUrl);</span>
+		// Create temp-directory
+<span class="nc" id="L183">		final Path tempDir = Files.createTempDirectory(&quot;oversigt-temp-git&quot;);</span>
+<span class="nc" id="L184">		FileUtils.deleteFolderOnExit(tempDir);</span>
+
+		// Clone repo to temp dir
+<span class="nc" id="L187">		getLogger().debug(&quot;Start cloning&quot;);</span>
+<span class="nc" id="L188">		final CloneCommand cloneCommand = Git.cloneRepository();</span>
+<span class="nc" id="L189">		cloneCommand.setDirectory(tempDir.toFile());</span>
+<span class="nc" id="L190">		cloneCommand.setURI(repositoryUrl);</span>
+<span class="nc" id="L191">		cloneCommand.setCredentialsProvider(createCredentialsProvider(tempDir));</span>
+
+		// Create repo
+<span class="nc" id="L194">		final Git git = cloneCommand.call();</span>
+<span class="nc" id="L195">		getLogger().debug(&quot;Cloning done.&quot;);</span>
+<span class="nc" id="L196">		return git;</span>
+	}
+
+	private &lt;T, Y, C extends GitCommand&lt;Y&gt;, X extends TransportCommand&lt;C, T&gt;&gt; X withCredentials(final X command) {
+<span class="nc" id="L200">		command.setCredentialsProvider(createCredentialsProvider(getGit().getRepository().getDirectory()));</span>
+<span class="nc" id="L201">		return command;</span>
+	}
+
+	private CredentialsProvider createCredentialsProvider(final File localRepositoryPath) {
+<span class="nc" id="L205">		return createCredentialsProvider(localRepositoryPath.toPath());</span>
+	}
+
+	private CredentialsProvider createCredentialsProvider(final Path localRepositoryPath) {
+<span class="nc" id="L209">		return new GitCredentialsProvider(</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">				localRepositoryPath.endsWith(&quot;.git&quot;) ? localRepositoryPath : localRepositoryPath.resolve(&quot;.git&quot;));</span>
+	}
+
+	private final class GitCredentialsProvider extends CredentialsProvider {
+		private final Path gitPath;
+
+<span class="nc" id="L216">		private GitCredentialsProvider(final Path gitPath) {</span>
+<span class="nc" id="L217">			this.gitPath = gitPath;</span>
+<span class="nc" id="L218">		}</span>
+
+		@Override
+		public boolean supports(@Nullable final CredentialItem... items) {
+<span class="nc bnc" id="L222" title="All 2 branches missed.">			if (items == null) {</span>
+<span class="nc" id="L223">				return false;</span>
+			}
+<span class="nc bnc" id="L225" title="All 4 branches missed.">			return isUsernamePassword(items) || isSkipSslTrust(items);</span>
+		}
+
+		@Override
+		public boolean isInteractive() {
+<span class="nc" id="L230">			return false;</span>
+		}
+
+		@Override
+		public boolean get(@SuppressWarnings(&quot;unused&quot;) @Nullable final URIish uri,
+				@Nullable final CredentialItem... items) throws UnsupportedCredentialItem {
+<span class="nc bnc" id="L236" title="All 2 branches missed.">			if (items == null) {</span>
+<span class="nc" id="L237">				return false;</span>
+			}
+<span class="nc bnc" id="L239" title="All 2 branches missed.">			if (isUsernamePassword(items)) {</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">				for (final CredentialItem item : items) {</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">					if (item instanceof Username) {</span>
+<span class="nc" id="L242">						((Username) item).setValue(getCredentials().getUsername());</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">					} else if (item instanceof Password) {</span>
+<span class="nc" id="L244">						((Password) item).setValue(getCredentials().getPassword().toCharArray());</span>
+					}
+				}
+<span class="nc" id="L247">				return true;</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">			} else if (!isCheckSSL() &amp;&amp; isSkipSslTrust(items)) {</span>
+				// JGitText.get().sslTrustForNow
+				final String message
+<span class="nc" id="L251">						= MessageFormat.format(JGitText.get().sslTrustForRepo, gitPath.toAbsolutePath().toString());</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">				for (final CredentialItem item : items) {</span>
+<span class="nc bnc" id="L253" title="All 4 branches missed.">					if (item instanceof YesNoType &amp;&amp; item.getPromptText().equals(message)) {</span>
+<span class="nc" id="L254">						((YesNoType) item).setValue(true);</span>
+					}
+				}
+<span class="nc" id="L257">				return true;</span>
+			}
+<span class="nc" id="L259">			return false;</span>
+		}
+
+		private boolean isSkipSslTrust(final CredentialItem[] items) {
+<span class="nc bnc" id="L263" title="All 10 branches missed.">			return items.length == 4</span>
+					&amp;&amp; items[0] instanceof InformationalMessage
+					&amp;&amp; items[1] instanceof YesNoType
+					&amp;&amp; items[2] instanceof YesNoType
+					&amp;&amp; items[3] instanceof YesNoType
+<span class="nc bnc" id="L268" title="All 2 branches missed.">					&amp;&amp; items[0].getPromptText().endsWith(JGitText.get().sslFailureTrustExplanation);</span>
+		}
+
+		private boolean isUsernamePassword(final CredentialItem[] items) {
+<span class="nc bnc" id="L272" title="All 10 branches missed.">			return items.length == 2</span>
+					&amp;&amp; (items[0] instanceof Username &amp;&amp; items[1] instanceof Password
+							|| items[0] instanceof Password &amp;&amp; items[1] instanceof Username);
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

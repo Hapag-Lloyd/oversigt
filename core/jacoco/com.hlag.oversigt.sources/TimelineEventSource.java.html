@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimelineEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">TimelineEventSource.java</span></div><h1>TimelineEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.JsonBasedData;
+import com.hlag.oversigt.sources.data.Birthday;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.sources.event.TimelineEvent;
+
+import de.jollyday.Holiday;
+import de.jollyday.HolidayCalendar;
+import de.jollyday.HolidayManager;
+import de.jollyday.ManagerParameters;
+import microsoft.exchange.webservices.data.core.enumeration.property.LegacyFreeBusyStatus;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.service.item.Appointment;
+
+/**
+ * @author Constantin Pagenkopp
+ */
+@EventSource(displayName = &quot;Calendar Timeline View&quot;, view = &quot;Timeline&quot;)
+public class TimelineEventSource extends AbstractExchangeEventSource&lt;TimelineEvent&gt; {
+	// TODO internationalize these strings
+	private static final String UNTIL = &quot;until &quot;;
+
+	private static final String TODAY = &quot;Today&quot;;
+
+	private static final String ALL_DAY = &quot;all day&quot;;
+
+	private static final String ALL_DAY_UNTIL = ALL_DAY + &quot;, &quot; + UNTIL;
+
+<span class="nc" id="L51">	private Period maximumPointInFuture = Period.ofMonths(3);</span>
+
+<span class="nc" id="L53">	private int minimumEventCount = 0;</span>
+
+<span class="nc" id="L55">	private Color colorToday = Color.GREEN;</span>
+
+<span class="nc" id="L57">	private Color colorAppointment = Color.BLUE;</span>
+
+<span class="nc" id="L59">	private Color colorBirthday = Color.YELLOW;</span>
+
+<span class="nc" id="L61">	private Color colorHoliday = Color.GRAY;</span>
+
+<span class="nc" id="L63">	private Color colorOutOfOffice = Color.BLUE;</span>
+
+<span class="nc" id="L65">	private Color colorMailbox = Color.BLUE;</span>
+
+<span class="nc" id="L67">	private HolidayCalendar holidayCalendar = HolidayCalendar.GERMANY;</span>
+
+<span class="nc" id="L69">	private String holidayArea = &quot;hh&quot;;</span>
+
+<span class="nc" id="L71">	private Locale locale = Locale.getDefault();</span>
+
+<span class="nc" id="L73">	private Birthday[] birthdays = new Birthday[0];</span>
+
+<span class="nc" id="L75">	private HolidayNameCorrection[] corrections = new HolidayNameCorrection[] {</span>
+			new HolidayNameCorrection(&quot;Weihnachten&quot;, &quot;1. Weihnachtstag&quot;),
+			new HolidayNameCorrection(&quot;Stephanstag&quot;, &quot;2. Weihnachtstag&quot;),
+			new HolidayNameCorrection(&quot;Tag der Wiedervereinigung&quot;, &quot;Tag der Deutschen Einheit&quot;) };
+
+<span class="nc" id="L80">	public TimelineEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L82">	}</span>
+
+	@Override
+	protected Optional&lt;TimelineEvent&gt; produceExchangeEvent() {
+<span class="nc" id="L86">		final TimelineEvent event = new TimelineEvent(maximumPointInFuture, getZoneId(), getLocale());</span>
+<span class="nc" id="L87">		final LocalDate now = LocalDate.now(getZoneId());</span>
+
+<span class="nc" id="L89">		fillTimelineEvent(now, event);</span>
+
+<span class="nc" id="L91">		event.removeEvents(getMaximumPointInFuture(), getMinimumEventCount());</span>
+
+		// maybe add today
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if (!event.hasEventAt(now)) {</span>
+<span class="nc" id="L95">			event.addEvent(TODAY, now, now, false, colorToday);</span>
+		}
+
+<span class="nc" id="L98">		return Optional.of(event);</span>
+	}
+
+	protected void fillTimelineEvent(final LocalDate now, final TimelineEvent event) {
+<span class="nc" id="L102">		addBirthdays(event, now);</span>
+<span class="nc" id="L103">		addHolidays(event, now);</span>
+<span class="nc" id="L104">		addExchangeCalendar(event, now);</span>
+<span class="nc" id="L105">	}</span>
+
+	private void addExchangeCalendar(final TimelineEvent event, final LocalDate now) {
+<span class="nc" id="L108">		final ZonedDateTime from = now.minusMonths(5).atStartOfDay(getZoneId());</span>
+<span class="nc" id="L109">		final ZonedDateTime until = now.plus(getMaximumPointInFuture())</span>
+<span class="nc" id="L110">				.plus(getMaximumPointInFuture())</span>
+<span class="nc" id="L111">				.plusDays(1)</span>
+<span class="nc" id="L112">				.atStartOfDay(getZoneId());</span>
+		final List&lt;Appointment&gt; appointments;
+<span class="nc" id="L114">		try (StartedAction action</span>
+<span class="nc" id="L115">				= getStatisticsCollector().startAction(&quot;Exchange read appointments&quot;, from + &quot; - &quot; + until)) {</span>
+<span class="nc" id="L116">			appointments = getExchangeClient().loadAppointments(from, until);</span>
+		}
+<span class="nc bnc" id="L118" title="All 2 branches missed.">		for (final Appointment appointment : appointments) {</span>
+<span class="nc" id="L119">			addAppointment(event, appointment);</span>
+<span class="nc" id="L120">		}</span>
+<span class="nc" id="L121">	}</span>
+
+	private void addAppointment(final TimelineEvent event, final Appointment appointment) {
+		try {
+<span class="nc" id="L125">			final ZonedDateTime start = appointment.getStart().toInstant().atZone(getZoneId());</span>
+<span class="nc" id="L126">			final ZonedDateTime end = appointment.getEnd().toInstant().atZone(getZoneId());</span>
+<span class="nc" id="L127">			final LocalDate now = LocalDate.now(getZoneId());</span>
+
+			// for all day appointments, write &quot;ganztägig&quot;
+			final String duration;
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">			if (appointment.getIsAllDayEvent()) {</span>
+<span class="nc" id="L133">				final LocalDate endDate = end.toLocalDate().minus(1, ChronoUnit.DAYS);</span>
+<span class="nc" id="L134">				final boolean endSameDay = endDate.isEqual(start.toLocalDate());</span>
+<span class="nc" id="L135">				final boolean endsToday = endDate.isEqual(now);</span>
+
+<span class="nc bnc" id="L137" title="All 4 branches missed.">				if (endSameDay || endsToday) {</span>
+<span class="nc" id="L138">					duration = ALL_DAY;</span>
+				} else {
+<span class="nc" id="L140">					duration = ALL_DAY_UNTIL + endDate.format(DateTimeFormatter.ofPattern(&quot;d. MMM&quot;, getLocale()));</span>
+				}
+<span class="nc" id="L142">			} else {</span>
+				// not an all day event
+<span class="nc" id="L144">				final boolean startInPast = start.toLocalDate().isBefore(now);</span>
+
+<span class="nc bnc" id="L146" title="All 2 branches missed.">				if (startInPast) {</span>
+<span class="nc" id="L147">					duration = UNTIL + end.format(DateTimeFormatter.ofPattern(&quot;d. MMM, HH:mm&quot;, getLocale()));</span>
+				} else {
+					// begins today or in future: show start time (date is always shown)
+<span class="nc" id="L150">					duration = start.format(DateTimeFormatter.ofPattern(&quot;HH:mm&quot;, getLocale()));</span>
+				}
+			}
+
+<span class="nc" id="L154">			final String title = String.format(&quot;%s (%s)&quot;, appointment.getSubject(), duration);</span>
+
+			// for out of office and mailbox handling use special colors
+<span class="nc" id="L157">			Color color = colorAppointment;</span>
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">			if (LegacyFreeBusyStatus.OOF.equals(appointment.getLegacyFreeBusyStatus())) {</span>
+<span class="nc" id="L160">				color = colorOutOfOffice;</span>
+<span class="nc bnc" id="L161" title="All 4 branches missed.">			} else if (appointment.getSubject() != null &amp;&amp; appointment.getSubject().startsWith(&quot;Mailbox&quot;)) {</span>
+				// TODO Farben auf regel-basis erstellen, nicht hart-kodiert
+<span class="nc" id="L163">				color = colorMailbox;</span>
+			}
+
+<span class="nc" id="L166">			event.addEvent(title,</span>
+<span class="nc" id="L167">					appointment.getStart().toInstant().atZone(getZoneId()).toLocalDate(),</span>
+<span class="nc" id="L168">					appointment.getEnd().toInstant().atZone(getZoneId()).toLocalDate(),</span>
+<span class="nc" id="L169">					appointment.getIsAllDayEvent(),</span>
+					color);
+<span class="nc" id="L171">		} catch (@SuppressWarnings(&quot;unused&quot;) final ServiceLocalException ignore) {</span>
+			// in case of exception ignore event
+<span class="nc" id="L173">		}</span>
+<span class="nc" id="L174">	}</span>
+
+	private void addBirthdays(final TimelineEvent event, final LocalDate now) {
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		for (final Birthday birthday : getBirthdays()) {</span>
+<span class="nc" id="L178">			LocalDate date = birthday.getDate().withYear(now.getYear());</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">			if (date.isBefore(now)) {</span>
+<span class="nc" id="L180">				date = date.plusYears(1);</span>
+			}
+<span class="nc" id="L182">			event.addEvent(birthday.getName() + &quot; (&quot; + birthday.getDate().until(date).getYears() + &quot;)&quot;,</span>
+					date,
+					date,
+					true,
+					colorBirthday);
+		}
+<span class="nc" id="L188">	}</span>
+
+	private void addHolidays(final TimelineEvent event, final LocalDate now) {
+<span class="nc" id="L191">		final Color fontColor = Color.LIGHT_GRAY;</span>
+
+<span class="nc" id="L193">		final HolidayManager m = HolidayManager.getInstance(ManagerParameters.create(getHolidayCalendar()));</span>
+<span class="nc" id="L194">		final String area = Strings.emptyToNull(getHolidayArea());</span>
+		final Set&lt;Holiday&gt; holidays;
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (area != null) {</span>
+<span class="nc" id="L197">			holidays = m.getHolidays(now,</span>
+<span class="nc" id="L198">					now.plus(getMaximumPointInFuture()).plus(getMaximumPointInFuture()),</span>
+					new String[] { area });
+		} else {
+<span class="nc" id="L201">			holidays = m.getHolidays(now, now.plus(getMaximumPointInFuture()).plus(getMaximumPointInFuture()));</span>
+		}
+<span class="nc" id="L203">		holidays.forEach(h -&gt; event.addEvent(getCorrectHolidayName(</span>
+<span class="nc" id="L204">				h.getDescription(getLocale())), h.getDate(), h.getDate(), true, colorHoliday, fontColor));</span>
+<span class="nc" id="L205">	}</span>
+
+	private String getCorrectHolidayName(final String apiName) {
+<span class="nc" id="L208">		return Arrays.stream(getHolidayNameCorrections())</span>
+<span class="nc" id="L209">				.filter(c -&gt; c.apiName.equals(apiName))</span>
+<span class="nc" id="L210">				.findAny()</span>
+<span class="nc" id="L211">				.map(c -&gt; c.correctName)</span>
+<span class="nc" id="L212">				.orElse(apiName);</span>
+	}
+
+	@Property(name = &quot;Holiday Name Correction&quot;,
+			description = &quot;Some holiday names are not the common used names. If you wish to change that name displayd in the UI please change it here.&quot;)
+	public HolidayNameCorrection[] getHolidayNameCorrections() {
+<span class="nc" id="L218">		return corrections;</span>
+	}
+
+	public void setHolidayNameCorrections(final HolidayNameCorrection[] corrections) {
+<span class="nc" id="L222">		this.corrections = corrections;</span>
+<span class="nc" id="L223">	}</span>
+
+	public Period getMaximumPointInFuture() {
+<span class="nc" id="L226">		return maximumPointInFuture;</span>
+	}
+
+	public int getMinimumEventCount() {
+<span class="nc" id="L230">		return minimumEventCount;</span>
+	}
+
+	@Property(name = &quot;Maximum Point of Time in Future&quot;,
+			description = &quot;How far should this event source look into the future at maximum&quot;)
+	public void setMaximumPointInFuture(final Period maximumPointInFuture) {
+<span class="nc" id="L236">		this.maximumPointInFuture = maximumPointInFuture;</span>
+<span class="nc" id="L237">	}</span>
+
+	@Property(name = &quot;Minimum events count&quot;, description = &quot;Set to zero to disable&quot;)
+	public void setMinimumEventCount(final int minimumEventCount) {
+<span class="nc" id="L241">		this.minimumEventCount = minimumEventCount;</span>
+<span class="nc" id="L242">	}</span>
+
+	@Property(name = &quot;Color for Mailbox Handling&quot;)
+	public Color getColorMailbox() {
+<span class="nc" id="L246">		return colorMailbox;</span>
+	}
+
+	@Property(name = &quot;Color for \&quot;Today\&quot;&quot;)
+	public Color getColorToday() {
+<span class="nc" id="L251">		return colorToday;</span>
+	}
+
+	@Property(name = &quot;Color for Out Of Office&quot;)
+	public Color getColorOutOfOffice() {
+<span class="nc" id="L256">		return colorOutOfOffice;</span>
+	}
+
+	@Property(name = &quot;Color for Appointments&quot;)
+	public Color getColorAppointment() {
+<span class="nc" id="L261">		return colorAppointment;</span>
+	}
+
+	@Property(name = &quot;Color for Birthdays&quot;)
+	public Color getColorBirthday() {
+<span class="nc" id="L266">		return colorBirthday;</span>
+	}
+
+	@Property(name = &quot;Color for national holiday&quot;)
+	public Color getColorHoliday() {
+<span class="nc" id="L271">		return colorHoliday;</span>
+	}
+
+	@Property(name = &quot;Calendar Locale&quot;, description = &quot;Internationalization to be used for holiday names&quot;)
+	public Locale getLocale() {
+<span class="nc" id="L276">		return locale;</span>
+	}
+
+	public void setLocale(final Locale locale) {
+<span class="nc" id="L280">		this.locale = locale;</span>
+<span class="nc" id="L281">	}</span>
+
+	public void setColorToday(final Color colorToday) {
+<span class="nc" id="L284">		this.colorToday = colorToday;</span>
+<span class="nc" id="L285">	}</span>
+
+	public void setColorMailbox(final Color colorMailbox) {
+<span class="nc" id="L288">		this.colorMailbox = colorMailbox;</span>
+<span class="nc" id="L289">	}</span>
+
+	public void setColorOutOfOffice(final Color colorOutOfOffice) {
+<span class="nc" id="L292">		this.colorOutOfOffice = colorOutOfOffice;</span>
+<span class="nc" id="L293">	}</span>
+
+	public void setColorAppointment(final Color colorAppointment) {
+<span class="nc" id="L296">		this.colorAppointment = colorAppointment;</span>
+<span class="nc" id="L297">	}</span>
+
+	public void setColorBirthday(final Color colorBirthday) {
+<span class="nc" id="L300">		this.colorBirthday = colorBirthday;</span>
+<span class="nc" id="L301">	}</span>
+
+	public void setColorHoliday(final Color colorHoliday) {
+<span class="nc" id="L304">		this.colorHoliday = colorHoliday;</span>
+<span class="nc" id="L305">	}</span>
+
+	@Property(name = &quot;Holiday Calendar&quot;, description = &quot;The calendar that shall be used to determine holidays&quot;)
+	public HolidayCalendar getHolidayCalendar() {
+<span class="nc" id="L309">		return holidayCalendar;</span>
+	}
+
+	public void setHolidayCalendar(final HolidayCalendar holidayCalendar) {
+<span class="nc" id="L313">		this.holidayCalendar = holidayCalendar;</span>
+<span class="nc" id="L314">	}</span>
+
+	@Property(name = &quot;Holiday Area&quot;,
+			description = &quot;The area within the Holiday Calendar to be used to determine local holidays&quot;)
+	public String getHolidayArea() {
+<span class="nc" id="L319">		return holidayArea;</span>
+	}
+
+	public void setHolidayArea(final String holidayArea) {
+<span class="nc" id="L323">		this.holidayArea = holidayArea;</span>
+<span class="nc" id="L324">	}</span>
+
+	@Property(name = &quot;Birthdays&quot;, description = &quot;Add any birthdays to be displayed in the timeline view&quot;)
+	public Birthday[] getBirthdays() {
+<span class="nc" id="L328">		return birthdays;</span>
+	}
+
+	public void setBirthdays(final Birthday[] birthdays) {
+<span class="nc" id="L332">		this.birthdays = birthdays;</span>
+<span class="nc" id="L333">	}</span>
+
+	@JsonHint(arrayStyle = ArrayStyle.TABLE, headerTemplate = &quot;{{ self.correctName }}&quot;)
+	private static final class HolidayNameCorrection implements JsonBasedData {
+<span class="nc" id="L337">		@NotNull</span>
+		private String apiName = &quot;API Name&quot;;
+
+<span class="nc" id="L340">		@NotNull</span>
+		private String correctName = &quot;Correct Name&quot;;
+
+		@JsonCreator
+		private HolidayNameCorrection(@JsonProperty(&quot;apiName&quot;) final String apiName,
+<span class="nc" id="L345">				@JsonProperty(&quot;correctName&quot;) final String correctName) {</span>
+<span class="nc" id="L346">			this.apiName = apiName;</span>
+<span class="nc" id="L347">			this.correctName = correctName;</span>
+<span class="nc" id="L348">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

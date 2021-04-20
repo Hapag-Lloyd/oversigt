@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SystemResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">SystemResource.java</span></div><h1>SystemResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static com.hlag.oversigt.web.api.ErrorResponse.notFound;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.Response.ok;
+
+import java.io.IOException;
+import java.lang.Thread.State;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.NotBlank;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
+
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.google.common.base.Strings;
+import com.google.common.collect.EvictingQueue;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.core.Oversigt;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration;
+import com.hlag.oversigt.core.event.EventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.MailSender;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Nullables;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;System&quot; })
+@Path(&quot;/system&quot;)
+@Singleton
+public class SystemResource {
+<span class="nc" id="L82">	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(SystemResource.class);</span>
+
+	private final Runnable shutdownRunnable;
+
+	@Inject
+	private EventSender eventSender;
+
+	@Inject
+	private MailSender mailSender;
+
+	@Inject
+	private Authenticator authenticator;
+
+	@Inject
+	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceInstanceController eventSourceInstanceController;
+
+	@Inject
+	private SerializablePropertyController spController;
+
+	@Inject
+	private OversigtConfiguration configuration;
+
+	@Inject
+<span class="nc" id="L108">	public SystemResource(@Named(&quot;Shutdown&quot;) final Runnable shutdown) {</span>
+<span class="nc" id="L109">		shutdownRunnable = shutdown;</span>
+<span class="nc" id="L110">	}</span>
+
+	@POST
+	@Path(&quot;/shutdown&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 202, message = &quot;Server shutdown initiated.&quot;),
+			@ApiResponse(code = 401, message = &quot;If the user is not authorized.&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Shut down the server&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) },
+			notes = &quot;Shuts down the dashboard server. Once the request has been accepted the shut down will be initiated after two seconds.&quot;)
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response shutdown() {
+<span class="nc" id="L123">		ForkJoinPool.commonPool().execute(() -&gt; {</span>
+			try {
+<span class="nc" id="L125">				Thread.sleep(1000);</span>
+<span class="nc" id="L126">			} catch (@SuppressWarnings(&quot;unused&quot;) final Exception ignore) {</span>
+				// on interruption continue
+<span class="nc" id="L128">			}</span>
+<span class="nc" id="L129">			shutdownRunnable.run();</span>
+<span class="nc" id="L130">		});</span>
+<span class="nc" id="L131">		return Response.status(Status.ACCEPTED).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/configuration&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Server configuration.&quot;, response = OversigtConfiguration.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read the current server configuration&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response readConfiguration() {
+<span class="nc" id="L143">		final String configJson = JsonUtils.removeKeysFromJson(JsonUtils.toJson(configuration), s -&gt; {</span>
+<span class="nc" id="L144">			final String key = s.toLowerCase();</span>
+<span class="nc bnc" id="L145" title="All 4 branches missed.">			return !(key.contains(&quot;password&quot;) || key.contains(&quot;secret&quot;));</span>
+		});
+
+<span class="nc" id="L148">		return ok(configJson).type(MediaType.APPLICATION_JSON).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/logfiles&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A list of available log files will be transferred.&quot;,
+					response = String.class,
+					responseContainer = &quot;list&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;List available log files&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public List&lt;String&gt; listLogFiles() throws IOException {
+<span class="nc" id="L164">		return FileUtils.closedPathStream(Files.list(Paths.get(&quot;log&quot;)))</span>
+<span class="nc" id="L165">				.map(java.nio.file.Path::getFileName)</span>
+<span class="nc" id="L166">				.map(Object::toString)</span>
+<span class="nc" id="L167">				.collect(Collectors.toList());</span>
+	}
+
+	@GET
+	@Path(&quot;/logfiles/{filename}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;The requested lines of the log file will be transferred&quot;,
+					response = String.class,
+					responseContainer = &quot;list&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Retreive log file content&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response getLogFileContent(@PathParam(&quot;filename&quot;) @NotBlank final String filename,
+			@QueryParam(&quot;lines&quot;) @ApiParam(required = false,
+					defaultValue = &quot;0&quot;,
+					value = &quot;Number of lines to read from the log file. Negative value to read from the end of the file.&quot;) final Integer nullableLineCount)
+			throws IOException {
+<span class="nc" id="L187">		final int lineCount = Nullables.orElse(nullableLineCount, 0);</span>
+
+<span class="nc" id="L189">		final java.nio.file.Path logfile = Paths.get(&quot;log&quot;, filename);</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">		if (!Files.exists(logfile)) {</span>
+<span class="nc" id="L191">			return notFound(&quot;The log file '&quot; + filename + &quot;' does not exist.&quot;);</span>
+		}
+
+		final Collection&lt;String&gt; lines;
+<span class="nc" id="L195">		try (Stream&lt;String&gt; lineStream = Files.lines(logfile)) {</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">			if (lineCount == 0) {</span>
+<span class="nc" id="L197">				lines = lineStream.collect(Collectors.toList());</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">			} else if (lineCount &gt; 0) {</span>
+<span class="nc" id="L199">				lines = lineStream.limit(lineCount).collect(Collectors.toList());</span>
+			} else {
+<span class="nc" id="L201">				lines = lineStream.collect(Collectors.toCollection(() -&gt; EvictingQueue.create(-lineCount)));</span>
+			}
+		}
+<span class="nc" id="L204">		return ok(lines).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/loggers&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A list of the current loggers&quot;,
+					response = LoggerInfo.class,
+					responseContainer = &quot;list&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Get a list of the server's loggers&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public List&lt;LoggerInfo&gt; getLoggers(@QueryParam(&quot;configuredLevelsOnly&quot;) @ApiParam(required = false,
+			defaultValue = &quot;false&quot;,
+			value = &quot;Whether to filter the logger infos&quot;) final boolean onlyConfigured) {
+<span class="nc" id="L222">		Predicate&lt;LoggerInfo&gt; filter = l -&gt; true;</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">		if (onlyConfigured) {</span>
+<span class="nc" id="L224">			filter = l -&gt; l.level.isPresent();</span>
+		}
+<span class="nc" id="L226">		return getLoggerStream().map(LoggerInfo::new).filter(filter).collect(Collectors.toList());</span>
+	}
+
+	private Stream&lt;Logger&gt; getLoggerStream() {
+<span class="nc" id="L230">		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();</span>
+<span class="nc" id="L231">		return context.getLoggerList().stream();</span>
+	}
+
+	@PUT
+	@Path(&quot;/loggers/{logger}&quot;)
+	@ApiResponses({ @ApiResponse(code = 200, message = &quot;Changed the logger's level&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Change the log level&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_SERVER_ADMIN)
+	public Response setLogLevel(@PathParam(&quot;logger&quot;) @NotBlank final String loggerName,
+			@QueryParam(&quot;level&quot;) @ApiParam(required = true) @NotBlank final String levelName) {
+<span class="nc" id="L243">		final Level level = Level.valueOf(levelName);</span>
+
+<span class="nc" id="L245">		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();</span>
+<span class="nc" id="L246">		final Logger logger = context.getLogger(loggerName);</span>
+<span class="nc" id="L247">		logger.setLevel(level);</span>
+
+<span class="nc" id="L249">		return ok().build();</span>
+	}
+
+	@GET
+	@Path(&quot;/log-levels&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A list of the avaiblable log levels&quot;,
+					response = String.class,
+					responseContainer = &quot;list&quot;) })
+	@ApiOperation(value = &quot;Get a list of available log levels&quot;)
+	@PermitAll
+	@NoChangeLog
+	public String[] getLogLevels() {
+<span class="nc" id="L263">		return new String[] { &quot;OFF&quot;, &quot;ERROR&quot;, &quot;WARN&quot;, &quot;INFO&quot;, &quot;DEBUG&quot;, &quot;TRACE&quot;, &quot;ALL&quot; };</span>
+	}
+
+	@GET
+	@Path(&quot;/threads&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A list of the current threads&quot;,
+					response = ThreadInfo.class,
+					responseContainer = &quot;list&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Get a list the server's threads&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public List&lt;ThreadInfo&gt; getThreads() {
+<span class="nc" id="L278">		return Thread.getAllStackTraces()</span>
+<span class="nc" id="L279">				.keySet()</span>
+<span class="nc" id="L280">				.stream()</span>
+<span class="nc" id="L281">				.sorted((t1, t2) -&gt; String.CASE_INSENSITIVE_ORDER.compare(t1.getName(), t2.getName()))</span>
+<span class="nc" id="L282">				.map(ThreadInfo::new)</span>
+<span class="nc" id="L283">				.collect(Collectors.toList());</span>
+	}
+
+	@GET
+	@Path(&quot;/cached-events&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A list of the cached events&quot;,
+					response = OversigtEvent.class,
+					responseContainer = &quot;list&quot;),
+			@ApiResponse(code = 404,
+					message = &quot;The filtered event source does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Retrieve the cached events&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public Response getCachedEvents(
+			@QueryParam(&quot;eventSourceId&quot;) @ApiParam(value = &quot;Optional filter to get only one cached event&quot;,
+					required = false) final String filter) {
+<span class="nc" id="L304">		final Collection&lt;OversigtEvent&gt; events = new ArrayList&lt;&gt;(eventSender.getCachedEvents());</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(filter)) {</span>
+<span class="nc" id="L306">			return ok(events.stream()</span>
+<span class="nc" id="L307">					.map(OversigtEvent::toJson)</span>
+<span class="nc" id="L308">					.map(json -&gt; JsonUtils.fromJson(json, Map.class))</span>
+<span class="nc" id="L309">					.collect(toList())).build();</span>
+		}
+
+<span class="nc" id="L312">		final Optional&lt;OversigtEvent&gt; event</span>
+<span class="nc" id="L313">				= events.stream().filter(e -&gt; Objects.requireNonNull(e.getId()).equals(filter)).findFirst();</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">		if (!event.isPresent()) {</span>
+<span class="nc" id="L315">			return ErrorResponse.notFound(&quot;The event source does not exist&quot;, filter);</span>
+		}
+
+<span class="nc" id="L318">		final List&lt;OversigtEvent&gt; eventList</span>
+<span class="nc" id="L319">				= Arrays.asList(event.orElseThrow(() -&gt; new RuntimeException(&quot;The event is not present&quot;)));</span>
+<span class="nc" id="L320">		final String json = JsonUtils.toJson(eventList);</span>
+<span class="nc" id="L321">		return ok(json).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/users/{userId}/validity&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;A boolean indicating whether or not the user id is valid&quot;,
+					response = boolean.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Check a userid's validity&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public boolean isUserValid(@PathParam(&quot;userId&quot;) @ApiParam(value = &quot;The ID of the user to check&quot;,
+			required = true) final String userId) {
+<span class="nc" id="L337">		return authenticator.isUsernameValid(userId);</span>
+	}
+
+	@GET
+	@Path(&quot;/server/info&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Generic information about the server&quot;, response = ServerInfo.class) })
+	@ApiOperation(value = &quot;Get server information&quot;)
+	@NoChangeLog
+	public ServerInfo getServerInfo() {
+<span class="nc" id="L347">		return new ServerInfo();</span>
+	}
+
+	@POST
+	@Path(&quot;/mail&quot;)
+	@ApiResponses({ @ApiResponse(code = 200, message = &quot;Send mail for test purpose&quot;, response = boolean.class) })
+	@ApiOperation(value = &quot;Send mail&quot;)
+	@NoChangeLog
+	public boolean sendMail(@Context final SecurityContext securityContext,
+			@HeaderParam(&quot;x-os-recipient&quot;) final String recipient,
+			final String content) {
+		try {
+<span class="nc" id="L359">			mailSender.sendRawMail((Principal) securityContext.getUserPrincipal(), recipient, content);</span>
+<span class="nc" id="L360">			return true;</span>
+<span class="nc" id="L361">		} catch (final Exception e) {</span>
+<span class="nc" id="L362">			LOGGER.error(&quot;Unable to send test mail.&quot;, e);</span>
+<span class="nc" id="L363">			return false;</span>
+		}
+	}
+
+	@GET
+	@Path(&quot;/server/all-objects&quot;)
+	@ApiResponses({ @ApiResponse(code = 200, message = &quot;Search all server objects&quot;, response = ServerInfo.class) })
+	@ApiOperation(value = &quot;Server wide search for objects&quot;)
+	@NoChangeLog
+	public Response searchAllObjects(@QueryParam(&quot;query&quot;) @ApiParam(value = &quot;Text to search for&quot;,
+			required = true) final String rawSearchString) {
+<span class="nc bnc" id="L374" title="All 2 branches missed.">		if (Strings.nullToEmpty(rawSearchString).trim().length() == 0) {</span>
+<span class="nc" id="L375">			return ErrorResponse.badRequest(&quot;The search text must not be empty.&quot;);</span>
+		}
+
+		// prepare search
+<span class="nc" id="L379">		final String searchString = rawSearchString.toLowerCase();</span>
+<span class="nc" id="L380">		final List&lt;SearchResult&gt; results = new ArrayList&lt;&gt;();</span>
+
+		// TODO implement dynamic search registration
+
+		// search for dashboards
+<span class="nc" id="L385">		results.addAll(dashboardController.getDashboardIds()</span>
+<span class="nc" id="L386">				.stream()</span>
+<span class="nc" id="L387">				.map(dashboardController::getDashboard)</span>
+<span class="nc" id="L388">				.map(Optional::get)</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">				.filter(d -&gt; d.getTitle().toLowerCase().contains(searchString)</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">						|| d.getId().toLowerCase().contains(searchString))</span>
+<span class="nc" id="L391">				.map(d -&gt; new SearchResult(d.getTitle(), d.getId(), &quot;dashboard&quot;))</span>
+<span class="nc" id="L392">				.collect(toList()));</span>
+
+		// search for event sources
+<span class="nc" id="L395">		results.addAll(eventSourceInstanceController.getEventSourceInstances()</span>
+<span class="nc" id="L396">				.stream()</span>
+<span class="nc" id="L397">				.filter(EventSourceInstance.createFilter(searchString))</span>
+<span class="nc" id="L398">				.map(i -&gt; new SearchResult(i.getName(), i.getId(), &quot;event-source&quot;))</span>
+<span class="nc" id="L399">				.collect(toList()));</span>
+
+		// search for properties
+<span class="nc" id="L402">		spController.getClasses()</span>
+<span class="nc" id="L403">				.stream()</span>
+<span class="nc" id="L404">				.flatMap(spController::streamProperties)</span>
+<span class="nc" id="L405">				.filter(p -&gt; SerializablePropertyResource.toMapWithoutPassword(p)</span>
+<span class="nc" id="L406">						.values()</span>
+<span class="nc" id="L407">						.stream()</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">						.filter(v -&gt; v != null)</span>
+<span class="nc" id="L409">						.map(Object::toString)</span>
+<span class="nc" id="L410">						.map(String::toLowerCase)</span>
+<span class="nc" id="L411">						.anyMatch(s -&gt; s.contains(searchString)))</span>
+<span class="nc" id="L412">				.map(p -&gt; new SearchResult(p.getName(),</span>
+<span class="nc" id="L413">						Integer.toString(p.getId()),</span>
+						&quot;serializable-property&quot;,
+<span class="nc" id="L415">						p.getClass().getSimpleName()))</span>
+<span class="nc" id="L416">				.collect(Collectors.toList());</span>
+
+		// search for loggers
+<span class="nc" id="L419">		results.addAll(getLoggerStream().map(Logger::getName)</span>
+<span class="nc" id="L420">				.map(String::toLowerCase)</span>
+<span class="nc" id="L421">				.filter(name -&gt; name.contains(searchString))</span>
+<span class="nc" id="L422">				.map(name -&gt; new SearchResult(name, name, &quot;logger&quot;))</span>
+<span class="nc" id="L423">				.collect(toList()));</span>
+
+<span class="nc" id="L425">		return ok(results).build();</span>
+	}
+
+	public static class LoggerInfo {
+		private final String name;
+
+		private final Optional&lt;Level&gt; level;
+
+		private final Level effectiveLevel;
+
+<span class="nc" id="L435">		public LoggerInfo(final Logger logger) {</span>
+<span class="nc" id="L436">			name = logger.getName();</span>
+<span class="nc" id="L437">			level = Optional.ofNullable(logger.getLevel());</span>
+<span class="nc" id="L438">			effectiveLevel = logger.getEffectiveLevel();</span>
+<span class="nc" id="L439">		}</span>
+
+		public String getName() {
+<span class="nc" id="L442">			return name;</span>
+		}
+
+		public String getLevel() {
+<span class="nc" id="L446">			return level.map(Object::toString).orElse(null);</span>
+		}
+
+		public String getEffectiveLevel() {
+<span class="nc" id="L450">			return effectiveLevel.toString();</span>
+		}
+	}
+
+	public static class ThreadInfo {
+		private final String name;
+
+		private final long id;
+
+		private final int priority;
+
+		private final State state;
+
+		private final StackTraceElement[] stackTrace;
+
+<span class="nc" id="L465">		public ThreadInfo(final Thread thread) {</span>
+<span class="nc" id="L466">			name = thread.getName();</span>
+<span class="nc" id="L467">			id = thread.getId();</span>
+<span class="nc" id="L468">			priority = thread.getPriority();</span>
+<span class="nc" id="L469">			state = thread.getState();</span>
+<span class="nc" id="L470">			stackTrace = thread.getStackTrace();</span>
+<span class="nc" id="L471">		}</span>
+
+		public String getName() {
+<span class="nc" id="L474">			return name;</span>
+		}
+
+		public long getId() {
+<span class="nc" id="L478">			return id;</span>
+		}
+
+		public int getPriority() {
+<span class="nc" id="L482">			return priority;</span>
+		}
+
+		public State getState() {
+<span class="nc" id="L486">			return state;</span>
+		}
+
+		public StackTraceElement[] getStackTrace() {
+<span class="nc" id="L490">			return stackTrace;</span>
+		}
+	}
+
+	public static class ServerInfo {
+<span class="nc" id="L495">		private final String name = Oversigt.APPLICATION_NAME;</span>
+
+<span class="nc" id="L497">		private final String version = Oversigt.APPLICATION_VERSION;</span>
+
+<span class="nc" id="L499">		public ServerInfo() {</span>
+			// no fields to be initialized
+<span class="nc" id="L501">		}</span>
+
+		public String getName() {
+<span class="nc" id="L504">			return name;</span>
+		}
+
+		public String getVersion() {
+<span class="nc" id="L508">			return version;</span>
+		}
+	}
+
+	@JsonInclude(content = Include.NON_NULL)
+	public static class SearchResult {
+		private final String title;
+
+		private final String id;
+
+		private final String type;
+
+		private final Optional&lt;String&gt; subtype;
+
+<span class="nc" id="L522">		public SearchResult(final String title, final String id, final String type) {</span>
+<span class="nc" id="L523">			this.title = title;</span>
+<span class="nc" id="L524">			this.id = id;</span>
+<span class="nc" id="L525">			this.type = type;</span>
+<span class="nc" id="L526">			subtype = Optional.empty();</span>
+<span class="nc" id="L527">		}</span>
+
+<span class="nc" id="L529">		public SearchResult(final String title, final String id, final String type, final String subtype) {</span>
+<span class="nc" id="L530">			this.title = title;</span>
+<span class="nc" id="L531">			this.id = id;</span>
+<span class="nc" id="L532">			this.type = type;</span>
+<span class="nc" id="L533">			this.subtype = Optional.of(subtype);</span>
+<span class="nc" id="L534">		}</span>
+
+		public String getTitle() {
+<span class="nc" id="L537">			return title;</span>
+		}
+
+		public String getId() {
+<span class="nc" id="L541">			return id;</span>
+		}
+
+		public String getType() {
+<span class="nc" id="L545">			return type;</span>
+		}
+
+		public Optional&lt;String&gt; getSubtype() {
+<span class="nc" id="L549">			return subtype;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

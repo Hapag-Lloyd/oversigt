@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExchangeTasksEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">ExchangeTasksEventSource.java</span></div><h1>ExchangeTasksEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.event.TwoColumnListEvent;
+import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
+
+import microsoft.exchange.webservices.data.core.service.item.Task;
+
+/**
+ * @author Constantin Pagenkopp
+ */
+@EventSource(view = &quot;List&quot;, displayName = &quot;Microsoft Exchange Tasks Viewer&quot;, hiddenDataItems = { &quot;moreinfo&quot; })
+public class ExchangeTasksEventSource extends AbstractExchangeEventSource&lt;TwoColumnListEvent&lt;String&gt;&gt; {
+<span class="nc" id="L24">	private boolean showDateColumn = true;</span>
+
+<span class="nc" id="L26">	public ExchangeTasksEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L28">	}</span>
+
+	@Property(name = &quot;Show Date Column&quot;,
+			description = &quot;Determines whether the widget should show the date column or not&quot;)
+	public boolean isShowDateColumn() {
+<span class="nc" id="L33">		return showDateColumn;</span>
+	}
+
+	public void setShowDateColumn(final boolean showDateColumn) {
+<span class="nc" id="L37">		this.showDateColumn = showDateColumn;</span>
+<span class="nc" id="L38">	}</span>
+
+	@Override
+	protected Optional&lt;TwoColumnListEvent&lt;String&gt;&gt; produceExchangeEvent() throws Exception {
+		final List&lt;Task&gt; tasks;
+<span class="nc" id="L43">		try (StartedAction action = getStatisticsCollector().startAction(&quot;Exchange read tasks&quot;, &quot;&quot;)) {</span>
+<span class="nc" id="L44">			tasks = getExchangeClient().loadTasks();</span>
+		}
+<span class="nc" id="L46">		final TwoColumnListEvent&lt;String&gt; event = createEvent(tasks);</span>
+<span class="nc" id="L47">		return Optional.of(event);</span>
+	}
+
+	private TwoColumnListEvent&lt;String&gt; createEvent(final List&lt;Task&gt; tasks) {
+<span class="nc" id="L51">		return new TwoColumnListEvent&lt;&gt;(tasks.stream().map(t -&gt; createItem(t)).collect(Collectors.toList()));</span>
+	}
+
+	private ListEventItem&lt;String&gt; createItem(final Task task) {
+		try {
+<span class="nc" id="L56">			String subject = task.getSubject();</span>
+<span class="nc" id="L57">			String labelStyle = &quot;&quot;;</span>
+<span class="nc" id="L58">			String valueStyle = &quot;&quot;;</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">			for (final Style style : Style.values()) {</span>
+<span class="nc" id="L60">				final String searchTerm = &quot;[&quot; + style.name() + &quot;]&quot;;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">				if (subject.contains(searchTerm)) {</span>
+<span class="nc" id="L62">					subject = subject.replace(searchTerm, &quot;&quot;);</span>
+<span class="nc" id="L63">					labelStyle += style.getLabelStyle();</span>
+<span class="nc" id="L64">					valueStyle += style.getValueStyle();</span>
+				}
+			}
+
+<span class="nc bnc" id="L68" title="All 3 branches missed.">			switch (task.getImportance()) {</span>
+			case Low:
+<span class="nc" id="L70">				labelStyle += &quot;opacity: 0.75;&quot;;</span>
+<span class="nc" id="L71">				break;</span>
+			case High:
+<span class="nc" id="L73">				labelStyle += &quot;font-weight: bold;&quot;;</span>
+<span class="nc" id="L74">				break;</span>
+			case Normal:
+			default:
+				break;
+			}
+
+<span class="nc" id="L80">			String createdAtStr = null;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">			if (isShowDateColumn()) {</span>
+<span class="nc" id="L82">				final ZonedDateTime createdAt = task.getDateTimeCreated().toInstant().atZone(getZoneId());</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">				if (createdAt.toLocalDate().isBefore(LocalDate.now(getZoneId()))) {</span>
+<span class="nc" id="L84">					createdAtStr</span>
+<span class="nc" id="L85">							= createdAt.toLocalDate().format(DateTimeFormatter.ofPattern(&quot;dd.MM.yyyy&quot;, Locale.GERMANY));</span>
+				} else {
+<span class="nc" id="L87">					createdAtStr = createdAt.format(DateTimeFormatter.ofPattern(&quot;HH:mm&quot;, Locale.GERMANY));</span>
+				}
+			}
+
+<span class="nc" id="L91">			return new ListEventItem&lt;&gt;(subject, createdAtStr, labelStyle, valueStyle);</span>
+<span class="nc" id="L92">		} catch (final Exception e) {</span>
+<span class="nc" id="L93">			throw new RuntimeException(&quot;Unable to read task details&quot;, e);</span>
+		}
+	}
+
+<span class="nc" id="L97">	private enum Style {</span>
+<span class="nc" id="L98">		green(&quot;color: green;&quot;, &quot;&quot;),</span>
+<span class="nc" id="L99">		yellow(&quot;color: yellow;&quot;, &quot;&quot;),</span>
+<span class="nc" id="L100">		red(&quot;color: red;&quot;, &quot;&quot;);</span>
+
+		private final String labelStyle;
+
+		private final String valueStyle;
+
+<span class="nc" id="L106">		Style(final String labelStyle, final String valueStyle) {</span>
+<span class="nc" id="L107">			this.labelStyle = labelStyle;</span>
+<span class="nc" id="L108">			this.valueStyle = valueStyle;</span>
+<span class="nc" id="L109">		}</span>
+
+		public String getLabelStyle() {
+<span class="nc" id="L112">			return labelStyle;</span>
+		}
+
+		public String getValueStyle() {
+<span class="nc" id="L116">			return valueStyle;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

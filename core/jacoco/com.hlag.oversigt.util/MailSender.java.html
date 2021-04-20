@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MailSender.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">MailSender.java</span></div><h1>MailSender.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import static com.hlag.oversigt.util.Utils.logChange;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.ForkJoinPool;
+
+import javax.mail.BodyPart;
+import javax.mail.Message;
+import javax.mail.Message.RecipientType;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Roles;
+
+import de.larssh.utils.collection.Maps;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+
+@Singleton
+public class MailSender {
+<span class="nc" id="L53">	private static final Logger LOGGER = LoggerFactory.getLogger(MailSender.class);</span>
+
+	@Inject
+	private Configuration templateConfiguration;
+
+	@Inject
+	private Authenticator authenticator;
+
+	@Inject
+	@Named(&quot;hostname&quot;)
+	private String dashboardHostname;
+
+	@Inject
+	@Named(&quot;serverAdmins&quot;)
+	private List&lt;String&gt; adminUserIds;
+
+	@Inject
+	@Named(&quot;mailSenderHost&quot;)
+	private String host;
+
+	@Inject
+	@Named(&quot;mailSenderPort&quot;)
+	private int port;
+
+	@Inject
+	@Named(&quot;mailSenderStartTls&quot;)
+	private boolean startTls;
+
+	@Inject
+	@Named(&quot;mailSenderUsername&quot;)
+	private String username;
+
+	@Inject
+	@Named(&quot;mailSenderPassword&quot;)
+	private String password;
+
+	@Inject
+	@Named(&quot;mailSenderAddress&quot;)
+	private String senderAddress;
+
+<span class="nc" id="L93">	public MailSender() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L95">	}</span>
+
+	public void sendNewDashboard(final Principal sender, final Dashboard dashboard) {
+<span class="nc" id="L98">		sendMailToAdmins(sender,</span>
+				&quot;New dashboard requested&quot;,
+				&quot;A new dashboard has been created...&quot;,
+				&quot;NewDashboard&quot;,
+<span class="nc" id="L102">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L103">						.put(&quot;dashboard&quot;, dashboard)</span>
+<span class="nc" id="L104">						.get());</span>
+<span class="nc" id="L105">	}</span>
+
+	public void sendPermissionsReceived(final Principal sender,
+			final Collection&lt;String&gt; receiverUserId,
+			final Roles role,
+			final Dashboard dashboard) {
+<span class="nc" id="L111">		receiverUserId.forEach(receiver -&gt; sendPermissionsReceived(sender, receiver, role, dashboard));</span>
+<span class="nc" id="L112">	}</span>
+
+	public void sendPermissionsReceived(final Principal sender,
+			final String receiverUserId,
+			final Roles role,
+			final Dashboard dashboard) {
+<span class="nc" id="L118">		sendMailToUserId(sender,</span>
+				receiverUserId,
+				&quot;New permission received&quot;,
+<span class="nc" id="L121">				&quot;You have received a new permssion for dashboard '&quot; + dashboard.getTitle() + &quot;'.&quot;,</span>
+				&quot;PermissionReceived&quot;,
+<span class="nc" id="L123">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L124">						.put(&quot;role&quot;, role.getDisplayName())</span>
+<span class="nc" id="L125">						.put(&quot;dashboard&quot;, dashboard)</span>
+<span class="nc" id="L126">						.get());</span>
+<span class="nc" id="L127">	}</span>
+
+	public void sendDashboardEnabled(final Principal sender, final Dashboard dashboard) {
+<span class="nc" id="L130">		sendMailToDashboardInvolved(sender,</span>
+				dashboard,
+				&quot;Dashboard enabled&quot;,
+<span class="nc" id="L133">				&quot;The dashboard '&quot; + dashboard.getTitle() + &quot;' has been enabled. Configure it now!&quot;,</span>
+				&quot;DashboardEnabled&quot;,
+<span class="nc" id="L135">				Maps.&lt;String, Object&gt;builder().put(&quot;dashboard&quot;, dashboard).get());</span>
+<span class="nc" id="L136">	}</span>
+
+	public void sendRawMail(final Principal sender, final String recipient, final String content) {
+<span class="nc" id="L139">		send(sender, new String[] { recipient }, &quot;Oversigt test mail&quot;, &quot;&lt;p&gt;&quot; + content + &quot;&lt;/p&gt;&quot;, content);</span>
+<span class="nc" id="L140">	}</span>
+
+	private void sendMailToAdmins(final Principal sender,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map&lt;String, Object&gt; model) {
+<span class="nc" id="L147">		sendMailToUserIds(sender, adminUserIds, subject, title, templatePath, model);</span>
+<span class="nc" id="L148">	}</span>
+
+	private void sendMailToDashboardInvolved(final Principal sender,
+			final Dashboard dashboard,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map&lt;String, Object&gt; model) {
+<span class="nc" id="L156">		final List&lt;String&gt; involved = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L157">		involved.addAll(dashboard.getOwners());</span>
+<span class="nc" id="L158">		involved.addAll(dashboard.getEditors());</span>
+<span class="nc" id="L159">		model.put(&quot;dashboard&quot;, dashboard);</span>
+<span class="nc" id="L160">		sendMailToUserIds(sender, involved, subject, title, templatePath, model);</span>
+<span class="nc" id="L161">	}</span>
+
+	private void sendMailToUserIds(final Principal sender,
+			final List&lt;String&gt; userIds,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map&lt;String, Object&gt; model) {
+<span class="nc" id="L169">		userIds.forEach(userId -&gt; sendMailToUserId(sender, userId, subject, title, templatePath, model));</span>
+<span class="nc" id="L170">	}</span>
+
+	private void sendMailToUserId(final Principal sender,
+			final String userId,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map&lt;String, Object&gt; model) {
+<span class="nc" id="L178">		final Optional&lt;Principal&gt; receiver = authenticator.readPrincipal(userId);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">		if (!receiver.isPresent()) {</span>
+<span class="nc" id="L180">			throw new RuntimeException(&quot;Unknown receiver principal: &quot; + userId);</span>
+		}
+<span class="nc" id="L182">		sendMail(sender, receiver.get().getName(), receiver.get().getEmail(), subject, title, templatePath, model);</span>
+<span class="nc" id="L183">	}</span>
+
+	private void sendMail(final Principal sender,
+			final String recipientName,
+			final String recipientEmail,
+			final String subject,
+			final String title,
+			final String templatePath,
+			final Map&lt;String, Object&gt; mModel) {
+<span class="nc" id="L192">		Objects.requireNonNull(recipientName, &quot;The recipient name must not be null&quot;);</span>
+<span class="nc" id="L193">		Objects.requireNonNull(recipientEmail, &quot;The recipient mail must not be null&quot;);</span>
+
+<span class="nc" id="L195">		final Map&lt;String, Object&gt; model = Maps.builder(new HashMap&lt;&gt;(mModel))</span>
+<span class="nc" id="L196">				.put(&quot;hostname&quot;, dashboardHostname)</span>
+<span class="nc" id="L197">				.put(&quot;subject&quot;, subject)</span>
+<span class="nc" id="L198">				.put(&quot;title&quot;, title)</span>
+<span class="nc" id="L199">				.put(&quot;recipient&quot;,</span>
+<span class="nc" id="L200">						Maps.&lt;String, String&gt;builder() //</span>
+<span class="nc" id="L201">								.put(&quot;name&quot;, recipientName)</span>
+<span class="nc" id="L202">								.put(&quot;email&quot;, recipientEmail)</span>
+<span class="nc" id="L203">								.get())</span>
+<span class="nc" id="L204">				.get();</span>
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		if (!model.containsKey(&quot;preHeaderText&quot;)) {</span>
+<span class="nc" id="L207">			model.put(&quot;preHeaderText&quot;, title);</span>
+		}
+
+<span class="nc" id="L210">		ForkJoinPool.commonPool().execute(() -&gt; {</span>
+			try {
+<span class="nc" id="L212">				sendMail(sender, new String[] { recipientEmail }, subject, templatePath, model);</span>
+<span class="nc" id="L213">			} catch (final IOException | TemplateException e) {</span>
+<span class="nc" id="L214">				LOGGER.error(&quot;Unable to send mail.&quot;, e);</span>
+<span class="nc" id="L215">			}</span>
+<span class="nc" id="L216">		});</span>
+<span class="nc" id="L217">	}</span>
+
+	/**
+	 * DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!&lt;br/&gt;
+	 * This method generates the mail content and then sends the mail to the given
+	 * recipients
+	 *
+	 * @param recipients   all mail addresses that shall receive this current mail
+	 * @param subject      the subject of the mail to send
+	 * @param templateName the name to the template file to be used
+	 * @param model        the model to be used to fill the template
+	 * @return &lt;code&gt;true&lt;/code&gt; if mail sending was successful, otherwise
+	 *         &lt;code&gt;false&lt;/code&gt;
+	 * @throws IOException       if any IO error occurres - reading a file or
+	 *                           sending a mail
+	 * @throws TemplateException if something fails while processing the template
+	 */
+	private void sendMail(final Principal sender,
+			final String[] recipients,
+			final String subject,
+			final String templateName,
+			final Map&lt;String, Object&gt; model) throws IOException, TemplateException {
+<span class="nc" id="L239">		final String templatePath = &quot;mails/&quot; + templateName + &quot;.ftl&quot;;</span>
+<span class="nc" id="L240">		final Template htmlTemplate = templateConfiguration.getTemplate(templatePath + &quot;.html&quot;);</span>
+<span class="nc" id="L241">		final StringWriter html = new StringWriter();</span>
+<span class="nc" id="L242">		htmlTemplate.process(model, html);</span>
+
+<span class="nc" id="L244">		final Template textTemplate = templateConfiguration.getTemplate(templatePath + &quot;.txt&quot;);</span>
+<span class="nc" id="L245">		final StringWriter text = new StringWriter();</span>
+<span class="nc" id="L246">		textTemplate.process(model, text);</span>
+
+<span class="nc" id="L248">		send(sender, recipients, subject, html.toString(), text.toString());</span>
+<span class="nc" id="L249">	}</span>
+
+	/**
+	 * DO NOT USE THIS METHOD IF YOU ARE WRITING YOUR OWN SEND-MAIL METHOD!&lt;br/&gt;
+	 * This method sends a mail with the given subject and contents to the given
+	 * recipients.
+	 *
+	 * @param recipients  all mail addresses that shall receive the current mail
+	 * @param subject     the subject of the mail to send
+	 * @param htmlContent the HTML content of the file to send
+	 * @param textContent the text content of the file to send
+	 * @return &lt;code&gt;true&lt;/code&gt; if mail sending was successful, otherwise
+	 *         &lt;code&gt;false&lt;/code&gt;
+	 */
+	private void send(final Principal sender,
+			final String[] recipients,
+			final String subject,
+			final String htmlContent,
+			final String textContent) {
+<span class="nc bnc" id="L268" title="All 2 branches missed.">		if (Objects.requireNonNull(recipients).length == 0) {</span>
+<span class="nc" id="L269">			throw new RuntimeException(&quot;No recipient given&quot;);</span>
+		}
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(host)) {</span>
+<span class="nc" id="L273">			LOGGER.warn(&quot;Mailer hostname is not set. Mailing is deactivated.&quot;);</span>
+<span class="nc" id="L274">			return;</span>
+		}
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		if (port &lt;= 0) {</span>
+<span class="nc" id="L277">			LOGGER.warn(&quot;Mailer port has an invalid value. Mailing is deactivated.&quot;);</span>
+<span class="nc" id="L278">			return;</span>
+		}
+<span class="nc bnc" id="L280" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(senderAddress)) {</span>
+<span class="nc" id="L281">			LOGGER.warn(&quot;Mailer sender address is not set. Mailing is deactivated.&quot;);</span>
+<span class="nc" id="L282">			return;</span>
+		}
+
+<span class="nc" id="L285">		final Session session = Session.getInstance(createProperties(), createAuthenticator());</span>
+
+		try {
+<span class="nc" id="L288">			final Message message = new MimeMessage(session);</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">			for (final String recipient : recipients) {</span>
+<span class="nc" id="L290">				message.addRecipient(RecipientType.TO, new InternetAddress(recipient));</span>
+			}
+<span class="nc" id="L292">			message.setFrom(new InternetAddress(sender.getEmail(), sender.getName()));</span>
+<span class="nc" id="L293">			message.setSubject(subject);</span>
+<span class="nc" id="L294">			message.setSentDate(new Date());</span>
+
+<span class="nc" id="L296">			final Multipart multipart = new MimeMultipart(&quot;alternative&quot;);</span>
+<span class="nc" id="L297">			final BodyPart textBodyPart = new MimeBodyPart();</span>
+<span class="nc" id="L298">			textBodyPart.setContent(textContent, &quot;text/plain&quot;);</span>
+<span class="nc" id="L299">			final BodyPart htmlBodyPart = new MimeBodyPart();</span>
+<span class="nc" id="L300">			htmlBodyPart.setContent(htmlContent, &quot;text/html&quot;);</span>
+
+<span class="nc" id="L302">			multipart.addBodyPart(textBodyPart);</span>
+<span class="nc" id="L303">			multipart.addBodyPart(htmlBodyPart);</span>
+<span class="nc" id="L304">			message.setContent(multipart);</span>
+
+<span class="nc" id="L306">			Transport.send(message);</span>
+
+<span class="nc" id="L308">			logChange(sender,</span>
+					&quot;Sent mail to %s with subject '%s'. HTML size %s and TXT size %s&quot;,
+<span class="nc" id="L310">					Arrays.toString(recipients),</span>
+					subject,
+<span class="nc" id="L312">					htmlContent.length(),</span>
+<span class="nc" id="L313">					textContent.length());</span>
+<span class="nc" id="L314">		} catch (final MessagingException | UnsupportedEncodingException e) {</span>
+<span class="nc" id="L315">			throw new RuntimeException(&quot;Unable to send mail&quot;, e);</span>
+<span class="nc" id="L316">		}</span>
+<span class="nc" id="L317">	}</span>
+
+	private javax.mail.Authenticator createAuthenticator() {
+<span class="nc" id="L320">		return new javax.mail.Authenticator() {</span>
+			@Nullable
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+<span class="nc bnc" id="L324" title="All 4 branches missed.">				if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(password)) {</span>
+<span class="nc" id="L325">					return null;</span>
+				}
+<span class="nc" id="L327">				return new PasswordAuthentication(username, password);</span>
+			}
+		};
+	}
+
+	private Properties createProperties() {
+<span class="nc" id="L333">		final Properties config = new Properties();</span>
+<span class="nc" id="L334">		config.put(&quot;mail.smtp.auth&quot;,</span>
+<span class="nc bnc" id="L335" title="All 4 branches missed.">				Boolean.toString(!Strings.isNullOrEmpty(username) &amp;&amp; !Strings.isNullOrEmpty(password)));</span>
+<span class="nc" id="L336">		config.put(&quot;mail.smtp.starttls.enable&quot;, Boolean.toString(startTls));</span>
+<span class="nc" id="L337">		config.put(&quot;mail.smtp.host&quot;, host);</span>
+<span class="nc" id="L338">		config.put(&quot;mail.smtp.port&quot;, Integer.toString(port));</span>
+<span class="nc" id="L339">		return config;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

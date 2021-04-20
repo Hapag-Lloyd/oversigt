@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JiraClientFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.jira</a> &gt; <span class="el_source">JiraClientFactory.java</span></div><h1>JiraClientFactory.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.jira;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.ServerConnection;
+
+/**
+ * Factory for creating {@link JiraClient}s without knowing the implementation
+ *
+ * @author Olaf Neumann
+ *
+ */
+public final class JiraClientFactory {
+<span class="nc" id="L15">	private JiraClientFactory() {</span>
+<span class="nc" id="L16">		throw new RuntimeException(&quot;Do not instantiate this class.&quot;);</span>
+	}
+
+	/**
+	 * Create a new {@link JiraClient} for the given parameters.
+	 *
+	 * @param connection  the server details to be used to create the server
+	 *                    connection
+	 * @param credentials the credentials to be used for authenticating the JIRA
+	 *                    requests
+	 * @return created {@link JiraClient}
+	 * @throws JiraClientException in case of error while creating the client
+	 */
+	public static JiraClient createJiraClient(final ServerConnection connection, final Credentials credentials)
+			throws JiraClientException {
+<span class="nc" id="L31">		return new ThreadedJiraClient(connection, credentials);</span>
+	}
+
+<span class="nc" id="L34">	private static final Table&lt;String, String, UnlimitedJiraClient&gt; CLIENT_CACHE = HashBasedTable.create();</span>
+
+	/**
+	 * Create a new jira client for the givon connection and credentials. Only one
+	 * client per connection and credentials will be created and then cached.
+	 *
+	 * @param connection  where to connect the jira client to
+	 * @param credentials the credentials to use for the jira connection
+	 * @return the newly create jira client
+	 * @throws JiraClientException if something fails while creating the connection
+	 */
+	static synchronized JiraClient createUnlimitedJiraClient(final ServerConnection connection,
+			final Credentials credentials) throws JiraClientException {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">		if (!CLIENT_CACHE.contains(connection.getUrl(), credentials.getUsername())) {</span>
+<span class="nc" id="L48">			CLIENT_CACHE.put(connection.getUrl(),</span>
+<span class="nc" id="L49">					credentials.getUsername(),</span>
+					new UnlimitedJiraClient(connection, credentials));
+		}
+<span class="nc" id="L52">		return CLIENT_CACHE.get(connection.getUrl(), credentials.getUsername());</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

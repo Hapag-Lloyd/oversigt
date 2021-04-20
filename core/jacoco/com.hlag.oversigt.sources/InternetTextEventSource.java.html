@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InternetTextEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">InternetTextEventSource.java</span></div><h1>InternetTextEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logError;
+import static com.hlag.oversigt.util.Utils.logTrace;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import com.google.common.base.Strings;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.sources.event.TextEvent;
+import com.hlag.oversigt.util.JsonUtils;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+
+/**
+ * @deprecated Do not use this event source any longer!
+ */
+@EventSource(displayName = &quot;Internet Text&quot;,
+		description = &quot;Shows a text from a JSON&quot;,
+		view = &quot;Text&quot;,
+		hiddenDataItems = &quot;updated-at-message&quot;)
+@Deprecated
+public class InternetTextEventSource extends AbstractDownloadEventSource&lt;TextEvent&gt; {
+	private static final Configuration JSON_PATH_CONFIGURATION
+<span class="nc" id="L39">			= Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).build();</span>
+
+	private static final String JSONPATH_EXTRACTION_PATTERN_STRING = &quot;\\$\\{((?:[^\\}]|\\}[^$])*)\\}\\$?&quot;;
+
+<span class="nc" id="L43">	private static final Pattern JSONPATH_EXTRACTION_PATTERN = Pattern.compile(JSONPATH_EXTRACTION_PATTERN_STRING);</span>
+
+	// private String pathExpression = &quot;$[*].name&quot;;
+<span class="nc" id="L46">	private String[] pathExpressions = new String[] { &quot;$[*].name&quot; };</span>
+
+<span class="nc" id="L48">	private String stringFormat = &quot;&quot;;</span>
+
+<span class="nc" id="L50">	private String defaultValue = &quot;&quot;;</span>
+
+<span class="nc" id="L52">	private MultiResultBehaviour multiResultBehaviour = MultiResultBehaviour.Random;</span>
+
+<span class="nc" id="L54">	public InternetTextEventSource() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L56">	}</span>
+
+	@Override
+	protected Optional&lt;TextEvent&gt; produceEvent() {
+<span class="nc" id="L60">		logTrace(getLogger(), &quot;Starting event creation&quot;);</span>
+
+		final String body;
+		try {
+<span class="nc" id="L64">			body = downloadString(createConfiguredConnection());</span>
+<span class="nc" id="L65">			logDebug(getLogger(), &quot;Downloaded body&quot;);</span>
+<span class="nc" id="L66">			logTrace(getLogger(), &quot;Body content %s&quot;, body);</span>
+<span class="nc" id="L67">		} catch (final IOException e) {</span>
+<span class="nc" id="L68">			logError(getLogger(), &quot;Unable to download content: %s&quot;, e.getMessage());</span>
+<span class="nc" id="L69">			throw new RuntimeException(e);</span>
+<span class="nc" id="L70">		}</span>
+
+<span class="nc" id="L72">		final List&lt;?&gt; elements = extractElements(body);</span>
+<span class="nc" id="L73">		logDebug(getLogger(), &quot;Extracted text: %s&quot;, elements.toString());</span>
+
+		final String output;
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		if (elements.isEmpty()) {</span>
+<span class="nc" id="L77">			output = getDefaultValue();</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">		} else if (hasStringFormat()) {</span>
+<span class="nc" id="L79">			output = elements.stream()</span>
+<span class="nc" id="L80">					.map(JsonUtils::toJson)</span>
+<span class="nc" id="L81">					.map(this::useStringFormat)</span>
+<span class="nc" id="L82">					.collect(Collectors.joining(&quot;\n&quot;));</span>
+		} else {
+<span class="nc" id="L84">			output = getMultiResultBehaviour().extractElement(elements).toString();</span>
+		}
+
+<span class="nc" id="L87">		return Optional.of(new TextEvent(output));</span>
+	}
+
+	private List&lt;?&gt; extractElements(final String json) {
+<span class="nc" id="L91">		return getJsonPaths().stream()</span>
+<span class="nc" id="L92">				.map(jp -&gt; extractElement(jp, json))</span>
+<span class="nc" id="L93">				.flatMap(Collection::stream)</span>
+<span class="nc" id="L94">				.collect(Collectors.toList());</span>
+	}
+
+	private Collection&lt;?&gt; extractElement(final JsonPath jsonPath, final String json) {
+<span class="nc" id="L98">		final Object result = jsonPath.read(json, JSON_PATH_CONFIGURATION);</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">		if (getLogger().isDebugEnabled()) {</span>
+<span class="nc" id="L100">			getLogger().debug(&quot;Result: &quot; + result);</span>
+		}
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		if (result == null) {</span>
+<span class="nc" id="L104">			return Collections.emptyList();</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">		} else if (result instanceof Collection) {</span>
+<span class="nc" id="L106">			return (Collection&lt;?&gt;) result;</span>
+		} else {
+<span class="nc" id="L108">			return Arrays.asList(result);</span>
+		}
+	}
+
+	private String extractSingleElement(final JsonPath jsonPath, final String json) {
+<span class="nc" id="L113">		return extractElement(jsonPath, json).stream().findFirst().map(Object::toString).orElse(&quot;&quot;);</span>
+	}
+
+	@Property(name = &quot;Default Value&quot;, description = &quot;The default value to show if the JSONPath does not match&quot;)
+	public String getDefaultValue() {
+<span class="nc" id="L118">		return defaultValue;</span>
+	}
+
+	public void setDefaultValue(final String defaultValue) {
+<span class="nc" id="L122">		this.defaultValue = defaultValue;</span>
+<span class="nc" id="L123">	}</span>
+	// @Property(name = &quot;JSONPath Expression&quot;, description = &quot;The path to the values
+	// to be shown. If more than one item is returned one single value will be
+	// chosen randomly.&quot;, type = &quot;text&quot;)
+	// public String getPathExpression() {
+	// return pathExpression;
+	// }
+	// public void setPathExpression(String pathExpression) {
+	// this.pathExpression = pathExpression;
+	// }
+
+	private List&lt;JsonPath&gt; getJsonPaths() {
+		// if (getPathExpressions().length == 0) {
+		// return Arrays.asList(JsonPath.compile(getPathExpression()));
+		// } else {
+<span class="nc" id="L138">		return Arrays.stream(getPathExpressions()).map(JsonPath::compile).collect(Collectors.toList());</span>
+		// }
+	}
+
+	@Property(name = &quot;JSONPath Expressions&quot;,
+			description = &quot;The path to the values to be shown. If more than one item is returned one single value will be chosen randomly.&quot;)
+	@JsonHint(arrayStyle = ArrayStyle.TABLE)
+	public String[] getPathExpressions() {
+<span class="nc" id="L146">		return pathExpressions;</span>
+	}
+
+	public void setPathExpressions(final String[] pathExpressions) {
+<span class="nc" id="L150">		this.pathExpressions = pathExpressions;</span>
+<span class="nc" id="L151">	}</span>
+
+	@Property(name = &quot;Multi Result Behaviour&quot;,
+			description = &quot;How should the event source behave if the JSONPath expression results in more than one result?&quot;)
+	public MultiResultBehaviour getMultiResultBehaviour() {
+<span class="nc" id="L156">		return multiResultBehaviour;</span>
+	}
+
+	public void setMultiResultBehaviour(final MultiResultBehaviour multiResultBehaviour) {
+<span class="nc" id="L160">		this.multiResultBehaviour = multiResultBehaviour;</span>
+<span class="nc" id="L161">	}</span>
+
+	public String getStringFormat() {
+<span class="nc" id="L164">		return stringFormat;</span>
+	}
+
+	@Property(name = &quot;String Format&quot;,
+			description = &quot;Defines how the extracted content will be displayed. To access values from extracted JSON use JSONPath expressions encapsuled in ${ and }$. Example: This is ${$.value.child}$.&quot;)
+	public void setStringFormat(final String stringFormat) {
+<span class="nc" id="L170">		this.stringFormat = stringFormat;</span>
+<span class="nc" id="L171">	}</span>
+
+	private boolean hasStringFormat() {
+<span class="nc bnc" id="L174" title="All 2 branches missed.">		return !Strings.isNullOrEmpty(getStringFormat());</span>
+	}
+
+	private String useStringFormat(final String json) {
+		@SuppressWarnings({ &quot;checkstyle:IllegalInstantiation&quot;, &quot;checkstyle:XIllegalTypeCustom&quot; })
+<span class="nc" id="L179">		final StringBuffer builder = new StringBuffer();</span>
+
+<span class="nc" id="L181">		final Matcher matcher = JSONPATH_EXTRACTION_PATTERN.matcher(getStringFormat());</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">		while (matcher.find()) {</span>
+<span class="nc" id="L183">			final String pathString = matcher.group(1);</span>
+<span class="nc" id="L184">			final JsonPath path = JsonPath.compile(pathString);</span>
+<span class="nc" id="L185">			matcher.appendReplacement(builder, extractSingleElement(path, json));</span>
+<span class="nc" id="L186">		}</span>
+<span class="nc" id="L187">		matcher.appendTail(builder);</span>
+<span class="nc" id="L188">		return builder.toString();</span>
+	}
+
+<span class="nc" id="L191">	public enum MultiResultBehaviour {</span>
+<span class="nc" id="L192">		First(c -&gt; c.iterator().next()),</span>
+<span class="nc" id="L193">		Last(c -&gt; c.stream().skip(c.size() - 1).findFirst().get()),</span>
+<span class="nc" id="L194">		Random(c -&gt; c.stream().skip((long) (Math.random() * c.size())).findFirst().get());</span>
+
+		private final Function&lt;Collection&lt;?&gt;, ?&gt; extractor;
+
+<span class="nc" id="L198">		MultiResultBehaviour(final Function&lt;Collection&lt;?&gt;, ?&gt; extractor) {</span>
+<span class="nc" id="L199">			this.extractor = extractor;</span>
+<span class="nc" id="L200">		}</span>
+
+		private Object extractElement(final Collection&lt;?&gt; objects) {
+<span class="nc" id="L203">			return extractor.apply(objects);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

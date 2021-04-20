@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractJiraEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractJiraEventSource.java</span></div><h1>AbstractJiraEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
+import com.atlassian.jira.rest.client.api.RestClientException;
+import com.atlassian.jira.rest.client.api.domain.BasicComponent;
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.domain.IssueField;
+import com.atlassian.jira.rest.client.api.domain.User;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import com.hlag.oversigt.connect.jira.JiraClient;
+import com.hlag.oversigt.connect.jira.JiraClientException;
+import com.hlag.oversigt.connect.jira.JiraClientFactory;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.ServerConnection;
+import com.hlag.oversigt.sources.data.DisplayOption;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+
+import de.larssh.utils.Nullables;
+
+<span class="nc" id="L50">public abstract class AbstractJiraEventSource&lt;T extends OversigtEvent&gt; extends ScheduledEventSource&lt;T&gt; {</span>
+<span class="nc" id="L51">	private static final Pattern HANDLE_AUTHENTICATION_EXCEPTION_PATTERN = Pattern.compile(&quot;[\r\n]+&quot;);</span>
+
+<span class="nc" id="L53">	private ServerConnection jiraConnection = ServerConnection.EMPTY;</span>
+
+<span class="nc" id="L55">	private Credentials jiraCredentials = Credentials.EMPTY;</span>
+
+<span class="nc" id="L57">	private String query = &quot;&quot;;</span>
+
+<span class="nc" id="L59">	private final Set&lt;AggregationType&gt; aggregationTypes</span>
+<span class="nc" id="L60">			= Collections.synchronizedSet(new TreeSet&lt;&gt;(Arrays.asList(AggregationType.STATUS)));</span>
+
+<span class="nc" id="L62">	private DisplayOption[] displayOptions = new DisplayOption[0];</span>
+
+<span class="nc" id="L64">	private DisplayOption defaultDisplayOption = new DisplayOption();</span>
+
+<span class="nc" id="L66">	private boolean showEmptyCategories = false;</span>
+
+<span class="nc" id="L68">	private ShowUnknownCategories showUnknownCategories = ShowUnknownCategories.ALL;</span>
+
+	@Override
+	protected void shutDown() throws Exception {
+<span class="nc" id="L72">		super.shutDown();</span>
+<span class="nc" id="L73">	}</span>
+
+	protected Map&lt;DisplayOption, Set&lt;Issue&gt;&gt; getJiraTickets() throws EventSourceException {
+		// List all issues as defined by JQL query
+		final List&lt;Issue&gt; issues;
+		try {
+<span class="nc" id="L79">			final JiraClient client = JiraClientFactory.createJiraClient(getJiraConnection(), getJiraCredentials());</span>
+<span class="nc" id="L80">			try (StartedAction action = getStatisticsCollector().startAction(&quot;JIRA query&quot;, getQuery())) {</span>
+<span class="nc" id="L81">				issues = client.search(getQuery());</span>
+			}
+<span class="nc" id="L83">		} catch (final JiraClientException | TimeoutException e) {</span>
+<span class="nc" id="L84">			return handleException(e);</span>
+<span class="nc" id="L85">		}</span>
+
+		// Initialize entries per user-defined category to keep the user-defined order
+<span class="nc" id="L88">		Map&lt;DisplayOption, Set&lt;Issue&gt;&gt; issuesPerCategory = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		for (final DisplayOption displayOption : getDisplayOptions()) {</span>
+<span class="nc" id="L90">			issuesPerCategory.put(displayOption, new HashSet&lt;&gt;());</span>
+		}
+
+		// Find known (categories) and unknown DisplayOptions per issue
+<span class="nc" id="L94">		final Map&lt;DisplayOption, Set&lt;Issue&gt;&gt; issuesUnknown = new TreeMap&lt;&gt;();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">		for (final Issue issue : issues) {</span>
+<span class="nc" id="L96">			boolean containedKnownDislayOption = false;</span>
+
+			// Add issues to all known (categories) DisplayOptions,
+			// following the user-defined option &quot;showUnknownDisplayOptions&quot; for unknown
+			// DisplayOptions
+<span class="nc bnc" id="L101" title="All 2 branches missed.">			for (final DisplayOption displayOption : getDisplayOptions(issue)) {</span>
+<span class="nc bnc" id="L102" title="All 4 branches missed.">				if (issuesPerCategory.containsKey(displayOption) &amp;&amp; !Strings.isNullOrEmpty(displayOption.getValue())) {</span>
+<span class="nc" id="L103">					issuesPerCategory.get(displayOption).add(issue);</span>
+<span class="nc" id="L104">					containedKnownDislayOption = true;</span>
+				} else {
+<span class="nc bnc" id="L106" title="All 2 branches missed.">					final boolean addUnknownIssue = getShowUnknownCategories() == ShowUnknownCategories.ALL</span>
+<span class="nc bnc" id="L107" title="All 4 branches missed.">							|| getShowUnknownCategories() == ShowUnknownCategories.UNKNOWN_ONLY</span>
+									&amp;&amp; !containedKnownDislayOption;
+<span class="nc bnc" id="L109" title="All 2 branches missed.">					if (addUnknownIssue) {</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">						if (!issuesUnknown.containsKey(displayOption)) {</span>
+<span class="nc" id="L111">							issuesUnknown.put(displayOption, new HashSet&lt;&gt;());</span>
+						}
+<span class="nc" id="L113">						issuesUnknown.get(displayOption).add(issue);</span>
+					}
+				}
+<span class="nc" id="L116">			}</span>
+<span class="nc" id="L117">		}</span>
+
+		// Add unknown categories afterwards to have them sorted first (using TreeMap)
+<span class="nc" id="L120">		issuesPerCategory.putAll(issuesUnknown);</span>
+
+		// If not getShowEmptyCategories then remove empty DisplayOption entries
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		if (!getShowEmptyCategories()) {</span>
+<span class="nc" id="L124">			issuesPerCategory = issuesPerCategory.entrySet()</span>
+<span class="nc" id="L125">					.stream()</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">					.filter(e -&gt; !e.getValue().isEmpty())</span>
+<span class="nc" id="L127">					.collect(de.larssh.utils.Collectors.toLinkedHashMap());</span>
+		}
+
+<span class="nc" id="L130">		return issuesPerCategory;</span>
+	}
+
+	private DisplayOption getUnknownDisplayOptions(final AggregationType aggregationType,
+			final Issue issue,
+			final String value) {
+<span class="nc" id="L136">		final DisplayOption defaultDisplayOption = getDefaultDisplayOption();</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">		if (!Strings.isNullOrEmpty(defaultDisplayOption.getDisplayValue())) {</span>
+<span class="nc" id="L138">			return defaultDisplayOption;</span>
+		}
+<span class="nc" id="L140">		return new DisplayOption(aggregationType.getDisplayValue(issue, value));</span>
+	}
+
+	@Property(name = &quot;Jira URL&quot;)
+	public ServerConnection getJiraConnection() {
+<span class="nc" id="L145">		return jiraConnection;</span>
+	}
+
+	public void setJiraConnection(final ServerConnection jiraConnection) {
+<span class="nc" id="L149">		this.jiraConnection = jiraConnection;</span>
+<span class="nc" id="L150">	}</span>
+
+	@Property(name = &quot;Jira Credentials&quot;, description = &quot;The credentials to be used for Jira log in.&quot;)
+	public Credentials getJiraCredentials() {
+<span class="nc" id="L154">		return jiraCredentials;</span>
+	}
+
+	public void setJiraCredentials(final Credentials jiraCredentials) {
+<span class="nc" id="L158">		this.jiraCredentials = jiraCredentials;</span>
+<span class="nc" id="L159">	}</span>
+
+	@Property(name = &quot;Search Query&quot;)
+	public String getQuery() {
+<span class="nc" id="L163">		return query;</span>
+	}
+
+	public void setQuery(final String query) {
+<span class="nc" id="L167">		this.query = query;</span>
+<span class="nc" id="L168">	}</span>
+
+	@Property(name = &quot;Aggregate values by&quot;)
+	public AggregationType[] getAggregationTypes() {
+<span class="nc" id="L172">		return aggregationTypes.toArray(new AggregationType[0]);</span>
+	}
+
+	public void setAggregationTypes(final AggregationType[] aggregationTypes) {
+<span class="nc" id="L176">		synchronized (this.aggregationTypes) {</span>
+<span class="nc" id="L177">			this.aggregationTypes.clear();</span>
+<span class="nc" id="L178">			this.aggregationTypes.addAll(Arrays.asList(aggregationTypes));</span>
+<span class="nc" id="L179">		}</span>
+<span class="nc" id="L180">	}</span>
+
+	@Property(name = &quot;Display Options&quot;,
+			description = &quot;Optional mapping of original display values to originated display options, such as value and color. Values are handled as regular expression.&quot;)
+	public DisplayOption[] getDisplayOptions() {
+<span class="nc" id="L185">		return displayOptions;</span>
+	}
+
+	/**
+	 * Returns all matching DisplayOptions of an issue The returned set is ordered
+	 * by known categories first and unknown DisplayOptions last. For no further
+	 * ordering is guaranteed.
+	 */
+	private Set&lt;DisplayOption&gt; getDisplayOptions(final Issue issue) {
+		// Collect attribute values to match
+<span class="nc" id="L195">		final Map&lt;String, AggregationType&gt; values = new TreeMap&lt;&gt;();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		for (final AggregationType aggregationType : getAggregationTypes()) {</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">			for (final String value : aggregationType.getAttributeValues(issue)) {</span>
+<span class="nc" id="L198">				values.put(value, aggregationType);</span>
+<span class="nc" id="L199">			}</span>
+		}
+
+		// Collect DisplayOptions per value
+<span class="nc" id="L203">		final Set&lt;DisplayOption&gt; displayOptions = new LinkedHashSet&lt;&gt;();</span>
+<span class="nc" id="L204">		final Set&lt;DisplayOption&gt; displayOptionsUnknown = new TreeSet&lt;&gt;();</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		for (final String value : values.keySet()) {</span>
+<span class="nc" id="L206">			boolean foundDisplayOption = false;</span>
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">			for (final DisplayOption displayOption : getDisplayOptions()) {</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">				if (AggregationType.matches(displayOption, value)) {</span>
+<span class="nc" id="L210">					displayOptions.add(displayOption);</span>
+<span class="nc" id="L211">					foundDisplayOption = true;</span>
+				}
+			}
+
+<span class="nc bnc" id="L215" title="All 2 branches missed.">			if (!foundDisplayOption) {</span>
+<span class="nc" id="L216">				displayOptionsUnknown.add(getUnknownDisplayOptions(values.get(value), issue, value));</span>
+			}
+<span class="nc" id="L218">		}</span>
+
+<span class="nc" id="L220">		displayOptions.addAll(displayOptionsUnknown);</span>
+<span class="nc" id="L221">		return displayOptions;</span>
+	}
+
+	public void setDisplayOptions(final DisplayOption[] displayOptions) {
+<span class="nc" id="L225">		this.displayOptions = displayOptions;</span>
+<span class="nc" id="L226">	}</span>
+
+	@Property(name = &quot;Default Display Option&quot;,
+			description = &quot;Optionally all unmapped display values can be displayed by this color. By defining a Default Display Option display value, all unmapped display values are mapped to just one entry with that specified display value.&quot;)
+	public DisplayOption getDefaultDisplayOption() {
+<span class="nc" id="L231">		return defaultDisplayOption;</span>
+	}
+
+	public void setDefaultDisplayOption(final DisplayOption defaultDisplayOption) {
+<span class="nc" id="L235">		this.defaultDisplayOption = defaultDisplayOption;</span>
+<span class="nc" id="L236">	}</span>
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = &quot;Show Empty Categories&quot;,
+			description = &quot;If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.&quot;)
+	public boolean getShowEmptyCategories() {
+<span class="nc" id="L242">		return showEmptyCategories;</span>
+	}
+
+	public void setShowEmptyCategories(final boolean showEmptyCategories) {
+<span class="nc" id="L246">		this.showEmptyCategories = showEmptyCategories;</span>
+<span class="nc" id="L247">	}</span>
+
+	@Property(name = &quot;Show Unknown Categories&quot;,
+			description = &quot;Handles how values without a matching Display Option are handled.\n'ALL' shows them anyway, 'UNKNOWN_ONLY' shows them only if no Display Option matched the issue at all and 'NONE' ignores unknown values at all.&quot;)
+	public ShowUnknownCategories getShowUnknownCategories() {
+<span class="nc" id="L252">		return showUnknownCategories;</span>
+	}
+
+	public void setShowUnknownCategories(final ShowUnknownCategories showUnknownCategories) {
+<span class="nc" id="L256">		this.showUnknownCategories = showUnknownCategories;</span>
+<span class="nc" id="L257">	}</span>
+
+	private &lt;X&gt; X handleException(final Exception original) throws EventSourceException {
+<span class="nc" id="L260">		Throwable previous = null;</span>
+<span class="nc" id="L261">		Throwable throwable = original;</span>
+
+<span class="nc bnc" id="L263" title="All 4 branches missed.">		while (throwable != null &amp;&amp; throwable != previous) {</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">			if (throwable instanceof TimeoutException) {</span>
+<span class="nc" id="L265">				throw new EventSourceException(&quot;JIRA request timed out while waiting for a free connection.&quot;);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">			} else if (throwable instanceof JiraClientException) {</span>
+<span class="nc" id="L267">				throw new EventSourceException(throwable.getMessage(), throwable.getCause());</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">			} else if (throwable instanceof RestClientException) {</span>
+<span class="nc" id="L269">				final RestClientException rce = (RestClientException) throwable;</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">				if (rce.getStatusCode().isPresent()</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">						&amp;&amp; rce.getStatusCode().get() == 500</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">						&amp;&amp; rce.getCause() instanceof JSONException) {</span>
+<span class="nc" id="L273">					final JSONException je = (JSONException) rce.getCause();</span>
+<span class="nc" id="L274">					final String[] messageParts = HANDLE_AUTHENTICATION_EXCEPTION_PATTERN.split(je.getMessage(), 0);</span>
+<span class="nc" id="L275">					final List&lt;String&gt; auths = Arrays.stream(messageParts)</span>
+<span class="nc" id="L276">							.filter(ste -&gt; ste.toLowerCase().contains(&quot;authenticator&quot;))</span>
+<span class="nc" id="L277">							.collect(Collectors.toList());</span>
+
+<span class="nc bnc" id="L279" title="All 4 branches missed.">					if (contains(auths, &quot;getUserFromBasicAuthentication&quot;) &amp;&amp; contains(auths, &quot;checkAuthenticated&quot;)) {</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">						if (getJiraCredentials() == Credentials.EMPTY) {</span>
+<span class="nc" id="L281">							throw new EventSourceException(&quot;No credentials configured.&quot;);</span>
+						}
+<span class="nc" id="L283">						throw new EventSourceException(</span>
+<span class="nc" id="L284">								&quot;Unable to log in to JIRA. Username: &quot; + getJiraCredentials().getUsername());</span>
+					}
+				}
+			}
+<span class="nc bnc" id="L288" title="All 2 branches missed.">			if (Throwables.getRootCause(throwable) instanceof SocketTimeoutException) {</span>
+<span class="nc" id="L289">				throw new EventSourceException(&quot;JIRA not available: Timeout&quot;);</span>
+			}
+<span class="nc bnc" id="L291" title="All 2 branches missed.">			if (Throwables.getRootCause(throwable) instanceof JSONException) {</span>
+<span class="nc" id="L292">				throw new EventSourceException(&quot;JIRA not available: Invalid JSON returned from server&quot;);</span>
+			}
+<span class="nc" id="L294">			previous = throwable;</span>
+<span class="nc" id="L295">			throwable = throwable.getCause();</span>
+		}
+
+<span class="nc" id="L298">		throw new RuntimeException(original);</span>
+	}
+
+	private static boolean contains(final Collection&lt;String&gt; haystack, final String needle) {
+<span class="nc" id="L302">		return haystack.stream().filter(s -&gt; s.contains(needle)).findAny().isPresent();</span>
+	}
+
+<span class="nc" id="L305">	@JsonHint(arrayStyle = ArrayStyle.TABLE)</span>
+	public enum AggregationType {
+<span class="nc" id="L307">		ASSIGNEE(&quot;Assignee&quot;,</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">				i -&gt; i.getAssignee() == null ? null : i.getAssignee().getName(),</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">				i -&gt; i.getAssignee() == null ? null : i.getAssignee().getDisplayName()),</span>
+<span class="nc" id="L310">		COMPONENTS(&quot;Components&quot;,</span>
+<span class="nc" id="L311">				i -&gt; StreamSupport.stream(i.getComponents().spliterator(), false)</span>
+<span class="nc" id="L312">						.map(BasicComponent::getName)</span>
+<span class="nc" id="L313">						.collect(Collectors.toSet()),</span>
+<span class="nc" id="L314">				(i, v) -&gt; v),</span>
+<span class="nc" id="L315">		ISSUE_TYPE(&quot;Issue Type&quot;, i -&gt; i.getIssueType().getName()),</span>
+<span class="nc" id="L316">		PRIORITY(&quot;Priority&quot;, i -&gt; i.getPriority().getName()),</span>
+<span class="nc" id="L317">		PROJECT(&quot;Project&quot;, i -&gt; i.getProject().getName()),</span>
+<span class="nc" id="L318">		REPORTER(&quot;Reporter&quot;, i -&gt; i.getReporter().getName(), i -&gt; i.getReporter().getDisplayName()),</span>
+<span class="nc" id="L319">		RESPONSIBLE_PERSONS(&quot;Responsible Persons&quot;,</span>
+<span class="nc" id="L320">				i -&gt; getUserNamesOfResponsiblePersons(i.getFieldByName(&quot;Responsible Persons&quot;)),</span>
+<span class="nc" id="L321">				(i, v) -&gt; getDisplayNameOfResponsiblePerson(i.getFieldByName(&quot;Responsible Persons&quot;), v)),</span>
+<span class="nc" id="L322">		STATUS(&quot;Status&quot;, i -&gt; i.getStatus().getName()),</span>
+<span class="nc" id="L323">		WORKER(&quot;Worker&quot;,</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">				i -&gt; i.getFieldByName(&quot;Worker&quot;).getValue() == null</span>
+						? null
+<span class="nc" id="L326">						: ((User) i.getFieldByName(&quot;Worker&quot;).getValue()).getName(),</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">				i -&gt; i.getFieldByName(&quot;Worker&quot;).getValue() == null</span>
+						? null
+<span class="nc" id="L329">						: ((User) i.getFieldByName(&quot;Worker&quot;).getValue()).getDisplayName());</span>
+
+		private static String getDisplayNameOfResponsiblePerson(final IssueField field, final String name) {
+			try {
+<span class="nc" id="L333">				final JSONArray responsiblePersons = (JSONArray) field.getValue();</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">				for (int i = 0; i &lt; responsiblePersons.length(); i += 1) {</span>
+<span class="nc" id="L335">					final JSONObject person = responsiblePersons.getJSONObject(i);</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">					if (person.getString(&quot;name&quot;).equals(name)) {</span>
+<span class="nc" id="L337">						return person.getString(&quot;displayName&quot;);</span>
+					}
+				}
+<span class="nc" id="L340">				return name;</span>
+<span class="nc" id="L341">			} catch (final JSONException e) {</span>
+<span class="nc" id="L342">				throw new RuntimeException(&quot;Unable to extract responsible person.&quot;, e);</span>
+			}
+		}
+
+		private static List&lt;String&gt; getUserNamesOfResponsiblePersons(final IssueField field) {
+			try {
+<span class="nc" id="L348">				final List&lt;String&gt; names = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">				if (field.getValue() instanceof JSONArray) {</span>
+<span class="nc" id="L350">					final JSONArray responsiblePersons = (JSONArray) field.getValue();</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">					if (responsiblePersons != null) {</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">						for (int i = 0; i &lt; responsiblePersons.length(); i += 1) {</span>
+<span class="nc" id="L353">							names.add(responsiblePersons.getJSONObject(i).getString(&quot;name&quot;));</span>
+						}
+					}
+				}
+<span class="nc" id="L357">				return names;</span>
+<span class="nc" id="L358">			} catch (final JSONException e) {</span>
+<span class="nc" id="L359">				throw new RuntimeException(&quot;Unable to extract responsible persons.&quot;, e);</span>
+			}
+		}
+
+		public static boolean matches(final DisplayOption displayOption, final String attributeValue) {
+<span class="nc" id="L364">			final Pattern pattern = Pattern.compile(displayOption.getValue());</span>
+<span class="nc" id="L365">			return de.larssh.utils.text.Strings.matches(Nullables.orElse(attributeValue, &quot;&quot;), pattern);</span>
+		}
+
+		private final Function&lt;Issue, Collection&lt;String&gt;&gt; attributeValuesProducer;
+
+		private final String displayValue;
+
+		private final BiFunction&lt;Issue, String, String&gt; displayValueProducer;
+
+		AggregationType(final String displayValue, final Function&lt;Issue, String&gt; attributeValueProducer) {
+<span class="nc" id="L375">			this(displayValue, i -&gt; {</span>
+<span class="nc" id="L376">				final String value = attributeValueProducer.apply(i);</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">				return value == null ? Collections.emptyList() : Arrays.asList(value);</span>
+<span class="nc" id="L378">			}, (i, v) -&gt; v);</span>
+<span class="nc" id="L379">		}</span>
+
+		AggregationType(final String displayValue,
+				final Function&lt;Issue, String&gt; attributeValueProducer,
+				final Function&lt;Issue, String&gt; displayValueProducer) {
+<span class="nc" id="L384">			this(displayValue, i -&gt; {</span>
+<span class="nc" id="L385">				final String value = attributeValueProducer.apply(i);</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">				return value == null ? Collections.emptyList() : Arrays.asList(value);</span>
+<span class="nc" id="L387">			}, (i, v) -&gt; displayValueProducer.apply(i));</span>
+<span class="nc" id="L388">		}</span>
+
+		AggregationType(final String displayValue,
+				final Function&lt;Issue, Collection&lt;String&gt;&gt; attributeValuesProducer,
+<span class="nc" id="L392">				final BiFunction&lt;Issue, String, String&gt; displayValueProducer) {</span>
+<span class="nc" id="L393">			this.attributeValuesProducer = attributeValuesProducer;</span>
+<span class="nc" id="L394">			this.displayValue = displayValue;</span>
+<span class="nc" id="L395">			this.displayValueProducer = displayValueProducer;</span>
+<span class="nc" id="L396">		}</span>
+
+		public Collection&lt;String&gt; getAttributeValues(final Issue issue) {
+<span class="nc" id="L399">			return attributeValuesProducer.apply(issue);</span>
+		}
+
+		public String getDisplayValue() {
+<span class="nc" id="L403">			return displayValue;</span>
+		}
+
+		public String getDisplayValue(final Issue issue, final String value) {
+<span class="nc" id="L407">			return displayValueProducer.apply(issue, value);</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L412">			return displayValue;</span>
+		}
+	}
+
+<span class="nc" id="L416">	private enum ShowUnknownCategories {</span>
+<span class="nc" id="L417">		ALL,</span>
+<span class="nc" id="L418">		UNKNOWN_ONLY,</span>
+<span class="nc" id="L419">		NONE;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

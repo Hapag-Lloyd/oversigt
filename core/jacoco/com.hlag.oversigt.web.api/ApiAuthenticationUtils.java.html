@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiAuthenticationUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiAuthenticationUtils.java</span></div><h1>ApiAuthenticationUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import static com.hlag.oversigt.core.HttpHandlers.MAPPING_API;
+
+import java.util.Base64;
+import java.util.Date;
+import java.util.UUID;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.Principal;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+
+/**
+ * @author Olaf Neumann see
+ *         https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+ *
+ */
+@Singleton
+public class ApiAuthenticationUtils {
+	private final String issuer;
+
+	private final byte[] apiSecret;
+
+	private final SignatureAlgorithm signatureAlgorithm;
+
+	private final long apiTtl;
+
+	private final Authenticator authenticator;
+
+	@Inject
+	public ApiAuthenticationUtils(@Named(&quot;hostname&quot;) final String hostname,
+			@Named(&quot;api.secret.base64&quot;) final String apiSecretBase64,
+			final Authenticator authenticator,
+			final SignatureAlgorithm signatureAlgorithm,
+<span class="nc" id="L46">			@Named(&quot;api.ttl&quot;) final long ttl) {</span>
+<span class="nc" id="L47">		issuer = hostname + MAPPING_API;</span>
+<span class="nc" id="L48">		apiSecret = Base64.getDecoder().decode(apiSecretBase64);</span>
+<span class="nc" id="L49">		this.signatureAlgorithm = signatureAlgorithm;</span>
+<span class="nc" id="L50">		apiTtl = ttl;</span>
+<span class="nc" id="L51">		this.authenticator = authenticator;</span>
+<span class="nc" id="L52">	}</span>
+
+	public Principal authenticate(final String username, final String password) throws Exception {
+		// Authenticate against a database, LDAP, file or whatever
+		// Throw an Exception if the credentials are invalid
+
+<span class="nc" id="L58">		return authenticator//</span>
+<span class="nc" id="L59">				.login(username, password)</span>
+<span class="nc" id="L60">				.orElseThrow(() -&gt; new RuntimeException(&quot;Unable to log in&quot;));</span>
+	}
+
+	public String issueToken(final Principal principal) throws IllegalArgumentException {
+<span class="nc" id="L64">		final long nowMillis = System.currentTimeMillis();</span>
+<span class="nc" id="L65">		final Date now = new Date(nowMillis);</span>
+<span class="nc" id="L66">		final String id = nowMillis + &quot;-&quot; + UUID.randomUUID().toString();</span>
+
+<span class="nc" id="L68">		final JwtBuilder builder = Jwts.builder()</span>
+<span class="nc" id="L69">				.setId(id)</span>
+<span class="nc" id="L70">				.setIssuedAt(now)</span>
+<span class="nc" id="L71">				.setSubject(&quot;oversigt-api&quot;)</span>
+<span class="nc" id="L72">				.setIssuer(issuer)</span>
+<span class="nc" id="L73">				.claim(&quot;username&quot;, principal.getUsername())</span>
+<span class="nc" id="L74">				.signWith(signatureAlgorithm, apiSecret);</span>
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		if (apiTtl &gt; 0) {</span>
+<span class="nc" id="L77">			final long expMillis = nowMillis + apiTtl;</span>
+<span class="nc" id="L78">			final Date exp = new Date(expMillis);</span>
+<span class="nc" id="L79">			builder.setExpiration(exp);</span>
+		}
+
+<span class="nc" id="L82">		return builder.compact();</span>
+	}
+
+	public Principal validateToken(final String token)
+			throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException {
+		// Check if the token was issued by the server and if it's not expired
+		// Throw an Exception if the token is invalid
+
+		// This line will throw an exception if it is not a signed JWS (as expected)
+<span class="nc" id="L91">		final Claims claims = Jwts.parser()</span>
+<span class="nc" id="L92">				.setSigningKey(apiSecret)</span>
+<span class="nc" id="L93">				.requireSubject(&quot;oversigt-api&quot;)</span>
+<span class="nc" id="L94">				.requireIssuer(issuer)</span>
+<span class="nc" id="L95">				.parseClaimsJws(token)</span>
+<span class="nc" id="L96">				.getBody();</span>
+
+<span class="nc bnc" id="L98" title="All 2 branches missed.">		if (claims.getExpiration().before(new Date())) {</span>
+<span class="nc" id="L99">			throw new RuntimeException(&quot;JWT expired&quot;);</span>
+		}
+
+<span class="nc" id="L102">		return Principal.loadPrincipal(authenticator, claims.get(&quot;username&quot;, String.class)).get();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

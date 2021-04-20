@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceInstance.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.model</a> &gt; <span class="el_source">EventSourceInstance.java</span></div><h1>EventSourceInstance.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.model;
+
+import java.time.Duration;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hlag.oversigt.controller.DashboardController;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class EventSourceInstance implements Comparable&lt;EventSourceInstance&gt; {
+<span class="nc" id="L17">	public static final Comparator&lt;EventSourceInstance&gt; COMPARATOR = Comparator.comparing(EventSourceInstance::getName)</span>
+<span class="nc" id="L18">			.thenComparing(Comparator.comparing(EventSourceInstance::getId));</span>
+
+	@JsonIgnore
+	private final EventSourceDescriptor descriptor;
+
+	private String id;
+
+	private String name;
+
+	private boolean enabled;
+
+	private Duration frequency;
+
+<span class="nc" id="L31">	private final Map&lt;EventSourceProperty, Object&gt; propertyValues = new HashMap&lt;&gt;();</span>
+
+	private final String createdBy;
+
+	private String lastChangeBy;
+
+	public EventSourceInstance(final EventSourceDescriptor descriptor,
+			final String id,
+			final String name,
+			final boolean enabled,
+			final Duration frequency,
+			final String createdBy,
+<span class="nc" id="L43">			final String lastChangeBy) {</span>
+<span class="nc" id="L44">		this.descriptor = descriptor;</span>
+<span class="nc" id="L45">		this.id = id;</span>
+<span class="nc" id="L46">		this.name = name;</span>
+<span class="nc" id="L47">		this.enabled = enabled;</span>
+<span class="nc" id="L48">		this.frequency = frequency;</span>
+
+<span class="nc" id="L50">		this.createdBy = Objects.requireNonNull(createdBy, &quot;The creator of an event source must not be null&quot;);</span>
+<span class="nc" id="L51">		this.lastChangeBy = Objects.requireNonNull(lastChangeBy);</span>
+<span class="nc" id="L52">	}</span>
+
+	public EventSourceDescriptor getDescriptor() {
+<span class="nc" id="L55">		return descriptor;</span>
+	}
+
+	// TODO make non-public
+	public Object getPropertyValue(final EventSourceProperty property) {
+<span class="nc" id="L60">		return propertyValues.get(property);</span>
+	}
+
+	public String getPropertyValueString(final EventSourceProperty property) {
+<span class="nc" id="L64">		final Optional&lt;Object&gt; value = Optional.ofNullable(propertyValues.get(property));</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">		if (!property.getClazz().isPresent()) {</span>
+<span class="nc" id="L66">			return value.map(v -&gt; (String) v).orElse(&quot;&quot;);</span>
+		}
+<span class="nc" id="L68">		return value.map(v -&gt; DashboardController.getInstance().getValueString(property, v)).orElse(&quot;&quot;);</span>
+	}
+
+	public String getId() {
+<span class="nc" id="L72">		return id;</span>
+	}
+
+	public String getName() {
+<span class="nc" id="L76">		return name;</span>
+	}
+
+	public void setName(final String name) {
+<span class="nc" id="L80">		this.name = name;</span>
+<span class="nc" id="L81">	}</span>
+
+	public Duration getFrequency() {
+<span class="nc" id="L84">		return frequency;</span>
+	}
+
+	public void setFrequency(final Duration frequency) {
+<span class="nc" id="L88">		this.frequency = frequency;</span>
+<span class="nc" id="L89">	}</span>
+
+	public boolean isEnabled() {
+<span class="nc" id="L92">		return enabled;</span>
+	}
+
+	public void setEnabled(final boolean enabled) {
+<span class="nc" id="L96">		this.enabled = enabled;</span>
+<span class="nc" id="L97">	}</span>
+
+	// TODO make non-public
+	public void setProperty(final EventSourceProperty property, final Object value) {
+<span class="nc" id="L101">		Objects.requireNonNull(value, &quot;The value of a property must not be null&quot;);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (!property.getClazz().isPresent()</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">				&amp;&amp; !property.isCustomValuesAllowed()</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">				&amp;&amp; !property.getAllowedValues().isEmpty()</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">				&amp;&amp; !property.getAllowedValues().contains(value)) {</span>
+<span class="nc" id="L106">			throw new RuntimeException(&quot;The value '&quot; + value + &quot;' is not allowed for property &quot; + property.getName());</span>
+		}
+<span class="nc" id="L108">		propertyValues.put(property, value);</span>
+<span class="nc" id="L109">	}</span>
+
+	public void setPropertyString(final EventSourceProperty property, final String stringValue) {
+<span class="nc" id="L112">		setProperty(property, DashboardController.getInstance().createObjectFromString(property, stringValue));</span>
+<span class="nc" id="L113">	}</span>
+
+	public boolean hasPropertyValue(final EventSourceProperty property) {
+<span class="nc" id="L116">		return propertyValues.containsKey(property);</span>
+	}
+
+	public void removeProperty(final EventSourceProperty property) {
+<span class="nc" id="L120">		propertyValues.remove(property);</span>
+<span class="nc" id="L121">	}</span>
+
+	public String getCreatedBy() {
+<span class="nc" id="L124">		return createdBy;</span>
+	}
+
+	public String getLastChangeBy() {
+<span class="nc" id="L128">		return lastChangeBy;</span>
+	}
+
+	public void setLastChangeBy(final String lastChangeBy) {
+<span class="nc" id="L132">		this.lastChangeBy = lastChangeBy;</span>
+<span class="nc" id="L133">	}</span>
+
+	@Override
+	public int compareTo(@Nullable final EventSourceInstance that) {
+<span class="nc" id="L137">		return COMPARATOR.compare(this, that);</span>
+	}
+
+	@Override
+	public int hashCode() {
+<span class="nc" id="L142">		final int prime = 31;</span>
+<span class="nc" id="L143">		int result = 1;</span>
+<span class="nc" id="L144">		result = prime * result + id.hashCode();</span>
+<span class="nc" id="L145">		result = prime * result + name.hashCode();</span>
+<span class="nc" id="L146">		return result;</span>
+	}
+
+	@Override
+	public boolean equals(@Nullable final Object obj) {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (this == obj) {</span>
+<span class="nc" id="L152">			return true;</span>
+		}
+<span class="nc bnc" id="L154" title="All 2 branches missed.">		if (obj == null) {</span>
+<span class="nc" id="L155">			return false;</span>
+		}
+<span class="nc bnc" id="L157" title="All 2 branches missed.">		if (getClass() != obj.getClass()) {</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">			if (obj instanceof String) {</span>
+<span class="nc" id="L159">				return obj.equals(getId());</span>
+			}
+<span class="nc" id="L161">			return false;</span>
+		}
+<span class="nc" id="L163">		final EventSourceInstance other = (EventSourceInstance) obj;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		if (!id.equals(other.id)) {</span>
+<span class="nc" id="L165">			return false;</span>
+		}
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if (!name.equals(other.name)) {</span>
+<span class="nc" id="L168">			return false;</span>
+		}
+<span class="nc" id="L170">		return true;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L175">		return id</span>
+				+ &quot; \&quot;&quot;
+				+ name
+				+ &quot;\&quot;&quot;
+<span class="nc" id="L179">				+ descriptor.getServiceClass().map(c -&gt; &quot; (&quot; + c.getSimpleName() + &quot;)&quot;).orElse(&quot;&quot;);</span>
+	}
+
+	public static Predicate&lt;EventSourceInstance&gt; createFilter(final String filter) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		return i -&gt; i.getName().toLowerCase().contains(filter)</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">				|| i.getId().toLowerCase().contains(filter)</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">				|| Optional.ofNullable(i.getFrequency()).map(Object::toString).orElse(&quot;&quot;).toLowerCase().contains(filter)</span>
+<span class="nc" id="L186">				|| i.getDescriptor()</span>
+<span class="nc" id="L187">						.getProperties()</span>
+<span class="nc" id="L188">						.stream()</span>
+<span class="nc" id="L189">						.filter(i::hasPropertyValue)</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">						.anyMatch(p -&gt; i.getPropertyValueString(p).toLowerCase().contains(filter))</span>
+<span class="nc" id="L191">				|| i.getDescriptor()</span>
+<span class="nc" id="L192">						.getDataItems()</span>
+<span class="nc" id="L193">						.stream()</span>
+<span class="nc" id="L194">						.filter(i::hasPropertyValue)</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">						.anyMatch(p -&gt; i.getPropertyValueString(p).toLowerCase().contains(filter));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

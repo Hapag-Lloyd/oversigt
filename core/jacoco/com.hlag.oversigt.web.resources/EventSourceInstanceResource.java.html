@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceInstanceResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">EventSourceInstanceResource.java</span></div><h1>EventSourceInstanceResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static com.hlag.oversigt.util.JsonUtils.removePasswords;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.ok;
+
+import java.net.URI;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceDescriptorController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.controller.EventSourceKey;
+import com.hlag.oversigt.controller.InvalidKeyException;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.resources.DashboardResource.DashboardInfo;
+import com.hlag.oversigt.web.resources.EventSourceStatusResource.EventSourceInstanceState;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;EventSource&quot; },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Path(&quot;/event-source/instances&quot;)
+@Singleton
+public class EventSourceInstanceResource {
+<span class="nc" id="L78">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceInstanceResource.class);</span>
+
+	@Inject
+	private EventSourceInstanceController eventSourceInstanceController;
+
+	@Inject
+	private EventSourceDescriptorController eventSourceDescriptorController;
+
+	@Inject
+	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
+
+	@edu.umd.cs.findbugs.annotations.Nullable
+	@Context
+	private UriInfo injectedUriInfo;
+
+	@edu.umd.cs.findbugs.annotations.Nullable
+	@Context
+	private SecurityContext injectedSecurityContext;
+
+<span class="nc" id="L100">	public EventSourceInstanceResource() {</span>
+		// required by checkstyle
+<span class="nc" id="L102">	}</span>
+
+	private SecurityContext getSecurityContext() {
+<span class="nc" id="L105">		return Objects.requireNonNull(injectedSecurityContext);</span>
+	}
+
+	private UriInfo getUriInfo() {
+<span class="nc" id="L109">		return Objects.requireNonNull(injectedUriInfo);</span>
+	}
+
+	@GET
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a list of existing event source instances&quot;,
+					response = EventSourceInstanceInfo.class,
+					responseContainer = &quot;List&quot;) })
+	@JwtSecured
+	@ApiOperation(value = &quot;List existing event source instances&quot;)
+	@NoChangeLog
+	public Response listInstances(@QueryParam(&quot;containing&quot;) @ApiParam(required = false,
+			value = &quot;Filter to reduce the number of listed instances&quot;) @Nullable @edu.umd.cs.findbugs.annotations.Nullable final String containing,
+			@QueryParam(&quot;limit&quot;) @ApiParam(required = false,
+					value = &quot;Maximum number of instances to be returned&quot;) @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Integer limit,
+			@QueryParam(&quot;onlyStartable&quot;) @ApiParam(required = false,
+					value = &quot;Only return instances that can be started&quot;) @Nullable @edu.umd.cs.findbugs.annotations.Nullable final Boolean onlyStartable) {
+<span class="nc" id="L127">		Predicate&lt;EventSourceInstance&gt; containingFilter = i -&gt; true;</span>
+<span class="nc" id="L128">		Predicate&lt;EventSourceInstance&gt; startableFilter = i -&gt; true;</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		if (!Strings.isNullOrEmpty(containing)) {</span>
+<span class="nc" id="L131">			final String searchedContent = Strings.nullToEmpty(containing).toLowerCase();</span>
+<span class="nc" id="L132">			containingFilter = EventSourceInstance.createFilter(searchedContent);</span>
+		}
+
+<span class="nc bnc" id="L135" title="All 4 branches missed.">		if (onlyStartable != null &amp;&amp; onlyStartable) {</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">			startableFilter = i -&gt; i.getDescriptor().getEventClass() != null;</span>
+		}
+
+<span class="nc" id="L139">		Stream&lt;EventSourceInstanceInfo&gt; stream = eventSourceInstanceController.getEventSourceInstances()</span>
+<span class="nc" id="L140">				.stream()</span>
+<span class="nc" id="L141">				.filter(containingFilter)</span>
+<span class="nc" id="L142">				.filter(startableFilter)</span>
+<span class="nc" id="L143">				.map(instance -&gt; new EventSourceInstanceInfo(eventSourceInstanceController,</span>
+						dashboardController,
+						statisticsManager,
+						instance));
+<span class="nc bnc" id="L147" title="All 4 branches missed.">		if (limit != null &amp;&amp; limit &gt; 0) {</span>
+<span class="nc" id="L148">			stream = stream.limit(limit);</span>
+		}
+<span class="nc" id="L150">		final Set&lt;EventSourceInstanceInfo&gt; infos</span>
+<span class="nc" id="L151">				= new TreeSet&lt;&gt;((a, b) -&gt; String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName()));</span>
+<span class="nc" id="L152">		infos.addAll(stream.collect(toList()));</span>
+<span class="nc" id="L153">		return ok(infos).build();</span>
+	}
+
+	@POST
+	@Path(&quot;/&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 201,
+					message = &quot;Event source instance created&quot;,
+					response = EventSourceInstanceDetails.class),
+			@ApiResponse(code = 400,
+					message = &quot;The data provided by the client is invalid&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 404,
+					message = &quot;There is no event source descriptor named by the given key&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Create event source instance&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response createInstance(@QueryParam(&quot;key&quot;) @ApiParam(
+			value = &quot;The key of the event source descriptor to be used&quot;) @NotBlank final String keyString) {
+		final EventSourceKey key;
+		try {
+<span class="nc" id="L175">			key = EventSourceKey.fromKeyString(keyString);</span>
+<span class="nc" id="L176">		} catch (@SuppressWarnings(&quot;unused&quot;) final InvalidKeyException e) {</span>
+<span class="nc" id="L177">			return ErrorResponse.badRequest(&quot;The key '&quot; + keyString + &quot;' is invalid.&quot;);</span>
+<span class="nc" id="L178">		}</span>
+
+		final EventSourceDescriptor descriptor;
+		try {
+<span class="nc" id="L182">			descriptor = eventSourceDescriptorController.getEventSourceDescriptor(key);</span>
+<span class="nc" id="L183">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L184">			return ErrorResponse.notFound(&quot;No descriptor found for key: &quot; + keyString);</span>
+<span class="nc" id="L185">		}</span>
+
+<span class="nc" id="L187">		final EventSourceInstance instance = eventSourceInstanceController.createEventSourceInstance(descriptor,</span>
+<span class="nc" id="L188">				(Principal) getSecurityContext().getUserPrincipal());</span>
+<span class="nc" id="L189">		return created(URI.create(getUriInfo().getAbsolutePath() + &quot;/&quot; + instance.getId()))</span>
+<span class="nc" id="L190">				.entity(new EventSourceInstanceDetails(instance))</span>
+<span class="nc" id="L191">				.build();</span>
+	}
+
+	@GET
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns details of the requested event source instance&quot;,
+					response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 404,
+					message = &quot;The event source instance with the given id does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read event source instance&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public Response readInstance(@PathParam(&quot;id&quot;) @NotBlank final String instanceId) {
+		try {
+			// read object
+<span class="nc" id="L210">			final FullEventSourceInstanceInfo info = getInstanceInfo(instanceId);</span>
+<span class="nc" id="L211">			return ok(info).build();</span>
+<span class="nc" id="L212">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L213">			return ErrorResponse.notFound(&quot;Event source instance '&quot; + instanceId + &quot;' does not exist.&quot;);</span>
+		}
+	}
+
+	@GET
+	@Path(&quot;/{id}/usage&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns the usage of the event source instance&quot;,
+					response = DashboardInfo.class,
+					responseContainer = &quot;List&quot;)
+	// , @ApiResponse(code = 404, message = &quot;The event source instance with the
+	// given id does not exist&quot;, response = ErrorResponse.class)
+	})
+	@JwtSecured
+	@ApiOperation(value = &quot;Read event source instance usage&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_EDITOR)
+	@NoChangeLog
+	public Response readInstanceUsage(@PathParam(&quot;id&quot;) @NotBlank final String instanceId) {
+		try {
+<span class="nc" id="L233">			return ok(dashboardController.findDashboardUsingEventSourceInstance(instanceId)</span>
+<span class="nc" id="L234">					.stream()</span>
+<span class="nc" id="L235">					.map(DashboardInfo::new)</span>
+<span class="nc" id="L236">					.collect(toList())).build();</span>
+<span class="nc" id="L237">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L238">			return ErrorResponse.notFound(&quot;Event source instance '&quot; + instanceId + &quot;' does not exist.&quot;);</span>
+		}
+	}
+
+	@PUT
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;The event source instance has been updated&quot;,
+					response = FullEventSourceInstanceInfo.class),
+			@ApiResponse(code = 400, message = &quot;The data is invalid&quot;, response = ErrorResponse.class),
+			@ApiResponse(code = 404,
+					message = &quot;The event source instance with the given id does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Update event source instance&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response updateInstance(@PathParam(&quot;id&quot;) @NotBlank final String instanceId,
+			final EventSourceInstanceDetails details) {
+		final EventSourceInstance originalInstance;
+		try {
+<span class="nc" id="L259">			originalInstance = eventSourceInstanceController.getEventSourceInstance(instanceId);</span>
+<span class="nc" id="L260">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L261">			return ErrorResponse.notFound(&quot;Event source instance does not exist.&quot;);</span>
+<span class="nc" id="L262">		}</span>
+
+<span class="nc bnc" id="L264" title="All 4 branches missed.">		if (!originalInstance.getId().equals(details.getId()) || !details.getId().equals(instanceId)) {</span>
+<span class="nc" id="L265">			return ErrorResponse.badRequest(&quot;The ID does not match&quot;);</span>
+		}
+<span class="nc bnc" id="L267" title="All 2 branches missed.">		if (!originalInstance.getDescriptor().getKey().getKey().equals(details.getEventSourceDescriptor())) {</span>
+<span class="nc" id="L268">			return ErrorResponse.badRequest(&quot;The event source descriptor key does not match&quot;);</span>
+		}
+		// TODO this needs to be checked when the UI is fixed
+		// if (!instance.getDescriptor().isScheduledService()&amp;&amp; details.frequency !=
+		// Duration.ZERO) {
+		// return ErrorResponse.badRequest(&quot;The event source does not take a
+		// frequency&quot;);
+		// }
+<span class="nc" id="L276">		final Set&lt;String&gt; unnessaccaryDataItems = new HashSet&lt;&gt;(details.dataItems.keySet());</span>
+<span class="nc" id="L277">		unnessaccaryDataItems.removeAll(originalInstance.getDescriptor()</span>
+<span class="nc" id="L278">				.getDataItems()</span>
+<span class="nc" id="L279">				.stream()</span>
+<span class="nc" id="L280">				.map(EventSourceProperty::getName)</span>
+<span class="nc" id="L281">				.collect(Collectors.toSet()));</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">		if (!unnessaccaryDataItems.isEmpty()) {</span>
+<span class="nc" id="L283">			return ErrorResponse.badRequest(&quot;Some data items are unknown&quot;, unnessaccaryDataItems);</span>
+		}
+
+		final EventSourceInstance newInstance;
+		try {
+<span class="nc" id="L288">			newInstance = new EventSourceInstance(originalInstance.getDescriptor(),</span>
+<span class="nc" id="L289">					originalInstance.getId(),</span>
+<span class="nc" id="L290">					details.getName(),</span>
+<span class="nc" id="L291">					details.isEnabled(),</span>
+<span class="nc" id="L292">					details.getFrequency(),</span>
+<span class="nc" id="L293">					originalInstance.getCreatedBy(),</span>
+<span class="nc" id="L294">					((Principal) getSecurityContext().getUserPrincipal()).getUsername());</span>
+<span class="nc" id="L295">			newInstance.setEnabled(details.isEnabled());</span>
+<span class="nc" id="L296">			newInstance.setName(details.getName());</span>
+<span class="nc" id="L297">			newInstance.setFrequency(details.getFrequency());</span>
+<span class="nc" id="L298">			newInstance.getDescriptor()</span>
+<span class="nc" id="L299">					.getProperties()</span>
+<span class="nc" id="L300">					.forEach(p -&gt; newInstance.setPropertyString(p, details.properties.get(p.getName())));</span>
+<span class="nc" id="L301">			adoptPasswordsForProperties(newInstance, originalInstance);</span>
+<span class="nc" id="L302">			newInstance.getDescriptor().getDataItems().forEach(p -&gt; {</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">				if (details.dataItems.containsKey(p.getName())) {</span>
+<span class="nc" id="L304">					newInstance.setPropertyString(p, details.dataItems.get(p.getName()));</span>
+				} else {
+<span class="nc" id="L306">					newInstance.removeProperty(p);</span>
+				}
+<span class="nc" id="L308">			});</span>
+<span class="nc" id="L309">		} catch (final Exception e) {</span>
+<span class="nc" id="L310">			LOGGER.error(&quot;Unable to update event source instance&quot;, e);</span>
+<span class="nc" id="L311">			return ErrorResponse.badRequest(&quot;Invalid event source instance values&quot;, e);</span>
+<span class="nc" id="L312">		}</span>
+
+<span class="nc" id="L314">		eventSourceInstanceController.updateEventSourceInstance(newInstance);</span>
+<span class="nc" id="L315">		return ok(getInstanceInfo(instanceId)).build();</span>
+	}
+
+	@DELETE
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;The event source instance has been deleted&quot;),
+			@ApiResponse(code = 404,
+					message = &quot;The event source instance with the given id does not exist&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 422,
+					message = &quot;There widgets using this event source instance and the force parameter has not been set to true&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Delete event source instance&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response deleteInstance(@PathParam(&quot;id&quot;) @NotBlank final String instanceId,
+			@QueryParam(&quot;force&quot;) @ApiParam(required = false,
+					defaultValue = &quot;false&quot;,
+					value = &quot;true to also remove all widgets using this event source&quot;) final boolean force) {
+		try {
+<span class="nc" id="L336">			final Set&lt;String&gt; dashboardsPreventingDeletion</span>
+<span class="nc" id="L337">					= dashboardController.deleteEventSourceInstance(instanceId, force);</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">			if (dashboardsPreventingDeletion.isEmpty()) {</span>
+<span class="nc" id="L339">				return ok().build();</span>
+			}
+<span class="nc" id="L341">			return ErrorResponse.unprocessableEntity(&quot;Unable to delete event source instance&quot;,</span>
+					dashboardsPreventingDeletion);
+<span class="nc" id="L343">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L344">			return ErrorResponse.notFound(&quot;Event source instance does not exist.&quot;);</span>
+		}
+	}
+
+	FullEventSourceInstanceInfo getInstanceInfo(final String instanceId) {
+<span class="nc" id="L349">		final EventSourceInstance instance = eventSourceInstanceController.getEventSourceInstance(instanceId);</span>
+<span class="nc" id="L350">		return new FullEventSourceInstanceInfo(new EventSourceInstanceDetails(instance),</span>
+<span class="nc" id="L351">				EventSourceInstanceState.fromInstance(eventSourceInstanceController, statisticsManager, instance));</span>
+	}
+
+	private static void adoptPasswordsForProperties(final EventSourceInstance instanceToChange,
+			final EventSourceInstance instanceToAdoptFrom) {
+<span class="nc bnc" id="L356" title="All 2 branches missed.">		if (instanceToChange.getDescriptor() != instanceToAdoptFrom.getDescriptor()) {</span>
+<span class="nc" id="L357">			throw new RuntimeException(&quot;Unable to adopt passwords from another type of event source.&quot;);</span>
+		}
+
+		// final EventSourceDescriptor descriptor = instanceToChange.getDescriptor();
+		// for (final EventSourceProperty property : descriptor.getProperties()) {
+		// if (property.isJson()) {
+		// // final String valueToAdopt =
+		// // instanceToAdoptFrom.getPropertyValueString(property);
+		// // final String valueToChange =
+		// // instanceToChange.getPropertyValueString(property);
+		// // final Object objectToAdopt =
+		// // Objects.requireNonNull(JsonUtils.fromJson(valueToAdopt, Object.class));
+		// // final Object objectToChange =
+		// // Objects.requireNonNull(JsonUtils.fromJson(valueToChange, Object.class));
+		// // TODO adoptPasswords(mapToChange, mapToAdopt);
+		// }
+		// }
+<span class="nc" id="L374">	}</span>
+
+	static Map&lt;String, String&gt; getValueMap(final Stream&lt;EventSourceProperty&gt; propertyStream,
+			final Function&lt;EventSourceProperty, String&gt; getValue,
+			final Predicate&lt;EventSourceProperty&gt; hasValue,
+			final boolean removeEmpty) {
+<span class="nc bnc" id="L380" title="All 4 branches missed.">		final Map&lt;String, String&gt; map = propertyStream.filter(p -&gt; !(removeEmpty &amp;&amp; !hasValue.test(p)))</span>
+<span class="nc" id="L381">				.collect(Collectors.toMap(EventSourceProperty::getName, p -&gt; {</span>
+<span class="nc" id="L382">					String string = getValue.apply(p);</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">					if (p.isJson()) {</span>
+<span class="nc" id="L384">						string = JsonUtils.removePasswordsFromJson(string);</span>
+					}
+<span class="nc" id="L386">					return string;</span>
+				}));
+<span class="nc" id="L388">		return removePasswords(map);</span>
+	}
+
+	private static Map&lt;String, String&gt; getPropertyMap(final EventSourceInstance instance) {
+<span class="nc" id="L392">		return getValueMap(instance.getDescriptor().getProperties().stream(),</span>
+				instance::getPropertyValueString,
+				instance::hasPropertyValue,
+				false);
+	}
+
+	private static Map&lt;String, String&gt; getDataItemMap(final EventSourceInstance instance) {
+<span class="nc" id="L399">		return getValueMap(instance.getDescriptor().getDataItems().stream(),</span>
+				instance::getPropertyValueString,
+				instance::hasPropertyValue,
+				true);
+	}
+
+	public static class EventSourceInstanceInfo {
+<span class="nc" id="L406">		@NotBlank</span>
+		private String id = &quot;&quot;;
+
+<span class="nc" id="L409">		@NotBlank</span>
+		private String name = &quot;&quot;;
+
+<span class="nc" id="L412">		private boolean isService = false;</span>
+
+<span class="nc" id="L414">		private boolean enabled = false;</span>
+
+<span class="nc" id="L416">		private boolean running = false;</span>
+
+<span class="nc" id="L418">		private boolean hasError = false;</span>
+
+<span class="nc" id="L420">		@NotNull</span>
+		private List&lt;@NotNull DashboardInfo&gt; usedBy = new ArrayList&lt;&gt;();
+
+<span class="nc" id="L423">		public EventSourceInstanceInfo() {</span>
+			// nothing to initialize
+<span class="nc" id="L425">		}</span>
+
+		public EventSourceInstanceInfo(final EventSourceInstanceController eventSourceInstanceController,
+				final DashboardController dashboardController,
+				final EventSourceStatisticsManager statisticsManager,
+<span class="nc" id="L430">				final EventSourceInstance instance) {</span>
+<span class="nc" id="L431">			id = instance.getId();</span>
+<span class="nc" id="L432">			name = instance.getName();</span>
+<span class="nc" id="L433">			isService = instance.getDescriptor().getServiceClass().isPresent();</span>
+<span class="nc" id="L434">			enabled = instance.isEnabled();</span>
+<span class="nc" id="L435">			running = eventSourceInstanceController.isRunning(instance);</span>
+<span class="nc" id="L436">			hasError = statisticsManager.getEventSourceStatistics(instance.getId())</span>
+<span class="nc" id="L437">					.getLastRun()</span>
+<span class="nc" id="L438">					.flatMap(RunStatistic::getThrowable)</span>
+<span class="nc" id="L439">					.map(x -&gt; true)</span>
+<span class="nc" id="L440">					.orElse(false);</span>
+<span class="nc" id="L441">			usedBy = new ArrayList&lt;&gt;(dashboardController.getDashboardsWhereEventSourceIsUsed(instance)</span>
+<span class="nc" id="L442">					.map(DashboardInfo::new)</span>
+<span class="nc" id="L443">					.collect(toList()));</span>
+<span class="nc" id="L444">		}</span>
+
+		public String getId() {
+<span class="nc" id="L447">			return id;</span>
+		}
+
+		public String getName() {
+<span class="nc" id="L451">			return name;</span>
+		}
+
+		public boolean isService() {
+<span class="nc" id="L455">			return isService;</span>
+		}
+
+		public boolean isEnabled() {
+<span class="nc" id="L459">			return enabled;</span>
+		}
+
+		public boolean isRunning() {
+<span class="nc" id="L463">			return running;</span>
+		}
+
+		public boolean isHasError() {
+<span class="nc" id="L467">			return hasError;</span>
+		}
+
+		public List&lt;DashboardInfo&gt; getUsedBy() {
+<span class="nc" id="L471">			return usedBy;</span>
+		}
+	}
+
+	public static class EventSourceInstanceDetails {
+		@NotBlank
+		private String eventSourceDescriptor;
+
+		@NotBlank
+		private String id;
+
+		@NotBlank
+		private String name;
+
+		private boolean enabled;
+
+		private Duration frequency;
+
+		@NotNull
+		private Map&lt;@NotBlank String, @NotNull String&gt; properties;
+
+		@NotNull
+		private Map&lt;@NotBlank String, @NotNull String&gt; dataItems;
+
+<span class="nc" id="L495">		public EventSourceInstanceDetails() {</span>
+<span class="nc" id="L496">			eventSourceDescriptor = &quot;&quot;;</span>
+<span class="nc" id="L497">			id = &quot;&quot;;</span>
+<span class="nc" id="L498">			name = &quot;&quot;;</span>
+<span class="nc" id="L499">			enabled = false;</span>
+<span class="nc" id="L500">			frequency = Duration.ZERO;</span>
+<span class="nc" id="L501">			properties = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L502">			dataItems = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L503">		}</span>
+
+		public EventSourceInstanceDetails(@NotBlank final String eventSourceDescriptor,
+				@NotBlank final String id,
+				@NotBlank final String name,
+				final boolean enabled,
+				final Duration frequency,
+				@NotNull final Map&lt;@NotBlank String, @NotNull String&gt; properties,
+<span class="nc" id="L511">				@NotNull final Map&lt;@NotBlank String, @NotNull String&gt; dataItems) {</span>
+<span class="nc" id="L512">			this.eventSourceDescriptor = eventSourceDescriptor;</span>
+<span class="nc" id="L513">			this.id = id;</span>
+<span class="nc" id="L514">			this.name = name;</span>
+<span class="nc" id="L515">			this.enabled = enabled;</span>
+<span class="nc" id="L516">			this.frequency = frequency;</span>
+<span class="nc" id="L517">			this.properties = properties;</span>
+<span class="nc" id="L518">			this.dataItems = dataItems;</span>
+<span class="nc" id="L519">		}</span>
+
+		public EventSourceInstanceDetails(final EventSourceInstance instance) {
+<span class="nc" id="L522">			this(instance.getDescriptor().getKey().getKey(),</span>
+<span class="nc" id="L523">					instance.getId(),</span>
+<span class="nc" id="L524">					instance.getName(),</span>
+<span class="nc" id="L525">					instance.isEnabled(),</span>
+<span class="nc" id="L526">					instance.getFrequency(),</span>
+<span class="nc" id="L527">					getPropertyMap(instance),</span>
+<span class="nc" id="L528">					getDataItemMap(instance));</span>
+<span class="nc" id="L529">		}</span>
+
+		public String getEventSourceDescriptor() {
+<span class="nc" id="L532">			return eventSourceDescriptor;</span>
+		}
+
+		public String getId() {
+<span class="nc" id="L536">			return id;</span>
+		}
+
+		public String getName() {
+<span class="nc" id="L540">			return name;</span>
+		}
+
+		public boolean isEnabled() {
+<span class="nc" id="L544">			return enabled;</span>
+		}
+
+		public Duration getFrequency() {
+<span class="nc" id="L548">			return frequency;</span>
+		}
+
+		public Map&lt;String, String&gt; getProperties() {
+<span class="nc" id="L552">			return properties;</span>
+		}
+
+		public Map&lt;String, String&gt; getDataItems() {
+<span class="nc" id="L556">			return dataItems;</span>
+		}
+	}
+
+	public static class FullEventSourceInstanceInfo {
+		private final EventSourceInstanceDetails instanceDetails;
+
+		private final EventSourceInstanceState instanceState;
+
+		public FullEventSourceInstanceInfo(final EventSourceInstanceDetails instanceDetails,
+<span class="nc" id="L566">				final EventSourceInstanceState instanceState) {</span>
+<span class="nc" id="L567">			this.instanceDetails = instanceDetails;</span>
+<span class="nc" id="L568">			this.instanceState = instanceState;</span>
+<span class="nc" id="L569">		}</span>
+
+		public EventSourceInstanceDetails getInstanceDetails() {
+<span class="nc" id="L572">			return instanceDetails;</span>
+		}
+
+		public EventSourceInstanceState getInstanceState() {
+<span class="nc" id="L576">			return instanceState;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

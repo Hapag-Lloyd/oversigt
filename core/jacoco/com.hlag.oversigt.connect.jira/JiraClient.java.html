@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JiraClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.jira</a> &gt; <span class="el_source">JiraClient.java</span></div><h1>JiraClient.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.jira;
+
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+
+import com.atlassian.jira.rest.client.api.domain.Issue;
+
+/**
+ * A client enabling consumer code to retrieve information from a JIRA backend
+ *
+ * @author Lars Knickrehm
+ * @author Olaf Neumann
+ */
+public interface JiraClient {
+	/**
+	 * The maximum number of issues to return from the JIRA backend
+	 */
+	int MAX_RESULTS_DEFAULT = 500;
+
+	/**
+	 * Search the JIRA backend using the given query
+	 *
+	 * @param jql the query to execute on the JIRA backend
+	 * @return a possibly empty list of issues found in jira
+	 * @throws JiraClientException if something fails while searching for issues
+	 * @throws TimeoutException    if the query while waiting before its execution
+	 */
+	default List&lt;Issue&gt; search(final String jql) throws JiraClientException, TimeoutException {
+<span class="nc" id="L29">		return search(jql, MAX_RESULTS_DEFAULT, 0);</span>
+	}
+
+	/**
+	 * Perform the Jira search with the given parameters
+	 *
+	 * @param jql        the query to execute
+	 * @param maxResults the maximum number of results to return
+	 * @param startAt    &lt;em&gt;don't know&lt;/em&gt;
+	 * @return the list of found issues
+	 * @throws JiraClientException if something fails
+	 * @throws TimeoutException    if the query while waiting before its execution
+	 */
+	List&lt;Issue&gt; search(String jql, int maxResults, int startAt) throws JiraClientException, TimeoutException;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

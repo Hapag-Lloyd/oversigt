@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExchangeMailboxEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">ExchangeMailboxEventSource.java</span></div><h1>ExchangeMailboxEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import com.hlag.oversigt.connect.exchange.Mail;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.StatisticsCollector.StartedAction;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.sources.data.DisplayOption;
+import com.hlag.oversigt.sources.event.HlBarChartEvent;
+import com.hlag.oversigt.sources.event.HlBarChartEvent.Category;
+import com.hlag.oversigt.sources.event.HlBarChartEvent.Serie;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+
+/**
+ * @author Constantin Pagenkopp
+ */
+@EventSource(view = &quot;HlBarChart&quot;, displayName = &quot;Microsoft Exchange Mailbox Viewer&quot;)
+public class ExchangeMailboxEventSource extends AbstractExchangeEventSource&lt;HlBarChartEvent&gt; {
+	private static final String UNASSIGNED_LABEL = &quot;NN&quot;;
+
+<span class="nc" id="L30">	private static final Color UNASSIGNED_COLOR = Color.GRAY;</span>
+
+<span class="nc" id="L32">	private double serieMinimum = 0.35;</span>
+
+<span class="nc" id="L34">	private String folderName = WellKnownFolderName.Inbox.name();</span>
+
+<span class="nc" id="L36">	private boolean showEmptyCategories = false;</span>
+
+<span class="nc" id="L38">	private DisplayOption[] displayOptions = new DisplayOption[0];</span>
+
+<span class="nc" id="L40">	private DisplayOption defaultDisplayOption = new DisplayOption(UNASSIGNED_LABEL, UNASSIGNED_COLOR);</span>
+
+<span class="nc" id="L42">	private boolean showUnreadOnly = false;</span>
+
+<span class="nc" id="L44">	public ExchangeMailboxEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L46">	}</span>
+
+	@Property(name = &quot;Folder Name&quot;, description = &quot;The folder to be examined be this event source&quot;)
+	public String getFolderName() {
+<span class="nc" id="L50">		return folderName;</span>
+	}
+
+	public void setFolderName(final String folderName) {
+<span class="nc" id="L54">		this.folderName = folderName;</span>
+<span class="nc" id="L55">	}</span>
+
+	// TODO this property should be a property of the Widget, not of the
+	// EventSource. The EventSource needs to differentiate the categories, but it
+	// should be up to the Widget, how the categories are displayed
+	@Property(name = &quot;Display Options&quot;,
+			description = &quot;Optional mapping of original display values to originated display options, such as value and color.&quot;)
+	public DisplayOption[] getDisplayOptions() {
+<span class="nc" id="L63">		return displayOptions;</span>
+	}
+
+	public void setDisplayOptions(final DisplayOption[] displayOptions) {
+<span class="nc" id="L67">		this.displayOptions = displayOptions;</span>
+<span class="nc" id="L68">	}</span>
+
+	@Property(name = &quot;Default Display Option&quot;,
+			description = &quot;Optionally all unmapped display values can be displayed by this value and color.&quot;)
+	public DisplayOption getDefaultDisplayOption() {
+<span class="nc" id="L73">		return defaultDisplayOption;</span>
+	}
+
+	public void setDefaultDisplayOption(final DisplayOption defaultDisplayOption) {
+<span class="nc" id="L77">		this.defaultDisplayOption = defaultDisplayOption;</span>
+<span class="nc" id="L78">	}</span>
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = &quot;Show Empty Categories&quot;,
+			description = &quot;If enabled the event of this event source will contain all categories, even those containing any data. Otherwise they will be excluded.&quot;)
+	public boolean getShowEmptyCategories() {
+<span class="nc" id="L84">		return showEmptyCategories;</span>
+	}
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = &quot;Show Unread Mails Only&quot;,
+			description = &quot;If enabled the event of this event source will contain only unread mails. Otherwise the total mail count is shown with an unread mail indicator on top.&quot;)
+	public boolean getShowUnreadOnly() {
+<span class="nc" id="L91">		return showUnreadOnly;</span>
+	}
+
+	public void setShowEmptyCategories(final boolean showEmptyCategories) {
+<span class="nc" id="L95">		this.showEmptyCategories = showEmptyCategories;</span>
+<span class="nc" id="L96">	}</span>
+
+	// TODO this property should be a property of the Widget, not of the EventSource
+	@Property(name = &quot;Series Minimum&quot;,
+			description = &quot;The minimum percentage height of the series. A bar will never get below this height.&quot;)
+	public double getSerieMinimum() {
+<span class="nc" id="L102">		return serieMinimum;</span>
+	}
+
+	public void setSerieMinimum(final double serieMinimum) {
+<span class="nc" id="L106">		this.serieMinimum = serieMinimum;</span>
+<span class="nc" id="L107">	}</span>
+
+	@Override
+	protected Optional&lt;HlBarChartEvent&gt; produceExchangeEvent() throws Exception {
+		final List&lt;Mail&gt; mails;
+<span class="nc" id="L112">		try (StartedAction action = getStatisticsCollector().startAction(&quot;Exchange read mails&quot;, getFolderName())) {</span>
+<span class="nc" id="L113">			mails = getExchangeClient().loadMails(getFolderName());</span>
+		}
+<span class="nc" id="L115">		return Optional.of(createEvent(mails));</span>
+	}
+
+	@Override
+	protected Optional&lt;String&gt; getFailureMessage(final Exception e) {
+<span class="nc bnc" id="L120" title="All 4 branches missed.">		if (e instanceof IllegalArgumentException &amp;&amp; getClass() == ExchangeMailboxEventSource.class) {</span>
+<span class="nc" id="L121">			return Optional.of(String</span>
+<span class="nc" id="L122">					.format(&quot;Unable to read folder %s for user %s&quot;, getFolderName(), getCredentials().getUsername()));</span>
+		}
+<span class="nc" id="L124">		return Optional.empty();</span>
+	}
+
+	private HlBarChartEvent createEvent(final List&lt;Mail&gt; mails) {
+<span class="nc" id="L128">		final Collection&lt;CategoryInfo&gt; categoryInfos = createCategoryInfos();</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		for (final Mail mail : mails) {</span>
+<span class="nc" id="L130">			final List&lt;String&gt; categories = mail.getCategories();</span>
+<span class="nc" id="L131">			categories.forEach(category -&gt; increaseNumbers(mail, categoryInfos, Optional.of(category)));</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">			if (categories.isEmpty()) {</span>
+<span class="nc" id="L133">				increaseNumbers(mail, categoryInfos, Optional.empty());</span>
+			}
+<span class="nc" id="L135">		}</span>
+<span class="nc" id="L136">		return createEvent(categoryInfos, mails.size());</span>
+	}
+
+	private HlBarChartEvent createEvent(final Collection&lt;CategoryInfo&gt; categoryInfos, final int noOfMails) {
+<span class="nc" id="L140">		final List&lt;Category&gt; categories = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L141">		final int maxNumberOfMails = Math.max(3, getMaxNumberOfMails(categoryInfos));</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		for (final CategoryInfo info : categoryInfos) {</span>
+<span class="nc bnc" id="L143" title="All 8 branches missed.">			if (getShowEmptyCategories() || info.unread &gt; 0 || !getShowUnreadOnly() &amp;&amp; info.total &gt; 0) {</span>
+<span class="nc" id="L144">				final List&lt;Serie&gt; series = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L145">				final Color baseColor = info.option.getColor();</span>
+<span class="nc" id="L146">				final Color totalColor = getTotalColor(baseColor);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">				if (getShowUnreadOnly()) {</span>
+<span class="nc" id="L148">					series.add(createStrechedSerie(totalColor, info.unread, maxNumberOfMails));</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">					categories.add(new Category(info.unread &gt; 0 ? Integer.toString(info.unread) : &quot;&quot;,</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">							info.unread &gt; 0 ? info.option.getDisplayValue() : &quot;&quot;,</span>
+							series));
+				} else {
+<span class="nc" id="L153">					series.add(createStrechedSerie(totalColor, info.total, maxNumberOfMails));</span>
+<span class="nc" id="L154">					series.add(createStrechedSerie(baseColor, info.total - info.unread, maxNumberOfMails));</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">					categories.add(new Category(info.total &gt; 0 ? Integer.toString(info.total) : &quot;&quot;,</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">							info.total &gt; 0 ? info.option.getDisplayValue() : &quot;&quot;,</span>
+							series));
+				}
+			}
+<span class="nc" id="L160">		}</span>
+<span class="nc" id="L161">		return new HlBarChartEvent(categories, Integer.toString(noOfMails));</span>
+	}
+
+	private Collection&lt;CategoryInfo&gt; createCategoryInfos() {
+		// TODO better implementation... it's not clear, what this is about
+<span class="nc" id="L166">		final Collection&lt;CategoryInfo&gt; infos = new LinkedHashSet&lt;&gt;();</span>
+<span class="nc" id="L167">		infos.add(new CategoryInfo(getDefaultDisplayOption()));</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">		for (final DisplayOption option : getDisplayOptions()) {</span>
+<span class="nc" id="L169">			infos.add(new CategoryInfo(option));</span>
+		}
+<span class="nc" id="L171">		return infos;</span>
+	}
+
+	private Serie createStrechedSerie(final Color backgroundColor, final int value, final int maximum) {
+<span class="nc" id="L175">		double height = 0;</span>
+<span class="nc bnc" id="L176" title="All 4 branches missed.">		if (value &gt; 0 &amp;&amp; maximum &gt; 1) {</span>
+<span class="nc" id="L177">			height = getSerieMinimum() + (double) (value - 1) / (maximum - 1) * (1 - getSerieMinimum());</span>
+		}
+<span class="nc" id="L179">		return new Serie(backgroundColor, height);</span>
+	}
+
+	private Color getTotalColor(final Color originalColor) {
+<span class="nc" id="L183">		return new Color(Math.min(originalColor.getRed() + 10, 255),</span>
+<span class="nc" id="L184">				Math.min(originalColor.getGreen() + 10, 255),</span>
+<span class="nc" id="L185">				Math.min(originalColor.getBlue() + 10, 255));</span>
+	}
+
+	private int getMaxNumberOfMails(final Collection&lt;CategoryInfo&gt; categoryInfos) {
+<span class="nc" id="L189">		int max = 0;</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">		for (final CategoryInfo info : categoryInfos) {</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">			final int value = getShowUnreadOnly() ? info.unread : info.total;</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">			if (value &gt; max) {</span>
+<span class="nc" id="L193">				max = value;</span>
+			}
+<span class="nc" id="L195">		}</span>
+<span class="nc" id="L196">		return max;</span>
+	}
+
+	private void increaseNumbers(final Mail mail,
+			final Collection&lt;CategoryInfo&gt; infos,
+			final Optional&lt;String&gt; categoryName) {
+<span class="nc" id="L202">		CategoryInfo info = null;</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">		if (categoryName.isPresent()) {</span>
+			try {
+<span class="nc" id="L205">				info = infos.stream().filter(i -&gt; i.option.getValue().equals(categoryName.get())).findAny().get();</span>
+<span class="nc" id="L206">			} catch (final Exception e) {</span>
+<span class="nc" id="L207">				getLogger().warn(&quot;Unable to get display option for category: &quot; + categoryName, e);</span>
+<span class="nc" id="L208">			}</span>
+		}
+<span class="nc bnc" id="L210" title="All 2 branches missed.">		if (info == null) {</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">			info = infos.stream().filter(i -&gt; i.option == getDefaultDisplayOption()).findAny().get();</span>
+		}
+
+<span class="nc" id="L214">		info.total += 1;</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">		if (!mail.isRead()) {</span>
+<span class="nc" id="L216">			info.unread += 1;</span>
+		}
+<span class="nc" id="L218">	}</span>
+
+	private static class CategoryInfo {
+		private final DisplayOption option;
+
+<span class="nc" id="L223">		private int total = 0;</span>
+
+<span class="nc" id="L225">		private int unread = 0;</span>
+
+<span class="nc" id="L227">		CategoryInfo(final DisplayOption option) {</span>
+<span class="nc" id="L228">			this.option = Objects.requireNonNull(option);</span>
+<span class="nc" id="L229">		}</span>
+
+		@Override
+		public int hashCode() {
+<span class="nc" id="L233">			final int prime = 31;</span>
+<span class="nc" id="L234">			int result = 1;</span>
+<span class="nc" id="L235">			result = prime * result + option.getDisplayValue().hashCode();</span>
+<span class="nc" id="L236">			return result;</span>
+		}
+
+		@Override
+		public boolean equals(@Nullable final Object that) {
+<span class="nc bnc" id="L241" title="All 2 branches missed.">			if (this == that) {</span>
+<span class="nc" id="L242">				return true;</span>
+			}
+<span class="nc bnc" id="L244" title="All 2 branches missed.">			if (that == null) {</span>
+<span class="nc" id="L245">				return false;</span>
+			}
+<span class="nc bnc" id="L247" title="All 2 branches missed.">			if (this.getClass() != that.getClass()) {</span>
+<span class="nc" id="L248">				return false;</span>
+			}
+<span class="nc" id="L250">			final CategoryInfo thatOther = (CategoryInfo) that;</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">			if (!option.getDisplayValue().equals(thatOther.option.getDisplayValue())) {</span>
+<span class="nc" id="L252">				return false;</span>
+			}
+<span class="nc" id="L254">			return true;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

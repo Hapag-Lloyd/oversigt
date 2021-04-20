@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiAuthorizationFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiAuthorizationFilter.java</span></div><h1>ApiAuthorizationFilter.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Priority;
+import javax.annotation.security.DenyAll;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Priorities;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.Provider;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Provider
+@Priority(Priorities.AUTHORIZATION)
+@JwtSecured
+public class ApiAuthorizationFilter implements ContainerRequestFilter {
+<span class="nc" id="L31">	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile(&quot;\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}&quot;);</span>
+
+	@Nullable
+	@Context
+	private UriInfo injectedUriInfo;
+
+	@Nullable
+	@Context
+	private ResourceInfo injectedResourceInfo;
+
+<span class="nc" id="L41">	public ApiAuthorizationFilter() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L43">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext) throws IOException {
+<span class="nc" id="L48">		final UriInfo uriInfo = Objects.requireNonNull(injectedUriInfo);</span>
+<span class="nc" id="L49">		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);</span>
+<span class="nc" id="L50">		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);</span>
+
+<span class="nc" id="L52">		final Method method = resourceInfo.getResourceMethod();</span>
+
+		// @DenyAll on the method takes precedence over @RolesAllowed and @PermitAll
+<span class="nc bnc" id="L55" title="All 2 branches missed.">		if (method.isAnnotationPresent(DenyAll.class)) {</span>
+<span class="nc" id="L56">			refuseRequest(requestContext);</span>
+		}
+
+		// @RolesAllowed on the method takes precedence over @PermitAll
+<span class="nc" id="L60">		RolesAllowed rolesAllowed = method.getAnnotation(RolesAllowed.class);</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">		if (rolesAllowed != null) {</span>
+<span class="nc" id="L62">			performAuthorization(requestContext, rolesAllowed.value(), uriInfo);</span>
+<span class="nc" id="L63">			return;</span>
+		}
+
+		// @PermitAll on the method takes precedence over @RolesAllowed on the class
+<span class="nc bnc" id="L67" title="All 2 branches missed.">		if (method.isAnnotationPresent(PermitAll.class)) {</span>
+			// Do nothing
+<span class="nc" id="L69">			return;</span>
+		}
+
+		// @DenyAll can't be attached to classes
+
+		// @RolesAllowed on the class takes precedence over @PermitAll on the class
+<span class="nc" id="L75">		rolesAllowed = resourceInfo.getResourceClass().getAnnotation(RolesAllowed.class);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		if (rolesAllowed != null) {</span>
+<span class="nc" id="L77">			performAuthorization(requestContext, rolesAllowed.value(), uriInfo);</span>
+		}
+
+		// @PermitAll on the class
+<span class="nc bnc" id="L81" title="All 2 branches missed.">		if (resourceInfo.getResourceClass().isAnnotationPresent(PermitAll.class)) {</span>
+			// Do nothing
+<span class="nc" id="L83">			return;</span>
+		}
+
+		// Authentication is required for non-annotated methods
+<span class="nc bnc" id="L87" title="All 2 branches missed.">		if (!isAuthenticated(requestContext)) {</span>
+<span class="nc" id="L88">			refuseRequest(requestContext);</span>
+		}
+<span class="nc" id="L90">	}</span>
+
+	/**
+	 * Perform authorization based on roles.
+	 */
+	private void performAuthorization(final ContainerRequestContext requestContext,
+			final String[] rolesAllowed,
+			final UriInfo uriInfo) {
+<span class="nc bnc" id="L98" title="All 4 branches missed.">		if (rolesAllowed.length &gt; 0 &amp;&amp; !isAuthenticated(requestContext)) {</span>
+<span class="nc" id="L99">			refuseRequest(requestContext);</span>
+		}
+
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		for (final String role : rolesAllowed) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">			if (requestContext.getSecurityContext().isUserInRole(enhanceRole(requestContext, role, uriInfo))) {</span>
+<span class="nc" id="L104">				return;</span>
+			}
+		}
+
+<span class="nc" id="L108">		refuseRequest(requestContext);</span>
+<span class="nc" id="L109">	}</span>
+
+	/**
+	 * Check if the user is authenticated.
+	 */
+	private boolean isAuthenticated(final ContainerRequestContext requestContext) {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		return requestContext.getSecurityContext().getUserPrincipal() != null;</span>
+	}
+
+	/**
+	 * Refuse the request.
+	 */
+	private void refuseRequest(final ContainerRequestContext requestContext) {
+<span class="nc" id="L122">		requestContext.abortWith(ErrorResponse.forbidden(&quot;You don't have permissions to perform this action.&quot;));</span>
+<span class="nc" id="L123">	}</span>
+
+	private String enhanceRole(final ContainerRequestContext requestContext,
+			final String requiredRole,
+			final UriInfo uriInfo) {
+<span class="nc" id="L128">		String role = requiredRole;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		for (final String placeholder : getPlaceholders(role)) {</span>
+<span class="nc" id="L130">			final String newValue = getParameter(requestContext, placeholder, uriInfo);</span>
+<span class="nc" id="L131">			role = role.replace(&quot;{&quot; + placeholder + &quot;}&quot;, newValue);</span>
+<span class="nc" id="L132">		}</span>
+<span class="nc" id="L133">		return role;</span>
+	}
+
+	private String getParameter(final ContainerRequestContext requestContext,
+			final String parameterName,
+			final UriInfo uriInfo) {
+<span class="nc" id="L139">		Optional&lt;String&gt; param = Optional.empty();</span>
+
+		// path params
+<span class="nc" id="L142">		param = Optional.ofNullable(uriInfo.getPathParameters().get(parameterName)).map(l -&gt; l.get(0));</span>
+		// param=Optional.of(context.get)
+
+		// query params
+<span class="nc bnc" id="L146" title="All 2 branches missed.">		if (!param.isPresent()) {</span>
+<span class="nc" id="L147">			param = Optional.ofNullable(uriInfo.getQueryParameters().get(parameterName)).map(l -&gt; l.get(0));</span>
+		}
+
+		// header params
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (!param.isPresent()) {</span>
+<span class="nc" id="L152">			param = Optional.ofNullable(requestContext.getHeaders().get(parameterName)).map(l -&gt; l.get(0));</span>
+		}
+
+		// Cookie params
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		if (!param.isPresent()) {</span>
+<span class="nc" id="L157">			param = Optional.ofNullable(requestContext.getCookies().get(parameterName)).map(Cookie::getValue);</span>
+		}
+
+		// form params
+
+		// matrix params
+
+<span class="nc" id="L164">		return param.orElseThrow(() -&gt; new RuntimeException(&quot;The parameter &quot; + parameterName + &quot; is not present.&quot;));</span>
+	}
+
+	private static Set&lt;String&gt; getPlaceholders(final String roleString) {
+<span class="nc" id="L168">		final Set&lt;String&gt; placeholders = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L169">		final Matcher matcher = PLACEHOLDER_PATTERN.matcher(roleString);</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">		while (matcher.find()) {</span>
+<span class="nc" id="L171">			placeholders.add(matcher.group(1));</span>
+		}
+<span class="nc" id="L173">		return placeholders;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

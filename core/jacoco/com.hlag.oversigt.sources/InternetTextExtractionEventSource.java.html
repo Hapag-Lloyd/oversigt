@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InternetTextExtractionEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">InternetTextExtractionEventSource.java</span></div><h1>InternetTextExtractionEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logError;
+import static com.hlag.oversigt.util.Utils.logTrace;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.event.TwoColumnListEvent;
+import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
+import com.hlag.oversigt.util.text.TextProcessor;
+
+@EventSource(displayName = &quot;Internet Extraction Text&quot;,
+		description = &quot;Shows text extracted from (one or more) URL&quot;,
+		view = &quot;List&quot;,
+		hiddenDataItems = &quot;updated-at-message&quot;)
+public class InternetTextExtractionEventSource extends AbstractDownloadEventSource&lt;TwoColumnListEvent&lt;String&gt;&gt; {
+<span class="nc" id="L32">	private ValueExtraction[] valueExtractions = new ValueExtraction[] { new ValueExtraction(&quot;true&quot;, &quot;$[*].name&quot;) };</span>
+
+<span class="nc" id="L34">	private Summarization summarization = Summarization.ConcatenationWithLineBreak;</span>
+
+<span class="nc" id="L36">	private String defaultValue = &quot;&quot;;</span>
+
+<span class="nc" id="L38">	public InternetTextExtractionEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L40">	}</span>
+
+	@Override
+	protected Optional&lt;TwoColumnListEvent&lt;String&gt;&gt; produceEvent() {
+<span class="nc" id="L44">		logTrace(getLogger(), &quot;Starting event creation&quot;);</span>
+
+<span class="nc" id="L46">		final String body = downloadText();</span>
+<span class="nc" id="L47">		String output = processValueExtractions(body);</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">		if (Strings.isNullOrEmpty(output)) {</span>
+<span class="nc" id="L49">			output = getDefaultValue();</span>
+		}
+
+<span class="nc" id="L52">		final List&lt;ListEventItem&lt;String&gt;&gt; items = Splitter.on(&quot;\n&quot;)</span>
+<span class="nc" id="L53">				.splitToList(output)</span>
+<span class="nc" id="L54">				.stream()</span>
+<span class="nc" id="L55">				.map(l -&gt; new ListEventItem&lt;&gt;(l, &quot;&quot;))</span>
+<span class="nc" id="L56">				.collect(Collectors.toList());</span>
+<span class="nc" id="L57">		return Optional.of(new TwoColumnListEvent&lt;&gt;(items));</span>
+	}
+
+	private String downloadText() {
+		try {
+<span class="nc" id="L62">			final String body = downloadString(createConfiguredConnection());</span>
+<span class="nc" id="L63">			logDebug(getLogger(), &quot;Downloaded body&quot;);</span>
+<span class="nc" id="L64">			logTrace(getLogger(), &quot;Body content %s&quot;, body);</span>
+<span class="nc" id="L65">			return body;</span>
+<span class="nc" id="L66">		} catch (final IOException e) {</span>
+<span class="nc" id="L67">			logError(getLogger(), &quot;Unable to download content: %s&quot;, e.getMessage());</span>
+<span class="nc" id="L68">			throw new RuntimeException(e);</span>
+		}
+	}
+
+	private String processValueExtractions(final String downloadedContent) {
+<span class="nc" id="L73">		Object value = Arrays.stream(getValueExtractions())</span>
+<span class="nc" id="L74">				.filter(ve -&gt; filter(ve, downloadedContent))</span>
+<span class="nc" id="L75">				.map(ve -&gt; process(ve, downloadedContent))</span>
+<span class="nc" id="L76">				.collect(getSummarization().getCollector());</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (value instanceof Optional) {</span>
+<span class="nc" id="L78">			final Optional&lt;?&gt; optional = (Optional&lt;?&gt;) value;</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">			if (!optional.isPresent()) {</span>
+<span class="nc" id="L80">				return &quot;&quot;;</span>
+			}
+<span class="nc" id="L82">			value = optional.get();</span>
+		}
+<span class="nc" id="L84">		return Objects.toString(value);</span>
+	}
+
+	@Property(name = &quot;Default Value&quot;,
+			description = &quot;The default value to show if no or an empty value has been extracted&quot;)
+	public String getDefaultValue() {
+<span class="nc" id="L90">		return defaultValue;</span>
+	}
+
+	public void setDefaultValue(final String defaultValue) {
+<span class="nc" id="L94">		this.defaultValue = defaultValue;</span>
+<span class="nc" id="L95">	}</span>
+
+	@Property(name = &quot;Value Extraction&quot;, description = &quot;Specify the values to extract and how to extract them.&quot;)
+	public ValueExtraction[] getValueExtractions() {
+<span class="nc" id="L99">		return valueExtractions;</span>
+	}
+
+	public void setValueExtractions(final ValueExtraction[] valueExtractions) {
+<span class="nc" id="L103">		this.valueExtractions = valueExtractions;</span>
+<span class="nc" id="L104">	}</span>
+
+	@Property(name = &quot;Summary Method&quot;, description = &quot;How to summarize multiple extraction values.&quot;)
+	public Summarization getSummarization() {
+<span class="nc" id="L108">		return summarization;</span>
+	}
+
+	public void setSummarization(final Summarization summaization) {
+<span class="nc" id="L112">		summarization = summaization;</span>
+<span class="nc" id="L113">	}</span>
+
+	private boolean filter(final ValueExtraction valueExtraction, final String downloadedContent) {
+<span class="nc" id="L116">		final String result = new TextProcessor().registerDatetimeFunctions()</span>
+<span class="nc" id="L117">				.registerJsonPathFunction(downloadedContent)</span>
+<span class="nc" id="L118">				.registerRegularExpressionFunction(downloadedContent)</span>
+<span class="nc" id="L119">				.registerXPathFunction(downloadedContent)</span>
+<span class="nc" id="L120">				.process(valueExtraction.condition)</span>
+<span class="nc" id="L121">				.trim();</span>
+		try {
+<span class="nc bnc" id="L123" title="All 2 branches missed.">			if (Boolean.parseBoolean(result)) {</span>
+<span class="nc" id="L124">				return true;</span>
+			}
+<span class="nc" id="L126">		} catch (@SuppressWarnings(&quot;unused&quot;) final Exception ignore) {</span>
+			/* ignore */
+<span class="nc" id="L128">		}</span>
+		try {
+<span class="nc bnc" id="L130" title="All 2 branches missed.">			if (Long.parseLong(result) &gt; 0L) {</span>
+<span class="nc" id="L131">				return true;</span>
+			}
+<span class="nc" id="L133">		} catch (@SuppressWarnings(&quot;unused&quot;) final Exception ignore) {</span>
+			// ignore invalid user input
+<span class="nc" id="L135">		}</span>
+<span class="nc" id="L136">		return false;</span>
+	}
+
+	private String process(final ValueExtraction valueExtraction, final String downloadedContent) {
+<span class="nc" id="L140">		return new TextProcessor().registerDatetimeFunctions()</span>
+<span class="nc" id="L141">				.registerJsonPathFunction(downloadedContent)</span>
+<span class="nc" id="L142">				.registerRegularExpressionFunction(downloadedContent)</span>
+<span class="nc" id="L143">				.registerXPathFunction(downloadedContent)</span>
+<span class="nc" id="L144">				.process(valueExtraction.format);</span>
+	}
+
+	public static class ValueExtraction {
+		@NotNull
+		private final String condition;
+
+		@NotNull
+		private final String format;
+
+		@JsonCreator
+		public ValueExtraction(@JsonProperty(&quot;condition&quot;) final String condition,
+<span class="nc" id="L156">				@JsonProperty(&quot;format&quot;) final String format) {</span>
+<span class="nc" id="L157">			this.condition = condition;</span>
+<span class="nc" id="L158">			this.format = format;</span>
+<span class="nc" id="L159">		}</span>
+
+		public String getCondition() {
+<span class="nc" id="L162">			return condition;</span>
+		}
+
+		public String getFormat() {
+<span class="nc" id="L166">			return format;</span>
+		}
+	}
+
+<span class="nc" id="L170">	public enum Summarization {</span>
+<span class="nc" id="L171">		Concatenation(Collectors.joining()),</span>
+<span class="nc" id="L172">		ConcatenationWithLineBreak(Collectors.joining(&quot;\n&quot;)),</span>
+<span class="nc" id="L173">		Sum(Collectors.summingInt(cs -&gt; Integer.parseInt(cs.toString()))),</span>
+<span class="nc" id="L174">		Average(Collectors.averagingInt(cs -&gt; Integer.parseInt(cs.toString()))),</span>
+<span class="nc" id="L175">		Min(Collectors</span>
+<span class="nc" id="L176">				.minBy((a, b) -&gt; Integer.compare(Integer.parseInt(a.toString()), Integer.parseInt(b.toString())))),</span>
+<span class="nc" id="L177">		Max(Collectors</span>
+<span class="nc" id="L178">				.maxBy((a, b) -&gt; Integer.compare(Integer.parseInt(a.toString()), Integer.parseInt(b.toString()))));</span>
+
+		private final Collector&lt;CharSequence, ?, ?&gt; collector;
+
+<span class="nc" id="L182">		Summarization(final Collector&lt;CharSequence, ?, ?&gt; collector) {</span>
+<span class="nc" id="L183">			this.collector = collector;</span>
+<span class="nc" id="L184">		}</span>
+
+		public Collector&lt;CharSequence, ?, ?&gt; getCollector() {
+<span class="nc" id="L187">			return collector;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TextProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util.text</a> &gt; <span class="el_source">TextProcessor.java</span></div><h1>TextProcessor.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util.text;
+
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.w3c.dom.Document;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public final class TextProcessor {
+<span class="nc" id="L16">	private static final Pattern PATTERN_DATA_REPLACEMENT</span>
+<span class="nc" id="L17">			= Pattern.compile(&quot;\\$\\{(?&lt;processor&gt;[a-z]+)(:(?&lt;input&gt;[^\\}]+))?\\}&quot;);</span>
+
+<span class="nc" id="L19">	private final Map&lt;String, Function&lt;String, String&gt;&gt; processors = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L21">	public TextProcessor() {</span>
+		// nothing to do
+<span class="nc" id="L23">	}</span>
+
+	public TextProcessor registerFunction(final String name, final Function&lt;String, String&gt; function) {
+<span class="nc" id="L26">		processors.put(name, function);</span>
+<span class="nc" id="L27">		return this;</span>
+	}
+
+	public TextProcessor registerDatetimeFunctions() {
+<span class="nc" id="L31">		final DatetimeFunction datetimeFunction = new DatetimeFunction();</span>
+<span class="nc" id="L32">		registerFunction(&quot;datetime&quot;, s -&gt; datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span>
+<span class="nc" id="L33">		registerFunction(&quot;date&quot;, s -&gt; datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_DATE));</span>
+<span class="nc" id="L34">		registerFunction(&quot;time&quot;, s -&gt; datetimeFunction.apply(s).format(DateTimeFormatter.ISO_LOCAL_TIME));</span>
+<span class="nc" id="L35">		return this;</span>
+	}
+
+	public TextProcessor registerJsonPathFunction(final String probablyJson) {
+<span class="nc" id="L39">		return registerFunction(&quot;jsonpath&quot;, new JsonPathFunction(probablyJson)::apply);</span>
+	}
+
+	public TextProcessor registerRegularExpressionFunction(final String value) {
+<span class="nc" id="L43">		return registerFunction(&quot;regex&quot;, new RegularExpressionFunction(value)::apply);</span>
+	}
+
+	public TextProcessor registerXPathFunction(final Optional&lt;Document&gt; document) {
+<span class="nc" id="L47">		return registerFunction(&quot;xpath&quot;, new XPathFunction(document)::apply);</span>
+	}
+
+	public TextProcessor registerXPathFunction(final String probablyJsonOrXml) {
+<span class="nc" id="L51">		return registerFunction(&quot;xpath&quot;, new XPathFunction(probablyJsonOrXml)::apply);</span>
+	}
+
+	public String process(final String value) {
+<span class="nc" id="L55">		String string = value;</span>
+<span class="nc" id="L56">		final Matcher mainMatcher = PATTERN_DATA_REPLACEMENT.matcher(string);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">		while (mainMatcher.find()) {</span>
+<span class="nc" id="L58">			final String processorName = mainMatcher.group(&quot;processor&quot;);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">			if (!processors.containsKey(processorName)) {</span>
+<span class="nc" id="L60">				throw new RuntimeException(&quot;Data replacement '&quot; + mainMatcher.group(1) + &quot;' is unknown.&quot;);</span>
+			}
+
+			@Nullable
+<span class="nc" id="L64">			final String input = mainMatcher.group(&quot;input&quot;);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">			if (input != null) {</span>
+<span class="nc" id="L66">				final Function&lt;String, String&gt; processor = processors.get(processorName);</span>
+				@Nullable
+<span class="nc" id="L68">				final String replacement = processor.apply(input);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">				if (replacement != null) {</span>
+<span class="nc" id="L70">					string = string.replace(mainMatcher.group(), replacement);</span>
+				}
+			}
+<span class="nc" id="L73">		}</span>
+<span class="nc" id="L74">		return string;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

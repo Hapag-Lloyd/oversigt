@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DBConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.storage</a> &gt; <span class="el_source">DBConstants.java</span></div><h1>DBConstants.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.storage;
+
+import static de.larssh.utils.Finals.constant;
+import static java.util.stream.Collectors.toList;
+
+import java.util.stream.Stream;
+
+import com.hlag.oversigt.storage.SqlDialect.ColumnOptions;
+import com.hlag.oversigt.storage.SqlDialect.ColumnType;
+
+final class DBConstants {
+<span class="fc" id="L12">	public static final String TABLE_EVENT_SOURCE = constant(&quot;EVENT_SOURCE&quot;);</span>
+
+<span class="fc" id="L14">	public static final String TABLE_EVENT_SOURCE_PROPERTY = constant(&quot;EVENT_SOURCE_PROPERTY&quot;);</span>
+
+<span class="fc" id="L16">	public static final String TABLE_DASHBOARD = constant(&quot;DASHBOARD&quot;);</span>
+
+<span class="fc" id="L18">	public static final String TABLE_WIDGET = constant(&quot;WIDGET&quot;);</span>
+
+<span class="fc" id="L20">	public static final String TABLE_WIDGET_DATA = constant(&quot;WIDGET_DATA&quot;);</span>
+
+<span class="fc" id="L22">	public static final String TABLE_VALUES = constant(&quot;OVERSIGT_PROPERTY&quot;);</span>
+
+<span class="fc" id="L24">	public static final ColumnOptions[] COLUMN_OPTIONS_EVENT_SOURCE = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;ID&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;NAME&quot;, ColumnType.Text, null, false, false),
+<span class="fc" id="L27">			new ColumnOptions(&quot;ENABLED&quot;, ColumnType.Boolean, true, false, false),</span>
+			new ColumnOptions(&quot;EVENT_SOURCE_CLASS&quot;, ColumnType.Text, null, true, false),
+<span class="fc" id="L29">			new ColumnOptions(&quot;FREQUENCY&quot;, ColumnType.BigInteger, 60, true, false),</span>
+			new ColumnOptions(&quot;VIEW&quot;, ColumnType.Text, &quot;&quot;, false, false),
+			new ColumnOptions(&quot;CREATED_ON&quot;, ColumnType.Timestamp, null, false, false),
+			new ColumnOptions(&quot;CREATED_BY&quot;, ColumnType.Text, &quot;&quot;, false, false),
+			new ColumnOptions(&quot;LAST_CHANGE&quot;, ColumnType.Timestamp, null, false, false),
+			new ColumnOptions(&quot;LAST_CHANGE_BY&quot;, ColumnType.Text, &quot;&quot;, false, false) };
+
+<span class="fc" id="L36">	public static final ColumnOptions[] COLUMN_OPTIONS_EVENT_SOURCE_PROPERTY = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;EVENT_SOURCE_ID&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;TYPE&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;NAME&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;VALUE&quot;, ColumnType.Text, null, false, false) };
+
+<span class="fc" id="L42">	public static final ColumnOptions[] COLUMN_OPTIONS_DASHBOARD = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;ID&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;TITLE&quot;, ColumnType.Text, null, false, false),
+<span class="fc" id="L45">			new ColumnOptions(&quot;WIDTH&quot;, ColumnType.Integer, 1920, false, false),</span>
+<span class="fc" id="L46">			new ColumnOptions(&quot;HEIGHT&quot;, ColumnType.Integer, 1080, false, false),</span>
+<span class="fc" id="L47">			new ColumnOptions(&quot;COLUMNS&quot;, ColumnType.Integer, 15, false, false),</span>
+			new ColumnOptions(&quot;BACKGROUND_COLOR&quot;, ColumnType.Text, &quot;#222222&quot;, false, false),
+			new ColumnOptions(&quot;COLOR_SCHEME&quot;, ColumnType.Text, &quot;default&quot;, false, false),
+			new ColumnOptions(&quot;FOREGROUND_COLOR_START&quot;, ColumnType.Text, &quot;#888888&quot;, false, false),
+			new ColumnOptions(&quot;FOREGROUND_COLOR_END&quot;, ColumnType.Text, &quot;#AAAAAA&quot;, false, false),
+			new ColumnOptions(&quot;OWNER&quot;, ColumnType.Text, &quot;&quot;, false, false),
+			new ColumnOptions(&quot;EDITOR&quot;, ColumnType.Text, &quot;&quot;, false, false),
+<span class="fc" id="L54">			new ColumnOptions(&quot;ENABLED&quot;, ColumnType.Boolean, true, false, false),</span>
+			new ColumnOptions(&quot;LAST_CHANGE&quot;, ColumnType.Timestamp, null, false, false) };
+
+<span class="fc" id="L57">	public static final ColumnOptions[] COLUMN_OPTIONS_WIDGET = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;ID&quot;, ColumnType.Integer, null, false, true, true, false),
+			new ColumnOptions(&quot;DASHBOARD_ID&quot;, ColumnType.Text, null, false, false),
+			new ColumnOptions(&quot;EVENT_SOURCE_ID&quot;, ColumnType.Text, null, false, false),
+			new ColumnOptions(&quot;TITLE&quot;, ColumnType.Text, null, false, false),
+			new ColumnOptions(&quot;NAME&quot;, ColumnType.Text, null, false, false),
+<span class="fc" id="L63">			new ColumnOptions(&quot;ENABLED&quot;, ColumnType.Boolean, true, false, false),</span>
+<span class="fc" id="L64">			new ColumnOptions(&quot;POS_X&quot;, ColumnType.Integer, 1, false, false), // 1</span>
+<span class="fc" id="L65">			new ColumnOptions(&quot;POS_Y&quot;, ColumnType.Integer, 1, false, false), // 1</span>
+<span class="fc" id="L66">			new ColumnOptions(&quot;SIZE_X&quot;, ColumnType.Integer, 3, false, false), // 3</span>
+<span class="fc" id="L67">			new ColumnOptions(&quot;SIZE_Y&quot;, ColumnType.Integer, 3, false, false), // 3</span>
+			new ColumnOptions(&quot;BACKGROUND_COLOR&quot;, ColumnType.Text, &quot;#999&quot;, false, false),
+			new ColumnOptions(&quot;STYLE&quot;, ColumnType.Text, &quot;&quot;, false, false),
+			new ColumnOptions(&quot;LAST_CHANGE&quot;, ColumnType.Timestamp, null, false, false) };
+
+<span class="fc" id="L72">	public static final ColumnOptions[] COLUMN_OPTIONS_WIDGET_DATA = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;WIDGET_ID&quot;, ColumnType.Integer, null, false, true),
+			new ColumnOptions(&quot;NAME&quot;, ColumnType.Text, null, false, true),
+			new ColumnOptions(&quot;VALUE&quot;, ColumnType.Text, null, false, false) };
+
+<span class="fc" id="L77">	public static final ColumnOptions[] COLUMN_OPTIONS_VALUES = new ColumnOptions[] {</span>
+			new ColumnOptions(&quot;ID&quot;, ColumnType.Integer, null, false, true, true, true),
+			new ColumnOptions(&quot;CLASS&quot;, ColumnType.Text, null, false, false, false, true),
+			new ColumnOptions(&quot;NAME&quot;, ColumnType.Text, null, false, false),
+			new ColumnOptions(&quot;JSON&quot;, ColumnType.Text, null, false, false) };
+
+<span class="fc" id="L83">	public static final String[] COLUMNS_EVENT_SOURCE = Stream.of(COLUMN_OPTIONS_EVENT_SOURCE)</span>
+<span class="fc" id="L84">			.map(ColumnOptions::getName)</span>
+<span class="fc" id="L85">			.collect(toList())</span>
+<span class="fc" id="L86">			.toArray(new String[0]);</span>
+
+<span class="fc" id="L88">	public static final String[] COLUMNS_EVENT_SOURCE_PROPERTY = Stream.of(COLUMN_OPTIONS_EVENT_SOURCE_PROPERTY)</span>
+<span class="fc" id="L89">			.map(ColumnOptions::getName)</span>
+<span class="fc" id="L90">			.collect(toList())</span>
+<span class="fc" id="L91">			.toArray(new String[0]);</span>
+
+<span class="fc" id="L93">	public static final String[] COLUMNS_DASHBOARD</span>
+<span class="fc" id="L94">			= Stream.of(COLUMN_OPTIONS_DASHBOARD).map(ColumnOptions::getName).collect(toList()).toArray(new String[0]);</span>
+
+<span class="fc" id="L96">	public static final String[] COLUMNS_WIDGET</span>
+<span class="fc" id="L97">			= Stream.of(COLUMN_OPTIONS_WIDGET).map(ColumnOptions::getName).collect(toList()).toArray(new String[0]);</span>
+
+<span class="fc" id="L99">	public static final String[] COLUMNS_WIDGET_DATA = Stream.of(COLUMN_OPTIONS_WIDGET_DATA)</span>
+<span class="fc" id="L100">			.map(ColumnOptions::getName)</span>
+<span class="fc" id="L101">			.collect(toList())</span>
+<span class="fc" id="L102">			.toArray(new String[0]);</span>
+
+<span class="fc" id="L104">	public static final String[] COLUMNS_VALUES</span>
+<span class="fc" id="L105">			= Stream.of(COLUMN_OPTIONS_VALUES).map(ColumnOptions::getName).collect(toList()).toArray(new String[0]);</span>
+
+<span class="nc" id="L107">	private DBConstants() {</span>
+<span class="nc" id="L108">		throw new UnsupportedOperationException();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

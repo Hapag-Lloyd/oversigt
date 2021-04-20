@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StyleEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">StyleEvent.java</span></div><h1>StyleEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import static com.hlag.oversigt.util.HttpUtils.encodeByteArrayToUrlString;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+import de.larssh.utils.Nullables;
+
+public class StyleEvent extends OversigtEvent {
+	public static StyleEvent backgroundImage(final String url) {
+<span class="nc" id="L11">		return new StyleEvent(&quot;background-image: url(&quot; + url + &quot;)&quot;);</span>
+	}
+
+	public static StyleEvent backgroundImage(final String mimeType, final byte[] imageData) {
+<span class="nc" id="L15">		return new StyleEvent(String.format(&quot;background-image: url(\&quot;data:%s,%s\&quot;)&quot;,</span>
+<span class="nc" id="L16">				Nullables.orElse(mimeType, &quot;image&quot;),</span>
+<span class="nc" id="L17">				encodeByteArrayToUrlString(imageData)));</span>
+	}
+
+	private final String style;
+
+<span class="nc" id="L22">	public StyleEvent(final String style) {</span>
+<span class="nc" id="L23">		this.style = style;</span>
+<span class="nc" id="L24">	}</span>
+
+	public String getStyle() {
+<span class="nc" id="L27">		return style;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

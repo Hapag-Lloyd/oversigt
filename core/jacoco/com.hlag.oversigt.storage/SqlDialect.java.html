@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SqlDialect.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.storage</a> &gt; <span class="el_source">SqlDialect.java</span></div><h1>SqlDialect.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.storage;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public interface SqlDialect {
+	String getDriverClassName();
+
+	String getJdbcConnectionUrl(String location, String schemaName, String username, String password);
+
+	String createTable(String tableName, ColumnOptions... columns);
+
+	String alterTableAddColumn(String tableName, ColumnOptions option);
+
+	String alterTableDropColumn(String tableName, String columnName);
+
+	default String select(final String tableName, final Collection&lt;String&gt; where) {
+<span class="fc" id="L23">		return select(tableName, Collections.emptyList(), where);</span>
+	}
+
+	default String select(final String tableName, final Collection&lt;String&gt; select, final Collection&lt;String&gt; where) {
+<span class="fc" id="L27">		return select(tableName, select, where, Optional.empty(), false, 0L);</span>
+	}
+
+	default String select(final String tableName,
+			final Collection&lt;String&gt; select,
+			final Optional&lt;String&gt; columnIn,
+			final long inValues) {
+<span class="fc" id="L34">		return select(tableName, select, Collections.emptyList(), columnIn, false, inValues);</span>
+	}
+
+	String select(String tableName,
+			Collection&lt;String&gt; select,
+			Collection&lt;String&gt; where,
+			Optional&lt;String&gt; columnIn,
+			boolean notIn,
+			long inValues);
+
+	String selectWithOneLike(String tableName,
+			Collection&lt;String&gt; select,
+			Collection&lt;String&gt; columnsToCheck,
+			String columnWithLike);
+
+	String insert(String tableName, Collection&lt;String&gt; columns);
+
+	String update(String tableName, Collection&lt;String&gt; valueNames, Collection&lt;String&gt; whereNames);
+
+	String delete(String tableName, Collection&lt;String&gt; whereNames);
+
+	String delete(String tableName, Collection&lt;String&gt; where, Optional&lt;String&gt; columnIn, boolean notIn, long inValues);
+
+	Object convertValue(Object object);
+
+<span class="fc" id="L59">	enum ColumnType {</span>
+<span class="fc" id="L60">		Text,</span>
+<span class="fc" id="L61">		Integer,</span>
+<span class="fc" id="L62">		BigInteger,</span>
+<span class="fc" id="L63">		Float,</span>
+<span class="fc" id="L64">		Boolean,</span>
+<span class="fc" id="L65">		Timestamp,</span>
+<span class="fc" id="L66">		Date,</span>
+<span class="fc" id="L67">		Time</span>
+	}
+
+	class ColumnOptions {
+		private final String name;
+
+		private final ColumnType type;
+
+		private final boolean nullable;
+
+		@Nullable
+		private final Object defaultValue;
+
+		private final boolean primaryKey;
+
+		private final boolean autoincrement;
+
+		private final boolean unique;
+
+		private final OptionalInt length;
+
+		private final OptionalInt precision;
+
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				@Nullable final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey) {
+<span class="fc" id="L95">			this(name, type, defaultValue, nullable, primaryKey, false, false);</span>
+<span class="fc" id="L96">		}</span>
+
+		public ColumnOptions(final String name,
+				final ColumnType type,
+				@Nullable final Object defaultValue,
+				final boolean nullable,
+				final boolean primaryKey,
+				final boolean autoincrement,
+<span class="fc" id="L104">				final boolean unique) {</span>
+<span class="fc" id="L105">			this.name = Objects.requireNonNull(name);</span>
+<span class="fc" id="L106">			this.type = Objects.requireNonNull(type);</span>
+<span class="fc" id="L107">			this.defaultValue = defaultValue;</span>
+<span class="fc" id="L108">			this.nullable = nullable;</span>
+<span class="fc" id="L109">			this.primaryKey = primaryKey;</span>
+<span class="fc" id="L110">			this.autoincrement = autoincrement;</span>
+<span class="fc" id="L111">			length = OptionalInt.empty();</span>
+<span class="fc" id="L112">			precision = OptionalInt.empty();</span>
+<span class="fc" id="L113">			this.unique = unique;</span>
+<span class="fc" id="L114">		}</span>
+
+		@Nullable
+		public Object getDefaultValue() {
+<span class="fc" id="L118">			return defaultValue;</span>
+		}
+
+		public String getName() {
+<span class="fc" id="L122">			return name;</span>
+		}
+
+		public OptionalInt getLength() {
+<span class="nc" id="L126">			return length;</span>
+		}
+
+		public OptionalInt getPrecision() {
+<span class="nc" id="L130">			return precision;</span>
+		}
+
+		public ColumnType getType() {
+<span class="fc" id="L134">			return type;</span>
+		}
+
+		public boolean isAutoincrement() {
+<span class="fc" id="L138">			return autoincrement;</span>
+		}
+
+		public boolean isNullable() {
+<span class="fc" id="L142">			return nullable;</span>
+		}
+
+		public boolean isPrimaryKey() {
+<span class="fc" id="L146">			return primaryKey;</span>
+		}
+
+		public boolean isUnique() {
+<span class="fc" id="L150">			return unique;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

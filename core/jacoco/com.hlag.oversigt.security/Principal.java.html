@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Principal.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.security</a> &gt; <span class="el_source">Principal.java</span></div><h1>Principal.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.security;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.google.common.base.Ascii;
+
+public class Principal implements java.security.Principal {
+<span class="nc" id="L17">	private static final Map&lt;String, Principal&gt; PRINCIPALS = Collections.synchronizedMap(new WeakHashMap&lt;&gt;());</span>
+
+	static Optional&lt;Principal&gt; getPrincipal(final String username) {
+<span class="nc" id="L20">		return Optional.ofNullable(PRINCIPALS.get(username));</span>
+	}
+
+	/**
+	 * Gets the principal with the given username from the given
+	 * {@link Authenticator}.
+	 *
+	 * @param authenticator the {@link Authenticator} to use for reading the
+	 *                      principal information
+	 * @param username      the name of the {@link Principal} to read
+	 * @return the read {@link Principal} object. This method does not return
+	 *         &lt;code&gt;null&lt;/code&gt;.
+	 * @throws java.util.NoSuchElementException if the principal could not be
+	 *                                          loaded.
+	 */
+	public static Optional&lt;Principal&gt; loadPrincipal(final Authenticator authenticator, final String username) {
+<span class="nc" id="L36">		PRINCIPALS.computeIfAbsent(username, name -&gt; {</span>
+<span class="nc" id="L37">			final Optional&lt;Principal&gt; principal = authenticator.readPrincipal(name);</span>
+<span class="nc" id="L38">			authenticator.reloadRoles(name);</span>
+<span class="nc" id="L39">			return principal.orElse(null);</span>
+		});
+<span class="nc" id="L41">		return getPrincipal(username);</span>
+	}
+
+	private final String distinguishedName;
+
+	private final String username;
+
+	private final String name;
+
+	private final String email;
+
+<span class="nc" id="L52">	private final Set&lt;Role&gt; roles = new HashSet&lt;&gt;();</span>
+
+	// TODO make private and use cached principals
+	Principal(final String username, final Set&lt;Role&gt; roles) {
+<span class="nc" id="L56">		this(username, username, username, username + &quot;@example.com&quot;, roles);</span>
+<span class="nc" id="L57">	}</span>
+
+	Principal(final String distinguishedName,
+			final String username,
+			final String name,
+			final String email,
+<span class="nc" id="L63">			final Set&lt;Role&gt; roles) {</span>
+<span class="nc" id="L64">		this.distinguishedName = distinguishedName;</span>
+<span class="nc" id="L65">		this.username = username;</span>
+<span class="nc" id="L66">		this.name = name;</span>
+<span class="nc" id="L67">		this.email = email;</span>
+<span class="nc" id="L68">		this.roles.addAll(roles);</span>
+
+<span class="nc" id="L70">		PRINCIPALS.put(username, this);</span>
+<span class="nc" id="L71">	}</span>
+
+	synchronized void changeRoles(final Collection&lt;Role&gt; newRoles) {
+<span class="nc" id="L74">		roles.clear();</span>
+<span class="nc" id="L75">		roles.addAll(newRoles);</span>
+<span class="nc" id="L76">	}</span>
+
+	@Override
+	public String getName() {
+<span class="nc" id="L80">		return name;</span>
+	}
+
+	String getDistinguishedName() {
+<span class="nc" id="L84">		return distinguishedName;</span>
+	}
+
+	public String getEmail() {
+<span class="nc" id="L88">		return email;</span>
+	}
+
+	public String getUsername() {
+<span class="nc" id="L92">		return username;</span>
+	}
+
+	public Set&lt;Role&gt; getRoles() {
+<span class="nc" id="L96">		return Collections.unmodifiableSet(roles);</span>
+	}
+
+	public synchronized boolean hasRole(final Role role) {
+<span class="nc" id="L100">		for (Optional&lt;Role&gt; currentRole = Optional.of(role);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">				currentRole.isPresent();</span>
+<span class="nc" id="L102">				currentRole = currentRole.get().getParent()) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">			if (roles.contains(currentRole.get())) {</span>
+<span class="nc" id="L104">				return true;</span>
+			}
+		}
+<span class="nc" id="L107">		return false;</span>
+	}
+
+	public boolean hasRole(final String roleName) {
+<span class="nc" id="L111">		final Optional&lt;Roles&gt; roles = Roles.fromString(roleName);</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">		if (roles.isPresent()) {</span>
+<span class="nc" id="L113">			return hasRole(roles.get().getRole());</span>
+		}
+
+<span class="nc" id="L116">		final String[] parts = Ascii.toLowerCase(roleName).split(&quot;\\.&quot;, 3);</span>
+<span class="nc bnc" id="L117" title="All 4 branches missed.">		if (parts.length == 3 &amp;&amp; parts[0].equals(&quot;dashboard&quot;)) {</span>
+<span class="nc bnc" id="L118" title="All 3 branches missed.">			switch (parts[2]) {</span>
+			case &quot;owner&quot;:
+<span class="nc" id="L120">				return hasRole(Role.DASHBOARD_OWNER.getDashboardSpecificRole(parts[1]));</span>
+			case &quot;editor&quot;:
+<span class="nc" id="L122">				return hasRole(Role.DASHBOARD_EDITOR.getDashboardSpecificRole(parts[1]));</span>
+			default:
+				// unknown part
+<span class="nc" id="L125">				return false;</span>
+			}
+		}
+		// does not fit current role names
+<span class="nc" id="L129">		return false;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L134">		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

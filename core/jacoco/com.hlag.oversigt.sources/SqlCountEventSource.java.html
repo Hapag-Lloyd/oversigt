@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SqlCountEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">SqlCountEventSource.java</span></div><h1>SqlCountEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent;
+import com.hlag.oversigt.sources.event.ComplexGraphEvent.Point;
+
+/**
+ * @author kayma
+ * @deprecated Do not use this event source any longer!
+ */
+@Deprecated
+@EventSource(displayName = &quot;SQL Count&quot;, view = &quot;Rickshawgraph&quot;, hiddenDataItems = { &quot;moreinfo&quot;, &quot;points&quot; })
+public class SqlCountEventSource extends AbstractJdbcEventSource&lt;ComplexGraphEvent&gt; {
+<span class="nc" id="L30">	private Optional&lt;LocalDate&gt; loadDateYesterdayPoints = Optional.empty();</span>
+
+<span class="nc" id="L32">	private Optional&lt;ZonedDateTime&gt; loadDateTimeTodayPoints = Optional.empty();</span>
+
+<span class="nc" id="L34">	private final List&lt;ComplexGraphEvent.Point&gt; yesterdayPoints = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L36">	private final List&lt;ComplexGraphEvent.Point&gt; todayPoints = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L38">	private long sumToday = 0L;</span>
+
+<span class="nc" id="L40">	private String sqlStatement = &quot;&quot;;</span>
+
+<span class="nc" id="L42">	public SqlCountEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L44">	}</span>
+
+	@Property(name = &quot;SQL&quot;,
+			description = &quot;SQL Statement returning one row and two columns (hour, count). :DATE: is replaced by the current date/yesterday's date and is mandatory to use. Query has to start with select and no \&quot;;\&quot; are allowed.&quot;,
+			type = &quot;sql&quot;)
+	public String getSqlStatement() {
+<span class="nc" id="L50">		return sqlStatement;</span>
+	}
+
+	public void setSqlStatement(final String sqlStatement) {
+		// make sure that we have a select statement and nothing else. Some SQL
+		// statements starts with &quot;with&quot;
+<span class="nc bnc" id="L56" title="All 6 branches missed.">		if (!sqlStatement.startsWith(&quot;select&quot;) &amp;&amp; !sqlStatement.startsWith(&quot;with&quot;) || sqlStatement.contains(&quot;;&quot;)) {</span>
+<span class="nc" id="L57">			return;</span>
+		}
+
+<span class="nc" id="L60">		this.sqlStatement = sqlStatement;</span>
+<span class="nc" id="L61">	}</span>
+
+	@Override
+	protected void gatherDatabaseInfo(final Connection connection) throws SQLException {
+<span class="nc" id="L65">		final LocalDate today = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();</span>
+<span class="nc" id="L66">		final LocalDate yesterday = today.minusDays(1);</span>
+
+<span class="nc bnc" id="L68" title="All 4 branches missed.">		if (yesterdayPoints.isEmpty() || loadDateYesterdayPoints.get().isBefore(yesterday)) {</span>
+<span class="nc" id="L69">			yesterdayPoints.clear();</span>
+<span class="nc" id="L70">			yesterdayPoints.addAll(getRpMessagesPointsByDate(connection, yesterday));</span>
+<span class="nc" id="L71">			loadDateYesterdayPoints = Optional.of(yesterday);</span>
+		}
+
+<span class="nc bnc" id="L74" title="All 2 branches missed.">		if (!loadDateTimeTodayPoints.isPresent()</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">				|| loadDateTimeTodayPoints.get().plusMinutes(15).isBefore(ZonedDateTime.now(ZoneId.of(&quot;UTC&quot;)))) {</span>
+<span class="nc" id="L76">			todayPoints.clear();</span>
+<span class="nc" id="L77">			todayPoints.addAll(getRpMessagesPointsByDate(connection, today));</span>
+<span class="nc" id="L78">			loadDateTimeTodayPoints = Optional.of(ZonedDateTime.now(ZoneId.of(&quot;UTC&quot;)));</span>
+		}
+
+<span class="nc" id="L81">		sumToday = todayPoints.stream().mapToLong(Point::getY).sum();</span>
+<span class="nc" id="L82">	}</span>
+
+	@Override
+	protected Optional&lt;ComplexGraphEvent&gt; produceEventFromData() {
+<span class="nc" id="L86">		final ComplexGraphEvent.Series yesterdaySeries = new ComplexGraphEvent.Series(&quot;Yesterday&quot;, yesterdayPoints);</span>
+<span class="nc" id="L87">		final ComplexGraphEvent.Series todaySeries = new ComplexGraphEvent.Series(&quot;Today&quot;, todayPoints);</span>
+
+<span class="nc" id="L89">		final List&lt;ComplexGraphEvent.Series&gt; allSeries = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L90">		allSeries.add(yesterdaySeries);</span>
+<span class="nc" id="L91">		allSeries.add(todaySeries);</span>
+
+<span class="nc" id="L93">		final String sumTodayString = NumberFormat.getNumberInstance(Locale.GERMANY).format(sumToday);</span>
+
+<span class="nc" id="L95">		return Optional.of(new ComplexGraphEvent(allSeries, sumTodayString));</span>
+	}
+
+	private Collection&lt;Point&gt; getRpMessagesPointsByDate(final Connection con, final LocalDate date)
+			throws SQLException {
+<span class="nc" id="L100">		return readFromDatabase(con, rs -&gt; {</span>
+<span class="nc" id="L101">			final int hour = rs.getInt(1);</span>
+<span class="nc" id="L102">			final Long msgs = rs.getLong(2);</span>
+<span class="nc" id="L103">			return new ComplexGraphEvent.Point(hour * 60 * 60L, msgs);</span>
+<span class="nc" id="L104">		}, sqlStatement.replace(&quot;:DATE:&quot;, &quot;?&quot;), Date.valueOf(date));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OversigtServer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core</a> &gt; <span class="el_source">OversigtServer.java</span></div><h1>OversigtServer.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core;
+
+import static com.hlag.oversigt.util.Utils.not;
+
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.event.EventSender;
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.undertow.Handlers;
+import io.undertow.Undertow;
+import io.undertow.Undertow.Builder;
+import io.undertow.predicate.Predicates;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.RoutingHandler;
+import io.undertow.server.handlers.accesslog.AccessLogHandler;
+import io.undertow.server.handlers.encoding.ContentEncodingRepository;
+import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
+import io.undertow.server.handlers.encoding.EncodingHandler;
+import io.undertow.server.handlers.encoding.GzipEncodingProvider;
+import io.undertow.server.handlers.sse.ServerSentEventConnection;
+
+/**
+ * HTTP Server Controller. Bootstraps server and specifies all needed mappings
+ * and request handlers
+ *
+ * @author avarabyeu
+ * @author Olaf Neumann
+ */
+@Singleton
+public class OversigtServer extends AbstractIdleService {
+<span class="nc" id="L52">	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtServer.class);</span>
+
+	@Inject
+	@Named(&quot;listeners&quot;)
+	private List&lt;HttpListenerConfiguration&gt; listeners;
+
+	@Inject
+	private EventBus eventBus;
+
+<span class="nc" id="L61">	private Optional&lt;Undertow&gt; server = Optional.empty();</span>
+
+	@Inject
+	private EventSender sender;
+
+	@Inject
+	private HttpHandlers handlers;
+
+	@Inject
+	private EventSourceInstanceController instanceController;
+
+	@Inject
+	private DashboardController dashboardController;
+
+	@Inject
+	@Named(&quot;startEventSources&quot;)
+	private boolean startEventSources;
+
+	@Inject
+	@Named(&quot;NightlyDashboardReloader&quot;)
+	private Service nightlyDashboardReloader;
+
+	@Inject
+	@Named(&quot;NightlyEventSourceRestarter&quot;)
+	private Service nightlyEventSourceRestarter;
+
+	@Inject
+	@Named(&quot;foreignEvents.enabled&quot;)
+	private boolean foreignEventsEnabled;
+
+	@Inject
+<span class="nc" id="L92">	public OversigtServer() {</span>
+<span class="nc" id="L93">		addListener(new OversigtServerListener(), MoreExecutors.directExecutor());</span>
+<span class="nc" id="L94">	}</span>
+
+	@Override
+	protected void startUp() throws Exception {
+		// Configure listeners
+<span class="nc bnc" id="L99" title="All 2 branches missed.">		if (listeners.isEmpty()) {</span>
+<span class="nc" id="L100">			throw new RuntimeException(&quot;No http listeners configured.&quot;);</span>
+		}
+
+<span class="nc" id="L103">		LOGGER.info(&quot;Initializing controllers&quot;);</span>
+<span class="nc" id="L104">		dashboardController.initialize();</span>
+
+<span class="nc" id="L106">		LOGGER.info(&quot;Configuring web server&quot;);</span>
+<span class="nc" id="L107">		eventBus.register(new Consumer&lt;OversigtEvent&gt;() {</span>
+			@Subscribe
+			@Override
+			public void accept(@Nullable final OversigtEvent event) {
+<span class="nc bnc" id="L111" title="All 2 branches missed.">				if (event == null) {</span>
+<span class="nc" id="L112">					return;</span>
+				}
+<span class="nc" id="L114">				handlers.getServerSentEventsHandler()</span>
+<span class="nc" id="L115">						.getConnections()</span>
+<span class="nc" id="L116">						.forEach(connection -&gt; sender.sendEventToConnection(event, connection));</span>
+<span class="nc" id="L117">			}</span>
+		});
+
+		// Create Handlers for dynamic content
+<span class="nc" id="L121">		final RoutingHandler routingHandler = Handlers.routing()</span>
+				// dashboard handling
+<span class="nc" id="L123">				.get(&quot;/{dashboard}&quot;, handlers.createDashboardHandler())</span>
+				// send events to dashboards
+<span class="nc" id="L125">				.get(&quot;/events&quot;, handlers.getServerSentEventsHandler())</span>
+				// get widget details
+<span class="nc" id="L127">				.get(&quot;/views/{widget}&quot;, handlers.createWidgetHandler())</span>
+				// JSON Schema output
+<span class="nc" id="L129">				.get(&quot;/schema/{class}&quot;, handlers.createJsonSchemaHandler())</span>
+				// default handler
+<span class="nc" id="L131">				.get(&quot;/&quot;, handlers.createWelcomePageHandler());</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		if (foreignEventsEnabled) {</span>
+			// get events from outside
+<span class="nc" id="L134">			routingHandler.post(&quot;/events&quot;, handlers.createForeignEventHandler());</span>
+		}
+
+		// Create Handlers for static content
+<span class="nc" id="L138">		final HttpHandler rootHandler = Handlers.path(routingHandler)</span>
+<span class="nc" id="L139">				.addPrefixPath(&quot;/assets&quot;, handlers.createAssetsHandler())</span>
+<span class="nc" id="L140">				.addPrefixPath(&quot;/compiled&quot;, handlers.createAggregationHandler())</span>
+<span class="nc" id="L141">				.addPrefixPath(&quot;/api/swagger&quot;, handlers.createSwaggerUiHandler())</span>
+<span class="nc" id="L142">				.addPrefixPath(HttpHandlers.MAPPING_API, handlers.createApiHandler())</span>
+<span class="nc" id="L143">				.addPrefixPath(&quot;/config&quot;, handlers.createAngularHandler());</span>
+
+		// Create Handler for compressing content
+<span class="nc" id="L146">		final EncodingHandler encodingHandler = new EncodingHandler(new ContentEncodingRepository()</span>
+<span class="nc" id="L147">				.addEncodingHandler(&quot;gzip&quot;, new GzipEncodingProvider(), 50, Predicates.requestLargerThan(5))</span>
+<span class="nc" id="L148">				.addEncodingHandler(&quot;deflate&quot;, new DeflateEncodingProvider(), 50, Predicates.requestLargerThan(10)))</span>
+<span class="nc" id="L149">						.setNext(rootHandler);</span>
+
+<span class="nc" id="L151">		final Logger accessLogger = LoggerFactory.getLogger(&quot;access&quot;);</span>
+
+<span class="nc" id="L153">		final AccessLogHandler accessHandler = new AccessLogHandler(encodingHandler,</span>
+<span class="nc" id="L154">				message -&gt; accessLogger.info(message),</span>
+				&quot;combined&quot;,
+<span class="nc" id="L156">				OversigtServer.class.getClassLoader());</span>
+
+<span class="nc" id="L158">		final Builder builder = Undertow.builder();</span>
+<span class="nc" id="L159">		listeners.stream()</span>
+<span class="nc" id="L160">				.filter(not(HttpListenerConfiguration::isTls))</span>
+<span class="nc" id="L161">				.forEach(c -&gt; builder.addHttpListener(c.getPort(), c.getIp()));</span>
+<span class="nc" id="L162">		listeners.stream()</span>
+<span class="nc" id="L163">				.filter(HttpListenerConfiguration::isTls)</span>
+<span class="nc" id="L164">				.forEach(c -&gt; builder.addHttpsListener(c.getPort(),</span>
+<span class="nc" id="L165">						c.getIp(),</span>
+<span class="nc" id="L166">						Objects.requireNonNull(c.getTLSConfiguration()).createSSLContext()));</span>
+<span class="nc" id="L167">		final Undertow server = builder.setHandler(accessHandler).build();</span>
+<span class="nc" id="L168">		this.server = Optional.of(server);</span>
+
+<span class="nc" id="L170">		LOGGER.info(&quot;Starting web server&quot;);</span>
+		try {
+<span class="nc" id="L172">			server.start();</span>
+<span class="nc" id="L173">		} catch (final Exception e) {</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">			if (e.getCause() instanceof BindException) {</span>
+<span class="nc" id="L175">				LOGGER.error(&quot;Cannot start server&quot;, e.getCause());</span>
+<span class="nc" id="L176">				stopAsync();</span>
+			}
+<span class="nc" id="L178">		}</span>
+
+<span class="nc" id="L180">		nightlyDashboardReloader.startAsync();</span>
+<span class="nc" id="L181">		nightlyEventSourceRestarter.startAsync();</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">		if (startEventSources) {</span>
+<span class="nc" id="L183">			LOGGER.info(&quot;Starting event source instances&quot;);</span>
+<span class="nc" id="L184">			instanceController.startAllInstances();</span>
+		}
+
+<span class="nc" id="L187">		LOGGER.info(&quot;StartUp finished&quot;);</span>
+<span class="nc" id="L188">	}</span>
+
+	@Override
+	protected void shutDown() throws Exception {
+		/* stop the service for nightly reloading */
+<span class="nc" id="L193">		LOGGER.info(&quot;Stopping nightly services&quot;);</span>
+<span class="nc" id="L194">		nightlyDashboardReloader.stopAsync();</span>
+<span class="nc" id="L195">		nightlyDashboardReloader.awaitTerminated();</span>
+<span class="nc" id="L196">		nightlyEventSourceRestarter.stopAsync();</span>
+<span class="nc" id="L197">		nightlyEventSourceRestarter.awaitTerminated();</span>
+
+		/* stop all event source instances */
+<span class="nc" id="L200">		LOGGER.info(&quot;Stopping event sources&quot;);</span>
+<span class="nc" id="L201">		instanceController.stopAllInstances();</span>
+
+		/* close connections */
+<span class="nc" id="L204">		LOGGER.info(&quot;Shutting down server sent event connections&quot;);</span>
+<span class="nc" id="L205">		handlers.getServerSentEventsHandler().getConnections().forEach(ServerSentEventConnection::shutdown);</span>
+
+		/* stop the server */
+<span class="nc" id="L208">		LOGGER.info(&quot;Stopping web server&quot;);</span>
+<span class="nc" id="L209">		server.ifPresent(Undertow::stop);</span>
+<span class="nc" id="L210">	}</span>
+
+	private final class OversigtServerListener extends Listener {
+<span class="nc" id="L213">		private OversigtServerListener() {</span>
+			// no fields to be initialized
+<span class="nc" id="L215">		}</span>
+
+		@Override
+		public void running() {
+<span class="nc" id="L219">			final Undertow server = OversigtServer.this.server.get();</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">			if (server != null) {</span>
+<span class="nc" id="L221">				LOGGER.info(&quot;Embedded Oversigt server has started and is listening on port(s) {}&quot;,</span>
+<span class="nc" id="L222">						server.getListenerInfo()</span>
+<span class="nc" id="L223">								.stream()</span>
+<span class="nc" id="L224">								.map(li -&gt; (InetSocketAddress) li.getAddress())</span>
+<span class="nc" id="L225">								.mapToInt(InetSocketAddress::getPort)</span>
+<span class="nc" id="L226">								.toArray());</span>
+			}
+<span class="nc" id="L228">		}</span>
+
+		@Override
+		public void failed(@Nullable final State from, @Nullable final Throwable failure) {
+<span class="nc" id="L232">			LOGGER.error(&quot;Embedded Oversigt server failed from: &quot; + from, failure);</span>
+<span class="nc" id="L233">		}</span>
+
+		@Override
+		public void stopping(@SuppressWarnings(&quot;unused&quot;) @Nullable final State from) {
+<span class="nc" id="L237">			LOGGER.info(&quot;Stopping embedded Oversigt server&quot;);</span>
+<span class="nc" id="L238">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

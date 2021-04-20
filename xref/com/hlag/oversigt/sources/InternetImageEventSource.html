@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>/home/runner/work/oversigt/oversigt/core/src/main/java/com/hlag/oversigt/sources/InternetImageEventSource.java xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../apidocs/com/hlag/oversigt/sources">View Javadoc</a></div><pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> com.hlag.oversigt.sources;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <strong class="jxr_keyword">import</strong> java.util.Optional;
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.eventsource.EventSource;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.eventsource.EventSourceException;
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> com.hlag.oversigt.sources.event.StyleEvent;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  @EventSource(view = <span class="jxr_string">"ImageView"</span>,
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  		displayName = <span class="jxr_string">"Internet Image"</span>,
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  		description = <span class="jxr_string">"Load an image from the internet by parsing a web site and show the image in the dashboard."</span>,
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  		dataItems = { <span class="jxr_string">"width"</span> },
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  		hiddenDataItems = { <span class="jxr_string">"more-info"</span> })
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> InternetImageEventSource <strong class="jxr_keyword">extends</strong> AbstractDownloadEventSource&lt;StyleEvent&gt; {
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  	<strong class="jxr_keyword">public</strong> InternetImageEventSource() {
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  		<em class="jxr_comment">// no fields to be initialized</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  	}
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  	@Override
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  	<strong class="jxr_keyword">protected</strong> Optional&lt;StyleEvent&gt; produceEvent() <strong class="jxr_keyword">throws</strong> <a name="EventSourceException" href="../../../../com/hlag/oversigt/core/eventsource/EventSourceException.html#EventSourceException">EventSourceException</a> {
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  		<strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  			<strong class="jxr_keyword">final</strong> DownloadData image = downloadBytes(createConfiguredConnection());
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  			<strong class="jxr_keyword">return</strong> Optional.of(StyleEvent.backgroundImage(image.getContentType(), image.getData()));
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  		} <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> IOException e) {
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  			<strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a name="EventSourceException" href="../../../../com/hlag/oversigt/core/eventsource/EventSourceException.html#EventSourceException">EventSourceException</a>(<span class="jxr_string">"Unable to download image"</span>, e);
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  		}
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  	}
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  }
+</pre>
+<hr/>
+<div id="footer">Copyright &#169; 2021 <a href="https://www.hapag-lloyd.com/">Hapag-Lloyd AG</a>. All rights reserved.</div>
+</body>
+</html>

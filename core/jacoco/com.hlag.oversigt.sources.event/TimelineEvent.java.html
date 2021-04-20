@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimelineEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">TimelineEvent.java</span></div><h1>TimelineEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAmount;
+import java.util.Comparator;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.properties.Color;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class TimelineEvent extends OversigtEvent {
+<span class="nc" id="L19">	private static final Comparator&lt;Event&gt; BY_DATE = (e1, e2) -&gt; e1.getOriginalDate().compareTo(e2.getOriginalDate());</span>
+
+<span class="nc" id="L21">	private static final Comparator&lt;Event&gt; BY_NAME = (e1, e2) -&gt; e1.getName().compareTo(e2.getName());</span>
+
+<span class="nc" id="L23">	private SortedSet&lt;Event&gt; events = new TreeSet&lt;&gt;();</span>
+
+	private final TemporalAmount maxAge;
+
+	private final ZoneId zoneId;
+
+	private final Locale locale;
+
+<span class="nc" id="L31">	public TimelineEvent(final TemporalAmount maxAge, final ZoneId zoneId, final Locale locale) {</span>
+<span class="nc" id="L32">		this.maxAge = Objects.requireNonNull(maxAge);</span>
+<span class="nc" id="L33">		this.zoneId = Objects.requireNonNull(zoneId);</span>
+<span class="nc" id="L34">		this.locale = Objects.requireNonNull(locale);</span>
+<span class="nc" id="L35">	}</span>
+
+	public TemporalAmount getMaxAge() {
+<span class="nc" id="L38">		return maxAge;</span>
+	}
+
+	public boolean hasEventAt(final LocalDate date) {
+<span class="nc" id="L42">		return events.stream().filter(event -&gt; event.getOriginalDate().equals(date)).findAny().isPresent();</span>
+	}
+
+	public void addEvent(final String name,
+			final LocalDate startDate,
+			final LocalDate endDate,
+			final boolean allDay,
+			final Color background) {
+<span class="nc" id="L50">		addEvent(name, startDate, endDate, allDay, background.getHexColor());</span>
+<span class="nc" id="L51">	}</span>
+
+	public void addEvent(final String name,
+			final LocalDate startDate,
+			final LocalDate endDate,
+			final boolean allDay,
+			final String background) {
+<span class="nc" id="L58">		addEvent(name, startDate, endDate, allDay, background, null);</span>
+<span class="nc" id="L59">	}</span>
+
+	public void addEvent(final String name,
+			final LocalDate startDate,
+			final LocalDate endDate,
+			final boolean allDay,
+			final Color background,
+			@Nullable final Color fontColor) {
+<span class="nc" id="L67">		addEvent(name,</span>
+				startDate,
+				endDate,
+				allDay,
+<span class="nc bnc" id="L71" title="All 2 branches missed.">				background.getHexColor(),</span>
+<span class="nc" id="L72">				fontColor != null ? fontColor.getHexColor() : null);</span>
+<span class="nc" id="L73">	}</span>
+
+	public void addEvent(final String name,
+			final LocalDate startDate,
+			final LocalDate endDate,
+			final boolean allDay,
+			final String background,
+			@Nullable final String fontColor) {
+<span class="nc" id="L81">		final LocalDate now = LocalDate.now(zoneId);</span>
+
+		// filter event in the past
+<span class="nc bnc" id="L84" title="All 2 branches missed.">		if (endDate.isBefore(now)) {</span>
+<span class="nc" id="L85">			return;</span>
+		}
+		// filter all day events ending yesterday --&gt; the end date is one day later at
+		// 00:00
+		// but if the start and end date are the same -&gt; keep the event
+<span class="nc bnc" id="L90" title="All 6 branches missed.">		if (allDay &amp;&amp; endDate.isEqual(now) &amp;&amp; !startDate.equals(endDate)) {</span>
+<span class="nc" id="L91">			return;</span>
+		}
+		// filter events that are too far in the future
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if (endDate.minus(maxAge).plusDays(1).isAfter(now)) {</span>
+<span class="nc" id="L95">			return;</span>
+		}
+
+<span class="nc bnc" id="L98" title="All 2 branches missed.">		final LocalDate date = startDate.isBefore(now) ? now : startDate;</span>
+<span class="nc" id="L99">		final String dateLabel = DateTimeFormatter.ofPattern(&quot;MMM d&quot;, locale).format(startDate);</span>
+
+<span class="nc" id="L101">		events.add(new Event(name, date, dateLabel, startDate, background, fontColor));</span>
+<span class="nc" id="L102">	}</span>
+
+	/**
+	 * Removes events older than maxAge if more than minCount of events are inside
+	 * this event.
+	 *
+	 * @param maxAge   the maximum age of an event to be allowed
+	 * @param minCount the minimum number of events to keep
+	 */
+	public void removeEvents(final TemporalAmount maxAge, final int minCount) {
+<span class="nc" id="L112">		final LocalDate now = LocalDate.now(zoneId);</span>
+
+<span class="nc bnc" id="L114" title="All 2 branches missed.">		if (events.size() &gt; minCount) {</span>
+<span class="nc" id="L115">			int count = 0;</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">			for (final Event event : events) {</span>
+<span class="nc bnc" id="L117" title="All 4 branches missed.">				if (count &gt; minCount &amp;&amp; event.getOriginalDate().minus(maxAge).isAfter(now)) {</span>
+<span class="nc" id="L118">					events = new TreeSet&lt;&gt;(events.headSet(event));</span>
+<span class="nc" id="L119">					return;</span>
+				}
+<span class="nc" id="L121">				count += 1;</span>
+<span class="nc" id="L122">			}</span>
+		}
+<span class="nc" id="L124">	}</span>
+
+	public static final class Event implements Comparable&lt;Event&gt; {
+		private final String name;
+
+		private final String date;
+
+		private final String dateLabel;
+
+		private final String background;
+
+		@Nullable
+		private final String fontColor;
+
+		private final LocalDate originalDate;
+
+		private Event(final String name,
+				final LocalDate date,
+				final String dateLabel,
+				final LocalDate originalDate,
+				final String background,
+<span class="nc" id="L145">				@Nullable final String fontColor) {</span>
+<span class="nc" id="L146">			this.name = name;</span>
+<span class="nc" id="L147">			this.date = date.format(DateTimeFormatter.ISO_DATE);</span>
+<span class="nc" id="L148">			this.dateLabel = dateLabel;</span>
+<span class="nc" id="L149">			this.background = background;</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">			this.fontColor = fontColor == null ? &quot;white&quot; : fontColor;</span>
+<span class="nc" id="L151">			this.originalDate = originalDate;</span>
+<span class="nc" id="L152">		}</span>
+
+		public String getName() {
+<span class="nc" id="L155">			return name;</span>
+		}
+
+		public String getDate() {
+<span class="nc" id="L159">			return date;</span>
+		}
+
+		public String getDateLabel() {
+<span class="nc" id="L163">			return dateLabel;</span>
+		}
+
+		public String getBackground() {
+<span class="nc" id="L167">			return background;</span>
+		}
+
+		@Nullable
+		public String getFontColor() {
+<span class="nc" id="L172">			return fontColor;</span>
+		}
+
+		public LocalDate getOriginalDate() {
+<span class="nc" id="L176">			return originalDate;</span>
+		}
+
+		@Override
+		public int compareTo(@Nullable final Event that) {
+<span class="nc" id="L181">			return BY_DATE.thenComparing(BY_NAME).compare(this, that);</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L186">			return String.format(&quot;Event [name=%s, date=%s]&quot;, name, originalDate);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

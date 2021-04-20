@@ -1,0 +1,9 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Oversigt Core/oversigt-ui,com.hlag.oversigt.web.ui,OversigtUiHelper,14,0,0,0,5,0,2,0,2,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory.DisposableAtlassianHttpClientDecorator,19,0,0,0,6,0,3,0,3,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory.MavenUtils,61,0,2,0,14,0,4,0,3,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory.NoOpEventPublisher,9,0,0,0,5,0,5,0,5,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory.RestClientApplicationProperties,43,0,0,0,13,0,11,0,11,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory.NoOpThreadLocalContextManager,9,0,0,0,4,0,4,0,4,0
+Oversigt Core/jira-rest-java-client-fix,com.atlassian.jira.rest.client.internal.async,AsynchronousHttpClientFactory,41,0,0,0,15,0,6,0,6,0
+Oversigt Core/jira-rest-java-client-fix,com.hlag.oversigt.connect.jira.config,JiraConfigurationProvider,18,0,0,0,7,0,5,0,5,0

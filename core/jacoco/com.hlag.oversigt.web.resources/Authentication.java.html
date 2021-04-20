@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Authentication.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">Authentication.java</span></div><h1>Authentication.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static java.util.stream.Collectors.toSet;
+import static javax.ws.rs.core.Response.ok;
+
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.SecurityContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.security.RoleProvider;
+import com.hlag.oversigt.util.Utils;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ApiAuthenticationUtils;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+/**
+ * @author Olaf Neumann
+ * @see &lt;a href=
+ *      &quot;https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey&quot;&gt;https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey&lt;/a&gt;
+ */
+@Api(tags = { &quot;Authentication&quot; })
+@Path(&quot;/authentication&quot;)
+@Singleton
+public class Authentication {
+<span class="nc" id="L60">	private static final Logger LOGGER = LoggerFactory.getLogger(Authentication.class);</span>
+
+	private static Map&lt;String, String&gt; createTokenMap(final String token) {
+<span class="nc" id="L63">		final Map&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L64">		map.put(&quot;token&quot;, token);</span>
+<span class="nc" id="L65">		return map;</span>
+	}
+
+	@Inject
+	private ApiAuthenticationUtils authentication;
+
+	@Inject
+	private RoleProvider roleProvider;
+
+	@Nullable
+	@Context
+	private SecurityContext injectedSecurityContext;
+
+<span class="nc" id="L78">	public Authentication() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L80">	}</span>
+
+	private SecurityContext getSecurityContext() {
+<span class="nc" id="L83">		return Objects.requireNonNull(injectedSecurityContext);</span>
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(&quot;/login&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;User successfully logged in&quot;, response = AuthData.class),
+			@ApiResponse(code = 403, message = &quot;Log in failed&quot;) })
+	@ApiOperation(&quot;Log in a user&quot;)
+	public Response authenticateUser(@FormParam(&quot;username&quot;) final String username,
+			@FormParam(&quot;password&quot;) @ApiParam(format = &quot;password&quot;) final String password) {
+		try {
+			// Authenticate the user using the credentials provided
+<span class="nc" id="L98">			final Principal principal = authentication.authenticate(username, password);</span>
+
+			// Issue a token for the user
+<span class="nc" id="L101">			final String token = authentication.issueToken(principal);</span>
+<span class="nc" id="L102">			Utils.logChange(principal, &quot;logged in&quot;);</span>
+
+			// Return the token on the response
+<span class="nc" id="L105">			return ok(new AuthData(principal.getUsername(), principal.getName(), token, findRolesForUser(principal)),</span>
+<span class="nc" id="L106">					MediaType.APPLICATION_JSON).build();</span>
+<span class="nc" id="L107">		} catch (final Exception e) {</span>
+<span class="nc" id="L108">			LOGGER.warn(&quot;MAYBE &quot; + username + &quot; - tried to authenticate&quot;, e);</span>
+<span class="nc" id="L109">			return ErrorResponse.forbidden(&quot;The user and password combination is unknown.&quot;);</span>
+		}
+	}
+
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(&quot;/renew&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Token successfully renewed&quot;, response = AuthData.class),
+			@ApiResponse(code = 403, message = &quot;Token renewal failed&quot;) })
+	@ApiOperation(&quot;Renew the authentication token&quot;)
+	@NoChangeLog
+	public Response renewToken(@HeaderParam(&quot;token&quot;) @NotBlank @ApiParam(allowEmptyValue = false,
+			value = &quot;The JWT to renew&quot;) final String token) {
+<span class="nc" id="L124">		String newToken = null;</span>
+		try {
+<span class="nc" id="L126">			final Principal principal = authentication.validateToken(token);</span>
+<span class="nc" id="L127">			newToken = authentication.issueToken(principal);</span>
+
+<span class="nc" id="L129">			return ok(new AuthData(principal.getUsername(), principal.getName(), newToken, findRolesForUser(principal)),</span>
+<span class="nc" id="L130">					MediaType.APPLICATION_JSON).build();</span>
+<span class="nc" id="L131">		} catch (@SuppressWarnings(&quot;unused&quot;) final Exception ignore) {</span>
+			// take any exception of the token check as login failure
+		}
+<span class="nc bnc" id="L134" title="All 2 branches missed.">		if (newToken == null) {</span>
+<span class="nc" id="L135">			return Response.status(Status.FORBIDDEN).build();</span>
+		}
+<span class="nc" id="L137">		return ok(createTokenMap(newToken)).build();</span>
+	}
+
+	@GET
+	@Path(&quot;/roles&quot;)
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;A list of roles the current user has.&quot;, response = AuthData.class) })
+	@ApiOperation(value = &quot;Get user roles&quot;,
+			authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+	@NoChangeLog
+	@JwtSecured
+	public Response getRoles() {
+<span class="nc" id="L150">		return ok(new AuthData(findRolesForUser((Principal) getSecurityContext().getUserPrincipal()))).build();</span>
+	}
+
+	private Set&lt;String&gt; findRolesForUser(final Principal principal) {
+<span class="nc" id="L154">		return roleProvider.getRoles(principal.getUsername()).stream().map(Role::getName).collect(toSet());</span>
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(&quot;/check-token&quot;)
+	@ApiOperation(&quot;Check a token's validity&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;The check was successful and the result can be found in the response body&quot;,
+					response = boolean.class) })
+	@NoChangeLog
+	public boolean checkToken(@HeaderParam(&quot;token&quot;) @NotBlank @ApiParam(allowEmptyValue = false,
+			value = &quot;The JWT to check&quot;) final String token) {
+		try {
+<span class="nc" id="L169">			authentication.validateToken(token);</span>
+<span class="nc" id="L170">			return true; // ok(true).build();</span>
+<span class="nc" id="L171">		} catch (@SuppressWarnings(&quot;unused&quot;) final Exception e) {</span>
+<span class="nc" id="L172">			return false; // ok(false).build();</span>
+		}
+	}
+
+	public static class AuthData {
+		private final Optional&lt;String&gt; userId;
+
+		private final Optional&lt;String&gt; displayName;
+
+		private final Optional&lt;String&gt; token;
+
+		@NotNull
+		private final Set&lt;@NotBlank String&gt; roles;
+
+<span class="nc" id="L186">		AuthData(final String userId, final String displayName, final String token, final Set&lt;@NotBlank String&gt; roles) {</span>
+<span class="nc" id="L187">			this.userId = Optional.of(userId);</span>
+<span class="nc" id="L188">			this.displayName = Optional.of(displayName);</span>
+<span class="nc" id="L189">			this.token = Optional.of(token);</span>
+<span class="nc" id="L190">			this.roles = new LinkedHashSet&lt;&gt;(roles);</span>
+<span class="nc" id="L191">		}</span>
+
+<span class="nc" id="L193">		AuthData(final Set&lt;String&gt; roles) {</span>
+<span class="nc" id="L194">			userId = Optional.empty();</span>
+<span class="nc" id="L195">			displayName = Optional.empty();</span>
+<span class="nc" id="L196">			token = Optional.empty();</span>
+<span class="nc" id="L197">			this.roles = new LinkedHashSet&lt;&gt;(roles);</span>
+<span class="nc" id="L198">		}</span>
+
+		public Optional&lt;String&gt; getUserId() {
+<span class="nc" id="L201">			return userId;</span>
+		}
+
+		public Optional&lt;String&gt; getDisplayName() {
+<span class="nc" id="L205">			return displayName;</span>
+		}
+
+		public Optional&lt;String&gt; getToken() {
+<span class="nc" id="L209">			return token;</span>
+		}
+
+		public Set&lt;String&gt; getRoles() {
+<span class="nc" id="L213">			return roles;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

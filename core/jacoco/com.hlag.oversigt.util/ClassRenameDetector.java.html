@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClassRenameDetector.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">ClassRenameDetector.java</span></div><h1>ClassRenameDetector.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hlag.oversigt.controller.EventSourceKey;
+
+import info.debatty.java.stringsimilarity.Levenshtein;
+import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance;
+
+public final class ClassRenameDetector {
+<span class="nc" id="L29">	private static final Logger LOGGER = LoggerFactory.getLogger(ClassRenameDetector.class);</span>
+
+	private static final String RENAME_FILENAME = &quot;data/classRenames.properties&quot;;
+
+<span class="nc" id="L33">	private static final Properties RENAME_PROPERTIES = new Properties();</span>
+
+	static {
+<span class="nc" id="L36">		final Path path = Paths.get(RENAME_FILENAME);</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">		if (Files.exists(path)) {</span>
+<span class="nc" id="L38">			LOGGER.info(&quot;Class renaming properties exist. Loading them...&quot;);</span>
+<span class="nc" id="L39">			try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {</span>
+<span class="nc" id="L40">				RENAME_PROPERTIES.load(in);</span>
+<span class="nc" id="L41">				LOGGER.info(&quot;Found {} class renaming instructions.&quot;, RENAME_PROPERTIES.size());</span>
+<span class="nc" id="L42">				LOGGER.debug(&quot;Class renaming properties: {}&quot;, RENAME_PROPERTIES);</span>
+<span class="nc" id="L43">			} catch (final IOException e) {</span>
+<span class="nc" id="L44">				LOGGER.error(&quot;Unable to load class renaming properties&quot;, e);</span>
+<span class="nc" id="L45">			}</span>
+		}
+	}
+
+	private static String getSimpleName(final String className) {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">		return className.contains(&quot;.&quot;) ? className.substring(className.lastIndexOf(&quot;.&quot;) + 1) : className;</span>
+	}
+
+	public static Optional&lt;EventSourceKey&gt; detectPackageMove(final Map&lt;String, EventSourceKey&gt; keys,
+			final String className) {
+<span class="nc" id="L55">		final String simpleClassNameWithDot = &quot;.&quot; + getSimpleName(className);</span>
+<span class="nc" id="L56">		final Set&lt;Entry&lt;String, EventSourceKey&gt;&gt; candidates = keys.entrySet()</span>
+<span class="nc" id="L57">				.stream()</span>
+<span class="nc" id="L58">				.filter(s -&gt; s.getKey().startsWith(&quot;class:&quot;))</span>
+<span class="nc" id="L59">				.filter(s -&gt; s.getKey().endsWith(simpleClassNameWithDot))</span>
+<span class="nc" id="L60">				.collect(toSet());</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">		if (candidates.size() == 1) {</span>
+<span class="nc" id="L62">			return Optional.of(candidates.iterator().next().getValue());</span>
+		}
+<span class="nc bnc" id="L64" title="All 2 branches missed.">		if (candidates.isEmpty()) {</span>
+<span class="nc" id="L65">			LOGGER.warn(&quot;No moved class found for name: {}&quot;, className);</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">		} else if (candidates.size() &gt; 1) {</span>
+<span class="nc" id="L67">			LOGGER.warn(&quot;Multiple moved candidates found for class [{}]: {}&quot;,</span>
+					className,
+<span class="nc" id="L69">					candidates.stream().map(Entry::getKey).collect(joining(&quot;, &quot;)));</span>
+		}
+<span class="nc" id="L71">		return Optional.empty();</span>
+	}
+
+<span class="nc" id="L74">	private static final MetricStringDistance DISTANCE = new Levenshtein();</span>
+
+	public static Optional&lt;EventSourceKey&gt; detectSimpleRename(final Map&lt;String, EventSourceKey&gt; keys,
+			final String className) {
+<span class="nc" id="L78">		final String simpleClassName = getSimpleName(className);</span>
+<span class="nc" id="L79">		final List&lt;KeyDistance&gt; candidates = keys.entrySet()//</span>
+<span class="nc" id="L80">				.stream()</span>
+<span class="nc" id="L81">				.filter(s -&gt; s.getKey().startsWith(&quot;class:&quot;))</span>
+<span class="nc" id="L82">				.map(s -&gt; new KeyDistance(s.getValue(), DISTANCE.distance(simpleClassName, getSimpleName(s.getKey()))))</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">				.filter(t -&gt; t.getDistance() &lt;= 2.0)</span>
+<span class="nc" id="L84">				.sorted((a, b) -&gt; Double.compare(a.getDistance(), b.getDistance()))</span>
+<span class="nc" id="L85">				.collect(toList());</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		if (candidates.size() == 1) {</span>
+<span class="nc" id="L87">			return Optional.of(candidates.iterator().next().getKey());</span>
+		}
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		if (candidates.isEmpty()) {</span>
+<span class="nc" id="L90">			LOGGER.warn(&quot;No renamed class found for name: {}&quot;, className);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">		} else if (candidates.size() &gt; 1) {</span>
+<span class="nc" id="L92">			LOGGER.warn(&quot;Multiple renamed candidates found for class [{}]: {}&quot;,</span>
+					className,
+<span class="nc" id="L94">					candidates.stream().map(KeyDistance::getKey).map(EventSourceKey::getKey).collect(joining(&quot;, &quot;)));</span>
+		}
+<span class="nc" id="L96">		return Optional.empty();</span>
+	}
+
+	public static Optional&lt;EventSourceKey&gt; detectComplexRename(final Map&lt;String, EventSourceKey&gt; keys,
+			final String className) {
+<span class="nc" id="L101">		final String newClassName = RENAME_PROPERTIES.getProperty(className);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (newClassName != null) {</span>
+			try {
+<span class="nc" id="L104">				Class.forName(newClassName);</span>
+<span class="nc" id="L105">				LOGGER.info(&quot;Class {} replaced by {}&quot;, className, newClassName);</span>
+<span class="nc" id="L106">				return Optional.of(keys.get(&quot;class:&quot; + newClassName));</span>
+<span class="nc" id="L107">			} catch (final Exception e) {</span>
+<span class="nc" id="L108">				LOGGER.error(&quot;Unable to load class {} in order to replace class {}&quot;, newClassName, className, e);</span>
+			}
+		}
+<span class="nc" id="L111">		return Optional.empty();</span>
+	}
+
+<span class="nc" id="L114">	private ClassRenameDetector() {</span>
+<span class="nc" id="L115">		throw new UnsupportedOperationException();</span>
+	}
+
+	private static final class KeyDistance {
+		private final EventSourceKey key;
+
+		private final Double distance;
+
+<span class="nc" id="L123">		private KeyDistance(final EventSourceKey key, final Double distance) {</span>
+<span class="nc" id="L124">			this.key = key;</span>
+<span class="nc" id="L125">			this.distance = distance;</span>
+<span class="nc" id="L126">		}</span>
+
+		public EventSourceKey getKey() {
+<span class="nc" id="L129">			return key;</span>
+		}
+
+		public Double getDistance() {
+<span class="nc" id="L133">			return distance;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JSchLogger.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.ssh</a> &gt; <span class="el_source">JSchLogger.java</span></div><h1>JSchLogger.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.ssh;
+
+import org.slf4j.Logger;
+
+import com.google.common.base.Strings;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class JSchLogger implements com.jcraft.jsch.Logger {
+	private final Logger logger;
+
+<span class="nc" id="L12">	public JSchLogger(final Logger logger) {</span>
+<span class="nc" id="L13">		this.logger = logger;</span>
+<span class="nc" id="L14">	}</span>
+
+	@Override
+	public boolean isEnabled(final int level) {
+<span class="nc bnc" id="L18" title="All 5 branches missed.">		switch (level) {</span>
+		case DEBUG:
+<span class="nc" id="L20">			return logger.isDebugEnabled();</span>
+		case WARN:
+<span class="nc" id="L22">			return logger.isWarnEnabled();</span>
+		case INFO:
+<span class="nc" id="L24">			return logger.isInfoEnabled();</span>
+		case ERROR:
+		case FATAL:
+<span class="nc" id="L27">			return logger.isErrorEnabled();</span>
+		default:
+<span class="nc" id="L29">			return false;</span>
+		}
+	}
+
+	@Override
+	public void log(final int level, @Nullable final String input) {
+<span class="nc" id="L35">		final String string = Strings.nullToEmpty(input);</span>
+<span class="nc bnc" id="L36" title="All 5 branches missed.">		switch (level) {</span>
+		case DEBUG:
+<span class="nc" id="L38">			logger.debug(string);</span>
+<span class="nc" id="L39">			return;</span>
+		case WARN:
+<span class="nc" id="L41">			logger.warn(string);</span>
+<span class="nc" id="L42">			return;</span>
+		case INFO:
+<span class="nc" id="L44">			logger.info(string);</span>
+<span class="nc" id="L45">			return;</span>
+		case ERROR:
+		case FATAL:
+<span class="nc" id="L48">			logger.error(string);</span>
+<span class="nc" id="L49">			return;</span>
+		default:
+<span class="nc" id="L51">			logger.trace(string);</span>
+<span class="nc" id="L52">			return;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

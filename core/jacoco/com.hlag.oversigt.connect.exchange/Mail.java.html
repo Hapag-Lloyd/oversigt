@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Mail.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.exchange</a> &gt; <span class="el_source">Mail.java</span></div><h1>Mail.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.exchange;
+
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
+
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.property.complex.EmailAddress;
+
+/**
+ * Lightweight representation of an email message
+ *
+ * @author neumaol
+ *
+ */
+public final class Mail {
+<span class="nc" id="L30">	private static final Logger LOGGER = LoggerFactory.getLogger(Mail.class);</span>
+
+	/**
+	 * Create a lightweight representation of an email message
+	 *
+	 * @param emailMessage the original data to copy
+	 * @return the created mail message or an empty {@link Optional} of it was not
+	 *         possible to create the object.
+	 */
+	static Optional&lt;Mail&gt; create(final EmailMessage emailMessage) {
+		try {
+<span class="nc" id="L41">			return Optional.of(new Mail(emailMessage));</span>
+<span class="nc" id="L42">		} catch (final ServiceLocalException | AddressException e) {</span>
+<span class="nc" id="L43">			LOGGER.error(&quot;Unable to create mail&quot;, e);</span>
+<span class="nc" id="L44">			return Optional.empty();</span>
+		}
+	}
+
+	private final String id;
+
+	private final String subject;
+
+	private final String fromAddress;
+
+	private final String fromName;
+
+	private final Map&lt;InternetAddress, String&gt; tos;
+
+	private final Map&lt;InternetAddress, String&gt; ccs;
+
+	private final boolean isRead;
+
+	private final boolean hasAttachment;
+
+	private final List&lt;String&gt; categories;
+
+<span class="nc" id="L66">	private Mail(final EmailMessage mail) throws ServiceLocalException, AddressException {</span>
+<span class="nc" id="L67">		id = mail.getId().getUniqueId();</span>
+<span class="nc" id="L68">		subject = mail.getSubject();</span>
+
+<span class="nc" id="L70">		final EmailAddress from = mail.getFrom();</span>
+<span class="nc" id="L71">		fromAddress = from.getAddress();</span>
+<span class="nc" id="L72">		fromName = from.getName();</span>
+
+<span class="nc" id="L74">		final Map&lt;InternetAddress, String&gt; tos = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		for (final EmailAddress to : mail.getToRecipients()) {</span>
+<span class="nc" id="L76">			tos.put(new InternetAddress(to.getAddress()), to.getName());</span>
+<span class="nc" id="L77">		}</span>
+<span class="nc" id="L78">		this.tos = unmodifiableMap(tos);</span>
+
+<span class="nc" id="L80">		final Map&lt;InternetAddress, String&gt; ccs = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">		for (final EmailAddress to : mail.getCcRecipients()) {</span>
+<span class="nc" id="L82">			ccs.put(new InternetAddress(to.getAddress()), to.getName());</span>
+<span class="nc" id="L83">		}</span>
+<span class="nc" id="L84">		this.ccs = unmodifiableMap(ccs);</span>
+
+<span class="nc" id="L86">		isRead = mail.getIsRead();</span>
+<span class="nc" id="L87">		hasAttachment = mail.getHasAttachments();</span>
+<span class="nc" id="L88">		categories = unmodifiableList(Lists.newArrayList(mail.getCategories()));</span>
+<span class="nc" id="L89">	}</span>
+
+	/**
+	 * @return the logger
+	 */
+	public static Logger getLogger() {
+<span class="nc" id="L95">		return LOGGER;</span>
+	}
+
+	/**
+	 * @return the id
+	 */
+	public String getId() {
+<span class="nc" id="L102">		return id;</span>
+	}
+
+	/**
+	 * @return the subject
+	 */
+	public String getSubject() {
+<span class="nc" id="L109">		return subject;</span>
+	}
+
+	/**
+	 * @return the fromAddress
+	 */
+	public String getFromAddress() {
+<span class="nc" id="L116">		return fromAddress;</span>
+	}
+
+	/**
+	 * @return the fromName
+	 */
+	public String getFromName() {
+<span class="nc" id="L123">		return fromName;</span>
+	}
+
+	/**
+	 * @return the tos
+	 */
+	public Map&lt;InternetAddress, String&gt; getTos() {
+<span class="nc" id="L130">		return tos;</span>
+	}
+
+	/**
+	 * @return the ccs
+	 */
+	public Map&lt;InternetAddress, String&gt; getCcs() {
+<span class="nc" id="L137">		return ccs;</span>
+	}
+
+	/**
+	 * @return the isRead
+	 */
+	public boolean isRead() {
+<span class="nc" id="L144">		return isRead;</span>
+	}
+
+	/**
+	 * @return the hasAttachment
+	 */
+	public boolean isHasAttachment() {
+<span class="nc" id="L151">		return hasAttachment;</span>
+	}
+
+	/**
+	 * @return the categories
+	 */
+	public List&lt;String&gt; getCategories() {
+<span class="nc" id="L158">		return categories;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

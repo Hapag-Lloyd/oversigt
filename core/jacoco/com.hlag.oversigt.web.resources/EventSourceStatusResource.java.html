@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceStatusResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">EventSourceStatusResource.java</span></div><h1>EventSourceStatusResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import static javax.ws.rs.core.Response.ok;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
+import javax.annotation.security.RolesAllowed;
+import javax.validation.constraints.NotBlank;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.EventSourceStatistics;
+import com.hlag.oversigt.core.eventsource.EventSourceStatisticsManager.RunStatistic;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.security.Role;
+import com.hlag.oversigt.web.api.ApiAuthenticationFilter;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.JwtSecured;
+import com.hlag.oversigt.web.api.NoChangeLog;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+
+@Api(tags = { &quot;EventSource&quot; },
+		authorizations = { @Authorization(value = ApiAuthenticationFilter.API_OPERATION_AUTHENTICATION) })
+@Path(&quot;/event-source/state&quot;)
+@Singleton
+public class EventSourceStatusResource {
+<span class="nc" id="L46">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceStatusResource.class);</span>
+
+	@Inject
+	private EventSourceInstanceController controller;
+
+	@Inject
+	private EventSourceStatisticsManager statisticsManager;
+
+<span class="nc" id="L54">	public EventSourceStatusResource() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L56">	}</span>
+
+	@GET
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a current event source instance state&quot;,
+					response = EventSourceInstanceState.class),
+			@ApiResponse(code = 404,
+					message = &quot;The event source instance does not exist&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Read an event source instance's current state&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	@NoChangeLog
+	public Response isInstanceRunning(@PathParam(&quot;id&quot;) @NotBlank final String instanceId) {
+		try {
+<span class="nc" id="L73">			return ok(EventSourceInstanceState</span>
+<span class="nc" id="L74">					.fromInstance(controller, statisticsManager, controller.getEventSourceInstance(instanceId)))</span>
+<span class="nc" id="L75">							.build();</span>
+<span class="nc" id="L76">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L77">			return ErrorResponse.notFound(&quot;The event source instance does not exist&quot;);</span>
+		}
+	}
+
+	@POST
+	@Path(&quot;/{id}&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200,
+					message = &quot;Returns a current event source instance state after changing the state&quot;,
+					response = EventSourceInstanceState.class),
+			@ApiResponse(code = 404,
+					message = &quot;The event source instance does not exist&quot;,
+					response = ErrorResponse.class),
+			@ApiResponse(code = 412,
+					message = &quot;The event source was not in a suitable state&quot;,
+					response = ErrorResponse.class) })
+	@JwtSecured
+	@ApiOperation(value = &quot;Start or stop an event source instance&quot;)
+	@RolesAllowed(Role.ROLE_NAME_GENERAL_DASHBOARD_OWNER)
+	public Response setInstanceRunning(@PathParam(&quot;id&quot;) @NotBlank final String instanceId,
+			@QueryParam(&quot;running&quot;) @ApiParam(required = true,
+					value = &quot;Whether the event source instance shall be running or not&quot;) final boolean running) {
+		try {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">			if (running) {</span>
+<span class="nc" id="L101">				controller.startInstance(instanceId, false);</span>
+			} else {
+<span class="nc" id="L103">				controller.stopInstance(instanceId);</span>
+			}
+<span class="nc" id="L105">			return ok(EventSourceInstanceState</span>
+<span class="nc" id="L106">					.fromInstance(controller, statisticsManager, controller.getEventSourceInstance(instanceId)))</span>
+<span class="nc" id="L107">							.build();</span>
+<span class="nc" id="L108">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L109">			return ErrorResponse.notFound(&quot;The event source instance does not exist&quot;);</span>
+<span class="nc" id="L110">		} catch (final Exception e) {</span>
+<span class="nc" id="L111">			LOGGER.error(&quot;Unable to set event source status&quot;, e);</span>
+<span class="nc" id="L112">			return ErrorResponse.preconditionFailed(&quot;Unable to start/ stop event source&quot;, e);</span>
+		}
+	}
+
+	public static class EventSourceInstanceState {
+		public static EventSourceInstanceState fromInstance(final EventSourceInstanceController controller,
+				final EventSourceStatisticsManager statisticsManager,
+				final EventSourceInstance instance) {
+<span class="nc" id="L120">			final EventSourceStatistics stats = statisticsManager.getEventSourceStatistics(instance.getId());</span>
+<span class="nc" id="L121">			return new EventSourceInstanceState(instance.getId(),</span>
+<span class="nc" id="L122">					Optional.ofNullable(instance.getDescriptor().getServiceClassName()),</span>
+<span class="nc" id="L123">					instance.getCreatedBy(),</span>
+<span class="nc" id="L124">					instance.getLastChangeBy(),</span>
+<span class="nc" id="L125">					controller.isRunning(instance),</span>
+<span class="nc" id="L126">					stats.isAutomticallyStarted(),</span>
+<span class="nc" id="L127">					stats.getLastRuns(),</span>
+<span class="nc" id="L128">					stats.getLastRun(),</span>
+<span class="nc" id="L129">					stats.getLastSuccessfulRun(),</span>
+<span class="nc" id="L130">					stats.getLastFailedRun());</span>
+		}
+
+		@NotBlank
+		private final String id;
+
+		private final Optional&lt;String&gt; serviceClass;
+
+		private final String createdBy;
+
+		private final String lastChangedBy;
+
+		private final boolean running;
+
+		private final boolean automaticallyStarted;
+
+		private final List&lt;RunStatistic&gt; statistics;
+
+		private final Optional&lt;RunStatistic&gt; lastRun;
+
+		private final Optional&lt;RunStatistic&gt; lastSuccessfulRun;
+
+		private final Optional&lt;RunStatistic&gt; lastFailedRun;
+
+		public EventSourceInstanceState(@NotBlank final String id,
+				final Optional&lt;String&gt; serviceClass,
+				final String createdBy,
+				final String lastChangedBy,
+				final boolean running,
+				final boolean automaticallyStarted,
+				final List&lt;RunStatistic&gt; statistics,
+				final Optional&lt;RunStatistic&gt; lastRun,
+				final Optional&lt;RunStatistic&gt; lastSuccessfulRun,
+<span class="nc" id="L163">				final Optional&lt;RunStatistic&gt; lastFailedRun) {</span>
+<span class="nc" id="L164">			this.id = id;</span>
+<span class="nc" id="L165">			this.serviceClass = serviceClass;</span>
+<span class="nc" id="L166">			this.createdBy = createdBy;</span>
+<span class="nc" id="L167">			this.lastChangedBy = lastChangedBy;</span>
+<span class="nc" id="L168">			this.running = running;</span>
+<span class="nc" id="L169">			this.automaticallyStarted = automaticallyStarted;</span>
+<span class="nc" id="L170">			this.statistics = statistics;</span>
+<span class="nc" id="L171">			this.lastRun = lastRun;</span>
+<span class="nc" id="L172">			this.lastSuccessfulRun = lastSuccessfulRun;</span>
+<span class="nc" id="L173">			this.lastFailedRun = lastFailedRun;</span>
+<span class="nc" id="L174">		}</span>
+
+		public String getId() {
+<span class="nc" id="L177">			return id;</span>
+		}
+
+		public Optional&lt;String&gt; getServiceClass() {
+<span class="nc" id="L181">			return serviceClass;</span>
+		}
+
+		public String getCreatedBy() {
+<span class="nc" id="L185">			return createdBy;</span>
+		}
+
+		public String getLastChangedBy() {
+<span class="nc" id="L189">			return lastChangedBy;</span>
+		}
+
+		public boolean isRunning() {
+<span class="nc" id="L193">			return running;</span>
+		}
+
+		public boolean isAutomaticallyStarted() {
+<span class="nc" id="L197">			return automaticallyStarted;</span>
+		}
+
+		public List&lt;RunStatistic&gt; getStatistics() {
+<span class="nc" id="L201">			return statistics;</span>
+		}
+
+		public Optional&lt;RunStatistic&gt; getLastRun() {
+<span class="nc" id="L205">			return lastRun;</span>
+		}
+
+		public Optional&lt;RunStatistic&gt; getLastSuccessfulRun() {
+<span class="nc" id="L209">			return lastSuccessfulRun;</span>
+		}
+
+		public Optional&lt;RunStatistic&gt; getLastFailedRun() {
+<span class="nc" id="L213">			return lastFailedRun;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

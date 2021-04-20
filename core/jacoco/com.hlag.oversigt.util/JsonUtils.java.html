@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">JsonUtils.java</span></div><h1>JsonUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import static java.util.Collections.emptyMap;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+import com.hlag.oversigt.storage.Storage;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+
+import de.larssh.utils.collection.Maps;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public final class JsonUtils {
+<span class="fc" id="L49">	private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtils.class);</span>
+
+	private static final String SERIALIZABLE_PROPERTY_TYPE = &quot;number&quot;;
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">	private static final Predicate&lt;String&gt; PASSWORD_FILTER = s -&gt; !s.toLowerCase().contains(&quot;password&quot;);</span>
+
+	@Inject
+	@Nullable
+	private static Storage storage; // TODO remove this
+
+	@Inject
+	@Named(&quot;all-fields&quot;)
+	@Nullable
+	private static ObjectMapper allFieldObjectMapper;
+
+	@Inject
+	@Nullable
+	private static Configuration jsonpathConfiguration;
+
+	private static ObjectMapper getAllFieldsJsonConverter() {
+<span class="fc" id="L69">		return Objects.requireNonNull(allFieldObjectMapper);</span>
+	}
+
+	public static String toJson(final Object object) {
+		try {
+<span class="fc" id="L74">			return getAllFieldsJsonConverter().writeValueAsString(object);</span>
+<span class="nc" id="L75">		} catch (final JsonProcessingException e) {</span>
+<span class="nc" id="L76">			throw new RuntimeException(&quot;Unable to convert object to JSON&quot;, e);</span>
+		}
+	}
+
+	@Nullable
+	public static &lt;T&gt; T fromJson(final String json, final Class&lt;T&gt; type) {
+		// fromJson can return null!!
+		try {
+<span class="fc" id="L84">			return getAllFieldsJsonConverter().readValue(json, type);</span>
+<span class="nc" id="L85">		} catch (final IOException e) {</span>
+<span class="nc" id="L86">			throw new RuntimeException(&quot;Unable to parse JSON&quot;, e);</span>
+		}
+	}
+
+	@Nullable
+	public static &lt;T&gt; T extractValueUsingJsonPath(final JsonPath jsonPath, final String json) {
+<span class="fc" id="L92">		return jsonPath.read(json, jsonpathConfiguration);</span>
+	}
+
+	/**
+	 * Remove keys from the JSON string
+	 *
+	 * @param json   the JSON to work on
+	 * @param filter determine whether a key should stay in the JSON or not. If the
+	 *               {@link Predicate} returns &lt;code&gt;false&lt;/code&gt; the key will be
+	 *               removed.
+	 * @return the stripped JSON
+	 */
+	public static String removeKeysFromJson(final String json, final Predicate&lt;String&gt; filter) {
+<span class="fc" id="L105">		return toJson(removeKeys(Objects.requireNonNull(fromJson(json, Object.class)),</span>
+				filter,
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">				obj -&gt; obj instanceof Double ? ((Double) obj).longValue() : obj));</span>
+	}
+
+	/**
+	 * Remove all keys from the JSON string that contain the phrase &quot;password&quot; (not
+	 * case sensitive)
+	 *
+	 * @param string the JSON to work on
+	 * @return the JSON without keys containing &quot;password&quot; (not case sensitive)
+	 */
+	public static String removePasswordsFromJson(final String string) {
+<span class="fc" id="L118">		return removeKeysFromJson(string, PASSWORD_FILTER);</span>
+	}
+
+	public static &lt;T&gt; Map&lt;String, T&gt; removePasswords(final Map&lt;String, T&gt; map) {
+<span class="fc" id="L122">		removeKeys(map, PASSWORD_FILTER, Function.identity());</span>
+<span class="fc" id="L123">		return map;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private static Object removeKeys(final Object object,
+			final Predicate&lt;String&gt; filter,
+			final Function&lt;Object, Object&gt; customConverter) {
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">		if (object instanceof Collection) {</span>
+<span class="nc" id="L131">			removeKeys((Collection&lt;?&gt;) object, filter, customConverter);</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">		} else if (object instanceof Map) {</span>
+<span class="fc" id="L133">			removeKeys((Map&lt;String, Object&gt;) object, filter, customConverter);</span>
+		}
+<span class="fc" id="L135">		return customConverter.apply(object);</span>
+	}
+
+	private static void removeKeys(final Collection&lt;?&gt; collection,
+			final Predicate&lt;String&gt; filter,
+			final Function&lt;Object, Object&gt; customConverter) {
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		for (final Object e : collection) {</span>
+<span class="nc" id="L142">			removeKeys(e, filter, customConverter);</span>
+<span class="nc" id="L143">		}</span>
+<span class="nc" id="L144">	}</span>
+
+	private static void removeKeys(final Map&lt;String, Object&gt; map,
+			final Predicate&lt;String&gt; filter,
+			final Function&lt;Object, Object&gt; customConverter) {
+<span class="fc bfc" id="L149" title="All 2 branches covered.">		for (final Entry&lt;String, Object&gt; e : map.entrySet()) {</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">			if (!filter.test(e.getKey())) {</span>
+<span class="fc" id="L151">				e.setValue(null);</span>
+			} else {
+<span class="fc" id="L153">				e.setValue(removeKeys(e.getValue(), filter, customConverter));</span>
+			}
+<span class="fc" id="L155">		}</span>
+<span class="fc" id="L156">	}</span>
+
+	public static String toJsonSchema(final Class&lt;?&gt; clazz) {
+<span class="nc" id="L159">		return toJsonSchema(clazz, Optional.empty());</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public static String toJsonSchema(final Class&lt;?&gt; clazz, final Optional&lt;JsonHint&gt; hint) {
+<span class="nc" id="L164">		LOGGER.debug(&quot;Creating JSONSchema for class: &quot; + clazz.getName());</span>
+		final Map&lt;String, Object&gt; schema;
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (SerializableProperty.class.isAssignableFrom(clazz)) {</span>
+			// TODO move this conversion to another class
+<span class="nc" id="L168">			schema = Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L169">					.put(&quot;$schema&quot;, &quot;http://json-schema.org/schema#&quot;)</span>
+<span class="nc" id="L170">					.put(&quot;$id&quot;, &quot;http://schema.hlag.com/oversigt/property/&quot; + clazz.getName())</span>
+<span class="nc" id="L171">					.put(&quot;title&quot;, clazz.getSimpleName())</span>
+<span class="nc" id="L172">					.get();</span>
+<span class="nc" id="L173">			schema.putAll(toJsonSchemaFromProperty((Class&lt;? extends SerializableProperty&gt;) clazz));</span>
+		} else {
+<span class="nc" id="L175">			schema = Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L176">					.put(&quot;$schema&quot;, &quot;http://json-schema.org/schema#&quot;)</span>
+<span class="nc" id="L177">					.put(&quot;$id&quot;, &quot;http://schema.hlag.com/oversigt/type/&quot; + clazz.getName())</span>
+<span class="nc" id="L178">					.put(&quot;title&quot;, clazz.getSimpleName())</span>
+<span class="nc" id="L179">					.get();</span>
+<span class="nc" id="L180">			schema.putAll(toJsonSchemaFromType(clazz, hint));</span>
+		}
+<span class="nc" id="L182">		return toJson(schema);</span>
+	}
+
+	private static Map&lt;String, Object&gt; toJsonSchemaFromProperty(final Class&lt;? extends SerializableProperty&gt; clazz) {
+<span class="nc" id="L186">		final List&lt;? extends SerializableProperty&gt; propertyValues</span>
+<span class="nc" id="L187">				= Objects.requireNonNull(storage).listProperties(clazz);</span>
+<span class="nc" id="L188">		final List&lt;String&gt; names = new ArrayList&lt;&gt;(</span>
+<span class="nc" id="L189">				propertyValues.stream().map(SerializableProperty::getName).collect(Collectors.toList()));</span>
+<span class="nc" id="L190">		final List&lt;Integer&gt; ids = new ArrayList&lt;&gt;(</span>
+<span class="nc" id="L191">				propertyValues.stream().map(SerializableProperty::getId).collect(Collectors.toList()));</span>
+<span class="nc" id="L192">		final List&lt;Map&lt;String, Object&gt;&gt; mapping = propertyValues.stream()</span>
+<span class="nc" id="L193">				.map(p -&gt; Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L194">						.put(&quot;value&quot;, p.getId())</span>
+<span class="nc" id="L195">						.put(&quot;title&quot;, p.getName())</span>
+<span class="nc" id="L196">						.get())</span>
+<span class="nc" id="L197">				.collect(Collectors.toList());</span>
+		try {
+<span class="nc bnc" id="L199" title="All 2 branches missed.">			if (clazz.getDeclaredField(&quot;EMPTY&quot;) != null) {</span>
+<span class="nc" id="L200">				names.add(0, &quot;\u00a0&quot;);</span>
+<span class="nc" id="L201">				ids.add(0, 0);</span>
+<span class="nc" id="L202">				mapping.add(0,</span>
+<span class="nc" id="L203">						Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L204">								.put(&quot;value&quot;, 0)</span>
+<span class="nc" id="L205">								.put(&quot;title&quot;, &quot;\u00a0&quot;)</span>
+<span class="nc" id="L206">								.get());</span>
+			}
+<span class="nc" id="L208">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchFieldException | SecurityException ignore) {</span>
+			// continue if EMPTY is not found
+<span class="nc" id="L210">		}</span>
+<span class="nc" id="L211">		return Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L212">				.put(&quot;type&quot;, SERIALIZABLE_PROPERTY_TYPE)</span>
+<span class="nc" id="L213">				.put(&quot;uniqueItems&quot;, true)</span>
+<span class="nc" id="L214">				.put(&quot;enum&quot;, ids)</span>
+<span class="nc" id="L215">				.put(&quot;oversigt-ids&quot;, ids)</span>
+<span class="nc" id="L216">				.put(&quot;enumSource&quot;,</span>
+<span class="nc" id="L217">						Arrays.asList(Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L218">								.put(&quot;title&quot;, &quot;{{item.title}}&quot;)</span>
+<span class="nc" id="L219">								.put(&quot;value&quot;, &quot;{{item.value}}&quot;)</span>
+<span class="nc" id="L220">								.put(&quot;source&quot;, mapping)</span>
+<span class="nc" id="L221">								.get()))</span>
+<span class="nc" id="L222">				.get();</span>
+	}
+
+	private static Map&lt;String, Object&gt; toJsonSchemaFromType(final Type type, final Optional&lt;JsonHint&gt; hint) {
+<span class="nc bnc" id="L226" title="All 2 branches missed.">		if (type instanceof Class) {</span>
+<span class="nc" id="L227">			Optional&lt;JsonHint&gt; jsonHint = hint;</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">			if (((Class&lt;?&gt;) type).isAnnotationPresent(JsonHint.class)) {</span>
+<span class="nc" id="L229">				jsonHint = Optional.of(((Class&lt;?&gt;) type).getAnnotation(JsonHint.class));</span>
+			}
+<span class="nc" id="L231">			return toJsonSchemaFromClass((Class&lt;?&gt;) type, jsonHint);</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">		} else if (type instanceof ParameterizedType) {</span>
+<span class="nc" id="L233">			return toJsonSchemaFromType(((ParameterizedType) type).getActualTypeArguments()[0], hint);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		} else if (type instanceof TypeVariable) {</span>
+			// TypeVariable&lt;?&gt; tv = (TypeVariable&lt;?&gt;) type;
+			// AnnotatedType[] at = tv.getAnnotatedBounds();
+			// Type[] b = tv.getBounds();
+			// GenericDeclaration d = tv.getGenericDeclaration();
+<span class="nc" id="L239">			return emptyMap();</span>
+		} else {
+<span class="nc" id="L241">			throw new RuntimeException(&quot;Unknown type: &quot; + type);</span>
+		}
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private static Map&lt;String, Object&gt; toJsonSchemaFromClass(final Class&lt;?&gt; clazz, final Optional&lt;JsonHint&gt; hint) {
+<span class="nc" id="L247">		Optional&lt;JsonHint&gt; jsonHint = hint;</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">		if (clazz == String.class) {</span>
+<span class="nc" id="L249">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L250">					.put(&quot;type&quot;, &quot;string&quot;)</span>
+<span class="nc" id="L251">					.get();</span>
+<span class="nc bnc" id="L252" title="All 4 branches missed.">		} else if (clazz == boolean.class || clazz == Boolean.class) {</span>
+<span class="nc" id="L253">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L254">					.put(&quot;type&quot;, &quot;boolean&quot;)</span>
+<span class="nc" id="L255">					.get();</span>
+<span class="nc bnc" id="L256" title="All 4 branches missed.">		} else if (clazz == int.class || clazz == Integer.class) {</span>
+<span class="nc" id="L257">			return makeNumber(true, Optional.of(Integer.MIN_VALUE), Optional.of(Integer.MAX_VALUE));</span>
+<span class="nc bnc" id="L258" title="All 4 branches missed.">		} else if (clazz == long.class || clazz == Long.class) {</span>
+<span class="nc" id="L259">			return makeNumber(true, Optional.of(Long.MIN_VALUE), Optional.of(Long.MAX_VALUE));</span>
+<span class="nc bnc" id="L260" title="All 4 branches missed.">		} else if (clazz == double.class || clazz == Double.class) {</span>
+<span class="nc" id="L261">			return makeNumber(true, Optional.of(Double.MIN_VALUE), Optional.of(Double.MAX_VALUE));</span>
+<span class="nc bnc" id="L262" title="All 4 branches missed.">		} else if (clazz == float.class || clazz == Float.class) {</span>
+<span class="nc" id="L263">			return makeNumber(true, Optional.of(Float.MIN_VALUE), Optional.of(Float.MAX_VALUE));</span>
+<span class="nc bnc" id="L264" title="All 4 branches missed.">		} else if (clazz == byte.class || clazz == Byte.class) {</span>
+<span class="nc" id="L265">			return makeNumber(true, Optional.of(Byte.MIN_VALUE), Optional.of(Byte.MAX_VALUE));</span>
+<span class="nc bnc" id="L266" title="All 4 branches missed.">		} else if (clazz == short.class || clazz == Short.class) {</span>
+<span class="nc" id="L267">			return makeNumber(true, Optional.of(Short.MIN_VALUE), Optional.of(Short.MAX_VALUE));</span>
+<span class="nc bnc" id="L268" title="All 4 branches missed.">		} else if (clazz == char.class || clazz == Character.class) {</span>
+<span class="nc" id="L269">			return makeNumber(true, Optional.of(Character.MIN_VALUE), Optional.of(Character.MAX_VALUE));</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">		} else if (clazz == BigDecimal.class) {</span>
+<span class="nc" id="L271">			return makeNumber(false, Optional.empty(), Optional.empty());</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		} else if (Enum.class.isAssignableFrom(clazz)) {</span>
+<span class="nc" id="L273">			final List&lt;Map&lt;String, Object&gt;&gt; abc = Arrays.stream(clazz.getEnumConstants())</span>
+<span class="nc" id="L274">					.map(e -&gt; Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L275">							.put(&quot;value&quot;, ((Enum&lt;?&gt;) e).name())</span>
+<span class="nc" id="L276">							.put(&quot;title&quot;, e.toString())</span>
+<span class="nc" id="L277">							.get())</span>
+<span class="nc" id="L278">					.collect(Collectors.toList());</span>
+<span class="nc" id="L279">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L280">					.put(&quot;type&quot;, &quot;string&quot;)</span>
+<span class="nc" id="L281">					.put(&quot;uniqueItems&quot;, true) // TODO check whether this should always be true</span>
+<span class="nc" id="L282">					.put(&quot;oversigt-ids&quot;, getEnumConstants((Class&lt;Enum&lt;?&gt;&gt;) clazz))</span>
+<span class="nc" id="L283">					.put(&quot;enumSource&quot;,</span>
+<span class="nc" id="L284">							Arrays.asList(Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L285">									.put(&quot;title&quot;, &quot;{{item.title}}&quot;)</span>
+<span class="nc" id="L286">									.put(&quot;value&quot;, &quot;{{item.value}}&quot;)</span>
+<span class="nc" id="L287">									.put(&quot;source&quot;, abc)</span>
+<span class="nc" id="L288">									.get()))</span>
+<span class="nc" id="L289">					.get();</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">		} else if (SerializableProperty.class.isAssignableFrom(clazz)) {</span>
+<span class="nc" id="L291">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L292">					.put(&quot;type&quot;, SERIALIZABLE_PROPERTY_TYPE)</span>
+<span class="nc" id="L293">					.put(&quot;$ref&quot;, &quot;/schema/&quot; + clazz.getName())</span>
+<span class="nc" id="L294">					.put(&quot;oversigt-property&quot;, clazz.getName())</span>
+<span class="nc" id="L295">					.put(&quot;$class&quot;, clazz.getName())</span>
+<span class="nc" id="L296">					.put(&quot;serializable-property&quot;, clazz.getSimpleName())</span>
+<span class="nc" id="L297">					.get();</span>
+<span class="nc bnc" id="L298" title="All 4 branches missed.">		} else if (clazz.isArray() || Collection.class.isAssignableFrom(clazz)) {</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">			final Type componentType = clazz.isArray() ? clazz.getComponentType() : clazz.getGenericInterfaces()[0];</span>
+<span class="nc" id="L300">			final Map&lt;String, Object&gt; map = Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L301">					.put(&quot;type&quot;, &quot;array&quot;)</span>
+<span class="nc" id="L302">					.put(&quot;items&quot;, toJsonSchemaFromType(componentType, Optional.empty()))</span>
+<span class="nc" id="L303">					.put(&quot;additionalItems&quot;, false)</span>
+<span class="nc" id="L304">					.get();</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">			if (Set.class.isAssignableFrom(clazz)) {</span>
+<span class="nc" id="L306">				map.put(&quot;unique&quot;, true);</span>
+			}
+<span class="nc bnc" id="L308" title="All 4 branches missed.">			if (componentType instanceof Class &amp;&amp; ((Class&lt;?&gt;) componentType).isAnnotationPresent(JsonHint.class)) {</span>
+<span class="nc" id="L309">				jsonHint = Optional.of(((Class&lt;?&gt;) componentType).getAnnotation(JsonHint.class));</span>
+			}
+<span class="nc bnc" id="L311" title="All 4 branches missed.">			if (jsonHint.isPresent() &amp;&amp; jsonHint.get().arrayStyle().value().isPresent()) {</span>
+<span class="nc" id="L312">				map.put(&quot;format&quot;, jsonHint.map(JsonHint::arrayStyle).flatMap(ArrayStyle::value).get());</span>
+			} else {
+<span class="nc" id="L314">				final Map&lt;String, Object&gt; items = (Map&lt;String, Object&gt;) map.get(&quot;items&quot;);</span>
+<span class="nc bnc" id="L315" title="All 4 branches missed.">				if (items.containsKey(&quot;properties&quot;) &amp;&amp; ((Map&lt;?, ?&gt;) items.get(&quot;properties&quot;)).size() &lt;= 3) {</span>
+<span class="nc" id="L316">					map.put(&quot;format&quot;, &quot;table&quot;);</span>
+				}
+			}
+<span class="nc" id="L319">			return map;</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">		} else if (clazz == Color.class) {</span>
+<span class="nc" id="L321">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L322">					.put(&quot;type&quot;, &quot;string&quot;)</span>
+<span class="nc" id="L323">					.put(&quot;format&quot;, &quot;color&quot;)</span>
+<span class="nc" id="L324">					.get();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">		} else if (clazz == LocalDate.class) {</span>
+<span class="nc" id="L326">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L327">					.put(&quot;type&quot;, &quot;string&quot;)</span>
+<span class="nc" id="L328">					.put(&quot;format&quot;, &quot;date&quot;)</span>
+<span class="nc" id="L329">					.get();</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">		} else if (clazz == LocalTime.class) {</span>
+<span class="nc" id="L331">			return Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L332">					.put(&quot;type&quot;, &quot;string&quot;)</span>
+<span class="nc" id="L333">					.put(&quot;format&quot;, &quot;time&quot;)</span>
+<span class="nc" id="L334">					.get();</span>
+		} else {
+			// TODO check for notnull ???
+<span class="nc" id="L337">			final List&lt;Field&gt; fields = TypeUtils.streamFields(clazz)</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">					.filter(f -&gt; !Modifier.isTransient(f.getModifiers()))</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">					.filter(f -&gt; !Modifier.isStatic(f.getModifiers()))</span>
+<span class="nc" id="L340">					.collect(Collectors.toList());</span>
+<span class="nc" id="L341">			final Map&lt;String, Map&lt;String, Object&gt;&gt; fieldsMap = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">			for (final Field field : fields) {</span>
+<span class="nc" id="L343">				Optional&lt;JsonHint&gt; fieldHint = Optional.empty();</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">				if (field.isAnnotationPresent(JsonHint.class)) {</span>
+<span class="nc" id="L345">					fieldHint = Optional.of(field.getAnnotation(JsonHint.class));</span>
+				}
+<span class="nc" id="L347">				final Map&lt;String, Object&gt; map = JsonUtils.toJsonSchemaFromClass(field.getType(), fieldHint);</span>
+<span class="nc" id="L348">				map.put(&quot;title&quot;, makeFirstCharacterCapital(field.getName()));</span>
+<span class="nc" id="L349">				getFormat(field).ifPresent(format -&gt; map.put(&quot;format&quot;, format));</span>
+<span class="nc" id="L350">				fieldsMap.put(field.getName(), map);</span>
+<span class="nc" id="L351">			}</span>
+<span class="nc" id="L352">			final Map&lt;String, Object&gt; map = Maps.builder(new LinkedHashMap&lt;String, Object&gt;())</span>
+<span class="nc" id="L353">					.put(&quot;type&quot;, &quot;object&quot;)</span>
+<span class="nc" id="L354">					.put(&quot;title&quot;, makeFirstCharacterCapital(clazz.getSimpleName()))</span>
+<span class="nc" id="L355">					.put(&quot;properties&quot;, fieldsMap)</span>
+<span class="nc" id="L356">					.put(&quot;required&quot;, fields.stream().filter(JsonUtils::isRequired).map(Field::getName).toArray())</span>
+<span class="nc" id="L357">					.put(&quot;additionalProperties&quot;, false)</span>
+<span class="nc" id="L358">					.get();</span>
+
+<span class="nc bnc" id="L360" title="All 2 branches missed.">			if (clazz.isAnnotationPresent(JsonHint.class)) {</span>
+<span class="nc" id="L361">				jsonHint = Optional.of(clazz.getAnnotation(JsonHint.class));</span>
+			}
+<span class="nc bnc" id="L363" title="All 4 branches missed.">			if (jsonHint.isPresent() &amp;&amp; !Strings.isNullOrEmpty(jsonHint.get().headerTemplate())) {</span>
+<span class="nc" id="L364">				map.put(&quot;headerTemplate&quot;, jsonHint.get().headerTemplate());</span>
+			}
+<span class="nc" id="L366">			return map;</span>
+		}
+	}
+
+	private static boolean isRequired(final Field field) {
+<span class="nc bnc" id="L371" title="All 2 branches missed.">		if (field.isAnnotationPresent(javax.annotation.Nullable.class)) {</span>
+<span class="nc" id="L372">			return false;</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">		} else if (field.isAnnotationPresent(com.fasterxml.jackson.annotation.JsonProperty.class)) {</span>
+<span class="nc" id="L374">			return field.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class).required();</span>
+		} else {
+<span class="nc" id="L376">			return true;</span>
+		}
+	}
+
+	private static Map&lt;String, Object&gt; makeNumber(final boolean wholeNumbers,
+			final Optional&lt;Object&gt; min,
+			final Optional&lt;Object&gt; max) {
+<span class="nc" id="L383">		final Map&lt;String, Object&gt; map = Maps.builder(new LinkedHashMap&lt;String, Object&gt;()) //</span>
+<span class="nc" id="L384">				.put(&quot;type&quot;, &quot;number&quot;)</span>
+<span class="nc" id="L385">				.get();</span>
+<span class="nc" id="L386">		min.ifPresent(v -&gt; map.put(&quot;minimum&quot;, v));</span>
+<span class="nc" id="L387">		max.ifPresent(v -&gt; map.put(&quot;maximum&quot;, v));</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">		if (wholeNumbers) {</span>
+<span class="nc" id="L389">			map.put(&quot;multipleOf&quot;, 1.0);</span>
+		}
+<span class="nc" id="L391">		return map;</span>
+	}
+
+	private static String makeFirstCharacterCapital(final String string) {
+<span class="nc" id="L395">		return Character.toUpperCase(string.charAt(0)) + string.substring(1);</span>
+	}
+
+	private static &lt;E extends Enum&lt;?&gt;&gt; String[] getEnumConstants(final Class&lt;E&gt; clazz) {
+<span class="nc" id="L399">		return Stream.of((Object[]) clazz.getEnumConstants())</span>
+<span class="nc" id="L400">				.map(o -&gt; ((Enum&lt;?&gt;) o).name())</span>
+<span class="nc" id="L401">				.collect(Collectors.toList())</span>
+<span class="nc" id="L402">				.toArray(new String[0]);</span>
+	}
+
+	private static Optional&lt;String&gt; getFormat(final Field field) {
+<span class="nc" id="L406">		final String name = field.getName().toLowerCase();</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">		if (name.contains(&quot;password&quot;)) {</span>
+<span class="nc" id="L408">			return Optional.of(&quot;password&quot;);</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">		} else if (name.contains(&quot;mail&quot;)) {</span>
+<span class="nc" id="L410">			return Optional.of(&quot;email&quot;);</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">		} else if (name.endsWith(&quot;hostname&quot;)) {</span>
+<span class="nc" id="L412">			return Optional.of(&quot;hostname&quot;);</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		} else if (name.endsWith(&quot;url&quot;)) {</span>
+<span class="nc" id="L414">			return Optional.of(&quot;url&quot;);</span>
+		}
+<span class="nc" id="L416">		return Optional.empty();</span>
+	}
+
+<span class="nc" id="L419">	private JsonUtils() {</span>
+<span class="nc" id="L420">		throw new RuntimeException(&quot;Do not create an instance.s&quot;);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

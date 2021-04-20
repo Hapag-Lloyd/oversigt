@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">HttpUtils.java</span></div><h1>HttpUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import io.undertow.util.StatusCodes;
+
+public final class HttpUtils {
+	public static void redirect(final HttpServerExchange exchange,
+			final String location,
+			final boolean permanent,
+			final boolean changeToGet) {
+		final int code;
+<span class="nc bnc" id="L13" title="All 2 branches missed.">		if (permanent) {</span>
+<span class="nc bnc" id="L14" title="All 2 branches missed.">			if (changeToGet) {</span>
+<span class="nc" id="L15">				code = StatusCodes.MOVED_PERMANENTLY;</span>
+			} else {
+<span class="nc" id="L17">				code = StatusCodes.PERMANENT_REDIRECT;</span>
+			}
+		} else {
+<span class="nc bnc" id="L20" title="All 2 branches missed.">			if (changeToGet) {</span>
+<span class="nc" id="L21">				code = StatusCodes.SEE_OTHER;</span>
+			} else {
+<span class="nc" id="L23">				code = StatusCodes.TEMPORARY_REDIRECT;</span>
+			}
+		}
+<span class="nc" id="L26">		exchange.setStatusCode(code);</span>
+<span class="nc" id="L27">		exchange.getResponseHeaders().put(Headers.LOCATION, location);</span>
+<span class="nc" id="L28">		exchange.endExchange();</span>
+<span class="nc" id="L29">	}</span>
+
+	public static void notFound(final HttpServerExchange exchange) {
+<span class="nc" id="L32">		notFound(exchange, &quot;Not found&quot;);</span>
+<span class="nc" id="L33">	}</span>
+
+	public static void notFound(final HttpServerExchange exchange, final String message) {
+<span class="nc" id="L36">		exchange.setStatusCode(StatusCodes.NOT_FOUND);</span>
+<span class="nc" id="L37">		exchange.getResponseSender().send(&quot;404 - &quot; + message);</span>
+<span class="nc" id="L38">		exchange.endExchange();</span>
+<span class="nc" id="L39">	}</span>
+
+	public static void forbidden(final HttpServerExchange exchange) {
+<span class="nc" id="L42">		exchange.setStatusCode(StatusCodes.FORBIDDEN);</span>
+<span class="nc" id="L43">		exchange.getResponseSender().send(&quot;403 - Forbidden&quot;);</span>
+<span class="nc" id="L44">		exchange.endExchange();</span>
+<span class="nc" id="L45">	}</span>
+
+	public static void badRequest(final HttpServerExchange exchange) {
+<span class="nc" id="L48">		exchange.setStatusCode(StatusCodes.BAD_REQUEST);</span>
+<span class="nc" id="L49">		exchange.getResponseSender().send(&quot;400 - Bad Request&quot;);</span>
+<span class="nc" id="L50">		exchange.endExchange();</span>
+<span class="nc" id="L51">	}</span>
+
+	/**
+	 * Convert a byte array to a URL encoded string
+	 *
+	 * @param in byte[]
+	 * @return String
+	 */
+	@SuppressWarnings(&quot;checkstyle:IllegalToken&quot;)
+	public static String encodeByteArrayToUrlString(final byte[] in) {
+<span class="nc" id="L61">		int i = 0;</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		if (in.length == 0) {</span>
+<span class="nc" id="L63">			return &quot;&quot;;</span>
+		}
+
+<span class="nc" id="L66">		final String[] pseudo = { &quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, &quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot; };</span>
+<span class="nc" id="L67">		final StringBuilder out = new StringBuilder(2 * in.length);</span>
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		while (i &lt; in.length) {</span>
+			// First check to see if we need ASCII or HEX
+<span class="nc bnc" id="L71" title="All 22 branches missed.">			if (in[i] &gt;= '0' &amp;&amp; in[i] &lt;= '9'</span>
+					|| in[i] &gt;= 'a' &amp;&amp; in[i] &lt;= 'z'
+					|| in[i] &gt;= 'A' &amp;&amp; in[i] &lt;= 'Z'
+					|| in[i] == '$'
+					|| in[i] == '-'
+					|| in[i] == '_'
+					|| in[i] == '.'
+					|| in[i] == '!') {
+<span class="nc" id="L79">				out.append((char) in[i]);</span>
+<span class="nc" id="L80">				i += 1;</span>
+			} else {
+<span class="nc" id="L82">				out.append('%');</span>
+<span class="nc" id="L83">				byte ch = (byte) (in[i] &amp; 0xF0); // Strip off high nibble</span>
+<span class="nc" id="L84">				ch = (byte) (ch &gt;&gt;&gt; 4); // shift the bits down</span>
+<span class="nc" id="L85">				ch = (byte) (ch &amp; 0x0F); // must do this is high order bit is</span>
+				// on!
+<span class="nc" id="L87">				out.append(pseudo[ch]); // convert the nibble to a</span>
+				// String Character
+<span class="nc" id="L89">				ch = (byte) (in[i] &amp; 0x0F); // Strip off low nibble</span>
+<span class="nc" id="L90">				out.append(pseudo[ch]); // convert the nibble to a</span>
+				// String Character
+<span class="nc" id="L92">				i += 1;</span>
+<span class="nc" id="L93">			}</span>
+		}
+
+<span class="nc" id="L96">		return out.toString();</span>
+	}
+
+<span class="nc" id="L99">	private HttpUtils() {</span>
+<span class="nc" id="L100">		throw new UnsupportedOperationException();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractExchangeEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractExchangeEventSource.java</span></div><h1>AbstractExchangeEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.time.ZoneId;
+import java.util.Optional;
+
+import com.hlag.oversigt.connect.exchange.ExchangeClient;
+import com.hlag.oversigt.connect.exchange.ExchangeClientFactory;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.ServerConnection;
+
+import microsoft.exchange.webservices.data.core.exception.http.HttpErrorException;
+import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceRequestException;
+
+<span class="nc" id="L18">public abstract class AbstractExchangeEventSource&lt;T extends OversigtEvent&gt; extends ScheduledEventSource&lt;T&gt; {</span>
+	private static boolean isLoginException(final Exception e) {
+<span class="nc bnc" id="L20" title="All 2 branches missed.">		return e instanceof ServiceRequestException</span>
+<span class="nc bnc" id="L21" title="All 2 branches missed.">				&amp;&amp; e.getCause() != null</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">				&amp;&amp; e.getCause() instanceof ServiceRequestException</span>
+<span class="nc bnc" id="L23" title="All 2 branches missed.">				&amp;&amp; e.getCause().getCause() != null</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">				&amp;&amp; e.getCause().getCause() instanceof HttpErrorException</span>
+				&amp;&amp; &quot;The remote server returned an error: (401)Unauthorized&quot;
+<span class="nc bnc" id="L26" title="All 2 branches missed.">						.equals(e.getCause().getCause().getMessage());</span>
+	}
+
+<span class="nc" id="L29">	private ServerConnection serverConnection = ServerConnection.EMPTY;</span>
+
+<span class="nc" id="L31">	private Credentials credentials = Credentials.EMPTY;</span>
+
+<span class="nc" id="L33">	private ZoneId zoneId = ZoneId.systemDefault();</span>
+
+<span class="nc" id="L35">	private Optional&lt;ExchangeClient&gt; exchangeClient = Optional.empty();</span>
+
+	@Override
+	protected void startUp() throws Exception {
+<span class="nc" id="L39">		exchangeClient</span>
+<span class="nc" id="L40">				= Optional.of(ExchangeClientFactory.createExchangeClient(getServerConnection(), getCredentials()));</span>
+<span class="nc" id="L41">		super.startUp();</span>
+<span class="nc" id="L42">	}</span>
+
+	@Override
+	protected void shutDown() throws Exception {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">		if (exchangeClient.isPresent()) {</span>
+<span class="nc" id="L47">			exchangeClient.get().close();</span>
+		}
+<span class="nc" id="L49">		super.shutDown();</span>
+<span class="nc" id="L50">	}</span>
+
+	@Property(name = &quot;Exchange Server&quot;, description = &quot;The exchange server to connect to.&quot;)
+	public final ServerConnection getServerConnection() {
+<span class="nc" id="L54">		return serverConnection;</span>
+	}
+
+	public final void setServerConnection(final ServerConnection serverConnection) {
+<span class="nc" id="L58">		this.serverConnection = serverConnection;</span>
+<span class="nc" id="L59">	}</span>
+
+	@Property(name = &quot;Credentials&quot;, description = &quot;The credentials to be used when connecting to Exchange.&quot;)
+	public final Credentials getCredentials() {
+<span class="nc" id="L63">		return credentials;</span>
+	}
+
+	public final void setCredentials(final Credentials credentials) {
+<span class="nc" id="L67">		this.credentials = credentials;</span>
+<span class="nc" id="L68">	}</span>
+
+	@Property(name = &quot;Time Zone&quot;, description = &quot;The time zone that will be used for displayed dates and times&quot;)
+	public ZoneId getZoneId() {
+<span class="nc" id="L72">		return zoneId;</span>
+	}
+
+	public void setZoneId(final ZoneId zoneId) {
+<span class="nc" id="L76">		this.zoneId = zoneId;</span>
+<span class="nc" id="L77">	}</span>
+
+	protected ExchangeClient getExchangeClient() {
+<span class="nc" id="L80">		return exchangeClient.orElseThrow(() -&gt; new RuntimeException(&quot;The exchange client has not been created yet.&quot;));</span>
+	}
+
+	@Override
+	protected final Optional&lt;T&gt; produceEvent() throws EventSourceException {
+		try {
+<span class="nc" id="L86">			return produceExchangeEvent();</span>
+<span class="nc" id="L87">		} catch (final Exception e) {</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">			if (isLoginException(e)) {</span>
+<span class="nc" id="L89">				throw new EventSourceException(String.format(&quot;Unable to log in with user '%s' to %s&quot;,</span>
+<span class="nc" id="L90">						getCredentials().getUsername(),</span>
+<span class="nc" id="L91">						getServerConnection().getUrl()));</span>
+			}
+<span class="nc" id="L93">			throw new EventSourceException(getFailureMessage(e).orElse(&quot;Unable to produce Exchange event&quot;), e);</span>
+		}
+	}
+
+	protected Optional&lt;String&gt; getFailureMessage(@SuppressWarnings(&quot;unused&quot;) final Exception e) {
+<span class="nc" id="L98">		return Optional.empty();</span>
+	}
+
+	protected abstract Optional&lt;T&gt; produceExchangeEvent() throws Exception;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

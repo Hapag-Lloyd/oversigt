@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpHandlers.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core</a> &gt; <span class="el_source">HttpHandlers.java</span></div><h1>HttpHandlers.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core;
+
+import static com.hlag.oversigt.core.event.EventSender.DASHBOARD_KEY;
+import static com.hlag.oversigt.util.HttpUtils.redirect;
+import static com.hlag.oversigt.util.StringUtils.substringBefore;
+import static com.hlag.oversigt.util.Utils.map;
+import static de.larssh.utils.Finals.constant;
+import static io.undertow.servlet.Servlets.defaultContainer;
+import static io.undertow.servlet.Servlets.listener;
+import static io.undertow.servlet.Servlets.servlet;
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
+import javax.ws.rs.core.Application;
+
+import org.apache.commons.io.IOUtils;
+import org.jboss.resteasy.cdi.CdiInjectorFactory;
+import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
+import org.jboss.resteasy.spi.ResteasyDeployment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Ascii;
+import com.google.common.base.Strings;
+import com.google.common.eventbus.EventBus;
+import com.google.common.io.Resources;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.controller.DashboardController;
+import com.hlag.oversigt.controller.DashboardDesignHelper;
+import com.hlag.oversigt.controller.EventSourceInstanceController;
+import com.hlag.oversigt.core.configuration.WroManagerFactory;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.WroGroupContent;
+import com.hlag.oversigt.core.event.JsonEvent;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.util.ClassPathResourceManager;
+import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.HttpUtils;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.web.api.ApiBootstrapListener;
+import com.hlag.oversigt.web.ui.OversigtUiHelper;
+
+import de.larssh.utils.Finals;
+import de.larssh.utils.Nullables;
+import freemarker.template.Configuration;
+import freemarker.template.TemplateException;
+import io.undertow.Handlers;
+import io.undertow.security.api.AuthenticationMechanism;
+import io.undertow.security.api.AuthenticationMode;
+import io.undertow.security.api.SecurityContext;
+import io.undertow.security.handlers.AuthenticationCallHandler;
+import io.undertow.security.handlers.AuthenticationConstraintHandler;
+import io.undertow.security.handlers.AuthenticationMechanismsHandler;
+import io.undertow.security.handlers.SecurityInitialHandler;
+import io.undertow.security.idm.Account;
+import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.impl.BasicAuthenticationMechanism;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.BlockingHandler;
+import io.undertow.server.handlers.sse.ServerSentEventConnection;
+import io.undertow.server.handlers.sse.ServerSentEventHandler;
+import io.undertow.servlet.Servlets;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.api.ServletInfo;
+import io.undertow.servlet.util.ImmediateInstanceHandle;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.HeaderValues;
+import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
+import io.undertow.util.StatusCodes;
+import ro.isdc.wro.http.ConfigurableWroFilter;
+
+@Singleton
+public class HttpHandlers {
+<span class="nc" id="L112">	private static final Logger LOGGER = LoggerFactory.getLogger(HttpHandlers.class);</span>
+
+<span class="nc" id="L114">	public static final String MAPPING_API = constant(&quot;/api/v1&quot;);</span>
+
+	@Inject
+	private Injector injector;
+
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private Configuration templateConfiguration;
+
+	@Inject
+	private DashboardController dashboardController;
+
+	@Inject
+	private EventSourceInstanceController instanceController;
+
+	@Inject
+	private IdentityManager identityManager;
+
+	@Inject
+	private Authenticator authenticator;
+
+	@Inject
+	@Named(&quot;widgetsPaths&quot;)
+	private String[] widgetsPaths;
+
+	@Inject
+	@Named(&quot;showOwnersInWelcomePage&quot;)
+	private boolean showOwnersInWelcomePage;
+
+	@Inject
+	@Named(&quot;foreignEvents.needAuthentication&quot;)
+	private boolean foreignEventsNeedAuthentication;
+
+	@Inject
+	@Named(&quot;foreignEvents.apiKeyHeaderName&quot;)
+	private String foreignEventsApiKeyHeaderName;
+
+	@Inject
+	@Named(&quot;foreignEvents.allowedApiKeys&quot;)
+	private List&lt;String&gt; foreignEventsAllowedApiKeys;
+
+	@Inject
+	private Application restApiApplication;
+
+<span class="nc" id="L160">	public HttpHandlers() {</span>
+		// nothing to do
+<span class="nc" id="L162">	}</span>
+
+<span class="nc" id="L164">	private final Supplier&lt;ServerSentEventHandler&gt; serverSentEventHandlerSupplier</span>
+<span class="nc" id="L165">			= Finals.lazy(this::createServerSentEventHandler);</span>
+
+	ServerSentEventHandler getServerSentEventsHandler() {
+<span class="nc" id="L168">		return serverSentEventHandlerSupplier.get();</span>
+	}
+
+	private ServerSentEventHandler createServerSentEventHandler() {
+<span class="nc" id="L172">		return Handlers.serverSentEvents((final ServerSentEventConnection connection, final String lastEventId) -&gt; {</span>
+<span class="nc" id="L173">			Optional.ofNullable(connection.getQueryParameters().get(&quot;dashboard&quot;))//</span>
+<span class="nc" id="L174">					.map(Deque::getFirst)</span>
+<span class="nc" id="L175">					.flatMap(dashboardController::getDashboard)</span>
+<span class="nc" id="L176">					.ifPresent(dashboard -&gt; connection.putAttachment(DASHBOARD_KEY, dashboard));</span>
+<span class="nc" id="L177">			eventBus.post(connection);</span>
+<span class="nc" id="L178">		});</span>
+	}
+
+	HttpHandler createDashboardHandler() {
+<span class="nc" id="L182">		return this::serveDashboard;</span>
+	}
+
+	private void serveDashboard(final HttpServerExchange exchange) throws Exception {
+<span class="nc" id="L186">		final boolean searchHtml = Optional.ofNullable(exchange.getRequestHeaders().get(Headers.ACCEPT))</span>
+<span class="nc" id="L187">				.map(Object::toString)</span>
+<span class="nc" id="L188">				.map(Ascii::toLowerCase)</span>
+<span class="nc" id="L189">				.map(s -&gt; s.contains(&quot;html&quot;))</span>
+<span class="nc" id="L190">				.orElse(true);</span>
+
+		// Check if request wants to download some asset of a widget
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		if (!searchHtml) {</span>
+<span class="nc" id="L194">			redirect(exchange, &quot;/assets&quot; + exchange.getRequestURI(), false, true);</span>
+<span class="nc" id="L195">			return;</span>
+		}
+
+		// check whether to serve a favicon
+<span class="nc" id="L199">		final String dashboardId = exchange.getQueryParameters().get(&quot;dashboard&quot;).poll();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">		if (&quot;favicon.ico&quot;.equals(dashboardId)) {</span>
+<span class="nc" id="L201">			exchange.getResponseHeaders().add(HttpString.tryFromString(&quot;Content-Type&quot;), &quot;image/x-icon&quot;);</span>
+<span class="nc" id="L202">			exchange.getResponseSender()</span>
+<span class="nc" id="L203">					.send(ByteBuffer.wrap(Files.readAllBytes(</span>
+<span class="nc" id="L204">							Paths.get(Resources.getResource(&quot;statics/assets/images/favicon.ico&quot;).toURI()))));</span>
+<span class="nc" id="L205">			return;</span>
+		}
+
+		// check if the URI is correct... otherwise redirect to proper dashboard URI
+<span class="nc" id="L209">		final String correctUri = &quot;/&quot; + dashboardId;</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">		if (!correctUri.equals(exchange.getRequestURI())) {</span>
+<span class="nc" id="L211">			redirect(exchange, correctUri, true, true);</span>
+<span class="nc" id="L212">			return;</span>
+		}
+
+		// check if dashboard is present and enabled
+<span class="nc" id="L216">		final Optional&lt;Dashboard&gt; dashboard = dashboardController.getDashboard(dashboardId);</span>
+<span class="nc bnc" id="L217" title="All 4 branches missed.">		if (!dashboard.isPresent() || !dashboard.get().isEnabled()) {</span>
+<span class="nc" id="L218">			redirect(exchange, &quot;/config/dashboards/create/&quot; + dashboardId, false, true);</span>
+<span class="nc" id="L219">			return;</span>
+		}
+
+		// actually serve the dashboard
+<span class="nc" id="L223">		final String html = processTemplate(&quot;/web-templates/layout/dashboard/instance.ftl.html&quot;,</span>
+<span class="nc" id="L224">				map(&quot;title&quot;,</span>
+<span class="nc" id="L225">						dashboard.get().getTitle(),</span>
+						&quot;columns&quot;,
+<span class="nc" id="L227">						dashboard.get().getColumns(),</span>
+						&quot;backgroundColor&quot;,
+<span class="nc" id="L229">						dashboard.get().getBackgroundColor().getHexColor(),</span>
+						&quot;computedTileWidth&quot;,
+<span class="nc" id="L231">						dashboard.get().getComputedTileWidth(),</span>
+						&quot;computedTileHeight&quot;,
+<span class="nc" id="L233">						dashboard.get().getComputedTileHeight(),</span>
+						&quot;widgets&quot;,
+<span class="nc" id="L235">						dashboard.get().getWidgets(),</span>
+						&quot;getWidgetDisplayStyle&quot;,
+						(Function&lt;Widget, String&gt;) DashboardDesignHelper::getDisplayStyle,
+						&quot;getWidgetDisplayClass&quot;,
+						(Function&lt;Widget, String&gt;) DashboardDesignHelper::getDisplayClass));
+
+<span class="nc" id="L241">		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, &quot;text/html&quot;);</span>
+<span class="nc" id="L242">		exchange.getResponseSender().send(html);</span>
+<span class="nc" id="L243">	}</span>
+
+	HttpHandler createWelcomePageHandler() {
+<span class="nc" id="L246">		return this::serveWelcomePage;</span>
+	}
+
+	private void serveWelcomePage(final HttpServerExchange exchange) throws Exception {
+<span class="nc" id="L250">		final String html = processTemplate(&quot;/web-templates/layout/root/page_welcome.ftl.html&quot;,</span>
+<span class="nc" id="L251">				map(&quot;title&quot;,</span>
+						&quot;Welcome&quot;,
+						&quot;dashboards&quot;,
+<span class="nc" id="L254">						dashboardController.getDashboardIds()</span>
+<span class="nc" id="L255">								.stream()</span>
+<span class="nc" id="L256">								.map(dashboardController::getDashboard)</span>
+<span class="nc" id="L257">								.map(Optional::get)</span>
+<span class="nc" id="L258">								.filter(Dashboard::isEnabled)</span>
+<span class="nc" id="L259">								.sorted(Comparator.comparing(Dashboard::getTitle, String.CASE_INSENSITIVE_ORDER))</span>
+<span class="nc" id="L260">								.collect(Collectors.toList()),</span>
+						&quot;showOwnersInWelcomePage&quot;,
+<span class="nc" id="L262">						showOwnersInWelcomePage,</span>
+						&quot;getOwnerName&quot;,
+<span class="nc" id="L264">						(Function&lt;String, String&gt;) dashboardId -&gt; dashboardController.getDashboard(dashboardId)</span>
+<span class="nc" id="L265">								.map(d -&gt; d.getOwners().iterator().next())</span>
+<span class="nc" id="L266">								.flatMap(authenticator::readPrincipal)</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">								.map(p -&gt; Strings.isNullOrEmpty(p.getName()) ? p.getUsername() : p.getName())</span>
+<span class="nc" id="L268">								.orElse(&quot;No owner&quot;),</span>
+						&quot;getOwnerMail&quot;,
+<span class="nc" id="L270">						(Function&lt;String, String&gt;) dashboardId -&gt; dashboardController.getDashboard(dashboardId)</span>
+<span class="nc" id="L271">								.map(d -&gt; d.getOwners().iterator().next())</span>
+<span class="nc" id="L272">								.flatMap(authenticator::readPrincipal)</span>
+<span class="nc" id="L273">								.map(com.hlag.oversigt.security.Principal::getEmail)</span>
+<span class="nc" id="L274">								.orElse(null)));</span>
+
+<span class="nc" id="L276">		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, &quot;text/html&quot;);</span>
+<span class="nc" id="L277">		exchange.getResponseSender().send(html);</span>
+<span class="nc" id="L278">	}</span>
+
+	private String processTemplate(final String templateName, final Map&lt;String, Object&gt; model)
+			throws IOException, TemplateException {
+<span class="nc" id="L282">		final StringWriter out = new StringWriter();</span>
+<span class="nc" id="L283">		templateConfiguration.getTemplate(templateName).process(model, out);</span>
+<span class="nc" id="L284">		return out.toString();</span>
+	}
+
+	HttpHandler createJsonSchemaHandler() {
+<span class="nc" id="L288">		return this::serveJsonSchema;</span>
+	}
+
+	private void serveJsonSchema(final HttpServerExchange exchange) {
+<span class="nc" id="L292">		final Optional&lt;String&gt; jsonSchema = Optional.ofNullable(exchange.getQueryParameters().get(&quot;class&quot;).poll())</span>
+<span class="nc" id="L293">				.flatMap(TypeUtils::getClassForName)</span>
+<span class="nc" id="L294">				.filter(SerializableProperty.class::isAssignableFrom)</span>
+<span class="nc" id="L295">				.map(JsonUtils::toJsonSchema);</span>
+
+<span class="nc bnc" id="L297" title="All 2 branches missed.">		if (jsonSchema.isPresent()) {</span>
+<span class="nc" id="L298">			exchange.setStatusCode(StatusCodes.OK);</span>
+<span class="nc" id="L299">			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, &quot;application/json&quot;);</span>
+<span class="nc" id="L300">			exchange.getResponseSender().send(ByteBuffer.wrap(jsonSchema.get().getBytes(StandardCharsets.UTF_8)));</span>
+		} else {
+<span class="nc" id="L302">			HttpUtils.notFound(exchange);</span>
+		}
+<span class="nc" id="L304">	}</span>
+
+	HttpHandler createWidgetHandler() {
+<span class="nc" id="L307">		return this::serveWidget;</span>
+	}
+
+	private void serveWidget(final HttpServerExchange exchange) {
+<span class="nc" id="L311">		exchange.setStatusCode(StatusCodes.SEE_OTHER);</span>
+<span class="nc" id="L312">		final String widgetName = exchange.getQueryParameters().get(&quot;widget&quot;).getFirst();</span>
+<span class="nc" id="L313">		exchange.getResponseHeaders()</span>
+<span class="nc" id="L314">				.put(Headers.LOCATION, &quot;/assets/widgets/&quot; + substringBefore(widgetName, &quot;.html&quot;) + &quot;/&quot; + widgetName);</span>
+<span class="nc" id="L315">		exchange.endExchange();</span>
+<span class="nc" id="L316">	}</span>
+
+	HttpHandler createForeignEventHandler() {
+<span class="nc" id="L319">		HttpHandler handler = new BlockingHandler(this::handleForeignEvents);</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">		if (foreignEventsNeedAuthentication) {</span>
+<span class="nc" id="L321">			handler = addBasicAuthentication(handler, identityManager);</span>
+		}
+<span class="nc bnc" id="L323" title="All 2 branches missed.">		if (!foreignEventsAllowedApiKeys.isEmpty()) {</span>
+<span class="nc" id="L324">			handler = addApiKeyAuthentication(handler,</span>
+					foreignEventsApiKeyHeaderName,
+					foreignEventsAllowedApiKeys::contains);
+		}
+<span class="nc" id="L328">		return handler;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private void handleForeignEvents(final HttpServerExchange exchange) throws IOException {
+		// identify principal
+<span class="nc" id="L334">		final String name = Optional.of(exchange)</span>
+<span class="nc" id="L335">				.map(HttpServerExchange::getSecurityContext)</span>
+<span class="nc" id="L336">				.map(SecurityContext::getAuthenticatedAccount)</span>
+<span class="nc" id="L337">				.map(Account::getPrincipal)</span>
+<span class="nc" id="L338">				.map(Principal::getName)</span>
+<span class="nc" id="L339">				.orElse(&quot;&lt;unknown&gt;&quot;);</span>
+<span class="nc" id="L340">		LOGGER.info(&quot;Incoming foreign event. From: &quot; + name);</span>
+
+		// read JSON
+<span class="nc" id="L343">		final String encoding = exchange.getRequestCharset();</span>
+<span class="nc" id="L344">		final Charset charset = Charset.forName(encoding);</span>
+<span class="nc" id="L345">		final String json = IOUtils.toString(exchange.getInputStream(), charset);</span>
+<span class="nc" id="L346">		LOGGER.trace(&quot;JSON from outside: &quot; + json);</span>
+		final Map&lt;String, Object&gt; jsonMap;
+
+		// parse JSON
+		try {
+<span class="nc" id="L351">			jsonMap = Objects.requireNonNull(JsonUtils.fromJson(json, Map.class));</span>
+<span class="nc" id="L352">		} catch (final Exception e) {</span>
+<span class="nc" id="L353">			LOGGER.error(&quot;Unable to parse JSON for foreign event: &quot; + json, e);</span>
+<span class="nc" id="L354">			HttpUtils.badRequest(exchange);</span>
+<span class="nc" id="L355">			return;</span>
+<span class="nc" id="L356">		}</span>
+
+		// check JSON
+<span class="nc bnc" id="L359" title="All 2 branches missed.">		if (!jsonMap.containsKey(&quot;id&quot;)) {</span>
+<span class="nc" id="L360">			LOGGER.warn(&quot;Request does not contain an ID.&quot;);</span>
+<span class="nc" id="L361">			HttpUtils.badRequest(exchange);</span>
+<span class="nc" id="L362">			return;</span>
+		}
+<span class="nc" id="L364">		final String id = jsonMap.get(&quot;id&quot;).toString();</span>
+		try {
+<span class="nc" id="L366">			instanceController.getEventSourceInstance(id);</span>
+			// TODO check if JSON fits event definition
+<span class="nc" id="L368">		} catch (@SuppressWarnings(&quot;unused&quot;) final NoSuchElementException e) {</span>
+<span class="nc" id="L369">			LOGGER.warn(&quot;Event source instance '{}' does not exist.&quot;, id);</span>
+<span class="nc" id="L370">			HttpUtils.badRequest(exchange);</span>
+<span class="nc" id="L371">			return;</span>
+<span class="nc" id="L372">		}</span>
+
+<span class="nc" id="L374">		LOGGER.info(&quot;Posting event for: &quot; + id);</span>
+<span class="nc" id="L375">		final JsonEvent event = new JsonEvent(json);</span>
+<span class="nc" id="L376">		eventBus.post(event);</span>
+<span class="nc" id="L377">		exchange.setStatusCode(StatusCodes.NO_CONTENT);</span>
+<span class="nc" id="L378">		exchange.endExchange();</span>
+<span class="nc" id="L379">	}</span>
+
+	@SuppressWarnings(&quot;resource&quot;)
+	HttpHandler createAssetsHandler() {
+<span class="nc" id="L383">		return Handlers.resource(new AssetsClassPathResourceManager(&quot;statics&quot;, widgetsPaths));</span>
+	}
+
+	@SuppressWarnings(&quot;resource&quot;)
+	HttpHandler createSwaggerUiHandler() {
+<span class="nc" id="L388">		return Handlers.resource(new ClassPathResourceManager(&quot;swagger/swagger-ui/3.8.0&quot;));</span>
+	}
+
+	HttpHandler createAngularHandler() throws IOException {
+<span class="nc" id="L392">		final Path basePath = FileUtils.getPath(OversigtUiHelper.getPathToUiResources().get());</span>
+<span class="nc" id="L393">		final Path indexHtml = basePath.resolve(&quot;index.html&quot;);</span>
+<span class="nc bnc" id="L394" title="All 4 branches missed.">		if (!Files.exists(indexHtml) || !Files.isRegularFile(indexHtml)) {</span>
+<span class="nc" id="L395">			throw new RuntimeException(String.format(&quot;No file called 'index.html' found for Oversigt UI&quot;));</span>
+		}
+
+		// find all files belonging to the UI
+<span class="nc" id="L399">		final List&lt;String&gt; otherFilesNames = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L400">		final Path parent = indexHtml.getParent();</span>
+<span class="nc" id="L401">		try (Stream&lt;Path&gt; paths = Files.list(parent)) {</span>
+<span class="nc" id="L402">			otherFilesNames</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">					.addAll(paths.filter(path -&gt; !Ascii.toLowerCase(path.getFileName().toString()).endsWith(&quot;.txt&quot;))</span>
+<span class="nc" id="L404">							.map(path -&gt; path.getFileName().toString())</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">							.filter(name -&gt; !name.equals(&quot;index.html&quot;))</span>
+<span class="nc" id="L406">							.collect(toList()));</span>
+		}
+
+<span class="nc" id="L409">		return exchange -&gt; {</span>
+			// Find the file to serve
+<span class="nc" id="L411">			final String relativePath</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">					= exchange.getRelativePath().substring(exchange.getRelativePath().startsWith(&quot;/&quot;) ? 1 : 0);</span>
+<span class="nc" id="L413">			final Path requestedFile = basePath.resolve(relativePath);</span>
+			final Path fileToServe;
+<span class="nc bnc" id="L415" title="All 2 branches missed.">			if (Files.isRegularFile(requestedFile)) {</span>
+<span class="nc" id="L416">				fileToServe = requestedFile;</span>
+			} else {
+				// TODO check if it is really the HTML page that should be served...
+<span class="nc" id="L419">				fileToServe = basePath.resolve(&quot;index.html&quot;);</span>
+			}
+
+			// HTTP/2.0 -&gt; if index.html has been requested -&gt; push other files
+<span class="nc bnc" id="L423" title="All 2 branches missed.">			if (fileToServe.getFileName().toString().equals(&quot;index.html&quot;)) {</span>
+<span class="nc bnc" id="L424" title="All 2 branches missed.">				for (final String filename : otherFilesNames) {</span>
+<span class="nc" id="L425">					exchange.getConnection().pushResource(filename, new HttpString(&quot;GET&quot;), new HeaderMap());</span>
+<span class="nc" id="L426">				}</span>
+			}
+
+			// actually serve the file
+<span class="nc" id="L430">			final String contentType = FileUtils.getExtension(fileToServe).map(extension -&gt; {</span>
+<span class="nc bnc" id="L431" title="All 4 branches missed.">				switch (Ascii.toLowerCase(extension)) {</span>
+				case &quot;css&quot;:
+<span class="nc" id="L433">					return &quot;text/css&quot;;</span>
+				case &quot;html&quot;:
+<span class="nc" id="L435">					return &quot;text/html&quot;;</span>
+				case &quot;js&quot;:
+<span class="nc" id="L437">					return &quot;application/javascript&quot;;</span>
+				default:
+<span class="nc" id="L439">					return &quot;application/octet-stream&quot;;</span>
+				}
+<span class="nc" id="L441">			}).get();</span>
+<span class="nc" id="L442">			exchange.setStatusCode(StatusCodes.OK);</span>
+<span class="nc" id="L443">			exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, contentType);</span>
+<span class="nc" id="L444">			exchange.getResponseSender().send(ByteBuffer.wrap(Files.readAllBytes(fileToServe)));</span>
+<span class="nc" id="L445">			exchange.endExchange();</span>
+<span class="nc" id="L446">		};</span>
+	}
+
+	/**
+	 * Uses Wro4j Filter to pre-process resources Required for coffee scripts
+	 * compilation and saas processing Wro4j uses Servlet API so we make fake
+	 * Servlet Deployment here to emulate servlet-based environment
+	 *
+	 * @return Static resources handler
+	 */
+	HttpHandler createAggregationHandler() throws ServletException {
+<span class="nc" id="L457">		final CustomWroConfiguration wroConfig = injector.getInstance(CustomWroConfiguration.class);</span>
+<span class="nc" id="L458">		final WroGroupContent content = new WroGroupContent();</span>
+<span class="nc" id="L459">		content.addFiltered(FileUtils.streamResourcesFromClasspath(), wroConfig);</span>
+
+<span class="nc" id="L461">		final DeploymentInfo deploymentInfo = Servlets.deployment()</span>
+<span class="nc" id="L462">				.setClassLoader(OversigtServer.class.getClassLoader())</span>
+<span class="nc" id="L463">				.setContextPath(&quot;/&quot;)</span>
+<span class="nc" id="L464">				.setDeploymentName(&quot;oversigt&quot;)</span>
+<span class="nc" id="L465">				.addFilterUrlMapping(&quot;wro4j&quot;, &quot;/*&quot;, DispatcherType.REQUEST)</span>
+<span class="nc" id="L466">				.addFilter(Servlets.filter(&quot;wro4j&quot;, ConfigurableWroFilter.class, () -&gt; {</span>
+<span class="nc" id="L467">					final ConfigurableWroFilter filter = new ConfigurableWroFilter();</span>
+<span class="nc" id="L468">					filter.setWroManagerFactory(new WroManagerFactory(content));</span>
+<span class="nc" id="L469">					return new ImmediateInstanceHandle&lt;&gt;(filter);</span>
+				}));
+<span class="nc" id="L471">		final DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);</span>
+<span class="nc" id="L472">		manager.deploy();</span>
+<span class="nc" id="L473">		return manager.start();</span>
+	}
+
+	HttpHandler createApiHandler() throws ServletException {
+		// https://github.com/ukarim/undertow-resteasy-example
+<span class="nc" id="L478">		final ResteasyDeployment deployment = new ResteasyDeployment();</span>
+<span class="nc" id="L479">		deployment.setApplication(restApiApplication);</span>
+<span class="nc" id="L480">		deployment.setInjectorFactoryClass(CdiInjectorFactory.class.getName());</span>
+<span class="nc" id="L481">		final DeploymentInfo deploymentInfo = createUndertowDeployment(deployment, &quot;/&quot;);</span>
+<span class="nc" id="L482">		deploymentInfo.setClassLoader(OversigtServer.class.getClassLoader());</span>
+<span class="nc" id="L483">		deploymentInfo.setDeploymentName(&quot;oversigt-api&quot;);</span>
+<span class="nc" id="L484">		deploymentInfo.setContextPath(MAPPING_API);</span>
+<span class="nc" id="L485">		deploymentInfo.addListener(listener(org.jboss.weld.environment.servlet.Listener.class));</span>
+<span class="nc" id="L486">		deploymentInfo</span>
+<span class="nc" id="L487">				.addListener(listener(ApiBootstrapListener.class, createInstanceFactory(ApiBootstrapListener.class)));</span>
+
+<span class="nc" id="L489">		final DeploymentManager manager = defaultContainer().addDeployment(deploymentInfo);</span>
+<span class="nc" id="L490">		manager.deploy();</span>
+<span class="nc" id="L491">		return manager.start();</span>
+	}
+
+	private DeploymentInfo createUndertowDeployment(final ResteasyDeployment deployment, final String mapping) {
+<span class="nc" id="L495">		String mappingString = Nullables.orElse(mapping, &quot;/&quot;);</span>
+<span class="nc bnc" id="L496" title="All 2 branches missed.">		if (!mappingString.startsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L497">			mappingString = &quot;/&quot; + mappingString;</span>
+		}
+<span class="nc bnc" id="L499" title="All 2 branches missed.">		if (!mappingString.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L500">			mappingString += &quot;/&quot;;</span>
+		}
+<span class="nc" id="L502">		mappingString = mappingString + &quot;*&quot;;</span>
+<span class="nc" id="L503">		String prefix = null;</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">		if (!mappingString.equals(&quot;/*&quot;)) {</span>
+<span class="nc" id="L505">			prefix = mappingString.substring(0, mappingString.length() - 2);</span>
+		}
+<span class="nc" id="L507">		final ServletInfo resteasyServlet</span>
+<span class="nc" id="L508">				= servlet(&quot;ResteasyServlet&quot;, HttpServlet30Dispatcher.class).setAsyncSupported(true)</span>
+<span class="nc" id="L509">						.setLoadOnStartup(1)</span>
+<span class="nc" id="L510">						.addMapping(mappingString);</span>
+<span class="nc bnc" id="L511" title="All 2 branches missed.">		if (prefix != null) {</span>
+<span class="nc" id="L512">			resteasyServlet.addInitParam(&quot;resteasy.servlet.mapping.prefix&quot;, prefix);</span>
+		}
+
+<span class="nc" id="L515">		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)</span>
+<span class="nc" id="L516">				.addServlet(resteasyServlet);</span>
+	}
+
+	private &lt;T&gt; InstanceFactory&lt;T&gt; createInstanceFactory(final Class&lt;T&gt; clazz) {
+<span class="nc" id="L520">		final Injector injector = this.injector.createChildInjector(binder -&gt; binder.bind(clazz));</span>
+<span class="nc" id="L521">		return () -&gt; new ImmediateInstanceHandle&lt;&gt;(injector.getInstance(clazz));</span>
+	}
+
+	private static HttpHandler addBasicAuthentication(final HttpHandler next, final IdentityManager identityManager) {
+<span class="nc" id="L525">		HttpHandler handler = next;</span>
+<span class="nc" id="L526">		handler = new AuthenticationCallHandler(handler);</span>
+<span class="nc" id="L527">		handler = new AuthenticationConstraintHandler(handler);</span>
+<span class="nc" id="L528">		final List&lt;AuthenticationMechanism&gt; mechanisms</span>
+<span class="nc" id="L529">				= Collections.singletonList(new BasicAuthenticationMechanism(&quot;Oversigt&quot;));</span>
+<span class="nc" id="L530">		handler = new AuthenticationMechanismsHandler(handler, mechanisms);</span>
+<span class="nc" id="L531">		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);</span>
+<span class="nc" id="L532">		return handler;</span>
+	}
+
+	private static HttpHandler addApiKeyAuthentication(final HttpHandler next,
+			final String apiKeyHeaderName,
+			final Predicate&lt;String&gt; isApiKeyValid) {
+<span class="nc" id="L538">		return exchange -&gt; {</span>
+<span class="nc" id="L539">			final boolean apiKeyOk = Optional.of(exchange)</span>
+<span class="nc" id="L540">					.map(HttpServerExchange::getRequestHeaders)</span>
+<span class="nc" id="L541">					.map(hm -&gt; hm.get(apiKeyHeaderName))</span>
+<span class="nc" id="L542">					.map(HeaderValues::stream)</span>
+<span class="nc" id="L543">					.orElse(Stream.empty())</span>
+<span class="nc" id="L544">					.anyMatch(isApiKeyValid);</span>
+<span class="nc bnc" id="L545" title="All 2 branches missed.">			if (!apiKeyOk) {</span>
+<span class="nc" id="L546">				HttpUtils.forbidden(exchange);</span>
+<span class="nc" id="L547">				return;</span>
+			}
+<span class="nc" id="L549">			next.handleRequest(exchange);</span>
+<span class="nc" id="L550">		};</span>
+	}
+
+	private static final class AssetsClassPathResourceManager extends ClassPathResourceManager {
+		private final String[] widgetsPaths;
+
+		private AssetsClassPathResourceManager(final String prefix, final String[] widgetsPaths) {
+<span class="nc" id="L557">			super(prefix);</span>
+<span class="nc" id="L558">			this.widgetsPaths = widgetsPaths;</span>
+<span class="nc" id="L559">		}</span>
+
+		@Override
+		protected URL getResourceUrl(final String realPath) throws IllegalArgumentException {
+<span class="nc bnc" id="L563" title="All 2 branches missed.">			if (realPath.startsWith(&quot;statics/widgets/&quot;)) {</span>
+<span class="nc" id="L564">				final String end = realPath.substring(&quot;statics/widgets/&quot;.length());</span>
+<span class="nc" id="L565">				return Arrays.stream(widgetsPaths)</span>
+<span class="nc" id="L566">						.map(s -&gt; s + end)</span>
+<span class="nc" id="L567">						.map(FileUtils::getResourceUrl)</span>
+<span class="nc" id="L568">						.filter(Optional::isPresent)</span>
+<span class="nc" id="L569">						.map(Optional::get)</span>
+<span class="nc" id="L570">						.findFirst()</span>
+<span class="nc" id="L571">						.orElseThrow(() -&gt; new IllegalArgumentException(&quot;Resource &quot; + realPath + &quot; cannot be found.&quot;));</span>
+			}
+<span class="nc" id="L573">			return super.getResourceUrl(realPath);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

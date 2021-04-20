@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiAuthenticationFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiAuthenticationFilter.java</span></div><h1>ApiAuthenticationFilter.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.lang.reflect.Method;
+import java.util.Objects;
+
+import javax.annotation.Priority;
+import javax.ws.rs.Priorities;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
+import com.hlag.oversigt.security.Principal;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.jsonwebtoken.JwtException;
+
+/**
+ * @author Olaf Neumann see
+ *         https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+ *
+ */
+@JwtSecured
+@Provider
+@Priority(Priorities.AUTHENTICATION)
+public class ApiAuthenticationFilter implements ContainerRequestFilter {
+<span class="nc" id="L35">	private static final Logger LOGGER = LoggerFactory.getLogger(ApiAuthenticationFilter.class);</span>
+
+	public static final String API_OPERATION_AUTHENTICATION = &quot;JsonWebToken&quot;;
+
+	// https://stackoverflow.com/questions/26777083/best-practice-for-rest-token-based-authentication-with-jax-rs-and-jersey
+	private static final String REALM = &quot;oversigt-api&quot;;
+
+	private static final String AUTHENTICATION_SCHEME = &quot;Bearer&quot;;
+
+	@Nullable
+	@Inject
+	private ApiAuthenticationUtils injectedAuthentication;
+
+	@Nullable
+	@Context
+	private ResourceInfo injectedResourceInfo;
+
+<span class="nc" id="L52">	public ApiAuthenticationFilter() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L54">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public void filter(@Nullable final ContainerRequestContext nullableRequestContext) {
+<span class="nc" id="L59">		final ResourceInfo resourceInfo = Objects.requireNonNull(injectedResourceInfo);</span>
+<span class="nc" id="L60">		final ContainerRequestContext requestContext = Objects.requireNonNull(nullableRequestContext);</span>
+
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		if (!authorize(requestContext)) {</span>
+<span class="nc" id="L63">			final Method method = resourceInfo.getResourceMethod();</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">			if (method.isAnnotationPresent(JwtSecured.class)</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">					&amp;&amp; method.getAnnotation(JwtSecured.class).mustBeAuthenticated()) {</span>
+<span class="nc" id="L66">				abortWithUnauthorized(requestContext);</span>
+			}
+		}
+<span class="nc" id="L69">	}</span>
+
+	private boolean authorize(final ContainerRequestContext requestContext) {
+<span class="nc" id="L72">		final ApiAuthenticationUtils authentication = Objects.requireNonNull(injectedAuthentication);</span>
+
+		// Get the Authorization header from the request
+		@Nullable
+<span class="nc" id="L76">		final String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (authorizationHeader == null) {</span>
+<span class="nc" id="L78">			return false;</span>
+		}
+
+		// Validate the Authorization header
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		if (!isTokenBasedAuthentication(authorizationHeader)) {</span>
+<span class="nc" id="L83">			return false;</span>
+		}
+
+		// Extract the token from the Authorization header
+<span class="nc" id="L87">		final String token = authorizationHeader.substring(AUTHENTICATION_SCHEME.length()).trim();</span>
+
+		try {
+			// Validate the token
+<span class="nc" id="L91">			final Principal principal = authentication.validateToken(token);</span>
+<span class="nc" id="L92">			overrideSecurityContext(requestContext, principal);</span>
+<span class="nc" id="L93">			return true;</span>
+<span class="nc" id="L94">		} catch (final JwtException e) {</span>
+<span class="nc" id="L95">			LOGGER.warn(&quot;UNKNOWN - tried to use token: &quot; + token, e);</span>
+<span class="nc" id="L96">			return false;</span>
+		}
+	}
+
+	private void overrideSecurityContext(final ContainerRequestContext requestContext, final Principal principal) {
+<span class="nc" id="L101">		final SecurityContext currentSecurityContext = requestContext.getSecurityContext();</span>
+<span class="nc" id="L102">		requestContext.setSecurityContext(new ApiSecurityContext(currentSecurityContext, principal));</span>
+<span class="nc" id="L103">	}</span>
+
+	private boolean isTokenBasedAuthentication(final String authorizationHeader) {
+		// Check if the Authorization header is valid
+		// It must not be null and must be prefixed with &quot;Bearer&quot; plus a whitespace
+		// The authentication scheme comparison must be case-insensitive
+<span class="nc" id="L109">		return authorizationHeader.toLowerCase().startsWith(AUTHENTICATION_SCHEME.toLowerCase() + &quot; &quot;);</span>
+	}
+
+	private void abortWithUnauthorized(final ContainerRequestContext requestContext) {
+		// Abort the filter chain with a 401 status code response
+		// The WWW-Authenticate header is sent along with the response
+<span class="nc" id="L115">		requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)</span>
+<span class="nc" id="L116">				.header(HttpHeaders.WWW_AUTHENTICATE, AUTHENTICATION_SCHEME + &quot; realm=\&quot;&quot; + REALM + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L117">				.build());</span>
+<span class="nc" id="L118">	}</span>
+
+	private static final class ApiSecurityContext implements SecurityContext {
+		private final Principal principal;
+
+		private final SecurityContext securityContext;
+
+<span class="nc" id="L125">		private ApiSecurityContext(final SecurityContext securityContext, final Principal principal) {</span>
+<span class="nc" id="L126">			this.principal = principal;</span>
+<span class="nc" id="L127">			this.securityContext = securityContext;</span>
+<span class="nc" id="L128">		}</span>
+
+		@Override
+		public Principal getUserPrincipal() {
+<span class="nc" id="L132">			return principal;</span>
+		}
+
+		@Override
+		public boolean isUserInRole(@Nullable final String role) {
+<span class="nc" id="L137">			return principal.hasRole(Objects.requireNonNull(role));</span>
+		}
+
+		@Override
+		public boolean isSecure() {
+<span class="nc" id="L142">			return securityContext.isSecure();</span>
+		}
+
+		@Override
+		public String getAuthenticationScheme() {
+<span class="nc" id="L147">			return AUTHENTICATION_SCHEME;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

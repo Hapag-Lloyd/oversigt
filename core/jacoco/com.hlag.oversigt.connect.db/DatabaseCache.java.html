@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseCache.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.connect.db</a> &gt; <span class="el_source">DatabaseCache.java</span></div><h1>DatabaseCache.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.connect.db;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hlag.oversigt.util.function.ThrowingFunction;
+
+public abstract class DatabaseCache&lt;T&gt; {
+	public static &lt;X&gt; DatabaseCache&lt;X&gt; createCache(final ThrowingFunction&lt;Connection, Collection&lt;X&gt;&gt; readFunction) {
+<span class="nc" id="L20">		return new DatabaseCache&lt;X&gt;() {</span>
+			@Override
+			protected Collection&lt;X&gt; readItems(final Connection connection) throws SQLException {
+<span class="nc" id="L23">				return readFunction.apply(connection);</span>
+			}
+		};
+	}
+
+<span class="nc" id="L28">	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCache.class);</span>
+
+<span class="nc" id="L30">	private DatabaseCache() {}</span>
+
+<span class="nc" id="L32">	private final AtomicReference&lt;List&lt;T&gt;&gt; items = new AtomicReference&lt;&gt;(new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L34">	private final AtomicReference&lt;LocalDateTime&gt; lastAccess = new AtomicReference&lt;&gt;();</span>
+
+<span class="nc" id="L36">	private Duration durationBetweenReads = Duration.ofHours(1);</span>
+
+	public Duration getDurationBetweenReads() {
+<span class="nc" id="L39">		return durationBetweenReads;</span>
+	}
+
+	public void setDurationBetweenReads(final Duration durationBetweenReads) {
+<span class="nc bnc" id="L43" title="All 2 branches missed.">		if (LOGGER.isTraceEnabled()) {</span>
+<span class="nc" id="L44">			LOGGER.trace(&quot;Set durationBetweenReads=&quot; + durationBetweenReads);</span>
+		}
+<span class="nc" id="L46">		this.durationBetweenReads = durationBetweenReads;</span>
+<span class="nc" id="L47">	}</span>
+
+	public Stream&lt;T&gt; stream() {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">		if (LOGGER.isTraceEnabled()) {</span>
+<span class="nc" id="L51">			LOGGER.trace(&quot;stream called&quot;);</span>
+		}
+<span class="nc" id="L53">		return getItems().stream();</span>
+	}
+
+	public List&lt;T&gt; getItems() {
+<span class="nc" id="L57">		final List&lt;T&gt; items = this.items.get();</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">		if (items.isEmpty()) {</span>
+<span class="nc" id="L59">			LOGGER.warn(&quot;Items have not been loaded yet.&quot;);</span>
+		}
+<span class="nc" id="L61">		return items;</span>
+	}
+
+	public List&lt;T&gt; getItems(final Connection connection) throws SQLException {
+<span class="nc bnc" id="L65" title="All 2 branches missed.">		if (shouldReadItems()) {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">			if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L67">				LOGGER.debug(&quot;Reading items&quot;);</span>
+			}
+<span class="nc" id="L69">			final List&lt;T&gt; items = new ArrayList&lt;&gt;(readItems(connection));</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">			if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L71">				LOGGER.debug(&quot;Found &quot; + items.size() + &quot; items&quot;);</span>
+			}
+<span class="nc" id="L73">			this.items.set(items);</span>
+		}
+<span class="nc" id="L75">		return items.get();</span>
+	}
+
+	private synchronized boolean shouldReadItems() {
+<span class="nc" id="L79">		final LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">		final boolean yes = lastAccess.get() == null || lastAccess.get().plus(getDurationBetweenReads()).isBefore(now);</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">		if (yes) {</span>
+<span class="nc" id="L82">			lastAccess.set(now);</span>
+		}
+<span class="nc bnc" id="L84" title="All 2 branches missed.">		if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L85">			LOGGER.debug(&quot;Should read items: &quot; + yes);</span>
+		}
+<span class="nc" id="L87">		return yes;</span>
+	}
+
+	protected abstract Collection&lt;T&gt; readItems(Connection connection) throws SQLException;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

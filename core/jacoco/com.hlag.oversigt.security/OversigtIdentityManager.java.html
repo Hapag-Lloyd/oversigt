@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OversigtIdentityManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.security</a> &gt; <span class="el_source">OversigtIdentityManager.java</span></div><h1>OversigtIdentityManager.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.security;
+
+import static java.util.stream.Collectors.toSet;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.undertow.security.idm.Account;
+import io.undertow.security.idm.Credential;
+import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.idm.PasswordCredential;
+
+/**
+ * @author neumaol
+ * @see &lt;a href=&quot;https://www.baeldung.com/jboss-undertow&quot;&gt;Baeldung&lt;/a&gt;
+ */
+@Singleton
+public class OversigtIdentityManager implements IdentityManager {
+	@Inject
+	private Authenticator authenticator;
+
+<span class="nc" id="L27">	OversigtIdentityManager() {</span>
+		// nothing to do
+<span class="nc" id="L29">	}</span>
+
+	@Override
+	@Nullable
+	public Account verify(@Nullable final Account account) {
+<span class="nc" id="L34">		return account;</span>
+	}
+
+	@Override
+	@Nullable
+	public Account verify(@SuppressWarnings(&quot;unused&quot;) @Nullable final Credential credential) {
+<span class="nc" id="L40">		return null;</span>
+	}
+
+	@Override
+	@Nullable
+	public Account verify(@Nullable final String id, @Nullable final Credential credential) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">		if (credential instanceof PasswordCredential) {</span>
+<span class="nc" id="L47">			final Optional&lt;Principal&gt; principal = authenticator.login(Objects.requireNonNull(id),</span>
+<span class="nc" id="L48">					new String(((PasswordCredential) credential).getPassword()));</span>
+<span class="nc" id="L49">			return principal.map(OversigtAccount::new).orElse(null);</span>
+		}
+<span class="nc" id="L51">		return null;</span>
+	}
+
+	private static final class OversigtAccount implements Account {
+		private final Principal principal;
+
+<span class="nc" id="L57">		OversigtAccount(final Principal principal) {</span>
+<span class="nc" id="L58">			this.principal = principal;</span>
+<span class="nc" id="L59">		}</span>
+
+		@Override
+		public Principal getPrincipal() {
+<span class="nc" id="L63">			return principal;</span>
+		}
+
+		@Override
+		public Set&lt;String&gt; getRoles() {
+<span class="nc" id="L68">			return principal.getRoles().stream().map(Object::toString).collect(toSet());</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

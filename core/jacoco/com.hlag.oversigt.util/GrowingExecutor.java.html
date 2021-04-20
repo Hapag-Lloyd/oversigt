@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GrowingExecutor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">GrowingExecutor.java</span></div><h1>GrowingExecutor.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
+
+import org.jboss.weld.exceptions.IllegalStateException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * An executor that uses a variable number of threads to execute the provided
+ * tasks. The number of threads grows slowly if required.
+ *
+ * @author Olaf Neumann
+ *
+ */
+public class GrowingExecutor {
+	private static final int DEFAULT_CORE_POOL_SIZE = 1;
+
+	private static final int DEFAULT_MAXIMUM_NUMBER_OF_THREADS = Integer.MAX_VALUE;
+
+<span class="nc" id="L34">	private static final Duration DEFAULT_TIME_BEFORE_ADDING_NEW_THREADS = Duration.ofSeconds(1);</span>
+
+<span class="nc" id="L36">	private static final Duration DEFAULT_TIME_BEFORE_SHUTTING_DOWN_THREADS = Duration.ofMinutes(5);</span>
+
+	/** The logger to write information to a log file */
+<span class="nc" id="L39">	private static final Logger LOGGER = LoggerFactory.getLogger(GrowingExecutor.class);</span>
+
+	/**
+	 * a counter for the number of instances of the {@link GrowingExecutor} class
+	 */
+<span class="nc" id="L44">	private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger(0);</span>
+
+	/**
+	 * Executor for scheduling tasks that need to be done after certain time
+	 */
+<span class="nc" id="L49">	private static final ScheduledExecutorService TIMES = Executors.newScheduledThreadPool(1,</span>
+<span class="nc" id="L50">			CountingThreadFactory.createDaemonThreadFactory(&quot;GrowingExecutor-TimerThread-&quot;));</span>
+
+	/**
+	 * The thread factory creating threads for this executor
+	 */
+	private final ThreadFactory threadFactory;
+
+	/**
+	 * The minimum number of threads to keep alive
+	 */
+	private final int corePoolSize;
+
+	/**
+	 * The maximum number of threads to create for this executor
+	 */
+	private final int maximumNumberOfThreads;
+
+	/**
+	 * The list of threads working for this executor
+	 */
+<span class="nc" id="L70">	private final List&lt;Thread&gt; threads = new ArrayList&lt;&gt;();</span>
+
+	/**
+	 * The tasks waiting for execution
+	 */
+<span class="nc" id="L75">	private final LinkedList&lt;FutureTask&lt;?&gt;&gt; tasks = new LinkedList&lt;&gt;();</span>
+
+	/**
+	 * The time to wait before a new thread will be added if there's still work to
+	 * do
+	 */
+	private final Duration waitBeforeAddingThreads;
+
+	/**
+	 * The time to wait before ending a thread if there is no more task awaiting
+	 * execution
+	 */
+	private final Duration waitBeforeThreadShutdown;
+
+	/**
+	 * Mutex object to acquire the monitor for when manipulating the task list
+	 */
+<span class="nc" id="L92">	private final Object taskMutex = new Object();</span>
+
+	/**
+	 * Mutex object to acquire the monitor for when manipulating the list of
+	 * threads&lt;br&gt;
+	 * &lt;em&gt;Attention:&lt;/em&gt; In order to avoid deadlocks you &lt;strong&gt;must&lt;/strong&gt;
+	 * acquire the monitor for {@link #taskMutex} before acquiring this monitor!
+	 */
+<span class="nc" id="L100">	private final Object threadMutex = new Object();</span>
+
+	/**
+	 * Flag indicating whether a timer has been set and is waiting for execution
+	 */
+<span class="nc" id="L105">	private final AtomicBoolean timerSet = new AtomicBoolean(false);</span>
+
+	/**
+	 * A flag indicating whether this executor is accepting new tasks
+	 */
+<span class="nc" id="L110">	private final AtomicBoolean acceptingTasks = new AtomicBoolean(true);</span>
+
+	/**
+	 * Create a new {@link GrowingExecutor} with default settings.&lt;br&gt;
+	 * The default settings are:
+	 * &lt;ul&gt;
+	 * &lt;li&gt;Core pool size: 1&lt;/li&gt;
+	 * &lt;li&gt;Unlimited number of additional threads&lt;/li&gt;
+	 * &lt;li&gt;Wait one second before adding new threads to the executor&lt;/li&gt;
+	 * &lt;li&gt;Wait 5 minutes before ending a thread&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 */
+	public GrowingExecutor() {
+<span class="nc" id="L123">		this(DEFAULT_CORE_POOL_SIZE,</span>
+				DEFAULT_MAXIMUM_NUMBER_OF_THREADS,
+				DEFAULT_TIME_BEFORE_ADDING_NEW_THREADS,
+				DEFAULT_TIME_BEFORE_SHUTTING_DOWN_THREADS,
+<span class="nc" id="L127">				CountingThreadFactory.createDaemonThreadFactory(</span>
+<span class="nc" id="L128">						GrowingExecutor.class.getSimpleName() + &quot;-&quot; + INSTANCE_COUNTER.incrementAndGet() + &quot;-thread-&quot;));</span>
+<span class="nc" id="L129">	}</span>
+
+	/**
+	 * Create a new {@link GrowingExecutor} with the given configuration
+	 *
+	 * @param corePoolSize             the minimum number of threads to maintain if
+	 *                                 the executor has nothing to do
+	 * @param maximumNumberOfThreads   the maximum number of threads to create if
+	 *                                 the executor is busy
+	 * @param waitBeforeAddingThreads  time to wait before adding a new thread to
+	 *                                 the executor
+	 * @param waitBeforeThreadShutdown time to keep a thread alive if there's
+	 *                                 nothing to do
+	 * @param threadFactory            the thread factory creating new threads for
+	 *                                 the executor
+	 */
+	public GrowingExecutor(final int corePoolSize,
+			final int maximumNumberOfThreads,
+			final Duration waitBeforeAddingThreads,
+			final Duration waitBeforeThreadShutdown,
+<span class="nc" id="L149">			final ThreadFactory threadFactory) {</span>
+<span class="nc" id="L150">		this.corePoolSize = corePoolSize;</span>
+<span class="nc" id="L151">		this.maximumNumberOfThreads = maximumNumberOfThreads;</span>
+<span class="nc" id="L152">		this.waitBeforeAddingThreads = waitBeforeAddingThreads;</span>
+<span class="nc" id="L153">		this.waitBeforeThreadShutdown = waitBeforeThreadShutdown;</span>
+<span class="nc" id="L154">		this.threadFactory = threadFactory;</span>
+<span class="nc" id="L155">	}</span>
+
+	/**
+	 * Execute the given task and return a {@link Future} to retrieve the calculated
+	 * result.
+	 *
+	 * @param &lt;T&gt;      the type return value
+	 * @param callable the action to be executed
+	 * @return a value to retrieve the calculated result
+	 * @throws IllegalStateException if the {@link Callable} is submitted but
+	 *                               {@link #shutdown()} has been called before.
+	 */
+	public &lt;T&gt; Future&lt;T&gt; execute(final Callable&lt;T&gt; callable) {
+<span class="nc" id="L168">		LOGGER.debug(&quot;Executing callable&quot;);</span>
+<span class="nc" id="L169">		final FutureTask&lt;T&gt; task = new FutureTask&lt;&gt;(callable);</span>
+<span class="nc" id="L170">		queueFutureTask(task);</span>
+<span class="nc" id="L171">		return task;</span>
+	}
+
+	/**
+	 * Sets an internal flag that new tasks will not be accepted any more. Only
+	 * already queued tasks will be executed.
+	 */
+	public void shutdown() {
+<span class="nc" id="L179">		acceptingTasks.set(false);</span>
+<span class="nc" id="L180">	}</span>
+
+	/**
+	 * Joins all running threads. This method blocks until all threads of this
+	 * executor have ended.&lt;br&gt;
+	 * If the core pool size is greater than 0 this method will never return if
+	 * {@link #shutdown()} has not been called. On the other hand, this method will
+	 * return if the core pool size is 0 but the executor is still accepting new
+	 * tasks.
+	 *
+	 * @throws InterruptedException if a thread is interrupted while joining it
+	 */
+	public void join() throws InterruptedException {
+		while (true) {
+			final Thread thread;
+<span class="nc" id="L195">			synchronized (threadMutex) {</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">				if (threads.isEmpty()) {</span>
+<span class="nc" id="L197">					return;</span>
+				}
+<span class="nc" id="L199">				thread = threads.get(0);</span>
+<span class="nc" id="L200">			}</span>
+<span class="nc" id="L201">			thread.join();</span>
+<span class="nc" id="L202">		}</span>
+	}
+
+	private void queueFutureTask(final FutureTask&lt;?&gt; task) {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		if (acceptingTasks.get()) {</span>
+<span class="nc" id="L207">			synchronized (taskMutex) {</span>
+<span class="nc" id="L208">				tasks.add(task);</span>
+				// inform possibly sleeping threads that there is something to do
+<span class="nc" id="L210">				taskMutex.notifyAll();</span>
+
+				// start a timer to check whether new threads are needed
+<span class="nc" id="L213">				scheduleCheckIfEnoughThreadsAreAvailable();</span>
+<span class="nc" id="L214">			}</span>
+		} else {
+<span class="nc" id="L216">			throw new IllegalStateException(&quot;Executor is shutting down. New Callable will not be accepted.&quot;);</span>
+		}
+<span class="nc" id="L218">	}</span>
+
+	private void scheduleCheckIfEnoughThreadsAreAvailable() {
+<span class="nc" id="L221">		synchronized (taskMutex) {</span>
+<span class="nc" id="L222">			synchronized (threadMutex) {</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">				if (threads.isEmpty()) {</span>
+<span class="nc" id="L224">					checkIfEnoughThreadsAreAvailable();</span>
+				}
+<span class="nc" id="L226">			}</span>
+<span class="nc" id="L227">		}</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">		if (timerSet.compareAndSet(false, true)) {</span>
+<span class="nc" id="L229">			TIMES.schedule(this::checkIfEnoughThreadsAreAvailable,</span>
+<span class="nc" id="L230">					waitBeforeAddingThreads.toMillis(),</span>
+					TimeUnit.MILLISECONDS);
+		}
+<span class="nc" id="L233">	}</span>
+
+	private void checkIfEnoughThreadsAreAvailable() {
+<span class="nc" id="L236">		timerSet.set(false);</span>
+<span class="nc" id="L237">		synchronized (taskMutex) {</span>
+<span class="nc" id="L238">			synchronized (threadMutex) {</span>
+<span class="nc bnc" id="L239" title="All 4 branches missed.">				if (!tasks.isEmpty() &amp;&amp; threads.size() &lt; maximumNumberOfThreads) {</span>
+<span class="nc" id="L240">					startNewExecutorThread();</span>
+<span class="nc" id="L241">					scheduleCheckIfEnoughThreadsAreAvailable();</span>
+				}
+<span class="nc" id="L243">			}</span>
+<span class="nc" id="L244">		}</span>
+<span class="nc" id="L245">	}</span>
+
+	private void startNewExecutorThread() {
+<span class="nc" id="L248">		final Thread thread = threadFactory.newThread(this::executeTasks);</span>
+<span class="nc" id="L249">		synchronized (taskMutex) {</span>
+<span class="nc" id="L250">			synchronized (threadMutex) {</span>
+<span class="nc" id="L251">				threads.add(thread);</span>
+<span class="nc" id="L252">			}</span>
+<span class="nc" id="L253">		}</span>
+<span class="nc" id="L254">		thread.start();</span>
+<span class="nc" id="L255">	}</span>
+
+	private void executeTasks() {
+<span class="nc" id="L258">		LOGGER.info(&quot;Starting new executor thread.&quot;);</span>
+<span class="nc" id="L259">		FutureTask&lt;?&gt; task = null;</span>
+		while (true) {
+			// get a new task to execute
+<span class="nc" id="L262">			synchronized (taskMutex) {</span>
+				// wait one loop before shutting down the thread
+<span class="nc" id="L264">				boolean firstLoop = true;</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">				while ((task = tasks.pollFirst()) == null) {</span>
+					// check if we're the only thread... if not, we can quit
+<span class="nc bnc" id="L267" title="All 2 branches missed.">					if (!firstLoop) {</span>
+<span class="nc" id="L268">						synchronized (threadMutex) {</span>
+<span class="nc bnc" id="L269" title="All 4 branches missed.">							if (threads.size() &gt; corePoolSize || !acceptingTasks.get()) {</span>
+<span class="nc" id="L270">								LOGGER.info(&quot;No more tasks waiting. Shutting down thread.&quot;);</span>
+<span class="nc" id="L271">								threads.remove(Thread.currentThread());</span>
+<span class="nc" id="L272">								return;</span>
+							}
+<span class="nc" id="L274">						}</span>
+					}
+
+					// wait until new stuff is available
+					try {
+						// TODO as every thread is being notified we will reach the end of the wait loop
+<span class="nc" id="L280">						taskMutex.wait(Long.max(1, waitBeforeThreadShutdown.toMillis()));</span>
+						// too early and will end the thread to early...
+<span class="nc" id="L282">						firstLoop = false;</span>
+<span class="nc" id="L283">					} catch (final InterruptedException e) {</span>
+<span class="nc" id="L284">						LOGGER.error(&quot;Error while waiting for new task.&quot;, e);</span>
+						// exit run loop
+<span class="nc" id="L286">						return;</span>
+<span class="nc" id="L287">					}</span>
+				}
+<span class="nc" id="L289">			}</span>
+
+			// execute the task
+<span class="nc" id="L292">			LOGGER.debug(&quot;Running task&quot;);</span>
+<span class="nc" id="L293">			task.run();</span>
+<span class="nc" id="L294">			task = null;</span>
+
+			// check if we need to kill us
+<span class="nc bnc" id="L297" title="All 2 branches missed.">			if (Thread.interrupted()) {</span>
+<span class="nc" id="L298">				return;</span>
+			}
+		}
+	}
+
+	/**
+	 * Test method
+	 *
+	 * @param args command line arguments
+	 * @throws Exception if something fails
+	 */
+	public static void main(final String[] args) throws Exception {
+<span class="nc" id="L310">		final GrowingExecutor executor = new GrowingExecutor();</span>
+<span class="nc" id="L311">		IntStream.range(1, 21).mapToObj(GrowingExecutor::createCallable).forEach(executor::execute);</span>
+<span class="nc" id="L312">		System.out.println(Thread.currentThread().getName() + &quot;: &quot; + &quot;Scheduled&quot;);</span>
+<span class="nc" id="L313">		Thread.sleep(2000);</span>
+<span class="nc" id="L314">		executor.shutdown();</span>
+<span class="nc" id="L315">		executor.join();</span>
+<span class="nc" id="L316">		System.out.println(Thread.currentThread().getName() + &quot;: &quot; + &quot;Joined&quot;);</span>
+<span class="nc" id="L317">	}</span>
+
+	private static Callable&lt;Integer&gt; createCallable(final int retVal) {
+<span class="nc" id="L320">		return () -&gt; {</span>
+<span class="nc" id="L321">			final int seconds = (int) (5 + Math.random() * 5);</span>
+<span class="nc" id="L322">			Thread.sleep(seconds * 1000);</span>
+<span class="nc" id="L323">			System.out.println(Thread.currentThread().getName() + &quot;: &quot; + retVal);</span>
+<span class="nc" id="L324">			return retVal;</span>
+		};
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSender.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.event</a> &gt; <span class="el_source">EventSender.java</span></div><h1>EventSender.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.event;
+
+import static com.hlag.oversigt.util.Utils.logDebug;
+import static com.hlag.oversigt.util.Utils.logInfo;
+import static com.hlag.oversigt.util.Utils.logWarn;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.WeakHashMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.RateLimiter;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.Widget;
+
+import io.undertow.server.handlers.sse.ServerSentEventConnection;
+import io.undertow.util.AttachmentKey;
+
+@Singleton
+public class EventSender {
+<span class="nc" id="L39">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSender.class);</span>
+
+<span class="nc" id="L41">	private static final AttachmentKey&lt;RateLimiter&gt; RATE_LIMITER_KEY = AttachmentKey.create(RateLimiter.class);</span>
+
+<span class="nc" id="L43">	public static final AttachmentKey&lt;Dashboard&gt; DASHBOARD_KEY = AttachmentKey.create(Dashboard.class);</span>
+
+	@Named(&quot;application-id&quot;)
+	@Inject
+	private String applicationId;
+
+	private final long rateLimit;
+
+	// Send events in another thread
+<span class="nc" id="L52">	private final BlockingQueue&lt;EventSendTask&gt; eventsToSend = new LinkedBlockingQueue&lt;&gt;();</span>
+
+	private final Thread thread;
+
+<span class="nc" id="L56">	private final Map&lt;String, OversigtEvent&gt; cachedEvents = Collections.synchronizedMap(new HashMap&lt;&gt;());</span>
+
+<span class="nc" id="L58">	private final Map&lt;ServerSentEventConnection, Map&lt;String, LocalDateTime&gt;&gt; sentEventTimestamps</span>
+<span class="nc" id="L59">			= Collections.synchronizedMap(new WeakHashMap&lt;&gt;());</span>
+
+	private final Duration defaultEventLifetime;
+
+	@Inject
+	public EventSender(@Named(&quot;discardEventsAfter&quot;) final Duration discardEventsAfter,
+<span class="nc" id="L65">			@Named(&quot;rateLimit&quot;) final long rateLimit) {</span>
+<span class="nc" id="L66">		defaultEventLifetime = discardEventsAfter;</span>
+<span class="nc" id="L67">		this.rateLimit = rateLimit;</span>
+
+<span class="nc" id="L69">		thread = new Thread(this::sendQueuedTasks, &quot;EventSender&quot;);</span>
+<span class="nc" id="L70">		thread.setDaemon(true);</span>
+<span class="nc" id="L71">		thread.setPriority(Thread.NORM_PRIORITY + 1);</span>
+<span class="nc" id="L72">		thread.start();</span>
+<span class="nc" id="L73">	}</span>
+
+	@Subscribe
+	void cacheEvent(final OversigtEvent event) {
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (shouldCacheEvent(event)) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">			if (event.getLifetime() == null) {</span>
+<span class="nc" id="L79">				event.setLifetime(defaultEventLifetime);</span>
+			}
+<span class="nc" id="L81">			logDebug(LOGGER, &quot;Caching event [%s]. Lifetime [%s].&quot;, event.getId(), event.getLifetime());</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			if (!(event instanceof ErrorEvent)) {</span>
+<span class="nc" id="L83">				cachedEvents.put(event.getId(), event);</span>
+			} else {
+<span class="nc" id="L85">				synchronized (cachedEvents) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">					if (!cachedEvents.containsKey(event.getId())</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">							|| shouldRemoveEvent(cachedEvents.get(event.getId()))) {</span>
+<span class="nc" id="L88">						cachedEvents.put(event.getId(), event);</span>
+					}
+<span class="nc" id="L90">				}</span>
+			}
+		}
+<span class="nc" id="L93">	}</span>
+
+	@Subscribe
+	void newConnectionAdded(final ServerSentEventConnection connection) {
+<span class="nc" id="L97">		connection.putAttachment(RATE_LIMITER_KEY, RateLimiter.create(rateLimit));</span>
+<span class="nc" id="L98">		logInfo(LOGGER,</span>
+				&quot;Starting new SSE connection. Dashboard filter: '%s'. Rate limit: %s&quot;,
+<span class="nc" id="L100">				Optional.ofNullable(connection.getAttachment(DASHBOARD_KEY)).map(Dashboard::getId).orElse(&quot;*&quot;),</span>
+<span class="nc" id="L101">				rateLimit);</span>
+<span class="nc" id="L102">		synchronized (cachedEvents) {</span>
+<span class="nc" id="L103">			cachedEvents.values().removeIf(EventSender::shouldRemoveEvent);</span>
+<span class="nc" id="L104">			cachedEvents.values().forEach(event -&gt; sendEventToConnection(event, connection));</span>
+<span class="nc" id="L105">		}</span>
+<span class="nc" id="L106">	}</span>
+
+	@Subscribe
+	void removeEventWithId(final String id) {
+<span class="nc" id="L110">		synchronized (cachedEvents) {</span>
+<span class="nc" id="L111">			final boolean deleted</span>
+<span class="nc" id="L112">					= cachedEvents.values().removeIf(event -&gt; Objects.requireNonNull(event.getId()).equals(id));</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			if (deleted) {</span>
+<span class="nc" id="L114">				logWarn(LOGGER, &quot;Deleted cached events for ID [%s]&quot;, id);</span>
+			}
+<span class="nc" id="L116">		}</span>
+<span class="nc" id="L117">	}</span>
+
+	private boolean shouldSendEventToConnection(final OversigtEvent event, final ServerSentEventConnection connection) {
+		// always send uncached events
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		if (!shouldCacheEvent(event)) {</span>
+<span class="nc" id="L122">			return true;</span>
+		}
+
+		// filter for current dashboard
+<span class="nc" id="L126">		if (!Optional.ofNullable(connection.getAttachment(DASHBOARD_KEY))</span>
+<span class="nc" id="L127">				.map(d -&gt; doesDashboardContainEventId(d, Objects.requireNonNull(event.getId())))</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">				.orElse(true)) {</span>
+<span class="nc" id="L129">			return false;</span>
+		}
+
+		// special handling for error events
+<span class="nc bnc" id="L133" title="All 2 branches missed.">		if (event instanceof ErrorEvent) {</span>
+<span class="nc" id="L134">			final OversigtEvent cachedEvent = cachedEvents.get(event.getId());</span>
+<span class="nc bnc" id="L135" title="All 4 branches missed.">			return cachedEvent == null || cachedEvent instanceof ErrorEvent;</span>
+		}
+
+<span class="nc" id="L138">		return true;</span>
+	}
+
+	public void sendEventToConnection(final OversigtEvent event, final ServerSentEventConnection connection) {
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		if (shouldSendEventToConnection(event, connection)) {</span>
+<span class="nc" id="L143">			eventsToSend.add(new EventSendTask(connection, event));</span>
+		}
+<span class="nc" id="L145">	}</span>
+
+	private void sendQueuedTasks() {
+		while (true) {
+			try {
+<span class="nc" id="L150">				final EventSendTask task = eventsToSend.take();</span>
+<span class="nc" id="L151">				processTask(task);</span>
+<span class="nc" id="L152">				moveTasksForConnectionToBack(task.connection);</span>
+<span class="nc" id="L153">			} catch (final InterruptedException e) {</span>
+<span class="nc" id="L154">				LOGGER.error(&quot;Waiting for new events has been interrupted.&quot;, e);</span>
+<span class="nc" id="L155">			}</span>
+		}
+	}
+
+	private void processTask(final EventSendTask task) {
+		try {
+<span class="nc" id="L161">			processTask(task.connection, task.event);</span>
+<span class="nc" id="L162">		} catch (final Exception e) {</span>
+<span class="nc" id="L163">			LOGGER.error(&quot;Unable to send event.&quot;, e);</span>
+<span class="nc" id="L164">		}</span>
+<span class="nc" id="L165">	}</span>
+
+	private void processTask(final ServerSentEventConnection connection, final OversigtEvent event) {
+<span class="nc" id="L168">		final boolean isErrorEvent = event instanceof ErrorEvent;</span>
+<span class="nc" id="L169">		final Map&lt;String, LocalDateTime&gt; timestampsForConnection</span>
+<span class="nc" id="L170">				= sentEventTimestamps.computeIfAbsent(connection, c -&gt; Collections.synchronizedMap(new HashMap&lt;&gt;()));</span>
+<span class="nc" id="L171">		final LocalDateTime lastEventTimestamp = timestampsForConnection.get(event.getId());</span>
+<span class="nc bnc" id="L172" title="All 4 branches missed.">		if (isErrorEvent</span>
+				|| lastEventTimestamp == null
+<span class="nc bnc" id="L174" title="All 2 branches missed.">				|| lastEventTimestamp.isEqual(event.getCreatedOn())</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">				|| lastEventTimestamp.isBefore(event.getCreatedOn())) {</span>
+			// wait if there is rate limiter
+<span class="nc" id="L177">			Optional.ofNullable(connection.getAttachment(RATE_LIMITER_KEY)).ifPresent(RateLimiter::acquire);</span>
+
+			// put application ID into event
+<span class="nc" id="L180">			event.setApplicationId(applicationId);</span>
+
+			// Send event
+<span class="nc" id="L183">			logDebug(LOGGER, &quot;Sending event [%s]&quot;, event.getId());</span>
+<span class="nc" id="L184">			final String json = event.toJson();</span>
+<span class="nc" id="L185">			connection.send(json);</span>
+
+			// note when this connection got the last event of this ID
+<span class="nc bnc" id="L188" title="All 2 branches missed.">			if (isErrorEvent) {</span>
+<span class="nc" id="L189">				timestampsForConnection.put(event.getId(), event.getCreatedOn());</span>
+			}
+		}
+<span class="nc" id="L192">	}</span>
+
+	private void moveTasksForConnectionToBack(final ServerSentEventConnection connection) {
+<span class="nc" id="L195">		synchronized (eventsToSend) {</span>
+			// find tasks with the same connection
+<span class="nc" id="L197">			final List&lt;EventSendTask&gt; tasksWithSameConnection = new LinkedList&lt;&gt;();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">			for (final EventSendTask task : eventsToSend) {</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">				if (task.connection == connection) {</span>
+<span class="nc" id="L200">					tasksWithSameConnection.add(task);</span>
+				}
+<span class="nc" id="L202">			}</span>
+
+			// move tasks to end of list
+<span class="nc bnc" id="L205" title="All 2 branches missed.">			if (!tasksWithSameConnection.isEmpty()) {</span>
+<span class="nc" id="L206">				eventsToSend.removeAll(tasksWithSameConnection);</span>
+<span class="nc" id="L207">				eventsToSend.addAll(tasksWithSameConnection);</span>
+			}
+<span class="nc" id="L209">		}</span>
+<span class="nc" id="L210">	}</span>
+
+	public Collection&lt;OversigtEvent&gt; getCachedEvents() {
+<span class="nc" id="L213">		synchronized (cachedEvents) {</span>
+<span class="nc" id="L214">			return new ArrayList&lt;&gt;(cachedEvents.values());</span>
+		}
+	}
+
+	private static boolean doesDashboardContainEventId(final Dashboard dashboard, final String eventId) {
+<span class="nc" id="L219">		return dashboard.getWidgets()</span>
+<span class="nc" id="L220">				.stream()</span>
+<span class="nc" id="L221">				.map(Widget::getEventSourceInstance)</span>
+<span class="nc" id="L222">				.map(EventSourceInstance::getId)</span>
+<span class="nc" id="L223">				.anyMatch(eventId::equals);</span>
+	}
+
+	private static boolean shouldRemoveEvent(final OversigtEvent event) {
+<span class="nc bnc" id="L227" title="All 4 branches missed.">		final boolean remove = !(event instanceof ErrorEvent) &amp;&amp; !event.isValid();</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">		if (remove) {</span>
+<span class="nc" id="L229">			logWarn(LOGGER, &quot;Deleting cached event [%s]. Event lifetime was [%s]&quot;, event.getId(), event.getLifetime());</span>
+		}
+<span class="nc" id="L231">		return remove;</span>
+	}
+
+	private static boolean shouldCacheEvent(final OversigtEvent event) {
+<span class="nc bnc" id="L235" title="All 2 branches missed.">		return !event.getClass().isAnnotationPresent(NoCache.class);</span>
+	}
+
+	private static final class EventSendTask {
+		private ServerSentEventConnection connection;
+
+		private OversigtEvent event;
+
+<span class="nc" id="L243">		private EventSendTask(final ServerSentEventConnection connection, final OversigtEvent event) {</span>
+<span class="nc" id="L244">			this.connection = connection;</span>
+<span class="nc" id="L245">			this.event = event;</span>
+<span class="nc" id="L246">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

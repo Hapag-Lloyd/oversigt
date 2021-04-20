@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceNameGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.controller</a> &gt; <span class="el_source">EventSourceNameGenerator.java</span></div><h1>EventSourceNameGenerator.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.controller;
+
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.storage.Storage;
+
+@Singleton
+public class EventSourceNameGenerator {
+	private static final String EVENTSOURCE = &quot;eventsource&quot;;
+
+	@Inject
+	private Storage storage;
+
+<span class="nc" id="L19">	public EventSourceNameGenerator() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L21">	}</span>
+
+	String createEventSourceInstanceName(final EventSourceDescriptor descriptor) {
+		// create base name
+<span class="nc" id="L25">		String basename = descriptor//</span>
+<span class="nc" id="L26">				.getServiceClass()</span>
+<span class="nc" id="L27">				.map(c -&gt; c.getSimpleName())</span>
+<span class="nc" id="L28">				.map(name -&gt; {</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">					if (name.toLowerCase().endsWith(EVENTSOURCE)) {</span>
+<span class="nc" id="L30">						return name.substring(0, name.length() - EVENTSOURCE.length());</span>
+					}
+<span class="nc" id="L32">					return name;</span>
+				})
+<span class="nc" id="L34">				.orElse(descriptor.getView());</span>
+<span class="nc" id="L35">		basename = basename.chars()</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">				.mapToObj(c -&gt; Character.isUpperCase(c) ? &quot; &quot; + (char) c : Character.toString((char) c))</span>
+<span class="nc" id="L37">				.collect(Collectors.joining())</span>
+<span class="nc" id="L38">				.trim();</span>
+
+		// look if there is another source with the same name
+<span class="nc" id="L41">		final Set&lt;String&gt; names = new TreeSet&lt;&gt;(String.CASE_INSENSITIVE_ORDER);</span>
+<span class="nc" id="L42">		names.addAll(storage.getEventSourceNames());</span>
+<span class="nc" id="L43">		String name = basename;</span>
+<span class="nc" id="L44">		int i = 1;</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">		while (names.contains(name)) {</span>
+<span class="nc" id="L46">			name = basename + &quot; &quot; + i;</span>
+<span class="nc" id="L47">			i += 1;</span>
+		}
+
+<span class="nc" id="L50">		return name;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

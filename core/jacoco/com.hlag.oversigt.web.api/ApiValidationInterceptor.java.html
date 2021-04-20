@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiValidationInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.api</a> &gt; <span class="el_source">ApiValidationInterceptor.java</span></div><h1>ApiValidationInterceptor.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.api;
+
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+
+import com.google.inject.Inject;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+/**
+ * Interceptor that checks parameters of calls to public API methods. The javax
+ * annotations will be used to determine valid values for the parameters.
+ *
+ * @author Olaf Neumann
+ *
+ */
+public class ApiValidationInterceptor implements MethodInterceptor {
+	@Inject
+	private Validator validator;
+
+<span class="nc" id="L28">	public ApiValidationInterceptor() {</span>
+		// no fields to be initialized manually, some will be injected
+<span class="nc" id="L30">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public Object invoke(@Nullable final MethodInvocation nullableInvocation) throws Throwable {
+<span class="nc" id="L35">		final MethodInvocation invocation = Objects.requireNonNull(nullableInvocation);</span>
+
+		// save parameters for logging
+<span class="nc" id="L38">		LoggingInterceptor.PARAMETERS.set(invocation.getArguments());</span>
+
+		// Validate call
+<span class="nc" id="L41">		final Set&lt;ConstraintViolation&lt;?&gt;&gt; violations = new LinkedHashSet&lt;&gt;();</span>
+
+<span class="nc" id="L43">		violations.addAll(validator.forExecutables()</span>
+<span class="nc" id="L44">				.validateParameters(invocation.getThis(), invocation.getMethod(), invocation.getArguments()));</span>
+
+<span class="nc" id="L46">		final Class&lt;?&gt;[] types = invocation.getMethod().getParameterTypes();</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">		for (int i = 0; i &lt; types.length; i += 1) {</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">			if (!(types[i].isPrimitive()</span>
+<span class="nc bnc" id="L49" title="All 6 branches missed.">					|| Number.class.isAssignableFrom(types[i])</span>
+					|| types[i] == String.class
+					|| types[i] == Boolean.class)) {
+<span class="nc" id="L52">				violations.addAll(validator.validate(invocation.getArguments()[i]));</span>
+			}
+		}
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">		if (violations.isEmpty()) {</span>
+<span class="nc" id="L57">			return invocation.proceed();</span>
+		}
+<span class="nc" id="L59">		throw new ApiValidationException(invocation.getMethod(), violations);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

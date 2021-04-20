@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>OversigtConfigurationModule xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../../apidocs/com/hlag/oversigt/core/configuration/OversigtConfigurationModule.html">View Javadoc</a></div><pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> com.hlag.oversigt.core.configuration;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> com.hlag.oversigt.util.TypeUtils.createArray;
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <strong class="jxr_keyword">import</strong> java.nio.file.Path;
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">import</strong> java.nio.file.Paths;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <strong class="jxr_keyword">import</strong> java.time.Duration;
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <strong class="jxr_keyword">import</strong> java.util.Objects;
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <strong class="jxr_keyword">import</strong> java.util.function.Function;
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Collectors;
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Stream;
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <strong class="jxr_keyword">import</strong> org.slf4j.Logger;
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <strong class="jxr_keyword">import</strong> org.slf4j.LoggerFactory;
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> com.google.inject.AbstractModule;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> com.google.inject.TypeLiteral;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> com.google.inject.binder.ConstantBindingBuilder;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> com.google.inject.name.Names;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.configuration.OversigtConfiguration.DatabaseConfiguration;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.configuration.OversigtConfiguration.HttpListenerConfiguration;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.configuration.OversigtConfiguration.LdapConfiguration;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.security.Authenticator;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.security.LdapAuthenticator;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.security.MapAuthenticator;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> com.hlag.oversigt.storage.SqlDialect;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> io.jsonwebtoken.SignatureAlgorithm;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a name="OversigtConfigurationModule" href="../../../../../com/hlag/oversigt/core/configuration/OversigtConfigurationModule.html#OversigtConfigurationModule">OversigtConfigurationModule</a> <strong class="jxr_keyword">extends</strong> AbstractModule {
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger LOGGER = LoggerFactory.getLogger(OversigtConfigurationModule.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> TypeLiteral&lt;Map&lt;String, String&gt;&gt; MAP_OF_STRING_TO_STRING
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  			= <strong class="jxr_keyword">new</strong> TypeLiteral&lt;Map&lt;String, String&gt;&gt;() {
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  				<em class="jxr_comment">// just type literal for generics detection</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  			};
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> TypeLiteral&lt;List&lt;String&gt;&gt; LIST_OF_STRINGS = <strong class="jxr_keyword">new</strong> TypeLiteral&lt;List&lt;String&gt;&gt;() {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  		<em class="jxr_comment">// just type literal for generics detection</em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  	};
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> TypeLiteral&lt;List&lt;HttpListenerConfiguration&gt;&gt; LIST_OF_HTTP_LISTENER_CONFIGURATION
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  			= <strong class="jxr_keyword">new</strong> TypeLiteral&lt;List&lt;HttpListenerConfiguration&gt;&gt;() {
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  				<em class="jxr_comment">// just type literal for generics detection</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  			};
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <a name="OversigtConfiguration" href="../../../../../com/hlag/oversigt/core/configuration/OversigtConfiguration.html#OversigtConfiguration">OversigtConfiguration</a> config;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> debugFallback;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> String ldapBindPasswordFallback;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  	<strong class="jxr_keyword">public</strong> <a name="OversigtConfigurationModule" href="../../../../../com/hlag/oversigt/core/configuration/OversigtConfigurationModule.html#OversigtConfigurationModule">OversigtConfigurationModule</a>(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> debugFallback, <strong class="jxr_keyword">final</strong> String ldapBindPasswordFallback) {
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  		config = OversigtConfiguration.readConfiguration();
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  		<strong class="jxr_keyword">this</strong>.debugFallback = debugFallback;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  		<strong class="jxr_keyword">this</strong>.ldapBindPasswordFallback = ldapBindPasswordFallback;
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  	}
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  	<strong class="jxr_keyword">private</strong> ConstantBindingBuilder bind(<strong class="jxr_keyword">final</strong> String name) {
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  		<strong class="jxr_keyword">return</strong> bindConstant().annotatedWith(Names.named(name));
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  	}
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  	@Override
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  	<strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> configure() {
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  		<em class="jxr_comment">// config itself</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  		bind(OversigtConfiguration.<strong class="jxr_keyword">class</strong>).toInstance(config);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  		<em class="jxr_comment">// debug</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  		bind(<span class="jxr_string">"debug"</span>).to(config.isDebug() || debugFallback);
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  		<em class="jxr_comment">// template handling</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  		bind(CustomWroConfiguration.<strong class="jxr_keyword">class</strong>).toInstance(config.getWro());
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  		<em class="jxr_comment">// ui settings</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  		bind(<span class="jxr_string">"showOwnersInWelcomePage"</span>).to(config.getUi().isShowOwnersInWelcomePage());
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  		<em class="jxr_comment">// api settings</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  		bind(<span class="jxr_string">"hostname"</span>).to(config.getHostname().orElseThrow(() -&gt; <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"No hostname specified"</span>)));
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  		bind(SignatureAlgorithm.<strong class="jxr_keyword">class</strong>).toInstance(config.getApi().getJwtAlgorithm());
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  		bind(<span class="jxr_string">"api.secret.base64"</span>)
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  				.to(Objects.requireNonNull(config.getApi().getJwtSecretBase64(), <span class="jxr_string">"api.jwtSecretBase64"</span>));
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  		bind(<span class="jxr_string">"api.ttl"</span>).to(config.getApi().getJwtTimeToLive());
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  		bind(<span class="jxr_string">"rateLimit"</span>).to(config.getEventManager().getRateLimit());
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  		bind(Duration.<strong class="jxr_keyword">class</strong>).annotatedWith(Names.named(<span class="jxr_string">"discardEventsAfter"</span>))
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  				.toInstance(config.getEventManager().getDiscardEventsAfter());
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  		bind(<span class="jxr_string">"templateNumberFormat"</span>).to(config.getTemplateNumberFormat());
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  		<em class="jxr_comment">// database</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  		<strong class="jxr_keyword">final</strong> DatabaseConfiguration database = config.getDatabase();
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  		bind(<span class="jxr_string">"databaseLocation"</span>).to(database.getLocation());
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  		bind(<span class="jxr_string">"databaseName"</span>).to(database.getName());
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  		bind(<span class="jxr_string">"databaseUsername"</span>).to(database.getUsername());
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  		bind(<span class="jxr_string">"databasePassword"</span>).to(database.getPassword());
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  		bind(SqlDialect.<strong class="jxr_keyword">class</strong>).to(database.getSqlDialect());
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> 		<em class="jxr_comment">// http server config</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 		bind(LIST_OF_HTTP_LISTENER_CONFIGURATION).annotatedWith(Names.named(<span class="jxr_string">"listeners"</span>))
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> 				.toInstance(config.getListeners());
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> 
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> 		<em class="jxr_comment">// foreign events</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> 		bind(<span class="jxr_string">"foreignEvents.enabled"</span>).to(config.getSecurity().getForeignEvents().isEnabled());
+<a class="jxr_linenumber" name="L106" href="#L106">106</a> 		bind(<span class="jxr_string">"foreignEvents.needAuthentication"</span>).to(config.getSecurity().getForeignEvents().isNeedAuthentication());
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> 		bind(<span class="jxr_string">"foreignEvents.apiKeyHeaderName"</span>).to(config.getSecurity().getForeignEvents().getApiKeyHeaderName());
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> 		bind(LIST_OF_STRINGS).annotatedWith(Names.named(<span class="jxr_string">"foreignEvents.allowedApiKeys"</span>))
+<a class="jxr_linenumber" name="L109" href="#L109">109</a> 				.toInstance(config.getSecurity().getForeignEvents().getAllowedApiKeys());
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> 
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 		<em class="jxr_comment">// event sources</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> 		bindNamedStringArray(<span class="jxr_string">"additionalPackages"</span>, config.getEventSources().getPackages());
+<a class="jxr_linenumber" name="L113" href="#L113">113</a> 		bindNamedStringArray(<span class="jxr_string">"widgetsPaths"</span>, config.getEventSources().getWidgetsPaths());
+<a class="jxr_linenumber" name="L114" href="#L114">114</a> 		bindNamedArray(Path[].<strong class="jxr_keyword">class</strong>, <span class="jxr_string">"addonFolders"</span>, Paths::get, config.getEventSources().getAddonFolders());
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a> 		<em class="jxr_comment">// Mail Settings</em>
+<a class="jxr_linenumber" name="L117" href="#L117">117</a> 		bind(<span class="jxr_string">"mailSenderHost"</span>).to(
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> 				config.getMail().getHostname().orElseThrow(() -&gt; <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"No mail hostname configured."</span>)));
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> 		bind(<span class="jxr_string">"mailSenderPort"</span>).to(config.getMail().getPort());
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> 		bind(<span class="jxr_string">"mailSenderStartTls"</span>).to(config.getMail().isStartTls());
+<a class="jxr_linenumber" name="L121" href="#L121">121</a> 		bind(<span class="jxr_string">"mailSenderUsername"</span>).to(config.getMail().getUsername().orElse(<span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L122" href="#L122">122</a> 		bind(<span class="jxr_string">"mailSenderPassword"</span>).to(config.getMail().getPassword().orElse(<span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 		bind(<span class="jxr_string">"mailSenderAddress"</span>).to(config.getMail().getSenderAddress());
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> 
+<a class="jxr_linenumber" name="L125" href="#L125">125</a> 		<em class="jxr_comment">// Security</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 		<strong class="jxr_keyword">boolean</strong> boundAuthenticator = false;
+<a class="jxr_linenumber" name="L127" href="#L127">127</a> 		<strong class="jxr_keyword">if</strong> (config.getSecurity().getLdap().isPresent()) {
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> 			<strong class="jxr_keyword">final</strong> LdapConfiguration ldapConfiguration = config.getSecurity().getLdap().get();
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> 			<strong class="jxr_keyword">if</strong> (!ldapConfiguration.isBindPasswordSet()) {
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> 				ldapConfiguration.setBindPassword(ldapBindPasswordFallback);
+<a class="jxr_linenumber" name="L131" href="#L131">131</a> 			}
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> 			<strong class="jxr_keyword">if</strong> (ldapConfiguration.isBindPasswordSet()) {
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> 				bind(LdapConfiguration.<strong class="jxr_keyword">class</strong>).toInstance(ldapConfiguration);
+<a class="jxr_linenumber" name="L134" href="#L134">134</a> 				bind(Authenticator.<strong class="jxr_keyword">class</strong>).to(LdapAuthenticator.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a> 				boundAuthenticator = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L136" href="#L136">136</a> 			}
+<a class="jxr_linenumber" name="L137" href="#L137">137</a> 		}
+<a class="jxr_linenumber" name="L138" href="#L138">138</a> 		<strong class="jxr_keyword">if</strong> (!boundAuthenticator &amp;&amp; !config.getSecurity().getUsers().isEmpty()) {
+<a class="jxr_linenumber" name="L139" href="#L139">139</a> 			bind(MAP_OF_STRING_TO_STRING).annotatedWith(Names.named(<span class="jxr_string">"UsernamesAndPasswords"</span>))
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> 					.toInstance(config.getSecurity().getUsers());
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> 			bind(Authenticator.<strong class="jxr_keyword">class</strong>).to(MapAuthenticator.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> 			boundAuthenticator = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L143" href="#L143">143</a> 		}
+<a class="jxr_linenumber" name="L144" href="#L144">144</a> 		<strong class="jxr_keyword">final</strong> List&lt;String&gt; admins = config.getSecurity().getServerAdmins().orElseGet(ArrayList::<strong class="jxr_keyword">new</strong>);
+<a class="jxr_linenumber" name="L145" href="#L145">145</a> 		bind(LIST_OF_STRINGS).annotatedWith(Names.named(<span class="jxr_string">"serverAdmins"</span>)).toInstance(admins);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a> 		<strong class="jxr_keyword">if</strong> (admins.isEmpty()) {
+<a class="jxr_linenumber" name="L147" href="#L147">147</a> 			LOGGER.warn(<span class="jxr_string">"No server admins configured. Please check configuration security.serverAdmins"</span>);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a> 		}
+<a class="jxr_linenumber" name="L149" href="#L149">149</a> 
+<a class="jxr_linenumber" name="L150" href="#L150">150</a> 		<em class="jxr_comment">// JIRA</em>
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> 		bind(<span class="jxr_string">"jira.socketTimeout"</span>).to(config.getJira().getSocketTimeout());
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 	}
+<a class="jxr_linenumber" name="L153" href="#L153">153</a> 
+<a class="jxr_linenumber" name="L154" href="#L154">154</a> 	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> bindNamedStringArray(<strong class="jxr_keyword">final</strong> String name, <strong class="jxr_keyword">final</strong> String[] inputs) {
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> 		bindNamedArray(String[].<strong class="jxr_keyword">class</strong>, name, Function.identity(), inputs);
+<a class="jxr_linenumber" name="L156" href="#L156">156</a> 	}
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> 
+<a class="jxr_linenumber" name="L158" href="#L158">158</a> 	@SuppressWarnings(<span class="jxr_string">"unchecked"</span>)
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> 	<strong class="jxr_keyword">private</strong> &lt;T, I&gt; <strong class="jxr_keyword">void</strong> bindNamedArray(<strong class="jxr_keyword">final</strong> Class&lt;T[]&gt; targetClass,
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> 			<strong class="jxr_keyword">final</strong> String name,
+<a class="jxr_linenumber" name="L161" href="#L161">161</a> 			<strong class="jxr_keyword">final</strong> Function&lt;I, T&gt; converter,
+<a class="jxr_linenumber" name="L162" href="#L162">162</a> 			<strong class="jxr_keyword">final</strong> I[] inputs) {
+<a class="jxr_linenumber" name="L163" href="#L163">163</a> 		bind(targetClass).annotatedWith(Names.named(name))
+<a class="jxr_linenumber" name="L164" href="#L164">164</a> 				.toInstance((T[]) Stream.of(inputs)
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> 						.map(converter)
+<a class="jxr_linenumber" name="L166" href="#L166">166</a> 						.collect(Collectors.toList())
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> 						.toArray(createArray(targetClass.getComponentType(), 0)));
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> 	}
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> }
+</pre>
+<hr/>
+<div id="footer">Copyright &#169; 2021 <a href="https://www.hapag-lloyd.com/">Hapag-Lloyd AG</a>. All rights reserved.</div>
+</body>
+</html>

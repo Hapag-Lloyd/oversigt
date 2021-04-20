@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OversigtConfigurationModule.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.configuration</a> &gt; <span class="el_source">OversigtConfigurationModule.java</span></div><h1>OversigtConfigurationModule.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.configuration;
+
+import static com.hlag.oversigt.util.TypeUtils.createArray;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.TypeLiteral;
+import com.google.inject.binder.ConstantBindingBuilder;
+import com.google.inject.name.Names;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.DatabaseConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.HttpListenerConfiguration;
+import com.hlag.oversigt.core.configuration.OversigtConfiguration.LdapConfiguration;
+import com.hlag.oversigt.core.configuration.WroManagerFactory.CustomWroConfiguration;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.security.LdapAuthenticator;
+import com.hlag.oversigt.security.MapAuthenticator;
+import com.hlag.oversigt.storage.SqlDialect;
+
+import io.jsonwebtoken.SignatureAlgorithm;
+
+public class OversigtConfigurationModule extends AbstractModule {
+<span class="nc" id="L35">	private static final Logger LOGGER = LoggerFactory.getLogger(OversigtConfigurationModule.class);</span>
+
+<span class="nc" id="L37">	private static final TypeLiteral&lt;Map&lt;String, String&gt;&gt; MAP_OF_STRING_TO_STRING</span>
+<span class="nc" id="L38">			= new TypeLiteral&lt;Map&lt;String, String&gt;&gt;() {</span>
+				// just type literal for generics detection
+			};
+
+<span class="nc" id="L42">	private static final TypeLiteral&lt;List&lt;String&gt;&gt; LIST_OF_STRINGS = new TypeLiteral&lt;List&lt;String&gt;&gt;() {</span>
+		// just type literal for generics detection
+	};
+
+<span class="nc" id="L46">	private static final TypeLiteral&lt;List&lt;HttpListenerConfiguration&gt;&gt; LIST_OF_HTTP_LISTENER_CONFIGURATION</span>
+<span class="nc" id="L47">			= new TypeLiteral&lt;List&lt;HttpListenerConfiguration&gt;&gt;() {</span>
+				// just type literal for generics detection
+			};
+
+	private final OversigtConfiguration config;
+
+	private final boolean debugFallback;
+
+	private final String ldapBindPasswordFallback;
+
+<span class="nc" id="L57">	public OversigtConfigurationModule(final boolean debugFallback, final String ldapBindPasswordFallback) {</span>
+<span class="nc" id="L58">		config = OversigtConfiguration.readConfiguration();</span>
+<span class="nc" id="L59">		this.debugFallback = debugFallback;</span>
+<span class="nc" id="L60">		this.ldapBindPasswordFallback = ldapBindPasswordFallback;</span>
+<span class="nc" id="L61">	}</span>
+
+	private ConstantBindingBuilder bind(final String name) {
+<span class="nc" id="L64">		return bindConstant().annotatedWith(Names.named(name));</span>
+	}
+
+	@Override
+	protected void configure() {
+		// config itself
+<span class="nc" id="L70">		bind(OversigtConfiguration.class).toInstance(config);</span>
+
+		// debug
+<span class="nc bnc" id="L73" title="All 4 branches missed.">		bind(&quot;debug&quot;).to(config.isDebug() || debugFallback);</span>
+
+		// template handling
+<span class="nc" id="L76">		bind(CustomWroConfiguration.class).toInstance(config.getWro());</span>
+
+		// ui settings
+<span class="nc" id="L79">		bind(&quot;showOwnersInWelcomePage&quot;).to(config.getUi().isShowOwnersInWelcomePage());</span>
+
+		// api settings
+<span class="nc" id="L82">		bind(&quot;hostname&quot;).to(config.getHostname().orElseThrow(() -&gt; new RuntimeException(&quot;No hostname specified&quot;)));</span>
+<span class="nc" id="L83">		bind(SignatureAlgorithm.class).toInstance(config.getApi().getJwtAlgorithm());</span>
+<span class="nc" id="L84">		bind(&quot;api.secret.base64&quot;)</span>
+<span class="nc" id="L85">				.to(Objects.requireNonNull(config.getApi().getJwtSecretBase64(), &quot;api.jwtSecretBase64&quot;));</span>
+<span class="nc" id="L86">		bind(&quot;api.ttl&quot;).to(config.getApi().getJwtTimeToLive());</span>
+<span class="nc" id="L87">		bind(&quot;rateLimit&quot;).to(config.getEventManager().getRateLimit());</span>
+<span class="nc" id="L88">		bind(Duration.class).annotatedWith(Names.named(&quot;discardEventsAfter&quot;))</span>
+<span class="nc" id="L89">				.toInstance(config.getEventManager().getDiscardEventsAfter());</span>
+<span class="nc" id="L90">		bind(&quot;templateNumberFormat&quot;).to(config.getTemplateNumberFormat());</span>
+
+		// database
+<span class="nc" id="L93">		final DatabaseConfiguration database = config.getDatabase();</span>
+<span class="nc" id="L94">		bind(&quot;databaseLocation&quot;).to(database.getLocation());</span>
+<span class="nc" id="L95">		bind(&quot;databaseName&quot;).to(database.getName());</span>
+<span class="nc" id="L96">		bind(&quot;databaseUsername&quot;).to(database.getUsername());</span>
+<span class="nc" id="L97">		bind(&quot;databasePassword&quot;).to(database.getPassword());</span>
+<span class="nc" id="L98">		bind(SqlDialect.class).to(database.getSqlDialect());</span>
+
+		// http server config
+<span class="nc" id="L101">		bind(LIST_OF_HTTP_LISTENER_CONFIGURATION).annotatedWith(Names.named(&quot;listeners&quot;))</span>
+<span class="nc" id="L102">				.toInstance(config.getListeners());</span>
+
+		// foreign events
+<span class="nc" id="L105">		bind(&quot;foreignEvents.enabled&quot;).to(config.getSecurity().getForeignEvents().isEnabled());</span>
+<span class="nc" id="L106">		bind(&quot;foreignEvents.needAuthentication&quot;).to(config.getSecurity().getForeignEvents().isNeedAuthentication());</span>
+<span class="nc" id="L107">		bind(&quot;foreignEvents.apiKeyHeaderName&quot;).to(config.getSecurity().getForeignEvents().getApiKeyHeaderName());</span>
+<span class="nc" id="L108">		bind(LIST_OF_STRINGS).annotatedWith(Names.named(&quot;foreignEvents.allowedApiKeys&quot;))</span>
+<span class="nc" id="L109">				.toInstance(config.getSecurity().getForeignEvents().getAllowedApiKeys());</span>
+
+		// event sources
+<span class="nc" id="L112">		bindNamedStringArray(&quot;additionalPackages&quot;, config.getEventSources().getPackages());</span>
+<span class="nc" id="L113">		bindNamedStringArray(&quot;widgetsPaths&quot;, config.getEventSources().getWidgetsPaths());</span>
+<span class="nc" id="L114">		bindNamedArray(Path[].class, &quot;addonFolders&quot;, Paths::get, config.getEventSources().getAddonFolders());</span>
+
+		// Mail Settings
+<span class="nc" id="L117">		bind(&quot;mailSenderHost&quot;).to(</span>
+<span class="nc" id="L118">				config.getMail().getHostname().orElseThrow(() -&gt; new RuntimeException(&quot;No mail hostname configured.&quot;)));</span>
+<span class="nc" id="L119">		bind(&quot;mailSenderPort&quot;).to(config.getMail().getPort());</span>
+<span class="nc" id="L120">		bind(&quot;mailSenderStartTls&quot;).to(config.getMail().isStartTls());</span>
+<span class="nc" id="L121">		bind(&quot;mailSenderUsername&quot;).to(config.getMail().getUsername().orElse(&quot;&quot;));</span>
+<span class="nc" id="L122">		bind(&quot;mailSenderPassword&quot;).to(config.getMail().getPassword().orElse(&quot;&quot;));</span>
+<span class="nc" id="L123">		bind(&quot;mailSenderAddress&quot;).to(config.getMail().getSenderAddress());</span>
+
+		// Security
+<span class="nc" id="L126">		boolean boundAuthenticator = false;</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">		if (config.getSecurity().getLdap().isPresent()) {</span>
+<span class="nc" id="L128">			final LdapConfiguration ldapConfiguration = config.getSecurity().getLdap().get();</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">			if (!ldapConfiguration.isBindPasswordSet()) {</span>
+<span class="nc" id="L130">				ldapConfiguration.setBindPassword(ldapBindPasswordFallback);</span>
+			}
+<span class="nc bnc" id="L132" title="All 2 branches missed.">			if (ldapConfiguration.isBindPasswordSet()) {</span>
+<span class="nc" id="L133">				bind(LdapConfiguration.class).toInstance(ldapConfiguration);</span>
+<span class="nc" id="L134">				bind(Authenticator.class).to(LdapAuthenticator.class);</span>
+<span class="nc" id="L135">				boundAuthenticator = true;</span>
+			}
+		}
+<span class="nc bnc" id="L138" title="All 4 branches missed.">		if (!boundAuthenticator &amp;&amp; !config.getSecurity().getUsers().isEmpty()) {</span>
+<span class="nc" id="L139">			bind(MAP_OF_STRING_TO_STRING).annotatedWith(Names.named(&quot;UsernamesAndPasswords&quot;))</span>
+<span class="nc" id="L140">					.toInstance(config.getSecurity().getUsers());</span>
+<span class="nc" id="L141">			bind(Authenticator.class).to(MapAuthenticator.class);</span>
+<span class="nc" id="L142">			boundAuthenticator = true;</span>
+		}
+<span class="nc" id="L144">		final List&lt;String&gt; admins = config.getSecurity().getServerAdmins().orElseGet(ArrayList::new);</span>
+<span class="nc" id="L145">		bind(LIST_OF_STRINGS).annotatedWith(Names.named(&quot;serverAdmins&quot;)).toInstance(admins);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">		if (admins.isEmpty()) {</span>
+<span class="nc" id="L147">			LOGGER.warn(&quot;No server admins configured. Please check configuration security.serverAdmins&quot;);</span>
+		}
+
+		// JIRA
+<span class="nc" id="L151">		bind(&quot;jira.socketTimeout&quot;).to(config.getJira().getSocketTimeout());</span>
+<span class="nc" id="L152">	}</span>
+
+	private void bindNamedStringArray(final String name, final String[] inputs) {
+<span class="nc" id="L155">		bindNamedArray(String[].class, name, Function.identity(), inputs);</span>
+<span class="nc" id="L156">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private &lt;T, I&gt; void bindNamedArray(final Class&lt;T[]&gt; targetClass,
+			final String name,
+			final Function&lt;I, T&gt; converter,
+			final I[] inputs) {
+<span class="nc" id="L163">		bind(targetClass).annotatedWith(Names.named(name))</span>
+<span class="nc" id="L164">				.toInstance((T[]) Stream.of(inputs)</span>
+<span class="nc" id="L165">						.map(converter)</span>
+<span class="nc" id="L166">						.collect(Collectors.toList())</span>
+<span class="nc" id="L167">						.toArray(createArray(targetClass.getComponentType(), 0)));</span>
+<span class="nc" id="L168">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

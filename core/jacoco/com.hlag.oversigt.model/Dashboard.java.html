@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dashboard.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.model</a> &gt; <span class="el_source">Dashboard.java</span></div><h1>Dashboard.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.model;
+
+import static com.hlag.oversigt.util.Utils.sortedAndSynchronizedSet;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.hlag.oversigt.properties.Color;
+
+public class Dashboard {
+	private static final int TILE_DISTANCE = 6;
+
+	@NotNull
+	@NotBlank
+	@JsonPropertyDescription(&quot;The unique ID of the dashboard. It will be used to reference the dashboard.&quot;)
+	private String id;
+
+<span class="nc" id="L33">	@NotNull</span>
+	@NotBlank
+	@JsonPropertyDescription(&quot;The title of the dashboard for display in the browser&quot;)
+	private String title = &quot;Dashboard&quot;;
+
+<span class="nc" id="L38">	@NotNull</span>
+	@JsonPropertyDescription(&quot;Whether the dashboard is available to the public&quot;)
+	private boolean enabled = false;
+
+<span class="nc" id="L42">	@NotNull</span>
+	@Min(1)
+	@JsonProperty(defaultValue = &quot;1920&quot;)
+	@JsonPropertyDescription(&quot;The screen width the dashboard will be optimized for&quot;)
+	private int screenWidth = 1920;
+
+<span class="nc" id="L48">	@NotNull</span>
+	@Min(1)
+	@JsonProperty(defaultValue = &quot;1080&quot;)
+	@JsonPropertyDescription(&quot;The screen height the dashboard will be optimized for&quot;)
+	private int screenHeight = 1080;
+
+<span class="nc" id="L54">	@NotNull</span>
+	@Min(1)
+	@JsonProperty(defaultValue = &quot;15&quot;)
+	@JsonPropertyDescription(&quot;The number of columns the dashboard will show if displayed without zoom&quot;)
+	private int columns = 15;
+
+<span class="nc" id="L60">	@NotNull</span>
+	@JsonProperty(defaultValue = &quot;#222222&quot;)
+	@JsonPropertyDescription(&quot;The background color of the dashboard&quot;)
+<span class="nc" id="L63">	private Color backgroundColor = Color.parse(&quot;#222222&quot;);</span>
+
+<span class="nc" id="L65">	@NotNull</span>
+	@JsonPropertyDescription(&quot;The type of coloring the dashboard will use&quot;)
+	private DashboardColorScheme colorScheme = DashboardColorScheme.COLORED;
+
+<span class="nc" id="L69">	@NotNull</span>
+	@JsonPropertyDescription(&quot;The first color for the selected color scheme&quot;)
+<span class="nc" id="L71">	private Color foregroundColorStart = Color.parse(&quot;#888888&quot;);</span>
+
+<span class="nc" id="L73">	@NotNull</span>
+	@JsonPropertyDescription(&quot;The second color for the selected color scheme&quot;)
+<span class="nc" id="L75">	private Color foregroundColorEnd = Color.parse(&quot;#AAAAAA&quot;);</span>
+
+<span class="nc" id="L77">	@NotNull</span>
+	@JsonPropertyDescription(&quot;The user id of dashboard's owner&quot;)
+<span class="nc" id="L79">	private Set&lt;@NotBlank /* TODO @UserId */ String&gt; owners = sortedAndSynchronizedSet();</span>
+
+<span class="nc" id="L81">	@NotNull</span>
+	@JsonPropertyDescription(&quot;A list of user ids of people who are allowed to edit the dashboard&quot;)
+<span class="nc" id="L83">	private Set&lt;@NotBlank /* TODO @UserId */ String&gt; editors = sortedAndSynchronizedSet();</span>
+
+<span class="nc" id="L85">	@JsonIgnore</span>
+	private final Set&lt;Widget&gt; widgets = new TreeSet&lt;&gt;();
+
+<span class="nc" id="L88">	public Dashboard(final String id, final String owner, final boolean enabled) {</span>
+<span class="nc" id="L89">		this.id = id;</span>
+<span class="nc" id="L90">		title = id;</span>
+<span class="nc" id="L91">		owners.add(owner);</span>
+<span class="nc" id="L92">		this.enabled = enabled;</span>
+<span class="nc" id="L93">	}</span>
+
+	@JsonCreator(mode = Mode.PROPERTIES)
+	public Dashboard(@JsonProperty(&quot;id&quot;) final String id,
+			@JsonProperty(&quot;title&quot;) final String title,
+			@JsonProperty(&quot;enabled&quot;) final boolean enabled,
+			@JsonProperty(&quot;screenWidth&quot;) final int screenWidth,
+			@JsonProperty(&quot;screenHeight&quot;) final int screenHeight,
+			@JsonProperty(&quot;columns&quot;) final int columns,
+			@JsonProperty(&quot;backgroundColor&quot;) final Color backgroundColor,
+			@JsonProperty(&quot;colorScheme&quot;) final DashboardColorScheme colorScheme,
+			@JsonProperty(&quot;foregroundColorStart&quot;) final Color foregroundColorStart,
+			@JsonProperty(&quot;foregroundColorEnd&quot;) final Color foregroundColorEnd,
+			@JsonProperty(&quot;owners&quot;) final Collection&lt;String&gt; owners,
+<span class="nc" id="L107">			@JsonProperty(&quot;editors&quot;) final Collection&lt;String&gt; editors) {</span>
+<span class="nc" id="L108">		this.id = id;</span>
+<span class="nc" id="L109">		this.title = title;</span>
+<span class="nc" id="L110">		this.enabled = enabled;</span>
+<span class="nc" id="L111">		this.screenWidth = screenWidth;</span>
+<span class="nc" id="L112">		this.screenHeight = screenHeight;</span>
+<span class="nc" id="L113">		this.columns = columns;</span>
+<span class="nc" id="L114">		this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L115">		this.colorScheme = colorScheme;</span>
+<span class="nc" id="L116">		this.foregroundColorStart = foregroundColorStart;</span>
+<span class="nc" id="L117">		this.foregroundColorEnd = foregroundColorEnd;</span>
+<span class="nc" id="L118">		this.owners.addAll(owners);</span>
+<span class="nc" id="L119">		this.editors.addAll(editors);</span>
+<span class="nc" id="L120">	}</span>
+
+	public String getId() {
+<span class="nc" id="L123">		return Objects.requireNonNull(id);</span>
+	}
+
+	public void setId(final String id) {
+<span class="nc" id="L127">		this.id = id;</span>
+<span class="nc" id="L128">	}</span>
+
+	public String getTitle() {
+<span class="nc" id="L131">		return title;</span>
+	}
+
+	public void setTitle(final String title) {
+<span class="nc" id="L135">		this.title = title;</span>
+<span class="nc" id="L136">	}</span>
+
+	public boolean isEnabled() {
+<span class="nc" id="L139">		return enabled;</span>
+	}
+
+	public void setEnabled(final boolean enabled) {
+<span class="nc" id="L143">		this.enabled = enabled;</span>
+<span class="nc" id="L144">	}</span>
+
+	public int getScreenWidth() {
+<span class="nc" id="L147">		return screenWidth;</span>
+	}
+
+	public void setScreenWidth(final int screenWidth) {
+<span class="nc" id="L151">		this.screenWidth = screenWidth;</span>
+<span class="nc" id="L152">	}</span>
+
+	public int getScreenHeight() {
+<span class="nc" id="L155">		return screenHeight;</span>
+	}
+
+	public void setScreenHeight(final int screenHeight) {
+<span class="nc" id="L159">		this.screenHeight = screenHeight;</span>
+<span class="nc" id="L160">	}</span>
+
+	public int getColumns() {
+<span class="nc" id="L163">		return columns;</span>
+	}
+
+	public void setColumns(final int columns) {
+<span class="nc" id="L167">		this.columns = columns;</span>
+<span class="nc" id="L168">	}</span>
+
+	public Color getBackgroundColor() {
+<span class="nc" id="L171">		return backgroundColor;</span>
+	}
+
+	public void setBackgroundColor(final Color backgroundColor) {
+<span class="nc" id="L175">		this.backgroundColor = backgroundColor;</span>
+<span class="nc" id="L176">	}</span>
+
+	public void setBackgroundColor(final String backgroundColor) {
+<span class="nc" id="L179">		setBackgroundColor(Color.parse(backgroundColor));</span>
+<span class="nc" id="L180">	}</span>
+
+	public DashboardColorScheme getColorScheme() {
+<span class="nc" id="L183">		return colorScheme;</span>
+	}
+
+	public void setColorScheme(final DashboardColorScheme colorScheme) {
+<span class="nc" id="L187">		this.colorScheme = colorScheme;</span>
+<span class="nc" id="L188">	}</span>
+
+	public void setColorScheme(final String string) {
+<span class="nc" id="L191">		setColorScheme(DashboardColorScheme.fromString(string));</span>
+<span class="nc" id="L192">	}</span>
+
+	public Color getForegroundColorStart() {
+<span class="nc" id="L195">		return foregroundColorStart;</span>
+	}
+
+	public void setForegroundColorStart(final Color foregroundColorStart) {
+<span class="nc" id="L199">		this.foregroundColorStart = foregroundColorStart;</span>
+<span class="nc" id="L200">	}</span>
+
+	public void setForegroundColorStart(final String foregroundColorStart) {
+<span class="nc" id="L203">		setForegroundColorStart(Color.parse(foregroundColorStart));</span>
+<span class="nc" id="L204">	}</span>
+
+	public Color getForegroundColorEnd() {
+<span class="nc" id="L207">		return foregroundColorEnd;</span>
+	}
+
+	public void setForegroundColorEnd(final Color foregroundColorEnd) {
+<span class="nc" id="L211">		this.foregroundColorEnd = foregroundColorEnd;</span>
+<span class="nc" id="L212">	}</span>
+
+	public void setForegroundColorEnd(final String foregroundColorEnd) {
+<span class="nc" id="L215">		setForegroundColorEnd(Color.parse(foregroundColorEnd));</span>
+<span class="nc" id="L216">	}</span>
+
+	public Collection&lt;String&gt; getOwners() {
+<span class="nc" id="L219">		return owners;</span>
+	}
+
+	public void setOwners(final Collection&lt;String&gt; owners) {
+<span class="nc" id="L223">		this.owners = sortedAndSynchronizedSet(owners);</span>
+<span class="nc" id="L224">	}</span>
+
+	public Collection&lt;String&gt; getEditors() {
+<span class="nc" id="L227">		return editors;</span>
+	}
+
+	public void setEditors(final Collection&lt;String&gt; editors) {
+<span class="nc" id="L231">		this.editors = sortedAndSynchronizedSet(editors);</span>
+<span class="nc" id="L232">	}</span>
+
+	public boolean isEditor(final String username) {
+<span class="nc" id="L235">		return getEditors().contains(username);</span>
+	}
+
+	@JsonIgnore
+	public Collection&lt;Widget&gt; getWidgets() {
+<span class="nc" id="L240">		return Collections.unmodifiableCollection(widgets);</span>
+	}
+
+	public Widget getWidget(final int id) {
+		// TODO return optional
+<span class="nc bnc" id="L245" title="All 2 branches missed.">		return getWidgets().stream().filter(w -&gt; w.getId() == id).findFirst().get();</span>
+	}
+
+	// TODO make non-public
+	@JsonIgnore
+	public Collection&lt;Widget&gt; getModifiableWidgets() {
+<span class="nc" id="L251">		return widgets;</span>
+	}
+
+	@JsonIgnore
+	public int getComputedTileWidth() {
+<span class="nc" id="L256">		return (getScreenWidth() - TILE_DISTANCE * getColumns()) / getColumns();</span>
+	}
+
+	@JsonIgnore
+	public int getComputedTileHeight() {
+<span class="nc" id="L261">		int height = getComputedTileWidth() - 2;</span>
+<span class="nc" id="L262">		height = getScreenHeight() / height;</span>
+<span class="nc" id="L263">		height = (getScreenHeight() - TILE_DISTANCE * height) / height;</span>
+<span class="nc" id="L264">		return height;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L269">		return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);</span>
+	}
+
+	public Dashboard copy() {
+<span class="nc" id="L273">		final Dashboard dashboard = new Dashboard(getId(),</span>
+<span class="nc" id="L274">				getTitle(),</span>
+<span class="nc" id="L275">				isEnabled(),</span>
+<span class="nc" id="L276">				getScreenWidth(),</span>
+<span class="nc" id="L277">				getScreenHeight(),</span>
+<span class="nc" id="L278">				getColumns(),</span>
+<span class="nc" id="L279">				getBackgroundColor(),</span>
+<span class="nc" id="L280">				getColorScheme(),</span>
+<span class="nc" id="L281">				getForegroundColorStart(),</span>
+<span class="nc" id="L282">				getForegroundColorEnd(),</span>
+<span class="nc" id="L283">				getOwners(),</span>
+<span class="nc" id="L284">				getEditors());</span>
+<span class="nc" id="L285">		dashboard.getModifiableWidgets().addAll(getWidgets());</span>
+<span class="nc" id="L286">		return dashboard;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

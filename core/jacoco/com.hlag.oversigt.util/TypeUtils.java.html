@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TypeUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">TypeUtils.java</span></div><h1>TypeUtils.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.Strings;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
+import com.google.inject.Binder;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.properties.SerializableProperty.Member;
+import com.hlag.oversigt.util.function.ThrowingFunction;
+
+import de.larssh.utils.Nullables;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+public final class TypeUtils {
+<span class="fc" id="L58">	private static final Logger LOGGER = LoggerFactory.getLogger(TypeUtils.class);</span>
+
+<span class="nc" id="L60">	private TypeUtils() {</span>
+<span class="nc" id="L61">		throw new UnsupportedOperationException();</span>
+	}
+
+	public static &lt;T&gt; StdSerializer&lt;T&gt; serializer(final Class&lt;T&gt; clazz, final ThrowingFunction&lt;T, String&gt; converter) {
+<span class="fc" id="L65">		return new StdSerializer&lt;T&gt;(clazz) {</span>
+			@Override
+			public void serialize(@Nullable final T value,
+					@Nullable final JsonGenerator gen,
+					@SuppressWarnings(&quot;unused&quot;) @Nullable final SerializerProvider provider) throws IOException {
+<span class="nc" id="L70">				Objects.requireNonNull(gen).writeString(converter.apply(value));</span>
+<span class="nc" id="L71">			}</span>
+		};
+	}
+
+	public static &lt;T&gt; StdDeserializer&lt;T&gt; deserializer(final Class&lt;T&gt; clazz,
+			final ThrowingFunction&lt;String, T&gt; converter) {
+<span class="fc" id="L77">		return new StdDeserializer&lt;T&gt;(clazz) {</span>
+			@Override
+			public T deserialize(@Nullable final JsonParser p,
+					@SuppressWarnings(&quot;unused&quot;) @Nullable final DeserializationContext ctxt)
+					throws IOException, JsonProcessingException {
+<span class="nc" id="L82">				return converter.apply(Objects.requireNonNull(p).getValueAsString());</span>
+			}
+		};
+	}
+
+	public static Optional&lt;Class&lt;?&gt;&gt; getClassForName(final String name) {
+		try {
+<span class="nc" id="L89">			return Optional.of(Class.forName(name));</span>
+<span class="nc" id="L90">		} catch (@SuppressWarnings(&quot;unused&quot;) final ClassNotFoundException e) {</span>
+<span class="nc" id="L91">			return Optional.empty();</span>
+		}
+	}
+
+	public static boolean isOfType(final Class&lt;?&gt; typeToCheck, final Class&lt;?&gt; typeToCheckAgainst) {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		return typeToCheckAgainst.isAssignableFrom(typeToCheck)</span>
+<span class="nc bnc" id="L97" title="All 4 branches missed.">				|| typeToCheck.isArray() &amp;&amp; isOfType(typeToCheck.getComponentType(), typeToCheckAgainst);</span>
+	}
+
+	public static &lt;T&gt; Stream&lt;Class&lt;T&gt;&gt; findClasses(final Package packageToSearch, final Class&lt;T&gt; assignableTo) {
+<span class="nc" id="L101">		return findClasses(packageToSearch, c -&gt; assignableTo.isAssignableFrom(c));</span>
+	}
+
+	public static &lt;T&gt; Stream&lt;Class&lt;T&gt;&gt; findClasses(final Package packageToSearch,
+			final Class&lt;T&gt; assignableTo,
+			final Class&lt;? extends Annotation&gt; annotationToBePresent) {
+<span class="nc" id="L107">		return findClasses(packageToSearch,</span>
+<span class="nc bnc" id="L108" title="All 4 branches missed.">				c -&gt; assignableTo.isAssignableFrom(c) &amp;&amp; c.isAnnotationPresent(annotationToBePresent));</span>
+	}
+
+	public static &lt;T&gt; Stream&lt;Class&lt;T&gt;&gt; findClasses(final Package packageToSearch, final Predicate&lt;Class&lt;?&gt;&gt; filter) {
+<span class="nc" id="L112">		LOGGER.info(&quot;Inspecting classes using ClassLoader[{}] and package[{}]&quot;,</span>
+<span class="nc" id="L113">				Thread.currentThread().getContextClassLoader(),</span>
+				packageToSearch);
+		final Set&lt;ClassInfo&gt; classes;
+		try {
+<span class="nc" id="L117">			classes = ClassPath.from(Thread.currentThread().getContextClassLoader())</span>
+<span class="nc" id="L118">					.getTopLevelClassesRecursive(packageToSearch.getName());</span>
+<span class="nc" id="L119">		} catch (final IOException e) {</span>
+<span class="nc" id="L120">			throw new RuntimeException(&quot;Unable to search classes in class path&quot;, e);</span>
+<span class="nc" id="L121">		}</span>
+
+		// iterates over all classes, filter by HandlesEvent annotation and transforms
+		// stream to needed form
+		@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L126">		final Stream&lt;Class&lt;T&gt;&gt; stream = classes.stream()</span>
+<span class="nc" id="L127">				.map(TypeUtils::loadClassInfo)</span>
+<span class="nc" id="L128">				.filter(Optional::isPresent)</span>
+<span class="nc" id="L129">				.map(Optional::get)</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">				.filter(c -&gt; !c.isInterface())</span>
+<span class="nc" id="L131">				.filter(filter)</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">				.filter(c -&gt; !Modifier.isAbstract(c.getModifiers()))</span>
+<span class="nc" id="L133">				.map(c -&gt; (Class&lt;T&gt;) c);</span>
+<span class="nc" id="L134">		return stream;</span>
+	}
+
+	public static &lt;T&gt; Stream&lt;Class&lt;T&gt;&gt; findClasses(final ClassLoader classLoader,
+			final Collection&lt;String&gt; classNames,
+			final Class&lt;T&gt; assignableTo,
+			final Class&lt;? extends Annotation&gt; annotationToBePresent) {
+<span class="nc" id="L141">		final Predicate&lt;Class&lt;?&gt;&gt; predicate</span>
+<span class="nc bnc" id="L142" title="All 4 branches missed.">				= c -&gt; assignableTo.isAssignableFrom(c) &amp;&amp; c.isAnnotationPresent(annotationToBePresent);</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L144">		final Stream&lt;Class&lt;T&gt;&gt; stream = classNames.stream()</span>
+<span class="nc" id="L145">				.map(s -&gt; loadClassInfo(classLoader, s))</span>
+<span class="nc" id="L146">				.filter(Optional::isPresent)</span>
+<span class="nc" id="L147">				.map(Optional::get)</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">				.filter(c -&gt; !c.isInterface())</span>
+<span class="nc" id="L149">				.filter(predicate)</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">				.filter(c -&gt; !Modifier.isAbstract(c.getModifiers()))</span>
+<span class="nc" id="L151">				.map(c -&gt; (Class&lt;T&gt;) c);</span>
+<span class="nc" id="L152">		return stream;</span>
+	}
+
+	public static void bindClasses(final Package packageToSearch,
+			final Predicate&lt;Class&lt;?&gt;&gt; filter,
+			final Binder binder) {
+<span class="nc" id="L158">		findClasses(packageToSearch, filter).forEach(binder::bind);</span>
+<span class="nc" id="L159">	}</span>
+
+	/**
+	 * Tries to load a {@link Class} and return &lt;code&gt;true&lt;/code&gt; if successful.
+	 *
+	 * @param classInfo the {@link Class} to load
+	 * @return &lt;code&gt;true&lt;/code&gt; if the {@link Class} could be loaded, otherwise
+	 *         &lt;code&gt;false&lt;/code&gt;
+	 */
+	private static Optional&lt;Class&lt;?&gt;&gt; loadClassInfo(final ClassInfo classInfo) {
+		try {
+<span class="nc" id="L170">			return Optional.of(classInfo.load());</span>
+<span class="nc" id="L171">		} catch (final Exception | NoClassDefFoundError e) {</span>
+<span class="nc" id="L172">			LOGGER.trace(&quot;Class cannot be loaded: {}&quot;, classInfo.getName(), e);</span>
+<span class="nc" id="L173">			return Optional.empty();</span>
+		}
+	}
+
+	private static Optional&lt;Class&lt;?&gt;&gt; loadClassInfo(final ClassLoader classLoader, final String className) {
+		try {
+<span class="nc" id="L179">			return Optional.of(classLoader.loadClass(className));</span>
+<span class="nc" id="L180">		} catch (final Exception | NoClassDefFoundError e) {</span>
+<span class="nc" id="L181">			LOGGER.trace(&quot;Class cannot be loaded: {}&quot;, className, e);</span>
+<span class="nc" id="L182">			return Optional.empty();</span>
+		}
+	}
+
+	public static List&lt;String&gt; listClassesInJarFiles(final URL[] jarFileUrls) throws IOException {
+<span class="nc" id="L187">		final List&lt;String&gt; classNames = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">		for (final URL jarFileUrl : jarFileUrls) {</span>
+<span class="nc" id="L189">			try (JarInputStream in = new JarInputStream(jarFileUrl.openStream())) {</span>
+				JarEntry jarEntry;
+<span class="nc bnc" id="L191" title="All 2 branches missed.">				while ((jarEntry = in.getNextJarEntry()) != null) {</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">					if (!jarEntry.isDirectory()) {</span>
+<span class="nc" id="L193">						String name = jarEntry.getName();</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">						if (name.toLowerCase().endsWith(&quot;.class&quot;)) {</span>
+<span class="nc" id="L195">							name = name.substring(0, name.length() - &quot;.class&quot;.length());</span>
+<span class="nc" id="L196">							name = name.replace(&quot;/&quot;, &quot;.&quot;);</span>
+<span class="nc" id="L197">							classNames.add(name);</span>
+						}
+<span class="nc" id="L199">					}</span>
+				}
+			}
+		}
+<span class="nc" id="L203">		return classNames;</span>
+	}
+
+	public static Stream&lt;String&gt; getMembers(final Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L207" title="All 2 branches missed.">		return streamFields(clazz).filter(f -&gt; !Modifier.isTransient(f.getModifiers()))</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">				.filter(f -&gt; !Modifier.isStatic(f.getModifiers()))</span>
+<span class="nc" id="L209">				.map(Field::getName);</span>
+	}
+
+	/**
+	 * Inspects the given value and returns a {@link Map} containing all members
+	 * with their values. If the given object is an {@link Optional} it will be
+	 * unwrapped - if the {@link Optional} is empty an empty {@link Map} will be
+	 * returned.
+	 *
+	 * @param object the object to inspect
+	 * @return a map containing all members of the given object
+	 */
+	public static Map&lt;String, Object&gt; toMemberMap(final Object object) {
+<span class="nc bnc" id="L222" title="All 2 branches missed.">		if (object instanceof Optional) {</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			if (!((Optional&lt;?&gt;) object).isPresent()) {</span>
+<span class="nc" id="L224">				return new HashMap&lt;&gt;();</span>
+			}
+<span class="nc" id="L226">			return toMemberMap(((Optional&lt;?&gt;) object).get());</span>
+		}
+		try {
+<span class="nc" id="L229">			return Stream.of(Introspector.getBeanInfo(object.getClass(), Object.class).getPropertyDescriptors())</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">					.filter(i -&gt; i.getReadMethod() != null)</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">					.filter(i -&gt; !i.getReadMethod().isAnnotationPresent(JsonIgnore.class))</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">					.filter(i -&gt; i.getWriteMethod() == null</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">							|| !i.getWriteMethod().isAnnotationPresent(JsonIgnore.class))</span>
+<span class="nc" id="L234">					.collect(Collectors.toMap(PropertyDescriptor::getName, pd -&gt; get(pd.getReadMethod(), object)));</span>
+<span class="nc" id="L235">		} catch (final Exception e) {</span>
+<span class="nc" id="L236">			throw new RuntimeException(e);</span>
+		}
+	}
+
+	private static Object get(final Method method, final Object target) {
+		try {
+<span class="nc" id="L242">			return method.invoke(target);</span>
+<span class="nc" id="L243">		} catch (final Exception e) {</span>
+<span class="nc" id="L244">			throw new RuntimeException(e);</span>
+		}
+	}
+
+	public static &lt;T extends SerializableProperty&gt; Collection&lt;SerializablePropertyMember&gt; getSerializablePropertyMembers(
+			final Class&lt;T&gt; clazz) {
+<span class="nc" id="L250">		Collection&lt;SerializablePropertyMember&gt; members = new LinkedHashSet&lt;&gt;();</span>
+		try {
+<span class="nc" id="L252">			members.add(new SerializablePropertyMember(SerializableProperty.class.getDeclaredField(&quot;id&quot;)));</span>
+<span class="nc" id="L253">			members.add(new SerializablePropertyMember(SerializableProperty.class.getDeclaredField(&quot;name&quot;)));</span>
+<span class="nc" id="L254">		} catch (final NoSuchFieldException | SecurityException e) {</span>
+<span class="nc" id="L255">			throw new RuntimeException(&quot;Unable to find standard values&quot;, e);</span>
+<span class="nc" id="L256">		}</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">		members.addAll(streamFields(clazz).filter(f -&gt; !Modifier.isTransient(f.getModifiers()))</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">				.filter(f -&gt; !Modifier.isStatic(f.getModifiers()))</span>
+<span class="nc" id="L259">				.map(SerializablePropertyMember::new)</span>
+<span class="nc" id="L260">				.collect(Collectors.toList()));</span>
+<span class="nc" id="L261">		members = new ArrayList&lt;&gt;(members);</span>
+<span class="nc" id="L262">		((List&lt;?&gt;) members).remove(0);</span>
+<span class="nc" id="L263">		return members;</span>
+	}
+
+	static Stream&lt;Field&gt; streamFields(final Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L267" title="All 2 branches missed.">		if (clazz == Object.class) {</span>
+<span class="nc" id="L268">			return Stream.empty();</span>
+		}
+<span class="nc" id="L270">		return Stream.concat(Stream.of(clazz.getDeclaredFields()), streamFields(clazz.getSuperclass()));</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public static &lt;C&gt; Constructor&lt;C&gt; getAppropriateConstructor(final Class&lt;C&gt; c, final Object[] initArguments) {
+<span class="nc" id="L275">		final Object[] initArgs = Nullables.orElseGet(initArguments, () -&gt; new Object[0]);</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		for (final Constructor&lt;?&gt; constructor : c.getDeclaredConstructors()) {</span>
+<span class="nc" id="L277">			final Class&lt;?&gt;[] types = constructor.getParameterTypes();</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">			if (types.length != initArgs.length) {</span>
+<span class="nc" id="L279">				continue;</span>
+			}
+<span class="nc" id="L281">			boolean match = true;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">			for (int i = 0; i &lt; types.length; i += 1) {</span>
+<span class="nc" id="L283">				final Class&lt;?&gt; need = types[i];</span>
+<span class="nc" id="L284">				final Class&lt;?&gt; got = initArgs[i].getClass();</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">				if (!need.isAssignableFrom(got)) {</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">					if (need.isPrimitive()) {</span>
+<span class="nc bnc" id="L287" title="All 4 branches missed.">						match = int.class.equals(need) &amp;&amp; Integer.class.equals(got)</span>
+<span class="nc bnc" id="L288" title="All 4 branches missed.">								|| long.class.equals(need) &amp;&amp; Long.class.equals(got)</span>
+<span class="nc bnc" id="L289" title="All 4 branches missed.">								|| char.class.equals(need) &amp;&amp; Character.class.equals(got)</span>
+<span class="nc bnc" id="L290" title="All 4 branches missed.">								|| short.class.equals(need) &amp;&amp; Short.class.equals(got)</span>
+<span class="nc bnc" id="L291" title="All 4 branches missed.">								|| boolean.class.equals(need) &amp;&amp; Boolean.class.equals(got)</span>
+<span class="nc bnc" id="L292" title="All 4 branches missed.">								|| byte.class.equals(need) &amp;&amp; Byte.class.equals(got);</span>
+					} else {
+<span class="nc" id="L294">						match = false;</span>
+					}
+				}
+<span class="nc bnc" id="L297" title="All 2 branches missed.">				if (!match) {</span>
+<span class="nc" id="L298">					break;</span>
+				}
+			}
+<span class="nc bnc" id="L301" title="All 2 branches missed.">			if (match) {</span>
+<span class="nc" id="L302">				return (Constructor&lt;C&gt;) constructor;</span>
+			}
+		}
+<span class="nc" id="L305">		throw new IllegalArgumentException(&quot;Cannot find an appropriate constructor for class &quot;</span>
+				+ c
+				+ &quot; and arguments &quot;
+<span class="nc" id="L308">				+ Arrays.toString(initArgs));</span>
+	}
+
+	@SafeVarargs
+	public static &lt;T&gt; Optional&lt;T&gt; tryToCreateInstance(final String input, final Class&lt;? extends T&gt;... classes) {
+<span class="nc bnc" id="L313" title="All 2 branches missed.">		for (final Class&lt;? extends T&gt; clazz : classes) {</span>
+			try {
+<span class="nc" id="L315">				return Optional.of(createInstance(clazz, input));</span>
+<span class="nc" id="L316">			} catch (@SuppressWarnings(&quot;unused&quot;) final Exception ignore) {</span>
+				// ignore any problem when creating an instance
+			}
+		}
+<span class="nc" id="L320">		return Optional.empty();</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public static &lt;T&gt; T createInstance(final Class&lt;? extends T&gt; clazz, final Object... parameters) {
+<span class="nc" id="L325">		Objects.requireNonNull(parameters);</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">		for (final Object param : parameters) {</span>
+<span class="nc" id="L327">			Objects.requireNonNull(param);</span>
+		}
+<span class="nc bnc" id="L329" title="All 4 branches missed.">		if (parameters.length == 1 &amp;&amp; parameters[0].getClass() == clazz) {</span>
+<span class="nc" id="L330">			return (T) parameters[0];</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">		} else if (clazz.isPrimitive()) {</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">			if (int.class == clazz) {</span>
+<span class="nc" id="L333">				final int value = Integer.parseInt((String) parameters[0]);</span>
+<span class="nc" id="L334">				final Object[] values = { value };</span>
+<span class="nc" id="L335">				return (T) values[0];</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">			} else if (long.class == clazz) {</span>
+<span class="nc" id="L337">				final Object[] values = { Long.parseLong((String) parameters[0]) };</span>
+<span class="nc" id="L338">				return (T) values[0];</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">			} else if (double.class == clazz) {</span>
+<span class="nc" id="L340">				final Object[] values = { Double.parseDouble((String) parameters[0]) };</span>
+<span class="nc" id="L341">				return (T) values[0];</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">			} else if (float.class == clazz) {</span>
+<span class="nc" id="L343">				final Object[] values = { Float.parseFloat((String) parameters[0]) };</span>
+<span class="nc" id="L344">				return (T) values[0];</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">			} else if (byte.class == clazz) {</span>
+<span class="nc" id="L346">				final Object[] values = { Byte.parseByte((String) parameters[0]) };</span>
+<span class="nc" id="L347">				return (T) values[0];</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">			} else if (short.class == clazz) {</span>
+<span class="nc" id="L349">				final Object[] values = { Short.parseShort((String) parameters[0]) };</span>
+<span class="nc" id="L350">				return (T) values[0];</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">			} else if (char.class == clazz) {</span>
+<span class="nc" id="L352">				final Object[] values = { ((String) parameters[0]).charAt(0) };</span>
+<span class="nc" id="L353">				return (T) values[0];</span>
+			} else {
+<span class="nc" id="L355">				throw new RuntimeException(&quot;Unknown primitive type: &quot; + clazz.getName());</span>
+			}
+		} else {
+<span class="nc" id="L358">			final List&lt;Constructor&lt;?&gt;&gt; constructors = Arrays.stream(clazz.getDeclaredConstructors())</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">					.filter(c -&gt; c.getParameterCount() == parameters.length)</span>
+<span class="nc" id="L360">					.filter(c -&gt; {</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">						for (int i = 0; i &lt; parameters.length; i += 1) {</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">							if (!c.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {</span>
+<span class="nc" id="L363">								return false;</span>
+							}
+						}
+<span class="nc" id="L366">						return true;</span>
+					})
+<span class="nc" id="L368">					.limit(2)</span>
+<span class="nc" id="L369">					.collect(Collectors.toList());</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">			if (constructors.size() == 1) {</span>
+<span class="nc" id="L371">				constructors.get(0).setAccessible(true);</span>
+				try {
+<span class="nc" id="L373">					return (T) constructors.get(0).newInstance(parameters);</span>
+<span class="nc" id="L374">				} catch (final InstantiationException</span>
+						| IllegalAccessException
+						| IllegalArgumentException
+						| InvocationTargetException e) {
+<span class="nc" id="L378">					throw new RuntimeException(&quot;Unable to create instance of class: &quot; + clazz.getName(), e);</span>
+				}
+			}
+
+<span class="nc" id="L382">			final List&lt;Method&gt; fabricMethods = Arrays.stream(clazz.getDeclaredMethods())</span>
+<span class="nc" id="L383">					.filter(m -&gt; Modifier.isStatic(m.getModifiers()))</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">					.filter(m -&gt; m.getParameterTypes().length == parameters.length)</span>
+<span class="nc" id="L385">					.filter(m -&gt; clazz.isAssignableFrom(m.getReturnType()))</span>
+<span class="nc" id="L386">					.filter(m -&gt; {</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">						for (int i = 0; i &lt; parameters.length; i += 1) {</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">							if (!m.getParameterTypes()[i].isAssignableFrom(parameters[i].getClass())) {</span>
+<span class="nc" id="L389">								return false;</span>
+							}
+						}
+<span class="nc" id="L392">						return true;</span>
+					})
+<span class="nc" id="L394">					.collect(Collectors.toList());</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">			if (fabricMethods.size() == 1) {</span>
+<span class="nc" id="L396">				return invokeStaticMethod(fabricMethods.get(0), parameters);</span>
+			}
+<span class="nc bnc" id="L398" title="All 2 branches missed.">			if (fabricMethods.size() &gt; 1) {</span>
+<span class="nc" id="L399">				final Optional&lt;T&gt; maybe = tryStaticMethods(fabricMethods,</span>
+						new String[] {
+								&quot;parse&quot;,
+								&quot;create&quot;,
+								&quot;compile&quot;,
+								&quot;get&quot;,
+								&quot;createInstance&quot;,
+								&quot;getInstance&quot;,
+								&quot;construct&quot; },
+						parameters);
+<span class="nc" id="L409">				return maybe.get();</span>
+			}
+<span class="nc" id="L411">			throw new RuntimeException(&quot;No fitting constructor or method found for class: &quot; + clazz.getName());</span>
+		}
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private static &lt;T&gt; Optional&lt;T&gt; tryStaticMethods(final Collection&lt;Method&gt; methods,
+			final String[] names,
+			final Object... values) {
+<span class="nc" id="L419">		return (Optional&lt;T&gt;) Arrays.stream(names)</span>
+<span class="nc" id="L420">				.map(name -&gt; tryStaticMethod(methods, name, values))</span>
+<span class="nc" id="L421">				.findAny()</span>
+<span class="nc" id="L422">				.orElse(Optional.empty());</span>
+	}
+
+	private static &lt;T&gt; Optional&lt;T&gt; tryStaticMethod(final Collection&lt;Method&gt; methods,
+			final String name,
+			final Object... values) {
+<span class="nc" id="L428">		return methods.stream().filter(m -&gt; m.getName().equals(name)).findAny().map(m -&gt; invokeStaticMethod(m, values));</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private static &lt;T&gt; T invokeStaticMethod(final Method method, final Object... arguments) {
+<span class="nc" id="L433">		method.setAccessible(true);</span>
+		try {
+<span class="nc" id="L435">			return (T) method.invoke(null, arguments);</span>
+<span class="nc" id="L436">		} catch (final Exception e) {</span>
+<span class="nc" id="L437">			throw new RuntimeException(e);</span>
+		}
+	}
+
+	public static Optional&lt;Method&gt; getMethod(final Class&lt;?&gt; clazz,
+			final List&lt;String&gt; methodNames,
+			final Class&lt;?&gt;[] parameterTypes) {
+<span class="nc bnc" id="L444" title="All 2 branches missed.">		if (methodNames.isEmpty()) {</span>
+<span class="nc" id="L445">			return Optional.empty();</span>
+		}
+
+<span class="nc" id="L448">		Class&lt;?&gt; currentClazz = clazz;</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">		while (currentClazz != Object.class) {</span>
+<span class="nc" id="L450">			final Optional&lt;Method&gt; method = Stream.of(currentClazz.getDeclaredMethods())</span>
+<span class="nc" id="L451">					.filter(m -&gt; methodNames.contains(m.getName()))</span>
+<span class="nc" id="L452">					.filter(m -&gt; Arrays.deepEquals(m.getParameterTypes(), parameterTypes))</span>
+<span class="nc" id="L453">					.sorted(new IndexOfComparator(methodNames).thenComparing(CLASS_DEPTH_COMPARATOR))</span>
+<span class="nc" id="L454">					.findFirst();</span>
+<span class="nc bnc" id="L455" title="All 2 branches missed.">			if (method.isPresent()) {</span>
+<span class="nc" id="L456">				return method;</span>
+			}
+<span class="nc" id="L458">			currentClazz = currentClazz.getSuperclass();</span>
+<span class="nc" id="L459">		}</span>
+<span class="nc" id="L460">		return Optional.empty();</span>
+	}
+
+	private static int getClassDepth(final Class&lt;?&gt; clazz) {
+<span class="nc" id="L464">		Class&lt;?&gt; currentClass = clazz;</span>
+<span class="nc" id="L465">		int i = 1;</span>
+<span class="nc bnc" id="L466" title="All 4 branches missed.">		while (currentClass != null &amp;&amp; currentClass != Object.class) {</span>
+<span class="nc" id="L467">			i += 1;</span>
+<span class="nc" id="L468">			currentClass = currentClass.getSuperclass();</span>
+		}
+<span class="nc" id="L470">		return i;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public static &lt;T&gt; T[] createArray(final Class&lt;T&gt; clazz, final int length) {
+<span class="nc" id="L475">		return (T[]) Array.newInstance(clazz, length);</span>
+	}
+
+	public static boolean isDebug() {
+<span class="nc" id="L479">		return java.lang.management.ManagementFactory.getRuntimeMXBean()</span>
+<span class="nc" id="L480">				.getInputArguments()</span>
+<span class="nc" id="L481">				.toString()</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">				.indexOf(&quot;jdwp&quot;) &gt;= 0;</span>
+	}
+
+<span class="fc" id="L485">	private static final Comparator&lt;Method&gt; CLASS_DEPTH_COMPARATOR</span>
+<span class="nc" id="L486">			= (a, b) -&gt; -Integer.compare(getClassDepth(a.getReturnType()), getClassDepth(b.getReturnType()));</span>
+
+	private static String getName(@Nullable final Method method) {
+<span class="nc bnc" id="L489" title="All 2 branches missed.">		if (method == null) {</span>
+<span class="nc" id="L490">			return &quot;&quot;;</span>
+		}
+<span class="nc" id="L492">		return method.getName();</span>
+	}
+
+	@SuppressFBWarnings(value = &quot;SE_COMPARATOR_SHOULD_BE_SERIALIZABLE&quot;, justification = &quot;used only internally&quot;)
+	private static final class IndexOfComparator implements Comparator&lt;Method&gt; {
+		private final List&lt;String&gt; methodNames;
+
+<span class="nc" id="L499">		private IndexOfComparator(final List&lt;String&gt; methodNames) {</span>
+<span class="nc" id="L500">			this.methodNames = methodNames;</span>
+<span class="nc" id="L501">		}</span>
+
+		@Override
+		public int compare(@Nullable final Method a, @Nullable final Method b) {
+<span class="nc" id="L505">			return Integer.compare(methodNames.indexOf(getName(a)), methodNames.indexOf(getName(b)));</span>
+		}
+	}
+
+	public static final class SerializablePropertyMember {
+		private final Field field;
+
+		private final String name;
+
+		private final String displayName;
+
+		private final Type type;
+
+		private final String icon;
+
+		private final int size;
+
+		private final boolean required;
+
+		private SerializablePropertyMember(final Field field) {
+<span class="nc" id="L525">			this(field,</span>
+<span class="nc" id="L526">					field.getName(),</span>
+<span class="nc" id="L527">					Type.fromField(field),</span>
+<span class="nc bnc" id="L528" title="All 2 branches missed.">					field.isAnnotationPresent(Member.class)</span>
+<span class="nc" id="L529">							? Optional.of(field.getAnnotation(Member.class))</span>
+<span class="nc" id="L530">							: Optional.empty());</span>
+<span class="nc" id="L531">		}</span>
+
+		private SerializablePropertyMember(final Field field,
+				final String name,
+				final Type type,
+				final Optional&lt;Member&gt; member) {
+<span class="nc" id="L537">			this(field,</span>
+					name,
+					type,
+<span class="nc" id="L540">					member.map(Member::icon).orElse(&quot;tag&quot;),</span>
+<span class="nc" id="L541">					member.map(Member::size).orElse(2),</span>
+<span class="nc" id="L542">					member.map(Member::mayBeEmpty).orElse(false));</span>
+<span class="nc" id="L543">		}</span>
+
+		private SerializablePropertyMember(final Field field,
+				final String name,
+				final Type type,
+				final String icon,
+				final int size,
+<span class="nc" id="L550">				final boolean empty) {</span>
+<span class="nc" id="L551">			this.field = field;</span>
+<span class="nc" id="L552">			field.setAccessible(true);</span>
+<span class="nc" id="L553">			this.name = Objects.requireNonNull(name);</span>
+<span class="nc" id="L554">			displayName = Character.toUpperCase(name.charAt(0)) + name.substring(1);</span>
+<span class="nc" id="L555">			this.type = type;</span>
+<span class="nc" id="L556">			this.icon = icon;</span>
+<span class="nc" id="L557">			this.size = size;</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">			required = !empty;</span>
+<span class="nc" id="L559">		}</span>
+
+		private Class&lt;?&gt; getClazz() {
+<span class="nc" id="L562">			return field.getType();</span>
+		}
+
+		public Object createInstance(final String stringValue) throws MemberMissingException {
+<span class="nc bnc" id="L566" title="All 4 branches missed.">			if (isRequired() &amp;&amp; Strings.isNullOrEmpty(stringValue)) {</span>
+<span class="nc" id="L567">				throw new MemberMissingException(&quot;Value for member &quot; + name + &quot; must not be null or empty&quot;);</span>
+			}
+<span class="nc" id="L569">			return TypeUtils.createInstance(getClazz(), stringValue);</span>
+		}
+
+		// TODO check if really unused
+		public void set(final SerializableProperty property, final String value) throws MemberMissingException {
+<span class="nc" id="L574">			set(property, createInstance(value));</span>
+<span class="nc" id="L575">		}</span>
+
+		public void set(final SerializableProperty property, final Object object) {
+			try {
+<span class="nc" id="L579">				field.set(property, object);</span>
+<span class="nc" id="L580">			} catch (final IllegalArgumentException | IllegalAccessException e) {</span>
+<span class="nc" id="L581">				throw new RuntimeException(&quot;Unable to set value of member '&quot; + getName() + &quot;': &quot; + object.toString(),</span>
+						e);
+<span class="nc" id="L583">			}</span>
+<span class="nc" id="L584">		}</span>
+
+		public Object get(final SerializableProperty property) {
+			try {
+<span class="nc" id="L588">				return field.get(property);</span>
+<span class="nc" id="L589">			} catch (final IllegalArgumentException | IllegalAccessException e) {</span>
+<span class="nc" id="L590">				throw new RuntimeException(&quot;Unable to get value of member '&quot; + getName() + &quot;'&quot;, e);</span>
+			}
+		}
+
+		public String getName() {
+<span class="nc" id="L595">			return name;</span>
+		}
+
+		public String getDisplayName() {
+<span class="nc" id="L599">			return displayName;</span>
+		}
+
+		public Type getType() {
+<span class="nc" id="L603">			return type;</span>
+		}
+
+		public String getIcon() {
+<span class="nc" id="L607">			return icon;</span>
+		}
+
+		public int getSize() {
+<span class="nc" id="L611">			return size;</span>
+		}
+
+		public boolean isRequired() {
+<span class="nc" id="L615">			return required;</span>
+		}
+
+		@Override
+		public int hashCode() {
+<span class="nc" id="L620">			return name.hashCode();</span>
+		}
+
+		@Override
+		public boolean equals(@Nullable final Object obj) {
+<span class="nc bnc" id="L625" title="All 2 branches missed.">			if (this == obj) {</span>
+<span class="nc" id="L626">				return true;</span>
+			}
+<span class="nc bnc" id="L628" title="All 2 branches missed.">			if (obj == null) {</span>
+<span class="nc" id="L629">				return false;</span>
+			}
+<span class="nc bnc" id="L631" title="All 2 branches missed.">			if (getClass() != obj.getClass()) {</span>
+<span class="nc" id="L632">				return false;</span>
+			}
+<span class="nc" id="L634">			final SerializablePropertyMember other = (SerializablePropertyMember) obj;</span>
+<span class="nc bnc" id="L635" title="All 2 branches missed.">			if (!name.equals(other.name)) {</span>
+<span class="nc" id="L636">				return false;</span>
+			}
+<span class="nc" id="L638">			return true;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L643">			return &quot;SerializablePropertyMember [name=&quot;</span>
+					+ name
+					+ &quot;, type=&quot;
+					+ type
+					+ &quot;, icon=&quot;
+					+ icon
+					+ &quot;, size=&quot;
+					+ size
+					+ &quot;]&quot;;
+		}
+
+<span class="nc" id="L654">		public enum Type {</span>
+<span class="nc" id="L655">			text,</span>
+<span class="nc" id="L656">			number,</span>
+<span class="nc" id="L657">			password,</span>
+<span class="nc" id="L658">			color;</span>
+
+			static Type fromField(final Field field) {
+<span class="nc" id="L661">				final Class&lt;?&gt; type = field.getType();</span>
+<span class="nc bnc" id="L662" title="All 4 branches missed.">				if (type == String.class &amp;&amp; field.getName().toLowerCase().contains(&quot;password&quot;)) {</span>
+<span class="nc" id="L663">					return password;</span>
+				}
+<span class="nc bnc" id="L665" title="All 2 branches missed.">				if (type == Color.class) {</span>
+<span class="nc" id="L666">					return color;</span>
+				}
+<span class="nc bnc" id="L668" title="All 2 branches missed.">				if (type == String.class) {</span>
+<span class="nc" id="L669">					return text;</span>
+				}
+<span class="nc bnc" id="L671" title="All 6 branches missed.">				if (Number.class.isAssignableFrom(type) || type.isPrimitive() &amp;&amp; type != boolean.class) {</span>
+<span class="nc" id="L672">					return number;</span>
+				}
+<span class="nc" id="L674">				throw new RuntimeException(&quot;Unknown class: &quot; + type.getName());</span>
+			}
+		}
+
+		public static final class MemberMissingException extends Exception {
+			private MemberMissingException(final String message) {
+<span class="nc" id="L680">				super(message);</span>
+<span class="nc" id="L681">			}</span>
+		}
+	}
+
+	public static final class ClassProxy implements InvocationHandler {
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public static &lt;T&gt; T create(final Class&lt;T&gt; clazz, final ReturnValue... returns) {
+<span class="nc" id="L688">			return (T) Proxy.newProxyInstance(ClassProxy.class.getClassLoader(),</span>
+					new Class[] { clazz },
+					new ClassProxy(returns));
+		}
+
+		private final List&lt;ReturnValue&gt; returns;
+
+<span class="nc" id="L695">		private ClassProxy(final ReturnValue[] returns) {</span>
+<span class="nc" id="L696">			this.returns = Arrays.asList(returns);</span>
+<span class="nc" id="L697">		}</span>
+
+		@Override
+		public Object invoke(@SuppressWarnings(&quot;unused&quot;) @Nullable final Object object,
+				@Nullable final Method method,
+				@SuppressWarnings(&quot;unused&quot;) @Nullable final Object[] args) throws Throwable {
+<span class="nc" id="L703">			return returns.stream()</span>
+<span class="nc" id="L704">					.filter(r -&gt; r.getMethod().equals(method))</span>
+<span class="nc" id="L705">					.map(ReturnValue::getReturnValue)</span>
+<span class="nc" id="L706">					.findFirst()</span>
+<span class="nc" id="L707">					.orElse(null);</span>
+		}
+	}
+
+	public static final class ReturnValue {
+		public static ReturnValue find(final Class&lt;?&gt; clazz, final String methodName, final Object returnValue) {
+<span class="nc" id="L713">			return new ReturnValue(</span>
+<span class="nc" id="L714">					Arrays.stream(clazz.getMethods()).filter(m -&gt; m.getName().equals(methodName)).findFirst().get(),</span>
+					returnValue);
+		}
+
+		private final Method method;
+
+		private final Object returnValue;
+
+<span class="nc" id="L722">		private ReturnValue(final Method method, final Object returnValue) {</span>
+<span class="nc" id="L723">			this.method = method;</span>
+<span class="nc" id="L724">			this.returnValue = returnValue;</span>
+<span class="nc" id="L725">		}</span>
+
+		public Method getMethod() {
+<span class="nc" id="L728">			return method;</span>
+		}
+
+		public Object getReturnValue() {
+<span class="nc" id="L732">			return returnValue;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

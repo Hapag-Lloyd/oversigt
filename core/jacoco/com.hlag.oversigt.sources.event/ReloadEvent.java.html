@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReloadEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">ReloadEvent.java</span></div><h1>ReloadEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
+import com.hlag.oversigt.core.event.NoCache;
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+@NoCache
+public class ReloadEvent extends OversigtEvent {
+	private Collection&lt;String&gt; dashboards;
+
+	public ReloadEvent(final String... dashboards) {
+<span class="nc" id="L15">		this(Arrays.asList(dashboards));</span>
+<span class="nc" id="L16">	}</span>
+
+<span class="nc" id="L18">	public ReloadEvent(final Collection&lt;String&gt; dashboards) {</span>
+<span class="nc" id="L19">		setId(&quot;reload&quot;);</span>
+<span class="nc bnc" id="L20" title="All 2 branches missed.">		this.dashboards = dashboards.isEmpty() ? new ArrayList&lt;&gt;() : dashboards;</span>
+<span class="nc" id="L21">	}</span>
+
+	public Collection&lt;String&gt; getDashboards() {
+<span class="nc" id="L24">		return dashboards;</span>
+	}
+
+	public void setDashboards(final Collection&lt;String&gt; dashboards) {
+<span class="nc" id="L28">		this.dashboards = dashboards;</span>
+<span class="nc" id="L29">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

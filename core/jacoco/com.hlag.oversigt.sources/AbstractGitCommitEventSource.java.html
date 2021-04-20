@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractGitCommitEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">AbstractGitCommitEventSource.java</span></div><h1>AbstractGitCommitEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import static java.util.stream.Collectors.toMap;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.revwalk.RevCommit;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.sources.data.JsonHint.ArrayStyle;
+
+<span class="nc" id="L24">public abstract class AbstractGitCommitEventSource&lt;E extends OversigtEvent&gt; extends AbstractGitEventSource&lt;E&gt; {</span>
+<span class="nc" id="L25">	private int limit = 5;</span>
+
+<span class="nc" id="L27">	private String[] usersToSuppress = new String[0];</span>
+
+<span class="nc" id="L29">	private NameMapping[] nameMappings = new NameMapping[0];</span>
+
+	@Property(name = &quot;Limit&quot;,
+			description = &quot;The maximum number of committers to display. Values below 1 display all committers.&quot;)
+	public int getLimit() {
+<span class="nc" id="L34">		return limit;</span>
+	}
+
+	public void setLimit(final int limit) {
+<span class="nc" id="L38">		this.limit = limit;</span>
+<span class="nc" id="L39">	}</span>
+
+	@Property(name = &quot;Users to suppress&quot;,
+			description = &quot;If you want to suppress certain names, enter them here. This may be useful to prevent technical users from being shown in the list of committers.&quot;)
+	@JsonHint(arrayStyle = ArrayStyle.TABLE)
+	public String[] getUsersToSuppress() {
+<span class="nc" id="L45">		return usersToSuppress;</span>
+	}
+
+	public void setUsersToSuppress(final String[] usersToSuppress) {
+<span class="nc" id="L49">		this.usersToSuppress = usersToSuppress;</span>
+<span class="nc" id="L50">	}</span>
+
+	@Property(name = &quot;Name mappings&quot;,
+			description = &quot;Some users have different user names. Use these mappings to map all the known user names to one single name.&quot;)
+	public NameMapping[] getNameMappings() {
+<span class="nc" id="L55">		return nameMappings;</span>
+	}
+
+	public void setNameMappings(final NameMapping[] nameMappings) {
+<span class="nc" id="L59">		this.nameMappings = nameMappings;</span>
+<span class="nc" id="L60">	}</span>
+
+	protected &lt;R&gt; R streamLogWithoutFilteredUsers(final Function&lt;Stream&lt;RevCommit&gt;, R&gt; function)
+			throws NoHeadException, GitAPIException, IOException {
+<span class="nc" id="L64">		final Set&lt;String&gt; usersToSuppress = new HashSet&lt;&gt;(Arrays.asList(getUsersToSuppress()));</span>
+<span class="nc" id="L65">		return streamLog(</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">				s -&gt; function.apply(s.filter(rv -&gt; !usersToSuppress.contains(rv.getCommitterIdent().getName()))));</span>
+	}
+
+	protected Function&lt;String, String&gt; createNameMapper() {
+<span class="nc" id="L70">		final Map&lt;String, String&gt; nameMap</span>
+<span class="nc" id="L71">				= Arrays.stream(getNameMappings()).collect(toMap(NameMapping::getName, NameMapping::getMapTo));</span>
+<span class="nc" id="L72">		return x -&gt; nameMap.computeIfAbsent(x, Function.identity());</span>
+	}
+
+	@JsonHint(headerTemplate = &quot;{{self.name}}&quot;, arrayStyle = ArrayStyle.GRID)
+	public static class NameMapping {
+		private final String name;
+
+		private final String mapTo;
+
+		@JsonCreator
+<span class="nc" id="L82">		public NameMapping(@JsonProperty(&quot;name&quot;) final String name, @JsonProperty(&quot;mapTo&quot;) final String mapTo) {</span>
+<span class="nc" id="L83">			this.name = name;</span>
+<span class="nc" id="L84">			this.mapTo = mapTo;</span>
+<span class="nc" id="L85">		}</span>
+
+		public String getName() {
+<span class="nc" id="L88">			return name;</span>
+		}
+
+		public String getMapTo() {
+<span class="nc" id="L92">			return mapTo;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JenkinsPipelineStatusEventSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources</a> &gt; <span class="el_source">JenkinsPipelineStatusEventSource.java</span></div><h1>JenkinsPipelineStatusEventSource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.HttpClientBuilder;
+
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.EventSourceException;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.properties.Credentials;
+import com.hlag.oversigt.properties.HttpProxy;
+import com.hlag.oversigt.properties.ServerConnection;
+import com.hlag.oversigt.sources.event.JenkinsPipelineStatusEvent;
+import com.hlag.oversigt.sources.event.JenkinsPipelineStatusEvent.JenkinsPipelineEventStatusItem;
+import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.client.JenkinsHttpClient;
+import com.offbytwo.jenkins.model.Build;
+import com.offbytwo.jenkins.model.BuildResult;
+import com.offbytwo.jenkins.model.Job;
+import com.offbytwo.jenkins.model.JobWithDetails;
+
+@EventSource(view = &quot;JenkinsPipelineStatus&quot;, displayName = &quot;Jenkins Pipeline Status&quot;, hiddenDataItems = { &quot;moreinfo&quot; })
+public class JenkinsPipelineStatusEventSource extends ScheduledEventSource&lt;JenkinsPipelineStatusEvent&gt; {
+<span class="nc" id="L34">	private Credentials credentials = Credentials.EMPTY;</span>
+
+<span class="nc" id="L36">	private HttpProxy proxy = HttpProxy.EMPTY;</span>
+
+<span class="nc" id="L38">	private ServerConnection jenkinsUrl = ServerConnection.EMPTY;</span>
+
+	@Property(name = &quot;HTTP Proxy&quot;, description = &quot;The proxy server to be used to contact the internet.&quot;)
+	public HttpProxy getHttpProxy() {
+<span class="nc" id="L42">		return proxy;</span>
+	}
+
+	public void setHttpProxy(final HttpProxy proxy) {
+<span class="nc" id="L46">		this.proxy = proxy;</span>
+<span class="nc" id="L47">	}</span>
+
+<span class="nc" id="L49">	private String regEx = &quot;&quot;;</span>
+
+<span class="nc" id="L51">	private Pipeline[] pipelines = {};</span>
+
+<span class="nc" id="L53">	public JenkinsPipelineStatusEventSource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L55">	}</span>
+
+	@Override
+	protected Optional&lt;JenkinsPipelineStatusEvent&gt; produceEvent() throws EventSourceException {
+<span class="nc" id="L59">		final List&lt;JenkinsPipelineEventStatusItem&gt; list = new ArrayList&lt;&gt;();</span>
+
+		// Requests pipeline status
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		for (final Pipeline pipeline : pipelines) {</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			for (final Branch branch : pipeline.branch) {</span>
+<span class="nc" id="L64">				list.addAll(getJenkinsDataByID(pipeline, branch, branch.times));</span>
+			}
+		}
+
+		// Compare Pipelines
+<span class="nc" id="L69">		final Comparator&lt;JenkinsPipelineEventStatusItem&gt; comparator</span>
+<span class="nc" id="L70">				= Comparator.comparing(JenkinsPipelineEventStatusItem::getStatus)</span>
+<span class="nc" id="L71">						.thenComparing(JenkinsPipelineEventStatusItem::getPipeline);</span>
+<span class="nc" id="L72">		list.sort(comparator);</span>
+
+<span class="nc" id="L74">		return Optional.of(new JenkinsPipelineStatusEvent(list));</span>
+	}
+
+	@SuppressWarnings(&quot;resource&quot;)
+	public List&lt;JenkinsPipelineEventStatusItem&gt; getJenkinsDataByID(final Pipeline pipe,
+			final Branch branch,
+			final int times) throws EventSourceException {
+<span class="nc" id="L81">		try (JenkinsServer jenkins = new JenkinsServer(new JenkinsHttpClient(getJenkinsUri(),</span>
+<span class="nc" id="L82">				createHttpClientBuilder(),</span>
+<span class="nc" id="L83">				credentials.getUsername(),</span>
+<span class="nc" id="L84">				credentials.getPassword()))) {</span>
+<span class="nc" id="L85">			final Map&lt;String, Job&gt; jobs = jenkins.getJobs();</span>
+			// request Pipeline information
+<span class="nc" id="L87">			final JobWithDetails job = jobs.get(pipe.pipelineName).details();</span>
+<span class="nc" id="L88">			final List&lt;JenkinsPipelineEventStatusItem&gt; returns = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			for (final Build buildfromjob : job.getBuilds()) {</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">				if (buildfromjob.details().getDescription() != null</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">						&amp;&amp; buildfromjob.details().getDescription().contains(branch.branchName)) {</span>
+<span class="nc" id="L92">					final BuildResult status = buildfromjob.details().getResult();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">					if (status != null) {</span>
+<span class="nc" id="L94">						String userID = &quot;&quot;;</span>
+<span class="nc" id="L95">						String ticket = &quot;&quot;;</span>
+<span class="nc" id="L96">						final Matcher m = Pattern.compile(regEx).matcher(buildfromjob.details().getDescription());</span>
+<span class="nc" id="L97">						m.reset(buildfromjob.details().getDescription());</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">						if (m.find()) {</span>
+							// Use group 2 and 3 from RegEx
+<span class="nc" id="L100">							userID = m.group(2);</span>
+<span class="nc" id="L101">							ticket = m.group(3);</span>
+						}
+<span class="nc bnc" id="L103" title="All 2 branches missed.">						if (status.equals(BuildResult.UNKNOWN)) {</span>
+<span class="nc" id="L104">							returns.add(</span>
+<span class="nc" id="L105">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L106">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L109">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;No Build available&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+<span class="nc bnc" id="L117" title="All 2 branches missed.">						} else if (status.equals(BuildResult.SUCCESS)) {</span>
+<span class="nc" id="L118">							returns.add(</span>
+<span class="nc" id="L119">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L120">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L123">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Build successful&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+<span class="nc bnc" id="L131" title="All 2 branches missed.">						} else if (status.equals(BuildResult.UNSTABLE)) {</span>
+<span class="nc" id="L132">							returns.add(</span>
+<span class="nc" id="L133">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L134">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L137">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Build unstable&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+<span class="nc bnc" id="L145" title="All 2 branches missed.">						} else if (status.equals(BuildResult.FAILURE)) {</span>
+<span class="nc" id="L146">							returns.add(</span>
+<span class="nc" id="L147">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L148">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L151">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Build failed&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;color:red&quot;));
+<span class="nc bnc" id="L159" title="All 2 branches missed.">						} else if (status.equals(BuildResult.NOT_BUILT)) {</span>
+<span class="nc" id="L160">							returns.add(</span>
+<span class="nc" id="L161">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L162">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L165">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Has never run&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+<span class="nc bnc" id="L173" title="All 2 branches missed.">						} else if (status.equals(BuildResult.BUILDING)) {</span>
+<span class="nc" id="L174">							returns.add(</span>
+<span class="nc" id="L175">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L176">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L179">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Is currently building&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+<span class="nc bnc" id="L187" title="All 2 branches missed.">						} else if (status.equals(BuildResult.ABORTED)) {</span>
+<span class="nc" id="L188">							returns.add(</span>
+<span class="nc" id="L189">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L190">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L193">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;Build aborted&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+						} else {
+<span class="nc" id="L202">							returns.add(</span>
+<span class="nc" id="L203">									new JenkinsPipelineEventStatusItem(pipe.pipelineName.replace(&quot;_&quot;, &quot; &quot;).substring(4),</span>
+<span class="nc" id="L204">											branch.branchName,</span>
+											ticket,
+											userID,
+<span class="nc" id="L207">											Integer.toString(buildfromjob.getNumber()),</span>
+											&quot;no status available&quot;,
+											&quot;font-weight: bold&quot;,
+											&quot;&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-style: italic&quot;,
+											&quot;font-size: 80%&quot;,
+											&quot;&quot;));
+						}
+<span class="nc bnc" id="L216" title="All 2 branches missed.">						if (returns.size() == times) {</span>
+<span class="nc" id="L217">							return returns;</span>
+						}
+					}
+				}
+<span class="nc" id="L221">			}</span>
+
+<span class="nc" id="L223">			return returns;</span>
+<span class="nc" id="L224">		} catch (final IOException e) {</span>
+<span class="nc" id="L225">			throw new EventSourceException(&quot;Failed accessing Jenkins for &quot; + pipe.pipelineName, e);</span>
+		}
+	}
+
+	private HttpClientBuilder createHttpClientBuilder() {
+<span class="nc" id="L230">		final HttpClientBuilder builder = HttpClientBuilder.create();</span>
+
+<span class="nc" id="L232">		final HttpProxy proxy = getHttpProxy();</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">		if (proxy != HttpProxy.EMPTY) {</span>
+<span class="nc" id="L234">			builder.setProxy(new HttpHost(proxy.getHostname(), proxy.getPort()));</span>
+		}
+
+<span class="nc" id="L237">		return builder;</span>
+	}
+
+	private URI getJenkinsUri() throws EventSourceException {
+		try {
+<span class="nc" id="L242">			return URI.create(jenkinsUrl.getUrl());</span>
+<span class="nc" id="L243">		} catch (final IllegalArgumentException e) {</span>
+<span class="nc" id="L244">			throw new EventSourceException(&quot;Failed parsing Jenkins URL as URI&quot;, e);</span>
+		}
+	}
+
+	@Property(name = &quot;Regular Expression&quot;,
+			description = &quot;The regular expression(Java) used to specify information from description.&quot;)
+	public String getValue() {
+<span class="nc" id="L251">		return regEx;</span>
+	}
+
+	public void setValue(final String regEx) {
+<span class="nc" id="L255">		this.regEx = regEx;</span>
+<span class="nc" id="L256">	}</span>
+
+	@Property(name = &quot;Credentials&quot;, description = &quot;The credentials to be used when connecting to Jenkins.&quot;)
+	public Credentials getCredentials() {
+<span class="nc" id="L260">		return credentials;</span>
+	}
+
+	public void setCredentials(final Credentials credentials) {
+<span class="nc" id="L264">		this.credentials = credentials;</span>
+<span class="nc" id="L265">	}</span>
+
+	@Property(name = &quot;Jenkins URL&quot;, description = &quot;URL to the Jenkins server&quot;)
+	public ServerConnection getJenkinsUrl() {
+<span class="nc" id="L269">		return jenkinsUrl;</span>
+	}
+
+	public void setJenkinsUrl(final ServerConnection jenkinsUrl) {
+<span class="nc" id="L273">		this.jenkinsUrl = jenkinsUrl;</span>
+<span class="nc" id="L274">	}</span>
+
+	@Property(name = &quot;BuilsIDs&quot;, description = &quot;Build IDs from Jenkins Build Pipelines&quot;)
+	public Pipeline[] getPipelines() {
+<span class="nc" id="L278">		return pipelines;</span>
+	}
+
+	public void setPipelines(final Pipeline[] pipelines) {
+<span class="nc" id="L282">		this.pipelines = pipelines;</span>
+<span class="nc" id="L283">	}</span>
+
+	public static class Pipeline {
+<span class="nc" id="L286">		private String pipelineName = &quot;&quot;;</span>
+
+<span class="nc" id="L288">		private Branch[] branch = {};</span>
+
+<span class="nc" id="L290">		public Pipeline() {</span>
+			// nothing to initialize here
+<span class="nc" id="L292">		}</span>
+	}
+
+	public static class Branch {
+<span class="nc" id="L296">		private String branchName = &quot;&quot;;</span>
+
+<span class="nc" id="L298">		private int times = 1;</span>
+
+<span class="nc" id="L300">		public Branch() {</span>
+			// nothing to initialize here
+<span class="nc" id="L302">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

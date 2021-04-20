@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServerConnection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.properties</a> &gt; <span class="el_source">ServerConnection.java</span></div><h1>ServerConnection.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.properties;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hlag.oversigt.properties.SerializableProperty.Description;
+
+import de.larssh.utils.SneakyException;
+
+@Description(&quot;Details for a server connection containing a hostname and a port.&quot;)
+public class ServerConnection extends SerializableProperty {
+<span class="nc" id="L14">	public static final ServerConnection EMPTY = new ServerConnection(0, &quot;&quot;, &quot;&quot;);</span>
+
+	@Member(icon = &quot;cloud&quot;, size = 6)
+	private String url;
+
+	@JsonCreator
+	public ServerConnection(@JsonProperty(&quot;id&quot;) final int id,
+			@JsonProperty(&quot;name&quot;) final String name,
+			@JsonProperty(&quot;url&quot;) final String url) {
+<span class="nc" id="L23">		super(id, name);</span>
+<span class="nc" id="L24">		this.url = url;</span>
+<span class="nc" id="L25">	}</span>
+
+	public String getUrl() {
+<span class="nc" id="L28">		return url;</span>
+	}
+
+	private URL createUrl() {
+		try {
+<span class="nc" id="L33">			return new URL(url);</span>
+<span class="nc" id="L34">		} catch (final MalformedURLException e) {</span>
+<span class="nc" id="L35">			throw new SneakyException(e);</span>
+		}
+	}
+
+	public String extractHostname() {
+<span class="nc" id="L40">		return createUrl().getHost();</span>
+	}
+
+	public int extractPort() {
+<span class="nc" id="L44">		return createUrl().getPort();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.controller</a> &gt; <span class="el_source">DashboardController.java</span></div><h1>DashboardController.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.controller;
+
+import static com.hlag.oversigt.util.Utils.copyProperties;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Period;
+import java.time.temporal.TemporalAmount;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.EventBus;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.properties.JsonBasedData;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.properties.SerializablePropertyController;
+import com.hlag.oversigt.security.Principal;
+import com.hlag.oversigt.sources.event.ReloadEvent;
+import com.hlag.oversigt.storage.Storage;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.TypeUtils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+@Singleton
+public class DashboardController {
+<span class="nc" id="L49">	private static final Logger LOGGER = LoggerFactory.getLogger(DashboardController.class);</span>
+
+	@Nullable
+	private static DashboardController instance;
+
+	{
+<span class="nc" id="L55">		instance = this;</span>
+<span class="nc" id="L56">		EventSourceKey.setEventSourceRenamer(this::updateEventSourceClasses);</span>
+	}
+
+	public static DashboardController getInstance() {
+<span class="nc" id="L60">		final DashboardController checkedInstance = instance;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">		if (checkedInstance == null) {</span>
+<span class="nc" id="L62">			throw new RuntimeException(&quot;Instance has not been initialized yet.&quot;);</span>
+		}
+<span class="nc" id="L64">		return checkedInstance;</span>
+	}
+
+	@Inject
+	private Storage storage;
+
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private SerializablePropertyController spController;
+
+	@Inject
+	private final EventSourceInstanceController eventSourceInstanceController;
+
+	// Dashboards
+<span class="nc" id="L80">	private final Map&lt;String, Dashboard&gt; dashboards = Collections.synchronizedMap(new HashMap&lt;&gt;());</span>
+
+	@Inject
+<span class="nc" id="L83">	DashboardController(final EventSourceInstanceController eventSourceInstanceController) {</span>
+<span class="nc" id="L84">		this.eventSourceInstanceController = eventSourceInstanceController;</span>
+<span class="nc" id="L85">		eventSourceInstanceController</span>
+<span class="nc" id="L86">				.registerEventSourceInstanceUpdatedEventHandler(this::reloadDashboardsWithEventSourceInstance);</span>
+<span class="nc" id="L87">	}</span>
+
+	public Collection&lt;String&gt; getDashboardIds() {
+<span class="nc" id="L90">		return dashboards.keySet();</span>
+	}
+
+	public Optional&lt;Dashboard&gt; getDashboard(final String id) {
+<span class="nc" id="L94">		return Optional.ofNullable(dashboards.get(id));</span>
+	}
+
+	public Dashboard getDashboard(final Widget widget) {
+<span class="nc" id="L98">		return dashboards.values()</span>
+<span class="nc" id="L99">				.stream()</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">				.filter(d -&gt; d.getWidgets().stream().mapToInt(Widget::getId).anyMatch(i -&gt; i == widget.getId()))</span>
+<span class="nc" id="L101">				.findAny()</span>
+<span class="nc" id="L102">				.get();</span>
+	}
+
+	public void initialize() {
+<span class="nc" id="L106">		eventSourceInstanceController.initialize();</span>
+<span class="nc" id="L107">		LOGGER.info(&quot;Loading dashboards&quot;);</span>
+<span class="nc" id="L108">		dashboards.clear();</span>
+<span class="nc" id="L109">		dashboards.putAll(storage.loadDashboards()</span>
+<span class="nc" id="L110">				.stream()</span>
+<span class="nc" id="L111">				.peek(db -&gt; LOGGER.info(&quot;Loading dashboard: {} ({})&quot;, db.getId(), db.getTitle()))</span>
+<span class="nc" id="L112">				.peek(db -&gt; db.getModifiableWidgets()</span>
+<span class="nc" id="L113">						.addAll(storage.loadWidgetDatas(db, eventSourceInstanceController::getEventSourceInstance)))</span>
+<span class="nc" id="L114">				.collect(toMap(Dashboard::getId, Function.identity())));</span>
+<span class="nc" id="L115">	}</span>
+
+	/**
+	 * Creates a new dashboard instance, persists it in the storage and makes it
+	 * available for other users.
+	 *
+	 * @param id      the ID of the dashboard to be created
+	 * @param owner   the owner of the dashboard to be created
+	 * @param enabled &lt;code&gt;true&lt;/code&gt; if the dashboard should be enabled by
+	 *                default
+	 * @return the newly created dashboard object or &lt;code&gt;null&lt;/code&gt; if a
+	 *         dashboard with the given ID already exists.
+	 */
+	public Optional&lt;Dashboard&gt; createDashboard(final String id, final Principal owner, final boolean enabled) {
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		if (dashboards.containsKey(id)) {</span>
+<span class="nc" id="L130">			return Optional.empty();</span>
+		}
+<span class="nc" id="L132">		final Dashboard dashboard = new Dashboard(id, owner.getUsername(), enabled);</span>
+<span class="nc" id="L133">		storage.persistDashboard(dashboard);</span>
+<span class="nc" id="L134">		dashboards.put(id, dashboard);</span>
+		// TODO if owner is not admin -&gt; send mail to admins
+<span class="nc" id="L136">		return Optional.of(dashboard);</span>
+	}
+
+	public boolean updateDashboard(final Dashboard dashboard) {
+<span class="nc" id="L140">		final Optional&lt;Dashboard&gt; originalDashboard = getDashboard(dashboard.getId());</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if (!originalDashboard.isPresent()) {</span>
+<span class="nc" id="L142">			return false;</span>
+		}
+<span class="nc" id="L144">		copyProperties(dashboard, originalDashboard.get());</span>
+<span class="nc" id="L145">		storage.persistDashboard(originalDashboard.get());</span>
+<span class="nc" id="L146">		return true;</span>
+	}
+
+	public boolean deleteDashboard(final String id) {
+<span class="nc" id="L150">		final Optional&lt;Dashboard&gt; dashboard = getDashboard(id);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (!dashboard.isPresent()) {</span>
+<span class="nc" id="L152">			return false;</span>
+		}
+<span class="nc" id="L154">		return deleteDashboard(dashboard.get());</span>
+	}
+
+	public boolean deleteDashboard(final Dashboard dashboard) {
+<span class="nc" id="L158">		dashboards.remove(dashboard.getId());</span>
+<span class="nc" id="L159">		return storage.deleteDashboard(dashboard);</span>
+	}
+
+	public void reloadDashboards(final Dashboard... dashboards) {
+<span class="nc bnc" id="L163" title="All 2 branches missed.">		if (dashboards.length &gt; 0) {</span>
+<span class="nc" id="L164">			eventBus.post(new ReloadEvent(stream(dashboards).map(Dashboard::getId).collect(toList())));</span>
+		}
+<span class="nc" id="L166">	}</span>
+
+	public Stream&lt;Dashboard&gt; getDashboardsWhereEventSourceIsUsed(final EventSourceInstance instance) {
+<span class="nc" id="L169">		return dashboards.values()</span>
+<span class="nc" id="L170">				.stream()</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">				.filter(d -&gt; d.getWidgets().stream().anyMatch(w -&gt; w.getEventSourceInstance() == instance));</span>
+	}
+
+	private void reloadDashboardsWithEventSourceInstance(final EventSourceInstance instance) {
+<span class="nc" id="L175">		reloadDashboards(dashboards.values()</span>
+<span class="nc" id="L176">				.stream()</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">				.filter(d -&gt; d.getWidgets().stream().map(Widget::getEventSourceInstance).anyMatch(i -&gt; i == instance))</span>
+<span class="nc" id="L178">				.toArray(Dashboard[]::new));</span>
+<span class="nc" id="L179">	}</span>
+
+	public Widget createWidgetForDashboard(final Dashboard dashboard, final String eventSourceInstanceId) {
+<span class="nc" id="L182">		final Widget widget = new Widget(eventSourceInstanceController.getEventSourceInstance(eventSourceInstanceId));</span>
+<span class="nc" id="L183">		storage.createWidget(dashboard, widget);</span>
+<span class="nc" id="L184">		dashboard.getModifiableWidgets().add(widget);</span>
+<span class="nc" id="L185">		reloadDashboards(dashboard);</span>
+<span class="nc" id="L186">		return widget;</span>
+	}
+
+	public void updateWidget(final Widget widget) {
+<span class="nc" id="L190">		final Dashboard dashboard = getDashboard(widget);</span>
+<span class="nc" id="L191">		final Widget originalWidget = dashboard.getWidget(widget.getId());</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		if (widget != originalWidget) {</span>
+			// adapt properties to original widget
+<span class="nc bnc" id="L194" title="All 2 branches missed.">			if (originalWidget.getEventSourceInstance() != widget.getEventSourceInstance()) {</span>
+<span class="nc" id="L195">				throw new RuntimeException(&quot;The widgets have different EventSourceInstances&quot;);</span>
+			}
+<span class="nc" id="L197">			copyProperties(widget, originalWidget, &quot;eventSourceInstance&quot;);</span>
+			// update data
+<span class="nc bnc" id="L199" title="All 2 branches missed.">			for (final EventSourceProperty property : widget.getEventSourceInstance().getDescriptor().getDataItems()) {</span>
+<span class="nc" id="L200">				final String value = widget.getWidgetData(property);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">				if (value != null) {</span>
+<span class="nc" id="L202">					originalWidget.setWidgetData(property, value);</span>
+				} else {
+<span class="nc" id="L204">					originalWidget.removeWidgetData(property);</span>
+				}
+<span class="nc" id="L206">			}</span>
+		}
+<span class="nc" id="L208">		storage.updateWidget(widget);</span>
+<span class="nc" id="L209">		reloadDashboards(dashboard);</span>
+<span class="nc" id="L210">	}</span>
+
+	public void deleteWidget(final Widget widget) {
+<span class="nc" id="L213">		final Dashboard dashboard = getDashboard(widget);</span>
+<span class="nc" id="L214">		final Widget widgetReference = dashboard.getWidget(widget.getId());</span>
+<span class="nc" id="L215">		dashboard.getModifiableWidgets().remove(widgetReference);</span>
+<span class="nc" id="L216">		storage.deleteWidget(widgetReference);</span>
+<span class="nc" id="L217">		reloadDashboards(dashboard);</span>
+<span class="nc" id="L218">	}</span>
+
+	// TODO better handling for optionals in values!!
+	// TODO make non-public
+	public String getValueString(final EventSourceProperty property, final Object value) {
+		try {
+<span class="nc bnc" id="L224" title="All 2 branches missed.">			if (TypeUtils.isOfType(property.getClazz().get(), SerializableProperty.class)) {</span>
+<span class="nc" id="L225">				return spController.toString((SerializableProperty) value);</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">			} else if (value.getClass().isArray()) {</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">				if (TypeUtils.isOfType(value.getClass().getComponentType(), SerializableProperty.class)) {</span>
+<span class="nc" id="L228">					throw new NotImplementedException(</span>
+							&quot;Arrays of Objects of type SerializableProperty are not supported yet. Please refer to developers to implement this feature.&quot;);
+				}
+				// return Arrays.deepToString((Object[]) value);
+<span class="nc" id="L232">				return JsonUtils.toJson(value);</span>
+<span class="nc bnc" id="L233" title="All 4 branches missed.">			} else if (property.isJson() || TypeUtils.isOfType(property.getClazz().get(), JsonBasedData.class)) {</span>
+<span class="nc" id="L234">				return JsonUtils.toJson(value);</span>
+			} else {
+<span class="nc" id="L236">				return value.toString();</span>
+			}
+<span class="nc" id="L238">		} catch (final IllegalArgumentException | SecurityException e) {</span>
+<span class="nc" id="L239">			throw new RuntimeException(&quot;Unable to convert property '&quot; + property.getName() + &quot;' to string&quot;, e);</span>
+		}
+	}
+
+	private void updateEventSourceClasses(final String oldClassName, final String newClassName) {
+<span class="nc" id="L244">		LOGGER.info(&quot;Rename event source from [{}] to [{}]&quot;, oldClassName, newClassName);</span>
+<span class="nc" id="L245">		storage.updateEventSourceClasses(oldClassName, newClassName);</span>
+<span class="nc" id="L246">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public &lt;T extends Enum&lt;T&gt;&gt; Object createObjectFromString(final EventSourceProperty property,
+			final String inputString) {
+		// TODO check all callers
+<span class="nc" id="L252">		final Class&lt;?&gt; type = property.getClazz().orElse(String.class);</span>
+<span class="nc" id="L253">		final String string = Objects.requireNonNull(inputString, &quot;The input string must not be null.&quot;);</span>
+		try {
+<span class="nc bnc" id="L255" title="All 4 branches missed.">			if (type == null || String.class == type) {</span>
+<span class="nc" id="L256">				return string;</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">			} else if (type.isPrimitive()) {</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">				if (type == boolean.class) {</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">					return string == null ? Boolean.FALSE : Boolean.parseBoolean(string);</span>
+				}
+<span class="nc bnc" id="L261" title="All 2 branches missed.">				if (type == byte.class) {</span>
+<span class="nc" id="L262">					return Byte.parseByte(string);</span>
+				}
+<span class="nc bnc" id="L264" title="All 2 branches missed.">				if (type == short.class) {</span>
+<span class="nc" id="L265">					return Short.parseShort(string);</span>
+				}
+<span class="nc bnc" id="L267" title="All 2 branches missed.">				if (type == int.class) {</span>
+<span class="nc" id="L268">					return Integer.parseInt(string);</span>
+				}
+<span class="nc bnc" id="L270" title="All 2 branches missed.">				if (type == long.class) {</span>
+<span class="nc" id="L271">					return Long.parseLong(string);</span>
+				}
+<span class="nc bnc" id="L273" title="All 2 branches missed.">				if (type == float.class) {</span>
+<span class="nc" id="L274">					return Float.parseFloat(string);</span>
+				}
+<span class="nc bnc" id="L276" title="All 2 branches missed.">				if (type == double.class) {</span>
+<span class="nc" id="L277">					return Double.parseDouble(string);</span>
+				}
+<span class="nc bnc" id="L279" title="All 2 branches missed.">				if (type == char.class) {</span>
+<span class="nc" id="L280">					return string.charAt(0);</span>
+				}
+<span class="nc" id="L282">				throw new RuntimeException(&quot;Unknown primitive type: &quot; + type);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">			} else if (Enum.class.isAssignableFrom(type)) {</span>
+				final Enum&lt;T&gt; enumValue;
+<span class="nc bnc" id="L285" title="All 2 branches missed.">				if (string != null) {</span>
+<span class="nc" id="L286">					enumValue = Enum.valueOf((Class&lt;T&gt;) type, string);</span>
+				} else {
+<span class="nc" id="L288">					enumValue = (Enum&lt;T&gt;) type.getEnumConstants()[0];</span>
+				}
+				// method.invoke(eventSource, enumValue);
+<span class="nc" id="L291">				return enumValue;</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">			} else if (SerializableProperty.class.isAssignableFrom(type)) {</span>
+				try {
+<span class="nc" id="L294">					return spController.getProperty((Class&lt;SerializableProperty&gt;) type, Integer.parseInt(string));</span>
+<span class="nc" id="L295">				} catch (@SuppressWarnings(&quot;unused&quot;) final NumberFormatException ignore) {</span>
+<span class="nc" id="L296">					LOGGER.warn(&quot;Unable to find property type '{}' for id '{}'&quot;, type.getSimpleName(), string);</span>
+<span class="nc" id="L297">					return spController.getEmpty((Class&lt;SerializableProperty&gt;) type);</span>
+				}
+<span class="nc bnc" id="L299" title="All 4 branches missed.">			} else if (property.isJson() || TypeUtils.isOfType(type, JsonBasedData.class)) {</span>
+				// if string is empty, create empty object
+<span class="nc bnc" id="L301" title="All 2 branches missed.">				if (string.isEmpty()) {</span>
+<span class="nc" id="L302">					return TypeUtils.createInstance(type);</span>
+				}
+
+				// create object from json
+<span class="nc" id="L306">				final Object value = JsonUtils.fromJson(string, type);</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">				if (value != null) {</span>
+<span class="nc" id="L308">					return value;</span>
+				}
+
+				// unable to create object
+<span class="nc" id="L312">				throw new RuntimeException(String</span>
+<span class="nc" id="L313">						.format(&quot;Unable to create object of type %s from input string: %s&quot;, type.getName(), string));</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			} else if (type.isArray()) {</span>
+<span class="nc" id="L315">				throw new RuntimeException(&quot;Unable to deserialize type &quot; + type);</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">			} else if (Path.class == type) {</span>
+<span class="nc" id="L317">				return Paths.get(string);</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">			} else if (TemporalAmount.class == type) {</span>
+				// This is quite difficult. Java has many classes that are temporal amount.
+				// We need to test a bit, which one can interpret the String.
+<span class="nc" id="L321">				return TypeUtils.&lt;TemporalAmount&gt;tryToCreateInstance(string, Duration.class, Period.class)</span>
+<span class="nc" id="L322">						.orElseThrow(() -&gt; new RuntimeException(&quot;Unable to create TemporalAmount from: &quot; + string));</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">			} else if (type.isInterface()) {</span>
+<span class="nc" id="L324">				final String message = &quot;Type &quot;</span>
+<span class="nc" id="L325">						+ type.getName()</span>
+						+ &quot; is an interface. Please use concrete classes for getters and setters.&quot;;
+<span class="nc" id="L327">				LOGGER.error(message);</span>
+<span class="nc" id="L328">				throw new RuntimeException(message);</span>
+			} else {
+<span class="nc" id="L330">				return TypeUtils.createInstance(type, string);</span>
+			}
+<span class="nc" id="L332">		} catch (final Exception e) {</span>
+<span class="nc" id="L333">			throw new RuntimeException(&quot;Unable to set property value of type &quot; + type + &quot; from string '&quot; + string + &quot;'&quot;,</span>
+					e);
+		}
+	}
+
+	public Set&lt;Dashboard&gt; findDashboardUsingEventSourceInstance(final String eventSourceId) {
+<span class="nc" id="L339">		return dashboards.values()</span>
+<span class="nc" id="L340">				.stream()</span>
+<span class="nc" id="L341">				.filter(d -&gt; d.getWidgets()</span>
+<span class="nc" id="L342">						.stream()</span>
+<span class="nc" id="L343">						.anyMatch(w -&gt; w.getEventSourceInstance().getId().equals(eventSourceId)))</span>
+<span class="nc" id="L344">				.collect(toSet());</span>
+	}
+
+	/**
+	 * Delete an event source instance if the instance is not used any more
+	 *
+	 * @param eventSourceId the ID of the event source to remove
+	 * @return &lt;code&gt;null&lt;/code&gt; if the removal was successful or the names of all
+	 *         dashboards containing widgets that use this event source instance
+	 */
+	public Set&lt;String&gt; deleteEventSourceInstance(final String eventSourceId) {
+		// TODO rename method
+<span class="nc" id="L356">		return deleteEventSourceInstance(eventSourceId, false);</span>
+	}
+
+	public Set&lt;String&gt; deleteEventSourceInstance(final String eventSourceId, final boolean force) {
+		// TODO rename method
+<span class="nc" id="L361">		final List&lt;Widget&gt; widgetsToDelete = dashboards.values()</span>
+<span class="nc" id="L362">				.stream()</span>
+<span class="nc" id="L363">				.flatMap(d -&gt; d.getWidgets().stream())</span>
+<span class="nc" id="L364">				.filter(w -&gt; w.getEventSourceInstance().getId().equals(eventSourceId))</span>
+<span class="nc" id="L365">				.collect(toList());</span>
+
+<span class="nc bnc" id="L367" title="All 4 branches missed.">		if (!force &amp;&amp; !widgetsToDelete.isEmpty()) {</span>
+<span class="nc" id="L368">			return findDashboardUsingEventSourceInstance(eventSourceId)//</span>
+<span class="nc" id="L369">					.stream()</span>
+<span class="nc" id="L370">					.map(Dashboard::getId)</span>
+<span class="nc" id="L371">					.collect(toSet());</span>
+<span class="nc bnc" id="L372" title="All 4 branches missed.">		} else if (force &amp;&amp; !widgetsToDelete.isEmpty()) {</span>
+<span class="nc" id="L373">			widgetsToDelete.forEach(this::deleteWidget);</span>
+		}
+
+<span class="nc" id="L376">		eventSourceInstanceController.deleteEventSourceInstance(eventSourceId);</span>
+<span class="nc" id="L377">		return Collections.emptySet();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WroManagerFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.configuration</a> &gt; <span class="el_source">WroManagerFactory.java</span></div><h1>WroManagerFactory.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.configuration;
+
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import com.google.common.io.CharStreams;
+import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.Utils;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import ro.isdc.wro.extensions.processor.css.RubySassCssProcessor;
+import ro.isdc.wro.extensions.processor.js.CoffeeScriptProcessor;
+import ro.isdc.wro.manager.factory.ConfigurableWroManagerFactory;
+import ro.isdc.wro.model.WroModel;
+import ro.isdc.wro.model.factory.WroModelFactory;
+import ro.isdc.wro.model.group.Group;
+import ro.isdc.wro.model.resource.Resource;
+import ro.isdc.wro.model.resource.ResourceType;
+import ro.isdc.wro.model.resource.processor.decorator.ProcessorDecorator;
+import ro.isdc.wro.model.resource.processor.factory.ProcessorsFactory;
+import ro.isdc.wro.model.resource.processor.factory.SimpleProcessorsFactory;
+
+/**
+ * Wro4j Manager Factory. Optimized for built-in usage
+ *
+ * @author avarabyeu
+ */
+public class WroManagerFactory extends ConfigurableWroManagerFactory {
+	private static final String COFFEE_FILENAME = &quot;.coffee&quot;;
+
+	private final WroGroupContent content;
+
+<span class="nc" id="L49">	public WroManagerFactory(final WroGroupContent content) {</span>
+<span class="nc" id="L50">		this.content = content;</span>
+<span class="nc" id="L51">	}</span>
+
+	@Override
+	protected ProcessorsFactory newProcessorsFactory() {
+<span class="nc" id="L55">		final SimpleProcessorsFactory factory = new SimpleProcessorsFactory();</span>
+<span class="nc" id="L56">		factory.addPreProcessor(new ProcessorDecorator(new CoffeeScriptProcessor()) {</span>
+			@Override
+			public void process(@Nullable final Resource resource,
+					@Nullable final Reader reader,
+					@Nullable final Writer writer) throws IOException {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">				if (Objects.requireNonNull(resource).getUri().endsWith(COFFEE_FILENAME)) {</span>
+<span class="nc" id="L62">					super.process(resource, reader, writer);</span>
+				} else {
+<span class="nc" id="L64">					CharStreams.copy(reader, writer);</span>
+				}
+<span class="nc" id="L66">			}</span>
+		});
+<span class="nc" id="L68">		factory.addPostProcessor(new RubySassCssProcessor());</span>
+
+<span class="nc" id="L70">		return factory;</span>
+	}
+
+	@Override
+	protected WroModelFactory newModelFactory() {
+<span class="nc" id="L75">		return new WroModelFactory() {</span>
+			@Override
+			public WroModel create() {
+<span class="nc" id="L78">				final WroModel model = new WroModel();</span>
+<span class="nc" id="L79">				model.addGroup(content.toGroup(&quot;application&quot;));</span>
+<span class="nc" id="L80">				return model;</span>
+			}
+
+			@Override
+			public void destroy() {
+				// nothing to do
+<span class="nc" id="L86">			}</span>
+		};
+	}
+
+	@Override
+	protected Properties newConfigProperties() {
+<span class="nc" id="L92">		final Properties properties = new Properties();</span>
+<span class="nc" id="L93">		properties.putAll(Utils.map(//</span>
+				&quot;minimizeEnabled&quot;,
+				&quot;false&quot;, //
+				&quot;disableCache&quot;,
+				&quot;true&quot;, //
+				&quot;gzipResources&quot;,
+				&quot;false&quot;, //
+				&quot;parallelPreprocessing&quot;,
+				&quot;true&quot;));
+<span class="nc" id="L102">		return properties;</span>
+	}
+
+	public static final class WroGroupContent {
+<span class="nc" id="L106">		private final Map&lt;ResourceType, Collection&lt;URI&gt;&gt; paths = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L108">		public WroGroupContent() {</span>
+			// nothing to do
+<span class="nc" id="L110">		}</span>
+
+		public void addFiltered(final Stream&lt;Path&gt; paths, final CustomWroConfiguration config) {
+<span class="nc" id="L113">			final Map&lt;ResourceType, Map&lt;Pattern, List&lt;URI&gt;&gt;&gt; foundPathsPerPattern = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L114">			final List&lt;ResourceType&gt; types = Arrays.asList(ResourceType.values());</span>
+<span class="nc" id="L115">			types.forEach(type -&gt; foundPathsPerPattern.put(type, new LinkedHashMap&lt;&gt;()));</span>
+<span class="nc" id="L116">			types.forEach(type -&gt; config.types.get(type)</span>
+<span class="nc" id="L117">					.forEach(patternString -&gt; foundPathsPerPattern.get(type)</span>
+<span class="nc" id="L118">							.put(Pattern.compile(FileUtils.toRegex(patternString)), new ArrayList&lt;&gt;())));</span>
+
+<span class="nc" id="L120">			paths.forEach(path -&gt; {</span>
+<span class="nc" id="L121">				final String pathString = path.toAbsolutePath().toString();</span>
+<span class="nc" id="L122">				types.forEach(type -&gt; {</span>
+<span class="nc" id="L123">					foundPathsPerPattern.get(type).keySet().forEach(pattern -&gt; {</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">						if (pattern.matcher(pathString).find()) {</span>
+<span class="nc" id="L125">							foundPathsPerPattern.get(type).get(pattern).add(path.toUri());</span>
+						}
+<span class="nc" id="L127">					});</span>
+<span class="nc" id="L128">				});</span>
+<span class="nc" id="L129">			});</span>
+<span class="nc" id="L130">			types.forEach(type -&gt; {</span>
+<span class="nc" id="L131">				this.paths.put(type,</span>
+<span class="nc" id="L132">						foundPathsPerPattern.get(type)</span>
+<span class="nc" id="L133">								.entrySet()</span>
+<span class="nc" id="L134">								.stream()</span>
+<span class="nc" id="L135">								.flatMap(e -&gt; e.getValue().stream())</span>
+<span class="nc" id="L136">								.collect(toList()));</span>
+<span class="nc" id="L137">			});</span>
+<span class="nc" id="L138">		}</span>
+
+		public Group toGroup(final String name) {
+<span class="nc" id="L141">			final Group group = new Group(name);</span>
+<span class="nc" id="L142">			group.setResources(Arrays.stream(ResourceType.values())</span>
+<span class="nc" id="L143">					.flatMap(type -&gt; paths.get(type)</span>
+<span class="nc" id="L144">							.stream()</span>
+<span class="nc" id="L145">							.map(path -&gt; path.toString())</span>
+<span class="nc" id="L146">							.map(uri -&gt; Resource.create(uri, type)))</span>
+<span class="nc" id="L147">					.collect(toList()));</span>
+<span class="nc" id="L148">			return group;</span>
+		}
+	}
+
+	public static final class CustomWroConfiguration {
+<span class="nc" id="L153">		private Map&lt;ResourceType, List&lt;String&gt;&gt; types = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L155">		public CustomWroConfiguration() {</span>
+			// nothing to do
+<span class="nc" id="L157">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

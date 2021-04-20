@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JdbcDatabase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.storage</a> &gt; <span class="el_source">JdbcDatabase.java</span></div><h1>JdbcDatabase.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.storage;
+
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.COLUMNS_WIDGET_DATA;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.COLUMN_OPTIONS_WIDGET_DATA;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_DASHBOARD;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_EVENT_SOURCE;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_EVENT_SOURCE_PROPERTY;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_VALUES;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET;
+import static com.hlag.oversigt.storage.DBConstants.TABLE_WIDGET_DATA;
+import static com.hlag.oversigt.util.StringUtils.list;
+import static com.hlag.oversigt.util.Utils.is;
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.model.Dashboard;
+import com.hlag.oversigt.model.DashboardColorScheme;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.model.EventSourceInstance;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.model.Widget;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.storage.SqlDialect.ColumnOptions;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.TypeUtils;
+
+import de.larssh.utils.collection.Maps;
+
+@Singleton
+public class JdbcDatabase extends AbstractJdbcConnector implements Storage {
+<span class="fc" id="L73">	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcDatabase.class);</span>
+
+	private static final String TYPE_PROPERTY = &quot;PROPERTY&quot;;
+
+	private static final String TYPE_DATA = &quot;DATA&quot;;
+
+<span class="pc" id="L79">	private static final Optional&lt;ThrowingFunction&lt;ResultSet, Integer&gt;&gt; RETRIEVE_ID = Optional.of(rs -&gt; rs.getInt(1));</span>
+
+	private final SqlDialect sqlDialect;
+
+	private final Connection connection;
+
+	@Inject
+	public JdbcDatabase(final SqlDialect dialect,
+			@Named(&quot;databaseLocation&quot;) final String databaseLocation,
+			@Named(&quot;databaseName&quot;) final String schema,
+			@Named(&quot;databaseUsername&quot;) final String username,
+<span class="fc" id="L90">			@Named(&quot;databasePassword&quot;) final String password) {</span>
+<span class="fc" id="L91">		sqlDialect = dialect;</span>
+		try {
+<span class="fc" id="L93">			LOGGER.info(&quot;Loading JDBC driver class: &quot; + dialect.getDriverClassName());</span>
+<span class="fc" id="L94">			Class.forName(dialect.getDriverClassName());</span>
+<span class="fc" id="L95">			LOGGER.info(&quot;Creating JDBC connection for location '{}' and schema '{}'&quot;, databaseLocation, schema);</span>
+<span class="fc" id="L96">			connection = DriverManager</span>
+<span class="fc" id="L97">					.getConnection(dialect.getJdbcConnectionUrl(databaseLocation, schema, username, password));</span>
+<span class="fc" id="L98">			checkTable(TABLE_EVENT_SOURCE, COLUMN_OPTIONS_EVENT_SOURCE);</span>
+<span class="fc" id="L99">			checkTable(TABLE_EVENT_SOURCE_PROPERTY, COLUMN_OPTIONS_EVENT_SOURCE_PROPERTY);</span>
+<span class="fc" id="L100">			checkTable(TABLE_DASHBOARD, COLUMN_OPTIONS_DASHBOARD);</span>
+<span class="fc" id="L101">			checkTable(TABLE_WIDGET, COLUMN_OPTIONS_WIDGET);</span>
+<span class="fc" id="L102">			checkTable(TABLE_WIDGET_DATA, COLUMN_OPTIONS_WIDGET_DATA);</span>
+<span class="fc" id="L103">			checkTable(TABLE_VALUES, COLUMN_OPTIONS_VALUES);</span>
+<span class="nc" id="L104">		} catch (final SQLException | ClassNotFoundException e) {</span>
+<span class="nc" id="L105">			throw new RuntimeException(&quot;Unable to create database connection&quot;, e);</span>
+<span class="fc" id="L106">		}</span>
+<span class="fc" id="L107">	}</span>
+
+	@Override
+	protected SqlDialect getDialect() {
+<span class="fc" id="L111">		return sqlDialect;</span>
+	}
+
+	private void checkTable(final String tableName, final ColumnOptions[] options) throws SQLException {
+<span class="fc" id="L115">		LOGGER.debug(&quot;Checking table &quot; + tableName);</span>
+<span class="fc" id="L116">		final DatabaseMetaData databaseMetaData = getConnection().getMetaData();</span>
+<span class="fc" id="L117">		try (ResultSet tables = databaseMetaData.getTables(null, null, tableName, new String[] { &quot;TABLE&quot; })) {</span>
+<span class="fc" id="L118">			final List&lt;Object&gt; tableList = getList(tables, rs -&gt; rs.getString(&quot;TABLE_NAME&quot;));</span>
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">			if (tableList.isEmpty()) {</span>
+				// Table does not exist. we need to create it
+<span class="nc" id="L121">				LOGGER.info(&quot;Creating table &quot; + tableName);</span>
+<span class="nc" id="L122">				final String sql = getDialect().createTable(tableName, options);</span>
+<span class="nc" id="L123">				executeUpdate(sql);</span>
+<span class="nc" id="L124">			} else {</span>
+				final List&lt;Map&lt;String, Object&gt;&gt; columnProperties;
+<span class="fc" id="L126">				try (ResultSet columns = databaseMetaData.getColumns(null, null, tableName, &quot;%&quot;)) {</span>
+<span class="fc" id="L127">					columnProperties = load(columns,</span>
+<span class="fc" id="L128">							rs -&gt; readColumnValues(rs,</span>
+									new String[] {
+											&quot;COLUMN_NAME&quot;,
+											&quot;TYPE_NAME&quot;,
+											&quot;COLUMN_SIZE&quot;,
+											&quot;IS_NULLABLE&quot;,
+											&quot;IS_AUTOINCREMENT&quot; }));
+				}
+<span class="fc bfc" id="L136" title="All 2 branches covered.">				for (final ColumnOptions option : options) {</span>
+<span class="fc" id="L137">					final Optional&lt;Map&lt;String, Object&gt;&gt; foundColumnProperties = columnProperties.stream()</span>
+<span class="fc" id="L138">							.filter(cp -&gt; option.getName().equals(cp.get(&quot;COLUMN_NAME&quot;)))</span>
+<span class="fc" id="L139">							.findFirst();</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">					if (!foundColumnProperties.isPresent()) {</span>
+<span class="nc" id="L141">						LOGGER.info(&quot;Altering table &quot; + tableName + &quot;. Adding column &quot; + option.getName());</span>
+<span class="nc" id="L142">						final String sql = getDialect().alterTableAddColumn(tableName, option);</span>
+<span class="nc" id="L143">						executeUpdate(sql);</span>
+<span class="nc" id="L144">					} else {</span>
+<span class="fc" id="L145">						columnProperties.remove(foundColumnProperties.get());</span>
+					}
+				}
+<span class="fc" id="L148">				final List&lt;String&gt; columnsToDrop = columnProperties.stream()</span>
+<span class="pc" id="L149">						.map(m -&gt; (String) m.get(&quot;COLUMN_NAME&quot;))</span>
+<span class="fc" id="L150">						.collect(Collectors.toList());</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">				for (final String columnToDrop : columnsToDrop) {</span>
+<span class="nc" id="L152">					LOGGER.info(&quot;Altering table &quot; + tableName + &quot;. Dropping column &quot; + columnToDrop);</span>
+<span class="nc" id="L153">					final String sql = getDialect().alterTableDropColumn(tableName, columnToDrop);</span>
+<span class="nc" id="L154">					executeUpdate(sql);</span>
+<span class="nc" id="L155">				}</span>
+			}
+<span class="nc" id="L157">		} catch (final Exception e) {</span>
+<span class="nc" id="L158">			throw new RuntimeException(&quot;Unable to check table: &quot; + tableName, e);</span>
+<span class="fc" id="L159">		}</span>
+<span class="fc" id="L160">	}</span>
+
+	@Override
+	public void close() throws IOException {
+		try {
+<span class="fc" id="L165">			connection.close();</span>
+<span class="fc" id="L166">			LOGGER.info(&quot;Database connection closed.&quot;);</span>
+<span class="nc" id="L167">		} catch (final SQLException e) {</span>
+<span class="nc" id="L168">			throw new IOException(&quot;Unable to close dastabase&quot;, e);</span>
+<span class="fc" id="L169">		}</span>
+<span class="fc" id="L170">	}</span>
+
+	@Override
+	protected Connection getConnection() {
+<span class="fc" id="L174">		return connection;</span>
+	}
+
+	@Override
+	public List&lt;String&gt; getEventSourceNames() {
+<span class="fc" id="L179">		return load(TABLE_EVENT_SOURCE, &quot;NAME&quot;);</span>
+	}
+
+	@Override
+	public Collection&lt;String&gt; getEventSourcesIds() {
+<span class="nc" id="L184">		return load(TABLE_EVENT_SOURCE, &quot;ID&quot;);</span>
+	}
+
+	@Override
+	public EventSourceInstance loadEventSourceInstance(final String eventSourceId,
+			final BiFunction&lt;Optional&lt;String&gt;, String, EventSourceDescriptor&gt; descriptorSupplier) {
+<span class="nc" id="L190">		final Map&lt;String, Object&gt; infos = load(TABLE_EVENT_SOURCE,</span>
+				&quot;*&quot;,
+<span class="nc" id="L192">				Optional.of(&quot;ID&quot;),</span>
+				eventSourceId,
+<span class="nc" id="L194">				rs -&gt; readColumnValues(rs, COLUMNS_EVENT_SOURCE)).get(0);</span>
+
+<span class="nc" id="L196">		final String id = (String) infos.get(&quot;ID&quot;);</span>
+<span class="nc" id="L197">		final String view = (String) infos.get(&quot;VIEW&quot;);</span>
+<span class="nc" id="L198">		final String name = (String) infos.get(&quot;NAME&quot;);</span>
+<span class="nc" id="L199">		final boolean enabled = is(infos.get(&quot;ENABLED&quot;));</span>
+<span class="nc" id="L200">		final Optional&lt;String&gt; className = Optional.ofNullable((String) infos.get(&quot;EVENT_SOURCE_CLASS&quot;));</span>
+<span class="nc" id="L201">		final Duration frequency = Optional.ofNullable((Number) infos.get(&quot;FREQUENCY&quot;))</span>
+<span class="nc" id="L202">				.map(Number::longValue)</span>
+<span class="nc" id="L203">				.map(Duration::ofSeconds)</span>
+<span class="nc" id="L204">				.orElse(null);</span>
+<span class="nc" id="L205">		final String createdBy = (String) infos.get(&quot;CREATED_BY&quot;);</span>
+<span class="nc" id="L206">		final String lastChangeBy = (String) infos.get(&quot;LAST_CHANGE_BY&quot;);</span>
+
+<span class="nc" id="L208">		return new EventSourceInstance(descriptorSupplier.apply(className,</span>
+				view), id, name, enabled, frequency, createdBy, lastChangeBy);
+	}
+
+	@Override
+	public Map&lt;String, String&gt; getEventSourceInstanceProperties(final String id) {
+<span class="nc" id="L214">		return getEventSourceInstance(id, TYPE_PROPERTY);</span>
+	}
+
+	@Override
+	public Map&lt;String, String&gt; getEventSourceInstanceDataItems(final String id) {
+<span class="nc" id="L219">		return getEventSourceInstance(id, TYPE_DATA);</span>
+	}
+
+	private Map&lt;String, String&gt; getEventSourceInstance(final String id, final String type) {
+<span class="nc" id="L223">		return load(TABLE_EVENT_SOURCE_PROPERTY,</span>
+				&quot;*&quot;,
+				&quot;EVENT_SOURCE_ID&quot;,
+				id,
+				&quot;TYPE&quot;,
+				type,
+<span class="nc" id="L229">				rs -&gt; readColumnValues(rs, new String[] { &quot;NAME&quot;, &quot;VALUE&quot; })).stream()</span>
+<span class="nc" id="L230">						.collect(Collectors.toMap(m -&gt; (String) m.get(&quot;NAME&quot;), m -&gt; (String) m.get(&quot;VALUE&quot;)));</span>
+	}
+
+	@Override
+	public void persistEventSourceInstance(final EventSourceInstance instance) {
+<span class="nc" id="L235">		final Map&lt;String, Object&gt; values = Maps.&lt;String, Object&gt;builder()</span>
+<span class="nc" id="L236">				.put(&quot;NAME&quot;, instance.getName())</span>
+<span class="nc" id="L237">				.put(&quot;ENABLED&quot;, instance.isEnabled())</span>
+<span class="nc" id="L238">				.put(&quot;EVENT_SOURCE_CLASS&quot;,</span>
+<span class="nc" id="L239">						instance.getDescriptor().getServiceClass().map(c -&gt; c.getName()).orElse(null))</span>
+<span class="nc" id="L240">				.put(&quot;FREQUENCY&quot;, instance.getFrequency())</span>
+<span class="nc" id="L241">				.put(&quot;VIEW&quot;, instance.getDescriptor().getView())</span>
+<span class="nc" id="L242">				.put(&quot;LAST_CHANGE&quot;, now())</span>
+<span class="nc" id="L243">				.put(&quot;LAST_CHANGE_BY&quot;, instance.getLastChangeBy())</span>
+<span class="nc" id="L244">				.get();</span>
+<span class="nc" id="L245">		persist(TABLE_EVENT_SOURCE,</span>
+				&quot;ID&quot;,
+				instance,
+				EventSourceInstance::getId,
+				values,
+<span class="nc" id="L250">				Maps.&lt;String, Object&gt;builder()</span>
+<span class="nc" id="L251">						.put(&quot;CREATED_ON&quot;, now())</span>
+<span class="nc" id="L252">						.put(&quot;CREATED_BY&quot;, instance.getCreatedBy())</span>
+<span class="nc" id="L253">						.get());</span>
+<span class="nc" id="L254">		final List&lt;Map&lt;String, Object&gt;&gt; existingProperties = load(TABLE_EVENT_SOURCE_PROPERTY,</span>
+				&quot;*&quot;,
+<span class="nc" id="L256">				Optional.of(&quot;EVENT_SOURCE_ID&quot;),</span>
+<span class="nc" id="L257">				instance.getId(),</span>
+<span class="nc" id="L258">				rs -&gt; readColumnValues(rs, COLUMNS_EVENT_SOURCE_PROPERTY));</span>
+<span class="nc" id="L259">		createOrUpdateEventSourceProperties(instance,</span>
+<span class="nc" id="L260">				instance.getDescriptor().getProperties().stream(),</span>
+				&quot;PROPERTY&quot;,
+				existingProperties);
+<span class="nc" id="L263">		delete(TABLE_EVENT_SOURCE_PROPERTY,</span>
+<span class="nc" id="L264">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L265">						.put(&quot;EVENT_SOURCE_ID&quot;, instance.getId())</span>
+<span class="nc" id="L266">						.put(&quot;TYPE&quot;, &quot;DATA&quot;)</span>
+<span class="nc" id="L267">						.get());</span>
+<span class="nc" id="L268">		createOrUpdateEventSourceProperties(instance,</span>
+<span class="nc" id="L269">				instance.getDescriptor().getDataItems().stream().filter(instance::hasPropertyValue),</span>
+				&quot;DATA&quot;,
+<span class="nc" id="L271">				Collections.emptyList());</span>
+<span class="nc" id="L272">	}</span>
+
+	private void createOrUpdateEventSourceProperties(final EventSourceInstance instance,
+			final Stream&lt;EventSourceProperty&gt; propertyStream,
+			final String type,
+			final List&lt;Map&lt;String, Object&gt;&gt; existingProperties) {
+<span class="nc" id="L278">		createOrUpdateEventSourceProperties(instance,</span>
+<span class="nc" id="L279">				propertyStream.collect(Collectors.toMap(Function.identity(),</span>
+<span class="nc" id="L280">						p -&gt; Strings.nullToEmpty(instance.getPropertyValueString(p)))),</span>
+<span class="nc" id="L281">				existingProperties.stream()</span>
+<span class="nc" id="L282">						.filter(m -&gt; type.equals(m.get(&quot;TYPE&quot;)))</span>
+<span class="nc" id="L283">						.map(m -&gt; (String) m.get(&quot;NAME&quot;))</span>
+<span class="nc" id="L284">						.collect(Collectors.toSet()));</span>
+<span class="nc" id="L285">	}</span>
+
+	private void createOrUpdateEventSourceProperties(final EventSourceInstance instance,
+			final Map&lt;EventSourceProperty, String&gt; properties,
+			final Set&lt;String&gt; existingNames) {
+<span class="nc bnc" id="L290" title="All 2 branches missed.">		for (final Entry&lt;EventSourceProperty, String&gt; e : properties.entrySet()) {</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">			if (existingNames.contains(e.getKey().getName())) {</span>
+				// update
+<span class="nc" id="L293">				updateByThreeKey(TABLE_EVENT_SOURCE_PROPERTY,</span>
+						&quot;EVENT_SOURCE_ID&quot;,
+<span class="nc" id="L295">						instance.getId(),</span>
+						&quot;TYPE&quot;,
+<span class="nc" id="L297">						e.getKey().getType(),</span>
+						&quot;NAME&quot;,
+<span class="nc" id="L299">						e.getKey().getName(),</span>
+						&quot;VALUE&quot;,
+<span class="nc" id="L301">						e.getValue());</span>
+			} else {
+				// create
+<span class="nc" id="L304">				insert(TABLE_EVENT_SOURCE_PROPERTY,</span>
+<span class="nc" id="L305">						Optional.empty(),</span>
+						&quot;EVENT_SOURCE_ID&quot;,
+<span class="nc" id="L307">						instance.getId(),</span>
+						&quot;TYPE&quot;,
+<span class="nc" id="L309">						e.getKey().getType(),</span>
+						&quot;NAME&quot;,
+<span class="nc" id="L311">						e.getKey().getName(),</span>
+						&quot;VALUE&quot;,
+<span class="nc" id="L313">						e.getValue());</span>
+			}
+<span class="nc" id="L315">		}</span>
+<span class="nc" id="L316">	}</span>
+
+	@Override
+	public void deleteEventSourceInstance(final String eventSourceId) {
+<span class="nc" id="L320">		delete(TABLE_EVENT_SOURCE, &quot;ID&quot;, eventSourceId);</span>
+<span class="nc" id="L321">		delete(TABLE_EVENT_SOURCE_PROPERTY, &quot;EVENT_SOURCE_ID&quot;, eventSourceId);</span>
+<span class="nc" id="L322">	}</span>
+
+	@Override
+	public void updateEventSourceClasses(final String oldClassName, final String newClassName) {
+<span class="nc" id="L326">		update(TABLE_EVENT_SOURCE,</span>
+<span class="nc" id="L327">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L328">						.put(&quot;EVENT_SOURCE_CLASS&quot;, oldClassName)</span>
+<span class="nc" id="L329">						.get(),</span>
+<span class="nc" id="L330">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L331">						.put(&quot;EVENT_SOURCE_CLASS&quot;, newClassName)</span>
+<span class="nc" id="L332">						.get());</span>
+<span class="nc" id="L333">	}</span>
+
+	@Override
+	public List&lt;String&gt; getDashboardIds() {
+<span class="fc" id="L337">		return load(TABLE_DASHBOARD, &quot;ID&quot;);</span>
+	}
+
+	@Override
+	public void persistDashboard(final Dashboard dashboard) {
+<span class="nc" id="L342">		final Map&lt;String, Object&gt; values = Maps.&lt;String, Object&gt;builder()</span>
+<span class="nc" id="L343">				.put(&quot;TITLE&quot;, dashboard.getTitle())</span>
+<span class="nc" id="L344">				.put(&quot;WIDTH&quot;, dashboard.getScreenWidth())</span>
+<span class="nc" id="L345">				.put(&quot;HEIGHT&quot;, dashboard.getScreenHeight())</span>
+<span class="nc" id="L346">				.put(&quot;COLUMNS&quot;, dashboard.getColumns())</span>
+<span class="nc" id="L347">				.put(&quot;BACKGROUND_COLOR&quot;, dashboard.getBackgroundColor().getHexColor())</span>
+<span class="nc" id="L348">				.put(&quot;COLOR_SCHEME&quot;, dashboard.getColorScheme().name())</span>
+<span class="nc" id="L349">				.put(&quot;FOREGROUND_COLOR_START&quot;, dashboard.getForegroundColorStart().getHexColor())</span>
+<span class="nc" id="L350">				.put(&quot;FOREGROUND_COLOR_END&quot;, dashboard.getForegroundColorEnd().getHexColor())</span>
+<span class="nc" id="L351">				.put(&quot;OWNER&quot;, dashboard.getOwners().stream().collect(Collectors.joining(&quot;,&quot;, &quot;,&quot;, &quot;,&quot;)))</span>
+<span class="nc" id="L352">				.put(&quot;EDITOR&quot;, dashboard.getEditors().stream().collect(Collectors.joining(&quot;,&quot;, &quot;,&quot;, &quot;,&quot;)))</span>
+<span class="nc" id="L353">				.put(&quot;ENABLED&quot;, dashboard.isEnabled())</span>
+<span class="nc" id="L354">				.put(&quot;LAST_CHANGE&quot;, now())</span>
+<span class="nc" id="L355">				.get();</span>
+<span class="nc" id="L356">		persist(TABLE_DASHBOARD, &quot;ID&quot;, dashboard, Dashboard::getId, values);</span>
+<span class="nc" id="L357">	}</span>
+
+	@Override
+	public List&lt;Dashboard&gt; loadDashboards() {
+<span class="nc" id="L361">		return load(TABLE_DASHBOARD, &quot;*&quot;, Optional.empty(), null, rs -&gt; readColumnValues(rs, COLUMNS_DASHBOARD))//</span>
+<span class="nc" id="L362">				.stream()</span>
+<span class="nc" id="L363">				.map(this::loadDashboard)</span>
+<span class="nc" id="L364">				.collect(Collectors.toList());</span>
+	}
+
+	@Override
+	public Optional&lt;Dashboard&gt; loadDashboard(final String id) {
+<span class="nc" id="L369">		final List&lt;Map&lt;String, Object&gt;&gt; maybeData</span>
+<span class="nc" id="L370">				= load(TABLE_DASHBOARD, &quot;*&quot;, Optional.of(&quot;ID&quot;), id, rs -&gt; readColumnValues(rs, COLUMNS_DASHBOARD));</span>
+
+<span class="nc bnc" id="L372" title="All 2 branches missed.">		if (maybeData.isEmpty()) {</span>
+<span class="nc" id="L373">			return Optional.empty();</span>
+		}
+<span class="nc" id="L375">		return Optional.of(loadDashboard(maybeData.get(0)));</span>
+	}
+
+	public Dashboard loadDashboard(final Map&lt;String, Object&gt; data) {
+<span class="nc" id="L379">		final String id = (String) data.get(&quot;ID&quot;);</span>
+<span class="nc" id="L380">		final String title = (String) data.get(&quot;TITLE&quot;);</span>
+<span class="nc" id="L381">		final boolean enabled = is(data.get(&quot;ENABLED&quot;));</span>
+<span class="nc" id="L382">		final int screenWidth = (int) data.get(&quot;WIDTH&quot;);</span>
+<span class="nc" id="L383">		final int screenHeight = (int) data.get(&quot;HEIGHT&quot;);</span>
+<span class="nc" id="L384">		final int columns = (int) data.get(&quot;COLUMNS&quot;);</span>
+<span class="nc" id="L385">		final Color backgroundColor = Color.parse((String) data.get(&quot;BACKGROUND_COLOR&quot;));</span>
+<span class="nc" id="L386">		final DashboardColorScheme colorScheme = DashboardColorScheme.fromString((String) data.get(&quot;COLOR_SCHEME&quot;));</span>
+<span class="nc" id="L387">		final Color foregroundColorStart = Color.parse((String) data.get(&quot;FOREGROUND_COLOR_START&quot;));</span>
+<span class="nc" id="L388">		final Color foregroundColorEnd = Color.parse((String) data.get(&quot;FOREGROUND_COLOR_END&quot;));</span>
+<span class="nc" id="L389">		final Collection&lt;String&gt; owners = list(Optional.ofNullable((String) data.get(&quot;OWNER&quot;)));</span>
+<span class="nc" id="L390">		final Collection&lt;String&gt; editors = list(Optional.ofNullable((String) data.get(&quot;EDITOR&quot;)));</span>
+
+<span class="nc" id="L392">		return new Dashboard(id,</span>
+				title,
+				enabled,
+				screenWidth,
+				screenHeight,
+				columns,
+				backgroundColor,
+				colorScheme,
+				foregroundColorStart,
+				foregroundColorEnd,
+				owners,
+				editors);
+	}
+
+	@Override
+	public void createWidget(final Dashboard dashboard, final Widget widget) {
+<span class="nc" id="L408">		final OptionalInt id = insert(TABLE_WIDGET,</span>
+				RETRIEVE_ID,
+				&quot;DASHBOARD_ID&quot;,
+<span class="nc" id="L411">				dashboard.getId(),</span>
+				&quot;EVENT_SOURCE_ID&quot;,
+<span class="nc" id="L413">				widget.getEventSourceInstance().getId(),</span>
+				&quot;TITLE&quot;,
+<span class="nc" id="L415">				widget.getTitle(),</span>
+				&quot;NAME&quot;,
+<span class="nc" id="L417">				widget.getName(),</span>
+				&quot;POS_X&quot;,
+<span class="nc" id="L419">				widget.getPosX(),</span>
+				&quot;POS_Y&quot;,
+<span class="nc" id="L421">				widget.getPosY(),</span>
+				&quot;SIZE_X&quot;,
+<span class="nc" id="L423">				widget.getSizeX(),</span>
+				&quot;SIZE_Y&quot;,
+<span class="nc" id="L425">				widget.getSizeY(),</span>
+				&quot;ENABLED&quot;,
+<span class="nc" id="L427">				widget.isEnabled(),</span>
+				&quot;BACKGROUND_COLOR&quot;,
+<span class="nc" id="L429">				widget.getBackgroundColor().getHexColor(),</span>
+				&quot;STYLE&quot;,
+<span class="nc" id="L431">				widget.getStyle(),</span>
+				&quot;LAST_CHANGE&quot;,
+<span class="nc" id="L433">				now()).map(OptionalInt::of).orElse(OptionalInt.empty());</span>
+<span class="nc bnc" id="L434" title="All 2 branches missed.">		if (!id.isPresent()) {</span>
+<span class="nc" id="L435">			throw new RuntimeException(String</span>
+<span class="nc" id="L436">					.format(&quot;In dashboard [%s]: unable to create widget: %s&quot;, dashboard.getId(), widget.toString()));</span>
+		}
+<span class="nc" id="L438">		widget.setId(id.getAsInt());</span>
+<span class="nc" id="L439">		createOrUpdateWidgetProperties(widget);</span>
+<span class="nc" id="L440">	}</span>
+
+	private void deleteWidgetDatas(final Widget widget) {
+<span class="nc" id="L443">		final String sql = getDialect().delete(TABLE_WIDGET_DATA,</span>
+<span class="nc" id="L444">				Arrays.asList(&quot;WIDGET_ID&quot;),</span>
+<span class="nc" id="L445">				Optional.of(&quot;NAME&quot;),</span>
+				true,
+<span class="nc" id="L447">				widget.getEventSourceInstance().getDescriptor().getDataItems().size());</span>
+<span class="nc" id="L448">		final List&lt;Object&gt; items = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L449">		items.add(widget.getId());</span>
+<span class="nc" id="L450">		items.addAll(widget.getEventSourceInstance()</span>
+<span class="nc" id="L451">				.getDescriptor()</span>
+<span class="nc" id="L452">				.getDataItems()</span>
+<span class="nc" id="L453">				.stream()</span>
+<span class="nc" id="L454">				.map(EventSourceProperty::getName)</span>
+<span class="nc" id="L455">				.collect(Collectors.toList()));</span>
+		try {
+<span class="nc" id="L457">			final int amount = executeUpdate(sql, items);</span>
+<span class="nc" id="L458">			LOGGER.info(&quot;Deleted &quot; + amount + &quot; data rows.&quot;);</span>
+<span class="nc" id="L459">		} catch (final SQLException e) {</span>
+<span class="nc" id="L460">			throw new RuntimeException(&quot;Unable to delete unnesseccary widget data items&quot;, e);</span>
+<span class="nc" id="L461">		}</span>
+<span class="nc" id="L462">	}</span>
+
+	private void createOrUpdateWidgetProperties(final Widget widget) {
+		// determine values to persist
+<span class="nc" id="L466">		final Map&lt;String, String&gt; values = widget.getEventSourceInstance()</span>
+<span class="nc" id="L467">				.getDescriptor()</span>
+<span class="nc" id="L468">				.getDataItems()</span>
+<span class="nc" id="L469">				.stream()</span>
+<span class="nc bnc" id="L470" title="All 2 branches missed.">				.filter(p -&gt; !widget.getEventSourceInstance().hasPropertyValue(p))</span>
+<span class="nc" id="L471">				.collect(Collectors.toMap(EventSourceProperty::getName,</span>
+<span class="nc" id="L472">						p -&gt; Strings.nullToEmpty(widget.getWidgetData(p))));</span>
+
+		// find names of already existing values
+<span class="nc" id="L475">		deleteWidgetDatas(widget);</span>
+<span class="nc" id="L476">		final List&lt;String&gt; exisitingNames = load(TABLE_WIDGET_DATA, &quot;NAME&quot;, Optional.of(&quot;WIDGET_ID&quot;), widget.getId());</span>
+		// TODO we can omit the &quot;OrUpdate&quot;
+<span class="nc" id="L478">		createOrUpdateWidgetProperties(widget.getId(), values, exisitingNames);</span>
+<span class="nc" id="L479">	}</span>
+
+	private void createOrUpdateWidgetProperties(final int widgetId,
+			final Map&lt;String, String&gt; entries,
+			final Collection&lt;String&gt; exisitingNames) {
+<span class="nc bnc" id="L484" title="All 2 branches missed.">		for (final Entry&lt;String, String&gt; e : entries.entrySet()) {</span>
+<span class="nc bnc" id="L485" title="All 2 branches missed.">			if (exisitingNames.contains(e.getKey())) {</span>
+				// update
+<span class="nc" id="L487">				updateByTwoKey(TABLE_WIDGET_DATA, &quot;WIDGET_ID&quot;, widgetId, &quot;NAME&quot;, e.getKey(), &quot;VALUE&quot;, e.getValue());</span>
+			} else {
+				// create
+<span class="nc" id="L490">				insert(TABLE_WIDGET_DATA,</span>
+<span class="nc" id="L491">						Optional.empty(),</span>
+						&quot;WIDGET_ID&quot;,
+<span class="nc" id="L493">						widgetId,</span>
+						&quot;NAME&quot;,
+<span class="nc" id="L495">						e.getKey(),</span>
+						&quot;VALUE&quot;,
+<span class="nc" id="L497">						e.getValue());</span>
+			}
+<span class="nc" id="L499">		}</span>
+<span class="nc" id="L500">	}</span>
+
+	@Override
+	public List&lt;Widget&gt; loadWidgetDatas(final Dashboard dashboard,
+			final Function&lt;String, EventSourceInstance&gt; instanceProvider) {
+<span class="nc" id="L505">		final List&lt;Map&lt;String, Object&gt;&gt; widgetInfoList = load(TABLE_WIDGET,</span>
+				&quot;*&quot;,
+<span class="nc" id="L507">				Optional.of(&quot;DASHBOARD_ID&quot;),</span>
+<span class="nc" id="L508">				dashboard.getId(),</span>
+<span class="nc" id="L509">				rs -&gt; readColumnValues(rs, COLUMNS_WIDGET));</span>
+<span class="nc" id="L510">		final List&lt;Map&lt;String, Object&gt;&gt; widgetDataMapList = loadValues(TABLE_WIDGET_DATA,</span>
+				&quot;*&quot;,
+<span class="nc" id="L512">				Optional.of(&quot;WIDGET_ID&quot;),</span>
+<span class="nc" id="L513">				widgetInfoList.stream().map(m -&gt; (Integer) m.get(&quot;ID&quot;)).collect(Collectors.toSet()),</span>
+				COLUMNS_WIDGET_DATA);
+
+<span class="nc" id="L516">		final List&lt;Widget&gt; widgets = widgetInfoList.stream()</span>
+<span class="nc" id="L517">				.map(m -&gt; loadWidget(m, widgetDataMapList, instanceProvider))</span>
+<span class="nc" id="L518">				.collect(Collectors.toList());</span>
+<span class="nc" id="L519">		return widgets;</span>
+	}
+
+	private Widget loadWidget(final Map&lt;String, Object&gt; map,
+			final List&lt;Map&lt;String, Object&gt;&gt; widgetDataMapList,
+			final Function&lt;String, EventSourceInstance&gt; instanceProvider) {
+<span class="nc" id="L525">		final int id = (int) map.get(&quot;ID&quot;);</span>
+<span class="nc" id="L526">		final EventSourceInstance eventSource = instanceProvider.apply((String) map.get(&quot;EVENT_SOURCE_ID&quot;));</span>
+<span class="nc" id="L527">		final String title = (String) map.get(&quot;TITLE&quot;);</span>
+<span class="nc" id="L528">		final String name = (String) map.get(&quot;NAME&quot;);</span>
+<span class="nc" id="L529">		final boolean enabled = is(map.get(&quot;ENABLED&quot;));</span>
+<span class="nc" id="L530">		final int posX = (int) map.get(&quot;POS_X&quot;);</span>
+<span class="nc" id="L531">		final int posY = (int) map.get(&quot;POS_Y&quot;);</span>
+<span class="nc" id="L532">		final int sizeX = (int) map.get(&quot;SIZE_X&quot;);</span>
+<span class="nc" id="L533">		final int sizeY = (int) map.get(&quot;SIZE_Y&quot;);</span>
+<span class="nc" id="L534">		final Color backgroundColor = Color.parse((String) map.get(&quot;BACKGROUND_COLOR&quot;));</span>
+<span class="nc" id="L535">		final String style = (String) map.get(&quot;STYLE&quot;);</span>
+
+<span class="nc" id="L537">		final Widget widget</span>
+				= new Widget(id, eventSource, title, name, enabled, posX, posY, sizeX, sizeY, backgroundColor, style);
+
+<span class="nc" id="L540">		final Map&lt;String, String&gt; datas = widgetDataMapList.stream()</span>
+<span class="nc bnc" id="L541" title="All 2 branches missed.">				.filter(d -&gt; (int) d.get(&quot;WIDGET_ID&quot;) == widget.getId())</span>
+<span class="nc" id="L542">				.collect(Collectors.toMap(d -&gt; (String) d.get(&quot;NAME&quot;), d -&gt; (String) d.get(&quot;VALUE&quot;)));</span>
+
+<span class="nc" id="L544">		eventSource.getDescriptor()</span>
+<span class="nc" id="L545">				.getDataItems()</span>
+<span class="nc" id="L546">				.stream()</span>
+<span class="nc" id="L547">				.filter(p -&gt; datas.containsKey(p.getName()))</span>
+<span class="nc bnc" id="L548" title="All 2 branches missed.">				.filter(p -&gt; !Strings.isNullOrEmpty(datas.get(p.getName())))</span>
+<span class="nc" id="L549">				.forEach(p -&gt; widget.setWidgetData(p, datas.get(p.getName())));</span>
+
+<span class="nc" id="L551">		return widget;</span>
+	}
+
+	@Override
+	public List&lt;String&gt; getOwnedDashboardIds(final String userid) {
+<span class="nc" id="L556">		return loadWithOneLike(TABLE_DASHBOARD,</span>
+				&quot;ID&quot;,
+				new String[] { /* &quot;ENABLED&quot; */ },
+				new Object[] { /* true */ },
+				&quot;OWNER&quot;,
+				&quot;%,&quot; + userid + &quot;,%&quot;);
+	}
+
+	@Override
+	public List&lt;String&gt; getEditableDashboardIds(final String userid) {
+<span class="nc" id="L566">		return loadWithOneLike(TABLE_DASHBOARD,</span>
+				&quot;ID&quot;,
+				new String[] { /* &quot;ENABLED&quot; */ },
+				new Object[] { /* true */ },
+				&quot;EDITOR&quot;,
+				&quot;%,&quot; + userid + &quot;,%&quot;);
+	}
+
+	@Override
+	public boolean deleteDashboard(final Dashboard dashboard) {
+<span class="nc" id="L576">		dashboard.getWidgets().stream().forEach(this::deleteWidget);</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">		return delete(TABLE_DASHBOARD, &quot;ID&quot;, dashboard.getId()) == 1;</span>
+	}
+
+	@Override
+	public void updateWidget(final Widget widget) {
+<span class="nc" id="L582">		updateByOneKey(TABLE_WIDGET,</span>
+				&quot;ID&quot;,
+<span class="nc" id="L584">				widget.getId(),</span>
+				&quot;TITLE&quot;,
+<span class="nc" id="L586">				widget.getTitle(),</span>
+				&quot;NAME&quot;,
+<span class="nc" id="L588">				widget.getName(),</span>
+				&quot;ENABLED&quot;,
+<span class="nc" id="L590">				widget.isEnabled(),</span>
+				&quot;POS_X&quot;,
+<span class="nc" id="L592">				widget.getPosX(),</span>
+				&quot;POS_Y&quot;,
+<span class="nc" id="L594">				widget.getPosY(),</span>
+				&quot;SIZE_X&quot;,
+<span class="nc" id="L596">				widget.getSizeX(),</span>
+				&quot;SIZE_Y&quot;,
+<span class="nc" id="L598">				widget.getSizeY(),</span>
+				&quot;BACKGROUND_COLOR&quot;,
+<span class="nc" id="L600">				widget.getBackgroundColor().getHexColor(),</span>
+				&quot;STYLE&quot;,
+<span class="nc" id="L602">				widget.getStyle());</span>
+
+<span class="nc" id="L604">		createOrUpdateWidgetProperties(widget);</span>
+<span class="nc" id="L605">	}</span>
+
+	@Override
+	public void deleteWidget(final Widget widget) {
+<span class="nc" id="L609">		deleteWidget(widget.getId());</span>
+<span class="nc" id="L610">	}</span>
+
+	private void deleteWidget(final int id) {
+<span class="nc" id="L613">		delete(TABLE_WIDGET_DATA, &quot;WIDGET_ID&quot;, id);</span>
+<span class="nc" id="L614">		delete(TABLE_WIDGET, &quot;ID&quot;, id);</span>
+<span class="nc" id="L615">	}</span>
+
+	@Override
+	public &lt;T extends SerializableProperty&gt; Optional&lt;T&gt; getProperty(final Class&lt;T&gt; clazz, final int id) {
+<span class="nc" id="L619">		final List&lt;Map&lt;String, Object&gt;&gt; credentialsMap = load(TABLE_VALUES,</span>
+				&quot;*&quot;,
+<span class="nc" id="L621">				Optional.of(&quot;ID&quot;),</span>
+<span class="nc" id="L622">				id,</span>
+				// XXX Column CLASS should be checked, too
+<span class="nc" id="L624">				rs -&gt; readColumnValues(rs, COLUMNS_VALUES));</span>
+<span class="nc" id="L625">		return credentialsMap.stream().findFirst().map(m -&gt; mapToValue(clazz, m));</span>
+	}
+
+	private &lt;T extends SerializableProperty&gt; T mapToValue(final Class&lt;T&gt; clazz, final Map&lt;String, Object&gt; map) {
+<span class="nc" id="L629">		return Objects.requireNonNull(JsonUtils.fromJson((String) map.get(&quot;JSON&quot;), clazz), &quot;Unable to create object&quot;);</span>
+	}
+
+	@Override
+	public &lt;T extends SerializableProperty&gt; List&lt;T&gt; listProperties(final Class&lt;T&gt; clazz) {
+<span class="nc" id="L634">		return load(TABLE_VALUES,</span>
+				&quot;*&quot;,
+<span class="nc" id="L636">				Optional.of(&quot;CLASS&quot;),</span>
+<span class="nc" id="L637">				clazz.getName(),</span>
+<span class="nc" id="L638">				rs -&gt; readColumnValues(rs, COLUMNS_VALUES))//</span>
+<span class="nc" id="L639">						.stream()//</span>
+<span class="nc" id="L640">						.map(m -&gt; mapToValue(clazz, m))//</span>
+<span class="nc" id="L641">						.sorted()//</span>
+<span class="nc" id="L642">						.collect(toList());</span>
+	}
+
+	@Override
+	public void updateProperty(final SerializableProperty value) {
+<span class="nc" id="L647">		update(TABLE_VALUES,</span>
+<span class="nc" id="L648">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L649">						.put(&quot;ID&quot;, value.getId())</span>
+<span class="nc" id="L650">						.put(&quot;CLASS&quot;, value.getClass().getName())</span>
+<span class="nc" id="L651">						.get(),</span>
+<span class="nc" id="L652">				Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L653">						.put(&quot;NAME&quot;, value.getName())</span>
+<span class="nc" id="L654">						.put(&quot;JSON&quot;, JsonUtils.toJson(value))</span>
+<span class="nc" id="L655">						.get());</span>
+<span class="nc" id="L656">	}</span>
+
+	@Override
+	public void deleteProperty(final Class&lt;? extends SerializableProperty&gt; clazz, final int id) {
+<span class="nc" id="L660">		delete(TABLE_VALUES, &quot;ID&quot;, id, &quot;CLASS&quot;, clazz.getName());</span>
+<span class="nc" id="L661">	}</span>
+
+	@Override
+	public &lt;T extends SerializableProperty&gt; T createProperty(final Class&lt;T&gt; clazz,
+			final String name,
+			final Object... parameters) {
+<span class="nc" id="L667">		final OptionalInt id = insert(TABLE_VALUES, RETRIEVE_ID, &quot;CLASS&quot;, clazz.getName(), &quot;NAME&quot;, name, &quot;JSON&quot;, &quot;{}&quot;)</span>
+<span class="nc" id="L668">				.map(OptionalInt::of)</span>
+<span class="nc" id="L669">				.orElse(OptionalInt.empty());</span>
+<span class="nc bnc" id="L670" title="All 2 branches missed.">		if (!id.isPresent()) {</span>
+<span class="nc" id="L671">			throw new RuntimeException(&quot;Unable to create property: &quot; + name);</span>
+		}
+<span class="nc" id="L673">		final Object[] params = new Object[2 + parameters.length];</span>
+<span class="nc" id="L674">		params[0] = id.getAsInt();</span>
+<span class="nc" id="L675">		params[1] = name;</span>
+<span class="nc" id="L676">		System.arraycopy(parameters, 0, params, 2, parameters.length);</span>
+		final T value;
+		try {
+<span class="nc" id="L679">			value = TypeUtils.getAppropriateConstructor(clazz, params).newInstance(params);</span>
+<span class="nc" id="L680">		} catch (final InstantiationException</span>
+				| IllegalAccessException
+				| IllegalArgumentException
+				| InvocationTargetException e) {
+<span class="nc" id="L684">			throw new RuntimeException(</span>
+<span class="nc" id="L685">					&quot;Class &quot; + clazz.getName() + &quot; does not contain a constructor to be used in the database class&quot;,</span>
+					e);
+<span class="nc" id="L687">		}</span>
+<span class="nc" id="L688">		updateProperty(value);</span>
+<span class="nc" id="L689">		return value;</span>
+	}
+
+	private &lt;T, I&gt; void persist(final String table,
+			final String idColumn,
+			final T item,
+			final Function&lt;T, I&gt; getId,
+			final Map&lt;String, Object&gt; values) {
+<span class="nc" id="L697">		persist(table, idColumn, item, getId, values, new HashMap&lt;&gt;());</span>
+<span class="nc" id="L698">	}</span>
+
+	private &lt;T, I&gt; void persist(final String table,
+			final String idColumn,
+			final T item,
+			final Function&lt;T, I&gt; getId,
+			final Map&lt;String, Object&gt; values,
+			final Map&lt;String, Object&gt; creationValues) {
+<span class="nc" id="L706">		final List&lt;String&gt; found</span>
+<span class="nc" id="L707">				= load(table, idColumn, Optional.of(idColumn), getId.apply(item), rs -&gt; rs.getString(idColumn));</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">		if (found.isEmpty()) {</span>
+<span class="nc" id="L709">			values.put(idColumn, getId.apply(item));</span>
+<span class="nc" id="L710">			values.putAll(creationValues);</span>
+<span class="nc" id="L711">			insert(table, Optional.empty(), values);</span>
+<span class="nc bnc" id="L712" title="All 2 branches missed.">		} else if (found.size() == 1) {</span>
+			// update existing entry
+<span class="nc" id="L714">			update(table,</span>
+<span class="nc" id="L715">					Maps.&lt;String, Object&gt;builder() //</span>
+<span class="nc" id="L716">							.put(idColumn, getId.apply(item))</span>
+<span class="nc" id="L717">							.get(),</span>
+					values);
+		} else {
+<span class="nc" id="L720">			throw new RuntimeException(&quot;More than one line found for ID: &quot; + getId.apply(item));</span>
+		}
+<span class="nc" id="L722">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

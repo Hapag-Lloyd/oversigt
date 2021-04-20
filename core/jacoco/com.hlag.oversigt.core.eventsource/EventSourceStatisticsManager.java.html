@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceStatisticsManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core.eventsource</a> &gt; <span class="el_source">EventSourceStatisticsManager.java</span></div><h1>EventSourceStatisticsManager.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core.eventsource;
+
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Throwables;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.util.Utils;
+
+@Singleton
+public class EventSourceStatisticsManager {
+<span class="nc" id="L23">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceStatisticsManager.class);</span>
+
+	private static final int MAX_RUN_HISTORY = 10;
+
+	public StatisticsCollector createCollector(final String eventId) {
+<span class="nc" id="L28">		return new StatisticsCollector(getEventSourceStatistics(eventId));</span>
+	}
+
+	public EventSourceStatistics getEventSourceStatistics(final String eventId) {
+<span class="nc" id="L32">		return idToStats.computeIfAbsent(eventId, x -&gt; new EventSourceStatistics());</span>
+	}
+
+<span class="nc" id="L35">	private final Map&lt;String, EventSourceStatistics&gt; idToStats = Collections.synchronizedMap(new HashMap&lt;&gt;());</span>
+
+<span class="nc" id="L37">	public EventSourceStatisticsManager() {</span>
+		// nothing to initialize
+<span class="nc" id="L39">	}</span>
+
+	public static final class EventSourceStatistics {
+<span class="nc" id="L42">		private Optional&lt;RunStatistic&gt; lastSuccessfulRun = Optional.empty();</span>
+
+<span class="nc" id="L44">		private Optional&lt;RunStatistic&gt; lastFailedRun = Optional.empty();</span>
+
+<span class="nc" id="L46">		private final List&lt;RunStatistic&gt; lastRuns = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L48">		private final AtomicBoolean automticallyStarted = new AtomicBoolean(false);</span>
+
+<span class="nc" id="L50">		private EventSourceStatistics() {</span>
+			// hide constructor and nothing to initialize
+<span class="nc" id="L52">		}</span>
+
+		public boolean isAutomticallyStarted() {
+<span class="nc" id="L55">			return automticallyStarted.get();</span>
+		}
+
+		public void setAutomaticallyStarted(final boolean automaticallyStarted) {
+<span class="nc" id="L59">			automticallyStarted.set(automaticallyStarted);</span>
+<span class="nc" id="L60">		}</span>
+
+		public synchronized Optional&lt;RunStatistic&gt; getLastFailedRun() {
+<span class="nc" id="L63">			return lastFailedRun;</span>
+		}
+
+		public synchronized List&lt;RunStatistic&gt; getLastRuns() {
+<span class="nc" id="L67">			return new ArrayList&lt;&gt;(lastRuns);</span>
+		}
+
+		public synchronized Optional&lt;RunStatistic&gt; getLastSuccessfulRun() {
+<span class="nc" id="L71">			return lastSuccessfulRun;</span>
+		}
+
+		public synchronized Optional&lt;RunStatistic&gt; getLastRun() {
+<span class="nc bnc" id="L75" title="All 2 branches missed.">			if (lastRuns.isEmpty()) {</span>
+<span class="nc" id="L76">				return Optional.empty();</span>
+			}
+<span class="nc" id="L78">			return Optional.of(lastRuns.get(lastRuns.size() - 1));</span>
+		}
+
+		public synchronized void addExecution(final RunStatistic statistics) {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			if (statistics.isSuccess()) {</span>
+<span class="nc" id="L83">				lastSuccessfulRun = Optional.of(statistics);</span>
+			} else {
+<span class="nc" id="L85">				lastFailedRun = Optional.of(statistics);</span>
+			}
+
+<span class="nc" id="L88">			lastRuns.add(statistics);</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			while (lastRuns.size() &gt; MAX_RUN_HISTORY) {</span>
+<span class="nc" id="L90">				lastRuns.remove(0);</span>
+			}
+<span class="nc" id="L92">		}</span>
+	}
+
+	public static final class RunStatistic {
+		private final ZonedDateTime startTime;
+
+		private final Duration duration;
+
+		private final boolean success;
+
+		private final boolean automaticallyStarted;
+
+		private final Optional&lt;String&gt; message;
+
+		private final Optional&lt;Throwable&gt; throwable;
+
+		private final List&lt;Action&gt; actions;
+
+		private RunStatistic(final ZonedDateTime startTime,
+				final Duration duration,
+				final boolean success,
+				final boolean automaticallyStarted,
+				final Optional&lt;String&gt; message,
+				final Optional&lt;Throwable&gt; throwable,
+<span class="nc" id="L116">				final List&lt;Action&gt; actions) {</span>
+<span class="nc" id="L117">			this.startTime = startTime;</span>
+<span class="nc" id="L118">			this.duration = duration;</span>
+<span class="nc" id="L119">			this.success = success;</span>
+<span class="nc" id="L120">			this.automaticallyStarted = automaticallyStarted;</span>
+<span class="nc" id="L121">			this.message = message;</span>
+<span class="nc" id="L122">			this.throwable = throwable;</span>
+<span class="nc" id="L123">			this.actions = Collections.unmodifiableList(actions);</span>
+<span class="nc" id="L124">		}</span>
+
+		public Duration getDuration() {
+<span class="nc" id="L127">			return duration;</span>
+		}
+
+		public Optional&lt;String&gt; getMessage() {
+<span class="nc" id="L131">			return message;</span>
+		}
+
+		public ZonedDateTime getStartTime() {
+<span class="nc" id="L135">			return startTime;</span>
+		}
+
+		@JsonIgnore
+		public Optional&lt;Throwable&gt; getThrowable() {
+<span class="nc" id="L140">			return throwable;</span>
+		}
+
+		public Optional&lt;String&gt; getThrowableStackTrace() {
+<span class="nc" id="L144">			return throwable.map(Throwables::getStackTraceAsString);</span>
+		}
+
+		public boolean isSuccess() {
+<span class="nc" id="L148">			return success;</span>
+		}
+
+		public boolean isAutomaticallyStarted() {
+<span class="nc" id="L152">			return automaticallyStarted;</span>
+		}
+
+		public List&lt;Action&gt; getActions() {
+<span class="nc" id="L156">			return actions;</span>
+		}
+	}
+
+	public static final class Action {
+		private final String name;
+
+		private final String detail;
+
+		private final Duration duration;
+
+<span class="nc" id="L167">		private Action(final String name, final String detail, final Duration duration) {</span>
+<span class="nc" id="L168">			this.name = name;</span>
+<span class="nc" id="L169">			this.detail = detail;</span>
+<span class="nc" id="L170">			this.duration = duration;</span>
+<span class="nc" id="L171">		}</span>
+
+		public Duration getDuration() {
+<span class="nc" id="L174">			return duration;</span>
+		}
+
+		public String getName() {
+<span class="nc" id="L178">			return name;</span>
+		}
+
+		public String getDetail() {
+<span class="nc" id="L182">			return detail;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L187">			return String.format(&quot;%s(%s): %s&quot;, name, detail, duration);</span>
+		}
+	}
+
+	public static final class StatisticsCollector {
+		private final EventSourceStatistics eventSourceStatistics;
+
+		private final boolean automaticallyStarted;
+
+		private final ZonedDateTime startTime;
+
+<span class="nc" id="L198">		private final List&lt;Action&gt; actions = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L200">		private StatisticsCollector(final EventSourceStatistics eventSourceStatistics) {</span>
+<span class="nc" id="L201">			this.eventSourceStatistics = eventSourceStatistics;</span>
+<span class="nc" id="L202">			automaticallyStarted = eventSourceStatistics.isAutomticallyStarted();</span>
+<span class="nc" id="L203">			startTime = ZonedDateTime.now();</span>
+<span class="nc" id="L204">		}</span>
+
+		public StartedAction startAction(final String name, final String detail) {
+<span class="nc" id="L207">			return new StartedAction(name, detail);</span>
+		}
+
+		public void addAction(final String name, final String detail, final Duration duration) {
+<span class="nc" id="L211">			actions.add(new Action(name, detail, duration));</span>
+<span class="nc" id="L212">		}</span>
+
+		void success() {
+<span class="nc" id="L215">			addRun(true, Optional.empty(), Optional.empty());</span>
+<span class="nc" id="L216">		}</span>
+
+		void failure(final String message) {
+<span class="nc" id="L219">			addRun(false, Optional.of(message), Optional.empty());</span>
+<span class="nc" id="L220">		}</span>
+
+		void failure(final String message, final Throwable throwable) {
+<span class="nc" id="L223">			addRun(false, Optional.of(message), Optional.of(throwable));</span>
+<span class="nc" id="L224">		}</span>
+
+		void failure(final String message, final Optional&lt;Throwable&gt; throwable) {
+<span class="nc" id="L227">			addRun(false, Optional.of(message), throwable);</span>
+<span class="nc" id="L228">		}</span>
+
+		private void addRun(final boolean success,
+				final Optional&lt;String&gt; message,
+				final Optional&lt;Throwable&gt; throwable) {
+<span class="nc" id="L233">			final Duration duration = Duration.between(startTime, ZonedDateTime.now());</span>
+<span class="nc" id="L234">			final RunStatistic stats</span>
+					= new RunStatistic(startTime, duration, success, automaticallyStarted, message, throwable, actions);
+<span class="nc" id="L236">			eventSourceStatistics.addExecution(stats);</span>
+<span class="nc" id="L237">			LOGGER.info(String.format(&quot;Execution duration: %s %s&quot;,</span>
+<span class="nc" id="L238">					Utils.formatDuration(stats.getDuration()),</span>
+<span class="nc" id="L239">					stats.getActions()));</span>
+<span class="nc" id="L240">		}</span>
+
+		public final class StartedAction implements AutoCloseable {
+			private final long actionStartTime;
+
+			private final String name;
+
+			private final String detail;
+
+<span class="nc" id="L249">			private StartedAction(final String name, final String detail) {</span>
+<span class="nc" id="L250">				this.name = name;</span>
+<span class="nc" id="L251">				this.detail = detail;</span>
+<span class="nc" id="L252">				actionStartTime = System.currentTimeMillis();</span>
+<span class="nc" id="L253">			}</span>
+
+			public void done() {
+<span class="nc" id="L256">				final long actionEndTime = System.currentTimeMillis();</span>
+<span class="nc" id="L257">				addAction(name, detail, Duration.ofMillis(actionEndTime - actionStartTime));</span>
+<span class="nc" id="L258">			}</span>
+
+			@Override
+			public void close() {
+<span class="nc" id="L262">				done();</span>
+<span class="nc" id="L263">			}</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

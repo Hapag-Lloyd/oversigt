@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TwoColumnListEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">TwoColumnListEvent.java</span></div><h1>TwoColumnListEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import java.util.List;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import com.hlag.oversigt.sources.event.TwoColumnListEvent.ListEventItem;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+public class TwoColumnListEvent&lt;T&gt; extends ListEvent&lt;ListEventItem&lt;T&gt;&gt; {
+	public TwoColumnListEvent(final List&lt;? extends ListEventItem&lt;T&gt;&gt; items) {
+<span class="nc" id="L15">		super(items);</span>
+<span class="nc" id="L16">	}</span>
+
+	public static class ListEventItem&lt;T&gt; {
+		private String label;
+
+		@Nullable
+		private T value;
+
+		private String labelStyle;
+
+		private String valueStyle;
+
+		public ListEventItem(final String label,
+				@Nullable final T value,
+				final String labelStyle,
+<span class="nc" id="L31">				final String valueStyle) {</span>
+<span class="nc" id="L32">			this.label = label;</span>
+<span class="nc" id="L33">			this.value = value;</span>
+<span class="nc" id="L34">			this.labelStyle = labelStyle;</span>
+<span class="nc" id="L35">			this.valueStyle = valueStyle;</span>
+<span class="nc" id="L36">		}</span>
+
+		public ListEventItem(final String label, final T value) {
+<span class="nc" id="L39">			this(label, value, &quot;&quot;, &quot;&quot;);</span>
+<span class="nc" id="L40">		}</span>
+
+		public ListEventItem(final Entry&lt;? extends CharSequence, T&gt; entry) {
+<span class="nc" id="L43">			this(entry.getKey().toString(), entry.getValue());</span>
+<span class="nc" id="L44">		}</span>
+
+		public String getLabel() {
+<span class="nc" id="L47">			return label;</span>
+		}
+
+		@Nullable
+		public T getValue() {
+<span class="nc" id="L52">			return value;</span>
+		}
+
+		public String getLabelStyle() {
+<span class="nc" id="L56">			return labelStyle;</span>
+		}
+
+		public String getValueStyle() {
+<span class="nc" id="L60">			return valueStyle;</span>
+		}
+
+		public void setLabelStyle(final String labelStyle) {
+<span class="nc" id="L64">			this.labelStyle = labelStyle;</span>
+<span class="nc" id="L65">		}</span>
+
+		public void setValueStyle(final String valueStyle) {
+<span class="nc" id="L68">			this.valueStyle = valueStyle;</span>
+<span class="nc" id="L69">		}</span>
+
+		@Override
+		public String toString() {
+<span class="nc" id="L73">			return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

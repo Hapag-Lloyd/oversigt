@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Oversigt.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.core</a> &gt; <span class="el_source">Oversigt.java</span></div><h1>Oversigt.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.core;
+
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import com.hlag.oversigt.connect.jira.config.JiraConfigurationProvider;
+import com.hlag.oversigt.core.configuration.JsonModule;
+import com.hlag.oversigt.core.configuration.OversigtConfigurationModule;
+import com.hlag.oversigt.core.configuration.OversigtModule;
+import com.hlag.oversigt.core.configuration.WebModule;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.security.Authenticator;
+import com.hlag.oversigt.storage.Storage;
+
+import ch.qos.logback.classic.LoggerContext;
+import de.larssh.utils.Finals;
+
+/**
+ * Application Entry Point. Creates Guava's Injector and runs spark server
+ *
+ * @author avarabyeu
+ * @author noxfireone
+ */
+public final class Oversigt {
+	/**
+	 * The human readable application name
+	 */
+<span class="nc" id="L39">	public static final String APPLICATION_NAME = Finals.constant(&quot;Oversigt&quot;);</span>
+
+	/**
+	 * The human readable application version
+	 */
+<span class="nc" id="L44">	public static final String APPLICATION_VERSION = Finals.constant(&quot;0.6&quot;);</span>
+
+<span class="nc" id="L46">	private static final Logger LOGGER = LoggerFactory.getLogger(Oversigt.class);</span>
+
+	/**
+	 * The name of the file containing the application configuration
+	 */
+<span class="nc" id="L51">	public static final String APPLICATION_CONFIG_FILE = Finals.constant(&quot;config.json&quot;);</span>
+
+<span class="nc" id="L53">	private AtomicBoolean bootstrapped = new AtomicBoolean(false);</span>
+
+<span class="nc" id="L55">	private AtomicBoolean shuttingDown = new AtomicBoolean(false);</span>
+
+	private Injector injector;
+
+	private Thread shutdownHook;
+
+<span class="nc" id="L61">	private Oversigt(final Injector injector) {</span>
+<span class="nc" id="L62">		this.injector = injector;</span>
+<span class="nc" id="L63">		shutdownHook = new Thread(this::shutdown, &quot;Oversigt-Shutdown-Hook&quot;);</span>
+<span class="nc" id="L64">	}</span>
+
+	/**
+	 * Bootstraps Oversigt. This operation is allowed only once. Bootstrapping
+	 * already started Oversigt is not permitted
+	 *
+	 * @return itself
+	 */
+	private Oversigt bootstrap() {
+<span class="nc bnc" id="L73" title="All 2 branches missed.">		if (bootstrapped.compareAndSet(false, true)) {</span>
+<span class="nc" id="L74">			final boolean debug = injector.getInstance(Key.get(boolean.class, Names.named(&quot;debug&quot;)));</span>
+			// if (debug) {
+			// ((ch.qos.logback.classic.Logger)
+			// LoggerFactory.getLogger(AbstractJdbcConnector.class))
+			// .setLevel(Level.ALL);
+			// }
+
+			/* bootstrap server */
+<span class="nc" id="L82">			final Service application = injector.getInstance(OversigtServer.class);</span>
+<span class="nc" id="L83">			application.startAsync();</span>
+
+<span class="nc" id="L85">			Runtime.getRuntime().addShutdownHook(shutdownHook);</span>
+
+			/* wait until server is running */
+<span class="nc" id="L88">			application.awaitRunning();</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			LOGGER.info(String.format(&quot;Oversigt has started in %s mode!&quot;, debug ? &quot;DEBUG&quot; : &quot;PRODUCTION&quot;));</span>
+<span class="nc" id="L90">		} else {</span>
+<span class="nc" id="L91">			throw new IllegalStateException(&quot;Oversigt already bootstrapped&quot;);</span>
+		}
+<span class="nc" id="L93">		return this;</span>
+	}
+
+	/**
+	 * Shutdowns Oversigt. Permitted only for bootstrapped instance
+	 */
+	private void shutdown() {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">		if (bootstrapped.get()) {</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">			if (shuttingDown.compareAndSet(false, true)) {</span>
+<span class="nc" id="L102">				LOGGER.info(&quot;Shutting down Oversigt...&quot;);</span>
+
+<span class="nc" id="L104">				injector.getInstance(OversigtServer.class).stopAsync().awaitTerminated();</span>
+<span class="nc" id="L105">				LOGGER.info(&quot;Stopping storage service&quot;);</span>
+<span class="nc" id="L106">				close(Storage.class);</span>
+<span class="nc" id="L107">				LOGGER.info(&quot;Stopping authenticator service&quot;);</span>
+<span class="nc" id="L108">				close(Authenticator.class);</span>
+
+				/*
+				 * shutdown method might be called by this hook. So, trying to remove hook which
+				 * is currently is progress causes error
+				 */
+<span class="nc bnc" id="L114" title="All 2 branches missed.">				if (!shutdownHook.isAlive()) {</span>
+<span class="nc" id="L115">					Runtime.getRuntime().removeShutdownHook(shutdownHook);</span>
+				}
+<span class="nc" id="L117">				LOGGER.info(&quot;Oversigt has stopped.&quot;);</span>
+
+				// Shutdown slf4j
+<span class="nc" id="L120">				((LoggerContext) LoggerFactory.getILoggerFactory()).stop();</span>
+			}
+		} else {
+<span class="nc" id="L123">			throw new IllegalStateException(&quot;Oversigt is not bootstrapped&quot;);</span>
+		}
+<span class="nc" id="L125">	}</span>
+
+	private void close(final Class&lt;? extends AutoCloseable&gt; clazz) {
+		try {
+<span class="nc" id="L129">			injector.getInstance(clazz).close();</span>
+<span class="nc" id="L130">		} catch (final Exception e) {</span>
+<span class="nc" id="L131">			LOGGER.error(&quot;Unable to close &quot; + clazz.getSimpleName() + &quot; instance.&quot;, e);</span>
+<span class="nc" id="L132">		}</span>
+<span class="nc" id="L133">	}</span>
+
+	/**
+	 * Creates new Oversigt builder
+	 *
+	 * @return Builder of Oversigt instance
+	 */
+	public static Builder builder() {
+<span class="nc" id="L141">		return new Builder();</span>
+	}
+
+	/**
+	 * The main Oversigt entry point
+	 *
+	 * @param args command line arguments
+	 */
+	public static void main(final String[] args) {
+		// parse command line options
+<span class="nc" id="L151">		final Optional&lt;CommandLineOptions&gt; options = CommandLineOptions.parse(args);</span>
+		// if command line options fail: shut down
+<span class="nc bnc" id="L153" title="All 2 branches missed.">		if (!options.isPresent()) {</span>
+<span class="nc" id="L154">			return;</span>
+		}
+
+		// bootstrap Oversigt
+		try {
+<span class="nc" id="L159">			LOGGER.info(&quot;Bootstrapping Oversigt&quot;);</span>
+<span class="nc" id="L160">			Oversigt.builder().startOptions(options.get()).build().bootstrap();</span>
+<span class="nc" id="L161">		} catch (final Exception e) {</span>
+<span class="nc" id="L162">			LOGGER.error(&quot;Oversigt cannot start&quot;, e);</span>
+<span class="nc" id="L163">		}</span>
+<span class="nc" id="L164">	}</span>
+
+	/**
+	 * Called if an exception occurred when dispatching an event in the
+	 * application's event bus
+	 *
+	 * @param throwable the exception that occurred
+	 * @param context   the context in which the exception occurred
+	 */
+	public static void handleEventBusException(final Throwable throwable, final SubscriberExceptionContext context) {
+<span class="nc" id="L174">		final StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L175">		sb.append(&quot;Could not dispatch event&quot;);</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		if (context.getEvent() instanceof OversigtEvent) {</span>
+<span class="nc" id="L177">			sb.append(&quot; ID &quot;).append(((OversigtEvent) context.getEvent()).getId());</span>
+		}
+<span class="nc" id="L179">		sb.append(&quot;: &quot;).append(context.getSubscriber()).append(&quot; to &quot;).append(context.getSubscriberMethod());</span>
+<span class="nc" id="L180">		LOGGER.error(sb.toString(), throwable);</span>
+<span class="nc" id="L181">	}</span>
+
+	/**
+	 * Oversigt builder
+	 */
+	public static class Builder {
+<span class="nc" id="L187">		private CommandLineOptions options = new CommandLineOptions();</span>
+
+<span class="nc" id="L189">		public Builder() {</span>
+			// no fields to be initialized
+<span class="nc" id="L191">		}</span>
+
+		/**
+		 * Create a builder
+		 *
+		 * @param options the options from the user
+		 * @return the created builder
+		 */
+		public Builder startOptions(final CommandLineOptions options) {
+<span class="nc" id="L200">			this.options = options;</span>
+<span class="nc" id="L201">			return this;</span>
+		}
+
+		/**
+		 * Builds Oversigt instance
+		 *
+		 * @return Oversigt
+		 */
+		public Oversigt build() {
+<span class="nc" id="L210">			final AtomicReference&lt;Oversigt&gt; oversigt = new AtomicReference&lt;&gt;();</span>
+<span class="nc" id="L211">			final Injector injector = Guice.createInjector(//</span>
+					Binder::requireExplicitBindings,
+<span class="nc" id="L213">					binder -&gt; binder.bind(Runnable.class)</span>
+<span class="nc" id="L214">							.annotatedWith(Names.named(&quot;Shutdown&quot;))</span>
+<span class="nc" id="L215">							.toInstance(() -&gt; oversigt.get().shutdown()),</span>
+<span class="nc" id="L216">					options.createModule(),</span>
+<span class="nc" id="L217">					new OversigtConfigurationModule(options.isDebugFallback(), options.getLdapBindPasswordFallback()),</span>
+					new JsonModule(),
+					new WebModule(),
+					new OversigtModule());
+
+<span class="nc" id="L222">			JiraConfigurationProvider.setSocketTimeout(</span>
+<span class="nc" id="L223">					injector.getBinding(Key.get(int.class, Names.named(&quot;jira.socketTimeout&quot;))).getProvider().get());</span>
+
+<span class="nc" id="L225">			oversigt.set(new Oversigt(injector));</span>
+<span class="nc" id="L226">			return oversigt.get();</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

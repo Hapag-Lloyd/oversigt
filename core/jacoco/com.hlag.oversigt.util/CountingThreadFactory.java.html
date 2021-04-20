@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CountingThreadFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.util</a> &gt; <span class="el_source">CountingThreadFactory.java</span></div><h1>CountingThreadFactory.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.util;
+
+import java.util.Objects;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+
+/**
+ * A thread factory that is counting the number of threads created. Every thread
+ * created can be uniquely identified by its number.
+ *
+ * @author Olaf Neumann
+ *
+ */
+public class CountingThreadFactory implements ThreadFactory {
+	/**
+	 * Create a new thread factory with the given name prefix and all created
+	 * threads are daemon threads.
+	 *
+	 * @param namePrefix the prefix to be prepended to every newly created thread
+	 *                   name
+	 * @return the newly created {@link CountingThreadFactory}
+	 * @throws NullPointerException if one of the parameter is &lt;code&gt;null&lt;/code&gt;
+	 */
+	public static ThreadFactory createDaemonThreadFactory(final String namePrefix) {
+<span class="nc" id="L28">		return new CountingThreadFactory(namePrefix, t -&gt; {</span>
+<span class="nc" id="L29">			t.setDaemon(true);</span>
+<span class="nc" id="L30">		});</span>
+	}
+
+	/**
+	 * A counter to identify every thread by a number
+	 */
+<span class="nc" id="L36">	private final AtomicInteger threadCounter = new AtomicInteger(0);</span>
+
+	/**
+	 * the name prefix to be prepended to new threads' names
+	 */
+	private final String namePrefix;
+
+	private final Consumer&lt;Thread&gt; threadModifier;
+
+	/**
+	 * Create a new thread factory with the given name prefix.
+	 *
+	 * @param namePrefix the prefix to be prepended to every newly created thread
+	 *                   name
+	 * @throws NullPointerException if one of the parameter is &lt;code&gt;null&lt;/code&gt;
+	 */
+	public CountingThreadFactory(final String namePrefix) {
+<span class="nc" id="L53">		this(namePrefix, t -&gt; { /* do nothing */ });</span>
+<span class="nc" id="L54">	}</span>
+
+	/**
+	 * Create a new thread factory with the given name prefix and with the specified
+	 * consumer to modify the thread after creation.
+	 *
+	 * @param namePrefix     the prefix to be prepended to every newly created
+	 *                       thread name
+	 * @param threadModifier a consumer that is called for each newly created
+	 *                       thread. It can be used to modify the thread be the
+	 *                       thread factory releases it for usage.
+	 * @throws NullPointerException if one of the parameter is &lt;code&gt;null&lt;/code&gt;
+	 */
+<span class="nc" id="L67">	public CountingThreadFactory(final String namePrefix, final Consumer&lt;Thread&gt; threadModifier) {</span>
+<span class="nc" id="L68">		this.namePrefix = Objects.requireNonNull(namePrefix);</span>
+<span class="nc" id="L69">		this.threadModifier = Objects.requireNonNull(threadModifier);</span>
+<span class="nc" id="L70">	}</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public Thread newThread(@Nullable final Runnable runnable) {
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		final Runnable runnableToExecute = runnable != null ? runnable : () -&gt; {</span>
+			/* create empty runnable */
+<span class="nc" id="L77">		};</span>
+<span class="nc" id="L78">		final Thread thread = new Thread(runnableToExecute, namePrefix + threadCounter.incrementAndGet());</span>
+<span class="nc" id="L79">		threadModifier.accept(thread);</span>
+<span class="nc" id="L80">		return thread;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

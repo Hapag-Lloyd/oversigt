@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BarChartEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.sources.event</a> &gt; <span class="el_source">BarChartEvent.java</span></div><h1>BarChartEvent.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.sources.event;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.hlag.oversigt.core.event.OversigtEvent;
+
+public class BarChartEvent extends OversigtEvent {
+<span class="nc" id="L10">	private Collection&lt;String&gt; labels = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L12">	private List&lt;Dataset&gt; datasets = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L14">	public BarChartEvent() {</span>
+		// no fields to be initialized
+<span class="nc" id="L16">	}</span>
+
+	public void addDataset(final String name, final String color, final int borderWidth) {
+<span class="nc" id="L19">		addDataset(name, color, color, borderWidth);</span>
+<span class="nc" id="L20">	}</span>
+
+	public void addDataset(final String name,
+			final String backgroundColor,
+			final String borderColor,
+			final int borderWidth) {
+<span class="nc" id="L26">		datasets.add(new Dataset(name, backgroundColor, borderColor, borderWidth));</span>
+<span class="nc" id="L27">	}</span>
+
+	public void addData(final String label, final double... values) {
+<span class="nc bnc" id="L30" title="All 2 branches missed.">		if (values.length != datasets.size()) {</span>
+<span class="nc" id="L31">			throw new RuntimeException(&quot;Number of values doesn't match the number of datasets&quot;);</span>
+		}
+<span class="nc" id="L33">		labels.add(label);</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">		for (int i = 0; i &lt; values.length; i += 1) {</span>
+<span class="nc" id="L35">			datasets.get(i).add(values[i]);</span>
+		}
+<span class="nc" id="L37">	}</span>
+
+	public Collection&lt;Dataset&gt; getDatasets() {
+<span class="nc" id="L40">		return datasets;</span>
+	}
+
+	public Collection&lt;String&gt; getLabels() {
+<span class="nc" id="L44">		return labels;</span>
+	}
+
+	public static final class Dataset {
+		private final String label;
+
+<span class="nc" id="L50">		private final Collection&lt;Double&gt; data = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L52">		private final Collection&lt;String&gt; backgroundColor = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L54">		private final Collection&lt;String&gt; borderColor = new ArrayList&lt;&gt;();</span>
+
+		private final int borderWidth;
+
+		private final transient String defaultBackgroundColor;
+
+		private final transient String defaultBorderColor;
+
+		private Dataset(final String label,
+				final String backgroundColor,
+				final String borderColor,
+<span class="nc" id="L65">				final int borderWidth) {</span>
+<span class="nc" id="L66">			this.label = label;</span>
+<span class="nc" id="L67">			this.borderWidth = borderWidth;</span>
+<span class="nc" id="L68">			defaultBackgroundColor = backgroundColor;</span>
+<span class="nc" id="L69">			defaultBorderColor = borderColor;</span>
+<span class="nc" id="L70">		}</span>
+
+		private void add(final double value) {
+<span class="nc" id="L73">			data.add(value);</span>
+<span class="nc" id="L74">			backgroundColor.add(defaultBackgroundColor);</span>
+<span class="nc" id="L75">			borderColor.add(defaultBorderColor);</span>
+<span class="nc" id="L76">		}</span>
+
+		public Collection&lt;String&gt; getBackgroundColor() {
+<span class="nc" id="L79">			return backgroundColor;</span>
+		}
+
+		public Collection&lt;String&gt; getBorderColor() {
+<span class="nc" id="L83">			return borderColor;</span>
+		}
+
+		public int getBorderWidth() {
+<span class="nc" id="L87">			return borderWidth;</span>
+		}
+
+		public String getLabel() {
+<span class="nc" id="L91">			return label;</span>
+		}
+
+		public Collection&lt;Double&gt; getData() {
+<span class="nc" id="L95">			return data;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

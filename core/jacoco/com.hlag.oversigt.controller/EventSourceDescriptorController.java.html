@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSourceDescriptorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.controller</a> &gt; <span class="el_source">EventSourceDescriptorController.java</span></div><h1>EventSourceDescriptorController.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.controller;
+
+import static com.hlag.oversigt.util.Utils.not;
+import static com.hlag.oversigt.util.Utils.notNull;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.Module;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.hlag.oversigt.core.event.OversigtEvent;
+import com.hlag.oversigt.core.eventsource.EventSource;
+import com.hlag.oversigt.core.eventsource.Property;
+import com.hlag.oversigt.core.eventsource.ScheduledEventSource;
+import com.hlag.oversigt.model.EventSourceDescriptor;
+import com.hlag.oversigt.model.EventSourceProperty;
+import com.hlag.oversigt.properties.Color;
+import com.hlag.oversigt.properties.JsonBasedData;
+import com.hlag.oversigt.properties.SerializableProperty;
+import com.hlag.oversigt.sources.MotivationEventSource;
+import com.hlag.oversigt.sources.data.JsonHint;
+import com.hlag.oversigt.util.FileUtils;
+import com.hlag.oversigt.util.JsonUtils;
+import com.hlag.oversigt.util.StringUtils;
+import com.hlag.oversigt.util.TypeUtils;
+import com.hlag.oversigt.util.Utils;
+
+import de.larssh.utils.Collectors;
+import de.larssh.utils.Optionals;
+import de.larssh.utils.function.ThrowingFunction;
+
+@Singleton
+public class EventSourceDescriptorController {
+<span class="nc" id="L81">	private static final Logger LOGGER = LoggerFactory.getLogger(EventSourceDescriptorController.class);</span>
+
+<span class="nc" id="L83">	private static final Package CORE_EVENT_SOURCE_PACKAGE = ScheduledEventSource.class.getPackage();</span>
+
+	// TODO make this constant configurable
+<span class="nc" id="L86">	private static final Collection&lt;Package&gt; PACKAGES_TO_SCAN = Arrays.asList(MotivationEventSource.class.getPackage());</span>
+
+<span class="nc" id="L88">	private static final Collection&lt;String&gt; RESERVED_DATA_BINDINGS = Arrays.asList(&quot;title&quot;);</span>
+
+	// Event Sources
+	// this field will be written once and then only read several times -&gt; no
+	// synchronization needed
+<span class="nc" id="L93">	private final Collection&lt;EventSourceDescriptor&gt; eventSourceDescriptors = new HashSet&lt;&gt;();</span>
+
+	private final Collection&lt;Path&gt; addonFolders;
+
+	private final Collection&lt;String&gt; widgetsPaths;
+
+	@Inject
+	public EventSourceDescriptorController(@Named(&quot;addonFolders&quot;) final Path[] addonFolders,
+<span class="nc" id="L101">			@Named(&quot;widgetsPaths&quot;) final String[] widgetsPaths) {</span>
+<span class="nc" id="L102">		this.addonFolders = Arrays.asList(addonFolders);</span>
+<span class="nc" id="L103">		this.widgetsPaths = Arrays.asList(widgetsPaths);</span>
+<span class="nc" id="L104">	}</span>
+
+	public void initialize() {
+<span class="nc" id="L107">		LOGGER.info(&quot;Loading event source descriptors&quot;);</span>
+		// load event sources without class
+<span class="nc" id="L109">		LOGGER.info(&quot;Scanning resources paths for EventSources: {}&quot;, widgetsPaths.stream().collect(joining(&quot;, &quot;)));</span>
+<span class="nc" id="L110">		final List&lt;EventSourceDescriptor&gt; descriptorsFromResources = loadMultipleEventSourceFromResources(widgetsPaths);</span>
+<span class="nc" id="L111">		LOGGER.info(&quot;Loaded {} EventSources&quot;, descriptorsFromResources.size());</span>
+
+		// load event sources from classes
+<span class="nc" id="L114">		LOGGER.info(&quot;Scanning packages for EventSources: {} &quot;,</span>
+<span class="nc" id="L115">				PACKAGES_TO_SCAN.stream().map(Package::getName).collect(joining(&quot;, &quot;)));</span>
+<span class="nc" id="L116">		final List&lt;EventSourceDescriptor.Builder&gt; descriptorsFromClasses = PACKAGES_TO_SCAN.stream()</span>
+<span class="nc" id="L117">				.flatMap(p -&gt; TypeUtils.findClasses(p, Service.class, EventSource.class))</span>
+<span class="nc" id="L118">				.map(this::loadEventSourceFromClass)</span>
+<span class="nc" id="L119">				.collect(toList());</span>
+<span class="nc" id="L120">		LOGGER.info(&quot;Loaded {} EventSources&quot;, descriptorsFromClasses.size());</span>
+
+<span class="nc" id="L122">		LOGGER.info(&quot;Scanning addon folders for EventSources: {}&quot;,</span>
+<span class="nc" id="L123">				addonFolders.stream().map(Path::toAbsolutePath).map(Object::toString).collect(joining(&quot;, &quot;)));</span>
+<span class="nc" id="L124">		final URL[] jarFileUrls = addonFolders.stream()</span>
+<span class="nc" id="L125">				.map(this::findAddonJarFiles)</span>
+<span class="nc" id="L126">				.flatMap(Collection::stream)</span>
+<span class="nc" id="L127">				.map(Path::toUri)</span>
+<span class="nc" id="L128">				.map(ThrowingFunction.throwing(URI::toURL))</span>
+<span class="nc" id="L129">				.collect(toSet())</span>
+<span class="nc" id="L130">				.toArray(new URL[0]);</span>
+		final List&lt;String&gt; classNamesToLoad;
+		try {
+<span class="nc" id="L133">			classNamesToLoad = TypeUtils.listClassesInJarFiles(jarFileUrls);</span>
+<span class="nc" id="L134">		} catch (final IOException e) {</span>
+<span class="nc" id="L135">			throw new RuntimeException(&quot;Unable to scan JAR files&quot;, e);</span>
+<span class="nc" id="L136">		}</span>
+		@SuppressWarnings(&quot;resource&quot;)
+<span class="nc" id="L138">		final ClassLoader addonClassLoader</span>
+<span class="nc" id="L139">				= URLClassLoader.newInstance(jarFileUrls, ClassLoader.getSystemClassLoader());</span>
+<span class="nc" id="L140">		final List&lt;EventSourceDescriptor.Builder&gt; descriptorsFromAddons</span>
+<span class="nc" id="L141">				= TypeUtils.findClasses(addonClassLoader, classNamesToLoad, Service.class, EventSource.class)</span>
+<span class="nc" id="L142">						.map(this::loadEventSourceFromClass)</span>
+<span class="nc" id="L143">						.collect(toList());</span>
+<span class="nc" id="L144">		LOGGER.info(&quot;Loaded {} EventSources&quot;, descriptorsFromAddons.size());</span>
+
+<span class="nc" id="L146">		final List&lt;EventSourceDescriptor.Builder&gt; descriptorsJavaBased = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L147">		descriptorsJavaBased.addAll(descriptorsFromClasses);</span>
+<span class="nc" id="L148">		descriptorsJavaBased.addAll(descriptorsFromAddons);</span>
+
+		// add properties from views into class' event sources
+<span class="nc" id="L151">		final List&lt;EventSourceDescriptor&gt; standAloneDescriptorsFromFileSystem</span>
+<span class="nc" id="L152">				= descriptorsFromResources.stream().filter(EventSourceDescriptor::isStandAlone).collect(toList());</span>
+
+<span class="nc" id="L154">		LOGGER.debug(&quot;Available view ids: {}&quot;,</span>
+<span class="nc" id="L155">				descriptorsFromResources.stream().map(EventSourceDescriptor::getView).sorted().collect(joining(&quot;, &quot;)));</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		for (final EventSourceDescriptor.Builder dfc : descriptorsJavaBased) {</span>
+<span class="nc" id="L157">			final EventSourceDescriptor descriptorForView = descriptorsFromResources.stream()</span>
+<span class="nc" id="L158">					.filter(d -&gt; d.getView().equals(dfc.getView()))</span>
+<span class="nc" id="L159">					.findAny()</span>
+<span class="nc" id="L160">					.orElseThrow(() -&gt; new RuntimeException(&quot;No widget found for view id: &quot; + dfc.getView()));</span>
+<span class="nc" id="L161">			descriptorForView.getDataItems()</span>
+<span class="nc" id="L162">					.stream()</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">					.filter(di -&gt; !dfc.getDataItemsToHide().contains(di.getName()))</span>
+<span class="nc" id="L164">					.forEach(dfc::addDataItem);</span>
+<span class="nc" id="L165">		}</span>
+
+		// Done
+<span class="nc" id="L168">		eventSourceDescriptors.clear();</span>
+<span class="nc" id="L169">		eventSourceDescriptors</span>
+<span class="nc" id="L170">				.addAll(descriptorsJavaBased.stream().map(EventSourceDescriptor.Builder::build).collect(toList()));</span>
+<span class="nc" id="L171">		eventSourceDescriptors.addAll(standAloneDescriptorsFromFileSystem);</span>
+<span class="nc" id="L172">	}</span>
+
+	private Collection&lt;Path&gt; findAddonJarFiles(final Path folder) {
+<span class="nc" id="L175">		try (Stream&lt;Path&gt; files = Files.walk(folder)) {</span>
+<span class="nc" id="L176">			return files.filter(p -&gt; p.getFileName().toString().toLowerCase().endsWith(&quot;.jar&quot;)).collect(toSet());</span>
+<span class="nc" id="L177">		} catch (final IOException e) {</span>
+<span class="nc" id="L178">			throw new RuntimeException(&quot;Unable to scan path: &quot; + folder.toAbsolutePath().toString(), e);</span>
+		}
+	}
+
+	public Collection&lt;EventSourceKey&gt; getEventSourceKeys() {
+<span class="nc" id="L183">		return eventSourceDescriptors.stream().map(EventSourceDescriptor::getKey).collect(toList());</span>
+	}
+
+	public EventSourceDescriptor getEventSourceDescriptor(final EventSourceKey key) {
+<span class="nc" id="L187">		return eventSourceDescriptors.stream().filter(d -&gt; d.getKey().equals(key)).findAny().get();</span>
+	}
+
+	private EventSourceDescriptor.Builder loadEventSourceFromClass(final Class&lt;? extends Service&gt; serviceClass) {
+<span class="nc" id="L191">		final EventSource eventSourceAnnotation = Objects.requireNonNull(serviceClass.getAnnotation(EventSource.class));</span>
+
+		// collect easy event source information
+<span class="nc" id="L194">		final EventSourceKey key = EventSourceKey.createKeyFromClass(serviceClass);</span>
+<span class="nc" id="L195">		final String displayName = Objects.requireNonNull(eventSourceAnnotation.displayName());</span>
+<span class="nc" id="L196">		final String description = eventSourceAnnotation.description();</span>
+<span class="nc" id="L197">		final String view = Objects.requireNonNull(eventSourceAnnotation.view());</span>
+<span class="nc" id="L198">		final Class&lt;? extends OversigtEvent&gt; eventClass = Objects.requireNonNull(getEventClass(serviceClass));</span>
+<span class="nc" id="L199">		final Class&lt;? extends Module&gt; moduleClass = eventSourceAnnotation.explicitConfiguration();</span>
+<span class="nc" id="L200">		final EventSourceDescriptor.Builder builder = new EventSourceDescriptor.Builder(key,</span>
+				displayName,
+				description,
+				view,
+				serviceClass,
+				eventClass,
+				moduleClass);
+
+		// Find fields of the event
+<span class="nc" id="L209">		final Set&lt;String&gt; eventFields = TypeUtils.getMembers(eventClass)</span>
+<span class="nc" id="L210">				.map(s -&gt; CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, s))</span>
+<span class="nc" id="L211">				.collect(toSet());</span>
+
+		// add event source defined data items
+<span class="nc" id="L214">		Stream.of(eventSourceAnnotation.dataItems())</span>
+<span class="nc" id="L215">				.filter(not(Strings::isNullOrEmpty))</span>
+<span class="nc" id="L216">				.filter(not(eventFields::contains))</span>
+<span class="nc" id="L217">				.map(this::createDummyEventSourceProperty)</span>
+<span class="nc" id="L218">				.forEach(builder::addDataItem);</span>
+
+		// list data items to be hidden from view
+<span class="nc" id="L221">		Stream.of(eventSourceAnnotation.hiddenDataItems())</span>
+<span class="nc" id="L222">				.filter(not(Strings::isNullOrEmpty))</span>
+<span class="nc" id="L223">				.forEach(builder::addDataItemToHide);</span>
+
+		// find class properties
+		final BeanInfo beanInfo;
+		try {
+<span class="nc" id="L228">			beanInfo = Introspector.getBeanInfo(serviceClass, Object.class);</span>
+<span class="nc" id="L229">		} catch (final IntrospectionException e) {</span>
+<span class="nc" id="L230">			throw new RuntimeException(String.format(&quot;Unable to examine class %s&quot;, serviceClass), e);</span>
+<span class="nc" id="L231">		}</span>
+<span class="nc" id="L232">		Stream.of(Objects.requireNonNull(beanInfo.getPropertyDescriptors()))</span>
+				// we need both getters and setters
+<span class="nc" id="L234">				.filter(p -&gt; Objects.nonNull(p.getReadMethod()))</span>
+<span class="nc" id="L235">				.filter(p -&gt; Objects.nonNull(p.getWriteMethod()))</span>
+				// getters should not return anything
+<span class="nc bnc" id="L237" title="All 2 branches missed.">				.filter(p -&gt; p.getReadMethod().getParameterCount() == 0)</span>
+				// setters should accept exactly one parameter
+<span class="nc bnc" id="L239" title="All 2 branches missed.">				.filter(p -&gt; p.getWriteMethod().getParameterCount() == 1)</span>
+				// getters and setters from base classes are not relevant
+<span class="nc bnc" id="L241" title="All 2 branches missed.">				.filter(p -&gt; !p.getReadMethod().getDeclaringClass().getPackage().equals(CORE_EVENT_SOURCE_PACKAGE))</span>
+				// getters and setters without annotation are not relevant
+<span class="nc bnc" id="L243" title="All 2 branches missed.">				.filter(p -&gt; p.getReadMethod().isAnnotationPresent(Property.class)</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">						|| p.getWriteMethod().isAnnotationPresent(Property.class))</span>
+				// convert into our own structure
+<span class="nc" id="L246">				.map(this::createEventSourceProperty)</span>
+<span class="nc" id="L247">				.forEach(builder::addProperty);</span>
+
+<span class="nc" id="L249">		return builder;</span>
+	}
+
+	private EventSourceProperty createDummyEventSourceProperty(final String name) {
+<span class="nc" id="L253">		return new EventSourceProperty(name, name, &quot;&quot;, &quot;text&quot;, true, Collections.emptyMap());</span>
+	}
+
+	private Optional&lt;JsonHint&gt; findJsonHint(final PropertyDescriptor descriptor) {
+<span class="nc" id="L257">		Optional&lt;JsonHint&gt; hint = Optional.ofNullable(descriptor.getReadMethod().getAnnotation(JsonHint.class));</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">		if (hint.isPresent()) {</span>
+<span class="nc" id="L259">			return hint;</span>
+		}
+<span class="nc" id="L261">		hint = Optional.ofNullable(descriptor.getWriteMethod().getAnnotation(JsonHint.class));</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">		if (hint.isPresent()) {</span>
+<span class="nc" id="L263">			return hint;</span>
+		}
+<span class="nc" id="L265">		Class&lt;?&gt; tmpClass = descriptor.getPropertyType();</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">		while (tmpClass.isArray()) {</span>
+<span class="nc" id="L267">			tmpClass = tmpClass.getComponentType();</span>
+		}
+<span class="nc" id="L269">		return Optional.ofNullable(tmpClass.getAnnotation(JsonHint.class));</span>
+	}
+
+	private EventSourceProperty createEventSourceProperty(final PropertyDescriptor descriptor) {
+<span class="nc bnc" id="L273" title="All 2 branches missed.">		if (descriptor.getReadMethod().getAnnotation(Property.class) != null</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">				&amp;&amp; descriptor.getWriteMethod().getAnnotation(Property.class) != null) {</span>
+<span class="nc" id="L275">			throw new RuntimeException(&quot;Unable to load property '&quot;</span>
+<span class="nc" id="L276">					+ descriptor.getName()</span>
+					+ &quot;' from class &quot;
+<span class="nc" id="L278">					+ descriptor.getReadMethod().getDeclaringClass().getName()</span>
+					+ &quot; because both the read and the write method are declaring a @&quot;
+<span class="nc" id="L280">					+ Property.class.getSimpleName()</span>
+					+ &quot; annotation.&quot;);
+		}
+
+		// find Property annotation
+		final Property property = Optionals
+<span class="nc" id="L286">				.getFirstValue(notNull(),</span>
+<span class="nc" id="L287">						descriptor.getReadMethod().getAnnotation(Property.class),</span>
+<span class="nc" id="L288">						descriptor.getWriteMethod().getAnnotation(Property.class))</span>
+<span class="nc" id="L289">				.orElseThrow(() -&gt; new NullPointerException(&quot;Both values are null.&quot;));</span>
+
+<span class="nc" id="L291">		final String name = descriptor.getName();</span>
+<span class="nc" id="L292">		final String displayName = property.name();</span>
+<span class="nc" id="L293">		final String description = Strings.nullToEmpty(property.description());</span>
+<span class="nc" id="L294">		final boolean customValuesAllowed = false;</span>
+<span class="nc" id="L295">		final Method getter = descriptor.getReadMethod();</span>
+<span class="nc" id="L296">		final Method setter = descriptor.getWriteMethod();</span>
+<span class="nc" id="L297">		final Class&lt;?&gt; clazz = descriptor.getPropertyType();</span>
+<span class="nc" id="L298">		final Optional&lt;JsonHint&gt; hint = findJsonHint(descriptor);</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">		final boolean json = !hasDedicatedEditor(clazz);</span>
+
+<span class="nc" id="L301">		final String inputType = getType(name,</span>
+<span class="nc" id="L302">				Optional.ofNullable(Strings.emptyToNull(property.type())),</span>
+<span class="nc" id="L303">				Optional.of(clazz),</span>
+				json,
+<span class="nc" id="L305">				Collections.emptyList());</span>
+<span class="nc" id="L306">		final Map&lt;String, String&gt; allowedValues = collectAllowedValues(clazz);</span>
+
+<span class="nc bnc" id="L308" title="All 2 branches missed.">		final EventSourceProperty esProperty = new EventSourceProperty(name,</span>
+				displayName,
+				description,
+				inputType,
+				customValuesAllowed,
+				allowedValues,
+				getter,
+				setter,
+				clazz,
+				hint,
+				json,
+<span class="nc" id="L319">				json ? Optional.of(JsonUtils.toJsonSchema(clazz, hint)) : Optional.empty());</span>
+
+<span class="nc" id="L321">		return esProperty;</span>
+	}
+
+	private EventSourceProperty createEventSourceProperty(final String name, final Properties properties) {
+<span class="nc" id="L325">		final String displayName = properties.getProperty(&quot;dataItem.&quot; + name + &quot;.title&quot;, name);</span>
+<span class="nc" id="L326">		final String description = Strings.nullToEmpty(properties.getProperty(&quot;dataItem.&quot; + name + &quot;.description&quot;));</span>
+<span class="nc" id="L327">		final String inputType = properties.getProperty(&quot;dataItem.&quot; + name + &quot;.type&quot;, &quot;text&quot;);</span>
+<span class="nc" id="L328">		final boolean customValuesAllowed</span>
+<span class="nc" id="L329">				= Boolean.parseBoolean(properties.getProperty(&quot;dataItem.&quot; + name + &quot;.customValuesAllowed&quot;, &quot;false&quot;));</span>
+<span class="nc" id="L330">		final Map&lt;String, String&gt; allowedValues</span>
+<span class="nc" id="L331">				= StringUtils.list(Optional.ofNullable(properties.getProperty(&quot;dataItem.&quot; + name + &quot;.values&quot;)))</span>
+<span class="nc" id="L332">						.stream()</span>
+<span class="nc" id="L333">						.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));</span>
+
+<span class="nc" id="L335">		final EventSourceProperty property = new EventSourceProperty(name,</span>
+				displayName,
+				description,
+<span class="nc" id="L338">				getType(displayName, Optional.of(inputType), Optional.empty(), false, allowedValues.keySet()),</span>
+				customValuesAllowed,
+				allowedValues);
+<span class="nc" id="L341">		return property;</span>
+	}
+
+	private Map&lt;String, String&gt; collectAllowedValues(final Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L345" title="All 2 branches missed.">		if (clazz.isEnum()) {</span>
+<span class="nc" id="L346">			return Stream.of(clazz.getEnumConstants())</span>
+<span class="nc" id="L347">					.map(e -&gt; (Enum&lt;?&gt;) e)</span>
+<span class="nc" id="L348">					.collect(Collectors.toLinkedHashMap(Enum::name, Enum::toString));</span>
+		}
+<span class="nc bnc" id="L350" title="All 2 branches missed.">		if (clazz == ZoneId.class) {</span>
+<span class="nc" id="L351">			return ZoneId.getAvailableZoneIds()</span>
+<span class="nc" id="L352">					.stream()</span>
+<span class="nc" id="L353">					.sorted(String::compareToIgnoreCase)</span>
+<span class="nc" id="L354">					.collect(Collectors.toLinkedHashMap(Function.identity(), Function.identity()));</span>
+		}
+<span class="nc bnc" id="L356" title="All 2 branches missed.">		if (clazz == Locale.class) {</span>
+<span class="nc" id="L357">			return Stream.of(Locale.getAvailableLocales())</span>
+<span class="nc" id="L358">					.sorted((a, b) -&gt; a.getDisplayName().compareTo(b.getDisplayName()))</span>
+<span class="nc" id="L359">					.collect(Collectors.toLinkedHashMap(l -&gt; l.toString().toLowerCase(), Locale::getDisplayName));</span>
+		}
+<span class="nc" id="L361">		return Collections.emptyMap();</span>
+	}
+
+	private String getType(final String name,
+			final Optional&lt;String&gt; propertyType,
+			final Optional&lt;Class&lt;?&gt;&gt; optionalType,
+			final boolean json,
+			final Collection&lt;?&gt; allowedValues) {
+<span class="nc bnc" id="L369" title="All 4 branches missed.">		if (propertyType.isPresent() &amp;&amp; propertyType.get().trim().length() &gt; 0) {</span>
+<span class="nc" id="L370">			return propertyType.get();</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">		} else if (optionalType.isPresent()) {</span>
+<span class="nc" id="L372">			final Class&lt;?&gt; type = optionalType.get();</span>
+<span class="nc bnc" id="L373" title="All 4 branches missed.">			if (Enum.class.isAssignableFrom(type) || !allowedValues.isEmpty()) {</span>
+<span class="nc" id="L374">				return &quot;enum&quot;;</span>
+<span class="nc bnc" id="L375" title="All 4 branches missed.">			} else if (json || TypeUtils.isOfType(type, JsonBasedData.class)) {</span>
+<span class="nc" id="L376">				return &quot;json&quot;;</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">			} else if (type == LocalDate.class) {</span>
+<span class="nc" id="L378">				return &quot;date&quot;;</span>
+<span class="nc bnc" id="L379" title="All 2 branches missed.">			} else if (type == LocalTime.class) {</span>
+<span class="nc" id="L380">				return &quot;time&quot;;</span>
+<span class="nc bnc" id="L381" title="All 2 branches missed.">			} else if (type == LocalDateTime.class) {</span>
+<span class="nc" id="L382">				return &quot;datetime-local&quot;;</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">			} else if (type == ZonedDateTime.class) {</span>
+<span class="nc" id="L384">				return &quot;datetime&quot;;</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">			} else if (type == Duration.class) {</span>
+<span class="nc" id="L386">				return &quot;duration&quot;;</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">			} else if (type == boolean.class) {</span>
+<span class="nc" id="L388">				return &quot;boolean&quot;;</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">			} else if (SerializableProperty.class.isAssignableFrom(type)) {</span>
+<span class="nc" id="L390">				return &quot;value_&quot; + type.getSimpleName();</span>
+<span class="nc bnc" id="L391" title="All 16 branches missed.">			} else if (type == int.class</span>
+					|| type == long.class
+					|| type == short.class
+					|| type == byte.class
+					|| type == Integer.class
+					|| type == Long.class
+					|| type == Short.class
+					|| type == Byte.class) {
+<span class="nc" id="L399">				return &quot;number&quot;;</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">			} else if (name.toLowerCase().contains(&quot;password&quot;)) {</span>
+<span class="nc" id="L401">				return &quot;password&quot;;</span>
+<span class="nc bnc" id="L402" title="All 4 branches missed.">			} else if (type == URL.class</span>
+					|| type == String.class
+<span class="nc bnc" id="L404" title="All 4 branches missed.">							&amp;&amp; (name.toLowerCase().endsWith(&quot;url&quot;) || name.toLowerCase().startsWith(&quot;url&quot;))) {</span>
+<span class="nc" id="L405">				return &quot;url&quot;;</span>
+			} else {
+<span class="nc" id="L407">				return &quot;text&quot;;</span>
+			}
+		} else {
+<span class="nc" id="L410">			throw new RuntimeException(&quot;Unable to determine type for: &quot; + name);</span>
+		}
+	}
+
+	private List&lt;EventSourceDescriptor&gt; loadMultipleEventSourceFromResources(final Collection&lt;String&gt; widgetsPaths) {
+<span class="nc" id="L415">		final Collection&lt;String&gt; allowedPaths = widgetsPaths.stream()</span>
+<span class="nc" id="L416">				.flatMap(wp -&gt; Stream.of(wp.replace('\\', '/'), wp.replace('/', '\\')))</span>
+<span class="nc" id="L417">				.collect(toSet());</span>
+
+<span class="nc" id="L419">		final Predicate&lt;Path&gt; allowedPathsFilter = path -&gt; {</span>
+<span class="nc" id="L420">			final String filename = path.getFileName().toString();</span>
+<span class="nc" id="L421">			final String fullpath = path.toString();</span>
+<span class="nc bnc" id="L422" title="All 4 branches missed.">			return filename.toLowerCase().endsWith(&quot;.html&quot;) &amp;&amp; allowedPaths.stream().anyMatch(fullpath::contains);</span>
+		};
+
+<span class="nc" id="L425">		return FileUtils.streamResourcesFromClasspath()</span>
+<span class="nc" id="L426">				.filter(allowedPathsFilter)</span>
+<span class="nc" id="L427">				.map(Path::getParent)</span>
+<span class="nc" id="L428">				.map(this::loadEventSourceFromPathOrFail)</span>
+<span class="nc" id="L429">				.filter(not(Objects::isNull))</span>
+<span class="nc" id="L430">				.collect(toList());</span>
+	}
+
+	private EventSourceDescriptor loadEventSourceFromPathOrFail(final Path folder) {
+		try {
+<span class="nc" id="L435">			return loadEventSourceFromPath(folder);</span>
+<span class="nc" id="L436">		} catch (final Exception e) {</span>
+<span class="nc" id="L437">			throw new RuntimeException(&quot;Unable to load widget from: &quot; + folder, e);</span>
+		}
+	}
+
+	private EventSourceDescriptor loadEventSourceFromPath(final Path folder) throws IOException {
+<span class="nc" id="L442">		LOGGER.trace(&quot;Inspecting path: %s&quot;, folder);</span>
+
+		// find name of EventSource
+<span class="nc" id="L445">		final String name = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, folder.getFileName().toString());</span>
+<span class="nc" id="L446">		String displayName = name;</span>
+<span class="nc" id="L447">		final EventSourceKey key = EventSourceKey.createKeyFromWidget(name, name);</span>
+<span class="nc" id="L448">		Optional&lt;String&gt; description = Optional.empty();</span>
+
+		// other info
+		final boolean standAlone;
+
+		// load additional information
+<span class="nc" id="L454">		final Path prop = folder.resolve(folder.getFileName().toString() + &quot;.properties&quot;);</span>
+<span class="nc" id="L455">		final Properties properties = new Properties();</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">		if (Files.exists(prop)) {</span>
+<span class="nc" id="L457">			try (Reader in = Files.newBufferedReader(prop)) {</span>
+<span class="nc" id="L458">				properties.load(in);</span>
+			}
+
+			// Check if this view is already used and if yes if it may be used stand-alone
+<span class="nc" id="L462">			standAlone</span>
+<span class="nc" id="L463">					= Boolean.parseBoolean(Strings.nullToEmpty(properties.getProperty(&quot;standalone-available&quot;, &quot;true&quot;)));</span>
+
+			// maybe change display name
+<span class="nc" id="L466">			final String newName = Strings.emptyToNull(properties.getProperty(&quot;displayName&quot;));</span>
+<span class="nc bnc" id="L467" title="All 2 branches missed.">			if (newName != null) {</span>
+<span class="nc" id="L468">				displayName = newName;</span>
+			}
+
+<span class="nc" id="L471">			description = Optional.ofNullable(properties.getProperty(&quot;description&quot;));</span>
+<span class="nc" id="L472">		} else {</span>
+<span class="nc" id="L473">			standAlone = true;</span>
+		}
+
+<span class="nc" id="L476">		final EventSourceDescriptor.Builder builder</span>
+				= new EventSourceDescriptor.Builder(key, displayName, description, name, standAlone);
+
+		// Load data items
+<span class="nc" id="L480">		final Set&lt;String&gt; dataItems = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L481">		addDataItemsFromHtml(dataItems, folder);</span>
+<span class="nc" id="L482">		addDataItemsFromCoffeeScript(dataItems, folder);</span>
+<span class="nc" id="L483">		dataItems.removeAll(RESERVED_DATA_BINDINGS);</span>
+<span class="nc" id="L484">		dataItems.removeAll(StringUtils.list(Optional.ofNullable(properties.getProperty(&quot;hiddenDataItems&quot;))));</span>
+<span class="nc" id="L485">		dataItems.addAll(StringUtils.list(Optional.ofNullable(properties.getProperty(&quot;additionalDataItems&quot;))));</span>
+
+<span class="nc" id="L487">		dataItems.stream().map(d -&gt; createEventSourceProperty(d, properties)).forEach(builder::addDataItem);</span>
+
+<span class="nc" id="L489">		return builder.build();</span>
+	}
+
+	private static void addDataItemsFromHtml(final Collection&lt;String&gt; dataItems, final Path folder) throws IOException {
+<span class="nc" id="L493">		final Path html = folder.resolve(folder.getFileName().toString() + &quot;.html&quot;);</span>
+<span class="nc bnc" id="L494" title="All 2 branches missed.">		if (Files.exists(html)) {</span>
+<span class="nc" id="L495">			dataItems.addAll(Utils.findDataBindings(Files.lines(html)));</span>
+		}
+<span class="nc" id="L497">	}</span>
+
+	private static void addDataItemsFromCoffeeScript(final Collection&lt;String&gt; dataItems, final Path folder)
+			throws IOException {
+<span class="nc" id="L501">		final Path coffee = folder.resolve(folder.getFileName().toString() + &quot;.coffee&quot;);</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">		if (Files.exists(coffee)) {</span>
+<span class="nc" id="L503">			final List&lt;String&gt; lines = Files.lines(coffee)</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">					.filter(l -&gt; !l.trim().startsWith(&quot;#&quot;))</span>
+<span class="nc" id="L505">					.filter(not(Strings::isNullOrEmpty))</span>
+<span class="nc" id="L506">					.collect(toList());</span>
+<span class="nc" id="L507">			final Set&lt;String&gt; gets = Utils.findGets(lines);</span>
+<span class="nc" id="L508">			final Set&lt;String&gt; sets = Utils.findSets(lines);</span>
+<span class="nc" id="L509">			dataItems.addAll(gets);</span>
+<span class="nc" id="L510">			dataItems.removeAll(sets);</span>
+		}
+<span class="nc" id="L512">	}</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	private static Class&lt;? extends OversigtEvent&gt; getEventClass(final Class&lt;? extends Service&gt; clazz) {
+<span class="nc" id="L516">		final Optional&lt;Method&gt; method = TypeUtils.getMethod(clazz,</span>
+<span class="nc" id="L517">				Arrays.asList(&quot;produceEventFromData&quot;, &quot;produceCachedEvent&quot;, &quot;produceEvent&quot;),</span>
+				new Class&lt;?&gt;[0]);
+<span class="nc bnc" id="L519" title="All 2 branches missed.">		if (!method.isPresent()) {</span>
+<span class="nc" id="L520">			return OversigtEvent.class;</span>
+		}
+
+		final Class&lt;?&gt; rawTypeOfOptional;
+<span class="nc bnc" id="L524" title="All 2 branches missed.">		if (method.get().getReturnType() == Optional.class) {</span>
+<span class="nc" id="L525">			final ParameterizedType parameterizedType = (ParameterizedType) method.get().getGenericReturnType();</span>
+<span class="nc" id="L526">			final Type typeOfOptional = parameterizedType.getActualTypeArguments()[0];</span>
+<span class="nc bnc" id="L527" title="All 2 branches missed.">			if (typeOfOptional instanceof TypeVariable&lt;?&gt;) {</span>
+<span class="nc" id="L528">				final TypeVariable&lt;?&gt; typeVariable = (TypeVariable&lt;?&gt;) typeOfOptional;</span>
+<span class="nc" id="L529">				final Type boundary = typeVariable.getBounds()[0];</span>
+<span class="nc bnc" id="L530" title="All 2 branches missed.">				if (boundary instanceof Class&lt;?&gt;) {</span>
+<span class="nc" id="L531">					rawTypeOfOptional = (Class&lt;?&gt;) boundary;</span>
+				} else {
+<span class="nc" id="L533">					throw new RuntimeException(String.format(</span>
+							&quot;Unable to inspect optional return value of method [%s]. Type in question: %s&quot;,
+<span class="nc" id="L535">							method.toString(),</span>
+							parameterizedType));
+				}
+<span class="nc bnc" id="L538" title="All 2 branches missed.">			} else if (typeOfOptional instanceof Class&lt;?&gt;) {</span>
+<span class="nc" id="L539">				rawTypeOfOptional = (Class&lt;?&gt;) typeOfOptional;</span>
+<span class="nc bnc" id="L540" title="All 2 branches missed.">			} else if (typeOfOptional instanceof ParameterizedType) {</span>
+<span class="nc" id="L541">				rawTypeOfOptional = (Class&lt;?&gt;) ((ParameterizedType) typeOfOptional).getRawType();</span>
+			} else {
+<span class="nc" id="L543">				throw new RuntimeException(&quot;Unknown type: &quot; + typeOfOptional.getClass().getName());</span>
+			}
+<span class="nc" id="L545">		} else {</span>
+<span class="nc" id="L546">			rawTypeOfOptional = method.get().getReturnType();</span>
+		}
+
+<span class="nc bnc" id="L549" title="All 2 branches missed.">		if (TypeUtils.isOfType(rawTypeOfOptional, OversigtEvent.class)) {</span>
+<span class="nc" id="L550">			return (Class&lt;? extends OversigtEvent&gt;) rawTypeOfOptional;</span>
+		}
+<span class="nc" id="L552">		throw new RuntimeException(String.format(&quot;Event producing method [%s] does not return event of type %s&quot;,</span>
+<span class="nc" id="L553">				method.toString(),</span>
+<span class="nc" id="L554">				OversigtEvent.class.getName()));</span>
+	}
+
+	/**
+	 * Determines whether the provided class has a dedicated editor in the UI or
+	 * not.&lt;br&gt;
+	 * Classes that have a dedicated editor:
+	 * &lt;ul&gt;
+	 * &lt;li&gt;all primitive types&lt;/li&gt;
+	 * &lt;li&gt;all types extending {@link SerializableProperty}&lt;/li&gt;
+	 * &lt;li&gt;all {@link Enum}s&lt;/li&gt;
+	 * &lt;li&gt;{@link String}&lt;/li&gt;
+	 * &lt;li&gt;{@link Color}&lt;/li&gt;
+	 * &lt;li&gt;{@link Locale}&lt;/li&gt;
+	 * &lt;li&gt;{@link Date}&lt;/li&gt;
+	 * &lt;li&gt;{@link LocalDate}&lt;/li&gt;
+	 * &lt;li&gt;{@link LocalTime}&lt;/li&gt;
+	 * &lt;li&gt;{@link TemporalAmount}&lt;/li&gt;
+	 * &lt;li&gt;{@link ZoneId}&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 *
+	 * @param clazz the class to test
+	 * @return &lt;code&gt;true&lt;/code&gt; if the class has a dedicated UI editor, otherwise
+	 *         &lt;code&gt;false&lt;/code&gt;
+	 */
+	private static boolean hasDedicatedEditor(final Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L580" title="All 4 branches missed.">		return clazz.isPrimitive()</span>
+				|| clazz == String.class
+<span class="nc bnc" id="L582" title="All 2 branches missed.">				|| SerializableProperty.class.isAssignableFrom(clazz)</span>
+<span class="nc bnc" id="L583" title="All 12 branches missed.">				|| clazz.isEnum()</span>
+				|| clazz == Color.class
+				|| clazz == Locale.class
+				|| clazz == Date.class
+				|| clazz == LocalDate.class
+				|| clazz == LocalTime.class
+<span class="nc bnc" id="L589" title="All 4 branches missed.">				|| TemporalAmount.class.isAssignableFrom(clazz)</span>
+				|| clazz == ZoneId.class; // TODO really?
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ViewResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Oversigt Core</a> &gt; <a href="index.source.html" class="el_package">com.hlag.oversigt.web.resources</a> &gt; <span class="el_source">ViewResource.java</span></div><h1>ViewResource.java</h1><pre class="source lang-java linenums">package com.hlag.oversigt.web.resources;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.security.PermitAll;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import com.google.common.base.CaseFormat;
+import com.google.common.io.Resources;
+import com.google.inject.Singleton;
+import com.hlag.oversigt.web.api.ErrorResponse;
+import com.hlag.oversigt.web.api.NoChangeLog;
+import com.hlag.oversigt.web.api.Wro4jExecutor;
+
+import de.larssh.utils.SneakyException;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import ro.isdc.wro.model.resource.ResourceType;
+
+@Api(tags = { &quot;View&quot; })
+@Path(&quot;/views/{viewId}&quot;)
+@Singleton
+public class ViewResource {
+<span class="nc" id="L38">	public ViewResource() {</span>
+		// no fields to be initialized
+<span class="nc" id="L40">	}</span>
+
+	@GET
+	@Path(&quot;/html&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Returning the raw HTML content of the view&quot;),
+			@ApiResponse(code = 404, message = &quot;The view does not exist&quot;) })
+	@ApiOperation(value = &quot;Read the HTML data of the given widget&quot;, produces = &quot;text/html&quot;)
+	@PermitAll
+	@NoChangeLog
+	public Response readHtml(@PathParam(&quot;viewId&quot;) @NotNull @NotBlank final String viewId) {
+<span class="nc bnc" id="L51" title="All 2 branches missed.">		if (doesViewExist(viewId)) {</span>
+<span class="nc" id="L52">			final Optional&lt;String&gt; content = readContent(getResourceUrl(viewId, &quot;html&quot;));</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">			if (content.isPresent()) {</span>
+<span class="nc" id="L54">				return Response.ok(content.get(), MediaType.TEXT_HTML_TYPE).build();</span>
+			}
+		}
+<span class="nc" id="L57">		return ErrorResponse.notFound(&quot;View does not exist.&quot;);</span>
+	}
+
+	@GET
+	@Path(&quot;/css&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Returning the raw CSS content of the view&quot;),
+			@ApiResponse(code = 404, message = &quot;The view does not exist&quot;) })
+	@ApiOperation(value = &quot;Read the CSS data of the given widget&quot;, produces = &quot;text/css&quot;)
+	@PermitAll
+	@NoChangeLog
+	public Response readCss(@PathParam(&quot;viewId&quot;) @NotNull @NotBlank final String viewId) {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">		if (doesViewExist(viewId)) {</span>
+<span class="nc" id="L70">			final Optional&lt;String&gt; out = new Wro4jExecutor(getName(viewId), true).execute(ResourceType.CSS);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">			if (out.isPresent()) {</span>
+<span class="nc" id="L72">				return Response.ok(out.get(), &quot;text/css&quot;).build();</span>
+			}
+<span class="nc" id="L74">			return ErrorResponse.internalServerError(UUID.randomUUID(), &quot;Unable to generate view content&quot;);</span>
+		}
+<span class="nc" id="L76">		return ErrorResponse.notFound(&quot;View does not exist.&quot;);</span>
+	}
+
+	@GET
+	@Path(&quot;/js&quot;)
+	@ApiResponses({
+			@ApiResponse(code = 200, message = &quot;Returning the raw Javascript content of the view&quot;),
+			@ApiResponse(code = 404, message = &quot;The view does not exist&quot;) })
+	@ApiOperation(value = &quot;Read the Javascript data of the given widget&quot;, produces = &quot;application/javascript&quot;)
+	@PermitAll
+	@NoChangeLog
+	public Response readJavascript(@PathParam(&quot;viewId&quot;) @NotNull @NotBlank final String viewId) {
+		// if (doesViewExist(viewId)) {
+<span class="nc" id="L89">		final Wro4jExecutor executor = new Wro4jExecutor(getName(viewId), true);</span>
+<span class="nc" id="L90">		final Optional&lt;String&gt; out = executor.execute(ResourceType.JS);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">		if (out.isPresent()) {</span>
+<span class="nc" id="L92">			return Response.ok(out.get(), &quot;application/javascript&quot;).build();</span>
+		}
+<span class="nc" id="L94">		return ErrorResponse.internalServerError(UUID.randomUUID(), &quot;Unable to generate view content&quot;);</span>
+		// }
+		// return ErrorResponse.notFound(&quot;View does not exist.&quot;);
+	}
+
+	private static String getName(final String viewId) {
+<span class="nc" id="L100">		return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, viewId);</span>
+	}
+
+	private static boolean doesViewExist(final String viewId) {
+		try {
+<span class="nc" id="L105">			return new File(getResourceUrl(viewId, &quot;html&quot;).toURI()).exists();</span>
+<span class="nc" id="L106">		} catch (final URISyntaxException e) {</span>
+<span class="nc" id="L107">			throw new SneakyException(e);</span>
+		}
+	}
+
+	private static URL getResourceUrl(final String viewId, final String extension) {
+<span class="nc" id="L112">		return Resources.getResource(&quot;statics/widgets/&quot; + getName(viewId) + &quot;/&quot; + getName(viewId) + &quot;.&quot; + extension);</span>
+	}
+
+	private static Optional&lt;String&gt; readContent(final URL url) {
+		try {
+<span class="nc" id="L117">			return Optional.of(new String(Resources.toByteArray(url), StandardCharsets.UTF_8));</span>
+<span class="nc" id="L118">		} catch (@SuppressWarnings(&quot;unused&quot;) final FileNotFoundException ignore) {</span>
+<span class="nc" id="L119">			return Optional.empty();</span>
+<span class="nc" id="L120">		} catch (final Exception e) {</span>
+<span class="nc" id="L121">			throw new SneakyException(e);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
