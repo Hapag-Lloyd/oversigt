@@ -82,9 +82,15 @@ jobs:
       - name: Prepare Site
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
         run: |
-          rm ./target/site/index.html
-          cp ./CHANGELOG.md ./target/site/CHANGELOG.md
-          cp ./README.md ./target/site/README.md
+          if [ -f ./target/site/index.html ]; then
+            rm ./target/site/index.html
+          fi
+          if [ -f ./CHANGELOG.md ]; then
+            cp ./CHANGELOG.md ./target/site/CHANGELOG.md
+          fi
+          if [ -f ./README.md ]; then
+            cp ./README.md ./target/site/README.md
+          fi
           
           # Modules
           cp -R ./core/target/site ./target/site/core
