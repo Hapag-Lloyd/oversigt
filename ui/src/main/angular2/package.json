@@ -29,7 +29,7 @@
     "jquery": "^3.6.0",
     "ngx-toastr": "^13.2.0",
     "rxjs": "^6.6.3",
-    "tslib": "^2.0.0",
+    "tslib": "^2.2.0",
     "zone.js": "~0.10.2",
     "@clr/core": "^4.0.8",
     "@webcomponents/webcomponentsjs": "^2.5.0"
