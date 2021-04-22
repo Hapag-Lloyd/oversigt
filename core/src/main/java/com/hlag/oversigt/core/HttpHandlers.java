@@ -42,6 +42,7 @@ import javax.ws.rs.core.Application;
 
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.cdi.CdiInjectorFactory;
+import org.jboss.resteasy.core.ResteasyDeploymentImpl;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
@@ -475,7 +476,7 @@ public class HttpHandlers {
 
 	HttpHandler createApiHandler() throws ServletException {
 		// https://github.com/ukarim/undertow-resteasy-example
-		final ResteasyDeployment deployment = new ResteasyDeployment();
+		final ResteasyDeployment deployment = new ResteasyDeploymentImpl();
 		deployment.setApplication(restApiApplication);
 		deployment.setInjectorFactoryClass(CdiInjectorFactory.class.getName());
 		final DeploymentInfo deploymentInfo = createUndertowDeployment(deployment, "/");
