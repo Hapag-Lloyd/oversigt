@@ -261,7 +261,8 @@
 		</dependency>
 
 		<!-- XPath -->
-		<!-- Do not update xml-apis:xml-apis to version 2.0.x as those are older than 1.3 and later -->
+		<!-- Do not update xml-apis:xml-apis to version 2.0.x as those are older 
+			than 1.3 and later -->
 		<dependency>
 			<groupId>xml-apis</groupId>
 			<artifactId>xml-apis</artifactId>
@@ -460,6 +461,7 @@
 							<overWriteReleases>false</overWriteReleases>
 							<overWriteSnapshots>false</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>
+							<skip>${maven-dependency-plugin.copy-dependency.skip}</skip>
 						</configuration>
 					</execution>
 					<execution>
@@ -498,4 +500,20 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Eclipse only: Skip "Copy Dependency" goal of the Maven Dependency 
+			Plugin as of MDEP-187 -->
+		<profile>
+			<id>eclipse-only</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<properties>
+				<maven-dependency-plugin.copy-dependency.skip>true</maven-dependency-plugin.copy-dependency.skip>
+			</properties>
+		</profile>
+	</profiles>
 </project>
