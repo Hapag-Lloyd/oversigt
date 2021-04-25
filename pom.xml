@@ -63,6 +63,9 @@
 		<parent-pom.default-sources-folder>java</parent-pom.default-sources-folder>
 		<parent-pom.github.organization>Hapag-Lloyd</parent-pom.github.organization>
 		<parent-pom.github.project>oversigt</parent-pom.github.project>
+
+		<!-- Increased to use no-fork reports -->
+		<maven-jxr-plugin.version>3.1.1</maven-jxr-plugin.version>
 	</properties>
 
 	<repositories>
