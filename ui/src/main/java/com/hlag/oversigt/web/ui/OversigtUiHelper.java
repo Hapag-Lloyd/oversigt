@@ -26,9 +26,8 @@ public final class OversigtUiHelper {
 	 * @return the URI to the Oversigt UI if found - otherwise empty()
 	 */
 	public static Optional<URI> getPathToUiResources() {
-		final ClassLoader classLoader = Nullables.orElseGet( //
-				OversigtUiHelper.class.getClassLoader(),
-				ClassLoader::getSystemClassLoader);
+		final ClassLoader classLoader
+				= Nullables.orElseGet(OversigtUiHelper.class.getClassLoader(), ClassLoader::getSystemClassLoader);
 		return Resources.getResource(classLoader, Paths.get("oversigt-ui")).map(Path::toUri);
 	}
 }
