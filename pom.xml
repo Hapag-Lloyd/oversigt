@@ -109,5 +109,6 @@
 					</reportSet>
 				</reportSets>
 			</plugin>
+		</plugins>
 	</reporting>
 </project>
