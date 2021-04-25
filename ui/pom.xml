@@ -49,9 +49,6 @@
 							<goal>npm</goal>
 						</goals>
 						<phase>compile</phase>
-						<configuration>
-							<arguments>install</arguments>
-						</configuration>
 					</execution>
 					<execution>
 						<id>npm-run-build-prod</id>
@@ -70,8 +67,6 @@
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>add-resource</id>
-						<phase>generate-resources</phase>
 						<goals>
 							<goal>add-resource</goal>
 						</goals>
