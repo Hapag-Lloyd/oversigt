@@ -52,7 +52,7 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.java-version == 8 && steps.version.outputs.is-snapshot == 'true' }}
         run: |
           set -o errexit -o pipefail
-          mvn deploy site --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+          mvn deploy site --define maven.wagon.rto=60000 --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
         if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/master' || matrix.java-version != 8 || steps.version.outputs.is-snapshot != 'true' }}
         run: |
           set -o errexit -o pipefail
-          mvn verify site --define gpg.skip=true --batch-mode --show-version 2>&1 | tee --append mvnout.txt
+          mvn verify site --define gpg.skip=true --define maven.wagon.rto=60000 --batch-mode --show-version 2>&1 | tee --append mvnout.txt
           set +o errexit +o pipefail
       - name: Check Output
         shell: bash {0}
