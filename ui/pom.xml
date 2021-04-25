@@ -15,9 +15,6 @@
 	<properties>
 		<parent-pom.create-readme-md>false</parent-pom.create-readme-md>
 		<mdep.analyze.skip>true</mdep.analyze.skip>
-
-		<!-- Versions: Plugins -->
-		<exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -51,6 +48,7 @@
 						<goals>
 							<goal>npm</goal>
 						</goals>
+						<phase>compile</phase>
 						<configuration>
 							<arguments>install</arguments>
 						</configuration>
@@ -60,6 +58,7 @@
 						<goals>
 							<goal>npm</goal>
 						</goals>
+						<phase>compile</phase>
 						<configuration>
 							<arguments>run buildProd</arguments>
 						</configuration>
