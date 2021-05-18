@@ -137,7 +137,7 @@
 <a class="jxr_linenumber" name="L129" href="#L129">129</a> 		<strong class="jxr_keyword">if</strong> (dashboards.containsKey(id)) {
 <a class="jxr_linenumber" name="L130" href="#L130">130</a> 			<strong class="jxr_keyword">return</strong> Optional.empty();
 <a class="jxr_linenumber" name="L131" href="#L131">131</a> 		}
-<a class="jxr_linenumber" name="L132" href="#L132">132</a> 		<strong class="jxr_keyword">final</strong> <a name="Dashboard" href="../../../../com/hlag/oversigt/model/D<a name="Dashboard" href="../../../../com/hlag/oversigt/model/Dashboard.html#Dashboard">Dashboard</a>html#Dashboard">Dashboard</a> dashboard = <strong class="jxr_keyword">new</strong> <a name="Dashboard" href="../../../../com/hlag/oversigt/model/Dashboard.html#Dashboard">Dashboard</a>(id, owner.getUsername(), enabled);
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> 		<strong class="jxr_keyword">final</strong> <a name="Dashboard" href="../../../../com/hlag/oversigt/model/Dashboard.html#Dashboard">Dashboard</a> dashboard = <strong class="jxr_keyword">new</strong> <a name="Dashboard" href="../../../../com/hlag/oversigt/model/Dashboard.html#Dashboard">Dashboard</a>(id, owner.getUsername(), enabled);
 <a class="jxr_linenumber" name="L133" href="#L133">133</a> 		storage.persistDashboard(dashboard);
 <a class="jxr_linenumber" name="L134" href="#L134">134</a> 		dashboards.put(id, dashboard);
 <a class="jxr_linenumber" name="L135" href="#L135">135</a> 		<em class="jxr_comment">// TODO if owner is not admin -&gt; send mail to admins</em>
@@ -187,7 +187,7 @@
 <a class="jxr_linenumber" name="L179" href="#L179">179</a> 	}
 <a class="jxr_linenumber" name="L180" href="#L180">180</a> 
 <a class="jxr_linenumber" name="L181" href="#L181">181</a> 	<strong class="jxr_keyword">public</strong> <a name="Widget" href="../../../../com/hlag/oversigt/model/Widget.html#Widget">Widget</a> createWidgetForDashboard(<strong class="jxr_keyword">final</strong> <a name="Dashboard" href="../../../../com/hlag/oversigt/model/Dashboard.html#Dashboard">Dashboard</a> dashboard, <strong class="jxr_keyword">final</strong> String eventSourceInstanceId) {
-<a class="jxr_linenumber" name="L182" href="#L182">182</a> 		<strong class="jxr_keyword">final</strong> <a name="Widget" href="../../../../com/hlag/oversigt/mode<a name="Widget" href="../../../../com/hlag/oversigt/model/Widget.html#Widget">Widget</a>et.html#Widget">Widget</a> widget = <strong class="jxr_keyword">new</strong> <a name="Widget" href="../../../../com/hlag/oversigt/model/Widget.html#Widget">Widget</a>(eventSourceInstanceController.getEventSourceInstance(eventSourceInstanceId));
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> 		<strong class="jxr_keyword">final</strong> <a name="Widget" href="../../../../com/hlag/oversigt/model/Widget.html#Widget">Widget</a> widget = <strong class="jxr_keyword">new</strong> <a name="Widget" href="../../../../com/hlag/oversigt/model/Widget.html#Widget">Widget</a>(eventSourceInstanceController.getEventSourceInstance(eventSourceInstanceId));
 <a class="jxr_linenumber" name="L183" href="#L183">183</a> 		storage.createWidget(dashboard, widget);
 <a class="jxr_linenumber" name="L184" href="#L184">184</a> 		dashboard.getModifiableWidgets().add(widget);
 <a class="jxr_linenumber" name="L185" href="#L185">185</a> 		reloadDashboards(dashboard);

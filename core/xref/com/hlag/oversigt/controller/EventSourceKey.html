@@ -96,7 +96,7 @@
 <a class="jxr_linenumber" name="L88" href="#L88">88</a>  		<strong class="jxr_keyword">return</strong> addKey(<strong class="jxr_keyword">new</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a>(<span class="jxr_string">"widget:"</span> + widgetName, Strings.nullToEmpty(displayName)));
 <a class="jxr_linenumber" name="L89" href="#L89">89</a>  	}
 <a class="jxr_linenumber" name="L90" href="#L90">90</a>  
-<a class="jxr_linenumber" name="L91" href="#L91">91</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/cont<a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a>urceKey.html#EventSourceKey">EventSourceKey</a> addKey(<strong class="jxr_keyword">final</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a> key) {
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a> addKey(<strong class="jxr_keyword">final</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a> key) {
 <a class="jxr_linenumber" name="L92" href="#L92">92</a>  		<strong class="jxr_keyword">if</strong> (KEYS.containsKey(key.getKey())) {
 <a class="jxr_linenumber" name="L93" href="#L93">93</a>  			<strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"Duplicate key: "</span> + key);
 <a class="jxr_linenumber" name="L94" href="#L94">94</a>  		}
@@ -152,7 +152,7 @@
 <a class="jxr_linenumber" name="L144" href="#L144">144</a> 		} <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (getClass() != obj.getClass()) {
 <a class="jxr_linenumber" name="L145" href="#L145">145</a> 			<strong class="jxr_keyword">return</strong> false;
 <a class="jxr_linenumber" name="L146" href="#L146">146</a> 		}
-<a class="jxr_linenumber" name="L147" href="#L147">147</a> 		<strong class="jxr_keyword">final</strong> <a name="EventSourceKey"<a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a>./../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a> other = (<a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a>) obj;
+<a class="jxr_linenumber" name="L147" href="#L147">147</a> 		<strong class="jxr_keyword">final</strong> <a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a> other = (<a name="EventSourceKey" href="../../../../com/hlag/oversigt/controller/EventSourceKey.html#EventSourceKey">EventSourceKey</a>) obj;
 <a class="jxr_linenumber" name="L148" href="#L148">148</a> 		<strong class="jxr_keyword">return</strong> key.equals(other.key);
 <a class="jxr_linenumber" name="L149" href="#L149">149</a> 	}
 <a class="jxr_linenumber" name="L150" href="#L150">150</a> 
