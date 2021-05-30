@@ -106,37 +106,40 @@
 			<version>2.0.1.Final</version>
 		</dependency>
 
-		<!-- Resteasy dependencies must not be updated as staring Oversigt fails 
-			otherwise! -->
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-jaxrs</artifactId>
-			<version>3.8.1.Final</version>
+			<artifactId>resteasy-cdi</artifactId>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-client</artifactId>
-			<version>3.8.1.Final</version>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-cdi</artifactId>
-			<version>3.8.1.Final</version>
+			<artifactId>resteasy-core</artifactId>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-links</artifactId>
-			<version>3.8.1.Final</version>
+			<artifactId>resteasy-core-spi</artifactId>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-guice</artifactId>
-			<version>3.8.1.Final</version>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jackson2-provider</artifactId>
-			<version>3.8.1.Final</version>
+			<version>4.6.0.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-links</artifactId>
+			<version>4.6.0.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.weld.servlet</groupId>
@@ -232,8 +235,6 @@
 		</dependency>
 
 		<!-- other useful stuff -->
-		<!-- Must not be updated as long as the JIRA client requires a method that 
-			has been removed in version 21! -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -261,7 +262,8 @@
 		</dependency>
 
 		<!-- XPath -->
-		<!-- Do not update xml-apis:xml-apis to version 2.0.x as those are older than 1.3 and later -->
+		<!-- Do not update xml-apis:xml-apis to version 2.0.x as those are older 
+			than 1.3 and later -->
 		<dependency>
 			<groupId>xml-apis</groupId>
 			<artifactId>xml-apis</artifactId>
@@ -433,16 +435,21 @@
 						<id>default</id>
 						<configuration>
 							<ignoredUsedUndeclaredDependencies>
-								<!-- OversigtServer: io.undertow.server.HttpServerExchange#getConnection() -->
+								<!-- OversigtServer calls io.undertow.server.HttpServerExchange#getConnection() 
+									and the returning class implements some interface from the below dependency -->
 								<ignoredUsedUndeclaredDependency>org.jboss.xnio:xnio-api:jar:</ignoredUsedUndeclaredDependency>
+
+								<!-- The following dependency is not necessary for building though 
+									Maven Dependency Plugin treats it as used. -->
+								<ignoredUsedUndeclaredDependency>jakarta.inject:jakarta.inject-api:</ignoredUsedUndeclaredDependency>
 							</ignoredUsedUndeclaredDependencies>
 							<usedDependencies>
 								<!-- REST API -->
 								<usedDependency>javax.el:javax.el-api</usedDependency>
 								<usedDependency>org.glassfish.web:javax.el</usedDependency>
 								<usedDependency>org.jboss.resteasy:resteasy-client</usedDependency>
-								<usedDependency>org.jboss.resteasy:resteasy-links</usedDependency>
 								<usedDependency>org.jboss.resteasy:resteasy-jackson2-provider</usedDependency>
+								<usedDependency>org.jboss.resteasy:resteasy-links</usedDependency>
 
 								<!-- REST API Validation -->
 								<usedDependency>org.hibernate.validator:hibernate-validator-annotation-processor</usedDependency>
@@ -460,6 +467,7 @@
 							<overWriteReleases>false</overWriteReleases>
 							<overWriteSnapshots>false</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>
+							<skip>${maven-dependency-plugin.copy-dependency.skip}</skip>
 						</configuration>
 					</execution>
 					<execution>
@@ -498,4 +506,20 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Eclipse only: Skip "Copy Dependency" goal of the Maven Dependency 
+			Plugin as of MDEP-187 -->
+		<profile>
+			<id>eclipse-only</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<properties>
+				<maven-dependency-plugin.copy-dependency.skip>true</maven-dependency-plugin.copy-dependency.skip>
+			</properties>
+		</profile>
+	</profiles>
 </project>
