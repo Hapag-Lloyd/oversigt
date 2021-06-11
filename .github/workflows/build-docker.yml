@@ -45,7 +45,7 @@ jobs:
       - name: Unzip artifact
         run: unzip *.zip
       - name: Delete ZIP files
-        run: unzip *.zip
+        run: rm *.zip
       - name: Build Docker image
         id: docker_build
         uses: docker/build-push-action@v2
