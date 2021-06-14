@@ -101,10 +101,10 @@
 <td>232</td></tr>
 <tr class="b">
 <th>Number of unique artifacts (NOA):</th>
-<td>314</td></tr>
+<td>315</td></tr>
 <tr class="a">
 <th>Number of version-conflicting artifacts (NOC):</th>
-<td>34</td></tr>
+<td>35</td></tr>
 <tr class="b">
 <th>Number of SNAPSHOT artifacts (NOS):</th>
 <td>0</td></tr>
@@ -673,7 +673,7 @@
 <td width="25%">5.7.2</td>
 <td>
 <ol style="list-style-type: decimal">
-<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;org.mockito:mockito-junit-jupiter:jar:3.11.0:test<br />|&#160;&#160;\-&#160;(org.junit.jupiter:junit-jupiter-api:jar:5.7.2:test - omitted for duplicate)<br />\-&#160;org.junit.jupiter:junit-jupiter-api:jar:5.7.2:test<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
+<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;org.mockito:mockito-junit-jupiter:jar:3.11.1:test<br />|&#160;&#160;\-&#160;(org.junit.jupiter:junit-jupiter-api:jar:5.7.2:test - omitted for duplicate)<br />\-&#160;org.junit.jupiter:junit-jupiter-api:jar:5.7.2:test<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.junit.platform:junit-platform-commons"></a>org.junit.platform:junit-platform-commons</h4>
 <table border="0" class="table table-striped">
 <tr class="a">
@@ -690,149 +690,165 @@
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.junit.jupiter:junit-jupiter-api:jar:5.7.2:test<br />&#160;&#160;&#160;\-&#160;org.junit.platform:junit-platform-commons:jar:1.7.2:test<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
-<h4><a name="org.ow2.asm:asm"></a>org.ow2.asm:asm</h4>
+<h4><a name="org.mockito:mockito-core"></a>org.mockito:mockito-core</h4>
 <table border="0" class="table table-striped">
 <tr class="b">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
 <tr class="a">
+<td width="25%">3.11.0</td>
+<td>
+<ol style="list-style-type: decimal">
+<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.mockito:mockito-core:jar:3.11.0:test<br /></li><br /></ol></td></tr>
+<tr class="b">
+<td width="25%">3.11.1</td>
+<td>
+<ol style="list-style-type: decimal">
+<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.mockito:mockito-junit-jupiter:jar:3.11.1:test<br />&#160;&#160;&#160;\-&#160;(org.mockito:mockito-core:jar:3.11.1:test - omitted for conflict with 3.11.0)<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
+<h4><a name="org.ow2.asm:asm"></a>org.ow2.asm:asm</h4>
+<table border="0" class="table table-striped">
+<tr class="a">
+<td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
+<td>
+<table border="0" class="table table-striped">
+<tr class="b">
 <td width="25%">9.0</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.jboss.resteasy:resteasy-core:jar:4.6.0.Final:compile<br />&#160;&#160;&#160;\-&#160;io.smallrye.config:smallrye-config:jar:2.0.1:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;io.smallrye.config:smallrye-config-core:jar:2.0.1:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.ow2.asm:asm:jar:9.0:compile<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">9.1</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;com.jayway.jsonpath:json-path:jar:2.6.0:compile<br />&#160;&#160;&#160;\-&#160;net.minidev:json-smart:jar:2.4.7:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;net.minidev:accessors-smart:jar:2.4.7:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.ow2.asm:asm:jar:9.1:compile - omitted for conflict with 9.0)<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.slf4j:slf4j-api"></a>org.slf4j:slf4j-api</h4>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td width="25%">1.5.10</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.codehaus.gmaven.runtime:gmaven-runtime-1.7:jar:1.3:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;+-&#160;(org.slf4j:slf4j-api:jar:1.5.10:compile - omitted for conflict with 1.7.30)<br />&#160;&#160;&#160;&#160;&#160;&#160;+-&#160;org.codehaus.gmaven.feature:gmaven-feature-support:jar:1.3:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.5.10:compile - omitted for conflict with 1.7.30)<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.codehaus.gmaven.runtime:gmaven-runtime-support:jar:1.3:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.5.10:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">1.7.10</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;com.hlag.oversigt:jira-rest-java-client-fix:jar:0.7-SNAPSHOT:compile<br />&#160;&#160;&#160;\-&#160;com.atlassian.jira:jira-rest-java-client-core:jar:5.2.2:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.10:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">1.7.16</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;ro.isdc.wro4j:wro4j-core:jar:1.8.0:compile<br />|&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.16:compile - omitted for conflict with 1.7.30)<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.16:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">1.7.21</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;com.offbytwo.jenkins:jenkins-client:jar:0.3.8:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.21:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">1.7.22</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;io.swagger:swagger-core:jar:1.6.2:compile<br />|&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.22:compile - omitted for conflict with 1.7.30)<br />\-&#160;io.swagger:swagger-models:jar:1.6.2:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.22:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">1.7.25</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ch.qos.logback:logback-classic:jar:1.2.3:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">1.7.30</td>
 <td>
 <ol style="list-style-type: decimal">
-<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;org.slf4j:slf4j-api:jar:1.7.30:compile<br />+-&#160;com.jayway.jsonpath:json-path:jar:2.6.0:compile<br />|&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.30:compile - omitted for duplicate)<br />\-&#160;org.eclipse.jgit:org.eclipse.jgit:jar:5.11.1.202105131744-r:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.30:compile - omitted for duplicate)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />+-&#160;org.slf4j:slf4j-api:jar:1.7.30:compile<br />+-&#160;com.jayway.jsonpath:json-path:jar:2.6.0:compile<br />|&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.30:compile - omitted for duplicate)<br />\-&#160;org.eclipse.jgit:org.eclipse.jgit:jar:5.12.0.202106070339-r:compile<br />&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.30:compile - omitted for duplicate)<br /></li><br /></ol></td></tr>
+<tr class="b">
 <td width="25%">1.7.7</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.webjars:webjars-locator:jar:0.30:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.webjars:webjars-locator-core:jar:0.30:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.slf4j:slf4j-api:jar:1.7.7:compile - omitted for conflict with 1.7.30)<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.springframework:spring-beans"></a>org.springframework:spring-beans</h4>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td width="25%">3.1.1.RELEASE</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.springframework:spring-web:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;+-&#160;(org.springframework:spring-beans:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.springframework:spring-context:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;+-&#160;org.springframework:spring-aop:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;\-&#160;(org.springframework:spring-beans:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.springframework:spring-beans:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">4.1.7.RELEASE</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;com.hlag.oversigt:jira-rest-java-client-fix:jar:0.7-SNAPSHOT:compile<br />&#160;&#160;&#160;\-&#160;com.atlassian.jira:jira-rest-java-client-core:jar:5.2.2:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.springframework:spring-beans:jar:4.1.7.RELEASE:compile - omitted for conflict with 5.3.8)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">5.3.8</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.springframework:spring-beans:jar:5.3.8:compile<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.springframework:spring-core"></a>org.springframework:spring-core</h4>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td width="25%">3.1.1.RELEASE</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.springframework:spring-web:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;+-&#160;org.springframework:spring-context:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;+-&#160;org.springframework:spring-aop:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;|&#160;&#160;\-&#160;(org.springframework:spring-core:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;+-&#160;(org.springframework:spring-core:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;\-&#160;org.springframework:spring-expression:jar:3.1.1.RELEASE:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;|&#160;&#160;&#160;&#160;&#160;\-&#160;(org.springframework:spring-core:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.springframework:spring-core:jar:3.1.1.RELEASE:compile - omitted for conflict with 5.3.8)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">5.3.8</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;org.springframework:spring-beans:jar:5.3.8:compile<br />&#160;&#160;&#160;\-&#160;org.springframework:spring-core:jar:5.3.8:compile<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.webjars:handlebars"></a>org.webjars:handlebars</h4>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td width="25%">1.3.0</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.webjars:emberjs:jar:1.9.0-1:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.webjars:handlebars:jar:1.3.0:compile - omitted for conflict with 3.0.3)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">3.0.3</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;ro.isdc.wro4j:wro4j-extensions:jar:1.8.0:compile<br />&#160;&#160;&#160;\-&#160;org.webjars:handlebars:jar:3.0.3:compile<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="org.wildfly.common:wildfly-common"></a>org.wildfly.common:wildfly-common</h4>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td width="25%">1.2.0.Final</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;io.undertow:undertow-core:jar:2.2.8.Final:compile<br />&#160;&#160;&#160;\-&#160;org.jboss.xnio:xnio-api:jar:3.8.0.Final:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.wildfly.client:wildfly-client-config:jar:1.0.1.Final:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(org.wildfly.common:wildfly-common:jar:1.2.0.Final:compile - omitted for conflict with 1.5.2.Final)<br /></li><br /></ol></td></tr>
-<tr class="b">
+<tr class="a">
 <td width="25%">1.5.2.Final</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;io.undertow:undertow-core:jar:2.2.8.Final:compile<br />&#160;&#160;&#160;\-&#160;org.jboss.xnio:xnio-api:jar:3.8.0.Final:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;org.wildfly.common:wildfly-common:jar:1.5.2.Final:compile<br /></li><br /></ol></td></tr></table></td></tr></table></section><section>
 <h4><a name="xml-apis:xml-apis"></a>xml-apis:xml-apis</h4>
 <table border="0" class="table table-striped">
-<tr class="a">
+<tr class="b">
 <td><figure><figcaption>[Error]</figcaption><img src="images/icon_error_sml.gif" alt="" /></figure></td>
 <td>
 <table border="0" class="table table-striped">
-<tr class="b">
+<tr class="a">
 <td width="25%">1.0.b2</td>
 <td>
 <ol style="list-style-type: decimal">
 <li>com.hlag.oversigt:oversigt-core:jar:0.7-SNAPSHOT<br />\-&#160;com.offbytwo.jenkins:jenkins-client:jar:0.3.8:compile<br />&#160;&#160;&#160;\-&#160;dom4j:dom4j:jar:1.6.1:compile<br />&#160;&#160;&#160;&#160;&#160;&#160;\-&#160;(xml-apis:xml-apis:jar:1.0.b2:compile - omitted for conflict with 1.4.01)<br /></li><br /></ol></td></tr>
-<tr class="a">
+<tr class="b">
 <td width="25%">1.4.01</td>
 <td>
 <ol style="list-style-type: decimal">
