@@ -102,20 +102,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.AbstractJiraEventSource.java">core/src/main/java/com/hlag/oversigt/sources/AbstractJiraEventSource.java</a>
-                </td>
-                <td>
-                  1
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  64
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.eventsource.NightlyDashboardReloaderService.java">core/src/main/java/com/hlag/oversigt/core/eventsource/NightlyDashboardReloaderService.java</a>
                 </td>
                 <td>
@@ -130,7 +116,35 @@ under the License.
               </tr>
                           <tr>
                 <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.AbstractJiraEventSource.java">core/src/main/java/com/hlag/oversigt/sources/AbstractJiraEventSource.java</a>
+                </td>
+                <td>
+                  1
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  64
+                </td>
+              </tr>
+                          <tr>
+                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.exchange.package-info.java">core/src/main/java/com/hlag/oversigt/connect/exchange/package-info.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  2
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.util.text.package-info.java">core/src/main/java/com/hlag/oversigt/util/text/package-info.java</a>
                 </td>
                 <td>
                   0
@@ -154,20 +168,6 @@ under the License.
                 </td>
                 <td>
                   17
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.util.text.package-info.java">core/src/main/java/com/hlag/oversigt/util/text/package-info.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  2
                 </td>
               </tr>
                           <tr>
@@ -200,20 +200,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.event.TextEvent.java">core/src/main/java/com/hlag/oversigt/sources/event/TextEvent.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  4
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.Oversigt.java">core/src/main/java/com/hlag/oversigt/core/Oversigt.java</a>
                 </td>
                 <td>
@@ -224,6 +210,20 @@ under the License.
                 </td>
                 <td>
                   12
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.event.TextEvent.java">core/src/main/java/com/hlag/oversigt/sources/event/TextEvent.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  4
                 </td>
               </tr>
                           <tr>
@@ -410,20 +410,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.MotivationEventSource.java">core/src/main/java/com/hlag/oversigt/sources/MotivationEventSource.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  10
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.model.EventSourceDescriptor.java">core/src/main/java/com/hlag/oversigt/model/EventSourceDescriptor.java</a>
                 </td>
                 <td>
@@ -434,6 +420,20 @@ under the License.
                 </td>
                 <td>
                   53
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.MotivationEventSource.java">core/src/main/java/com/hlag/oversigt/sources/MotivationEventSource.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  10
                 </td>
               </tr>
                           <tr>
@@ -634,20 +634,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.event.EventSender.java">core/src/main/java/com/hlag/oversigt/core/event/EventSender.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  30
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.controller.EventSourceInstanceController.java">core/src/main/java/com/hlag/oversigt/controller/EventSourceInstanceController.java</a>
                 </td>
                 <td>
@@ -658,6 +644,20 @@ under the License.
                 </td>
                 <td>
                   47
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.event.EventSender.java">core/src/main/java/com/hlag/oversigt/core/event/EventSender.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  30
                 </td>
               </tr>
                           <tr>
@@ -872,20 +872,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.validate.UserIdValidator.java">core/src/main/java/com/hlag/oversigt/validate/UserIdValidator.java</a>
-                </td>
-                <td>
-                  1
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  5
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.web.resources.DashboardWidgetResource.java">core/src/main/java/com/hlag/oversigt/web/resources/DashboardWidgetResource.java</a>
                 </td>
                 <td>
@@ -896,6 +882,20 @@ under the License.
                 </td>
                 <td>
                   82
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.validate.UserIdValidator.java">core/src/main/java/com/hlag/oversigt/validate/UserIdValidator.java</a>
+                </td>
+                <td>
+                  1
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  5
                 </td>
               </tr>
                           <tr>
@@ -1012,20 +1012,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.event.TimelineEvent.java">core/src/main/java/com/hlag/oversigt/sources/event/TimelineEvent.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  30
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.storage.JdbcDatabase.java">core/src/main/java/com/hlag/oversigt/storage/JdbcDatabase.java</a>
                 </td>
                 <td>
@@ -1036,6 +1022,20 @@ under the License.
                 </td>
                 <td>
                   88
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.event.TimelineEvent.java">core/src/main/java/com/hlag/oversigt/sources/event/TimelineEvent.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  30
                 </td>
               </tr>
                           <tr>
@@ -1068,20 +1068,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.SqlGraphEventSource.java">core/src/main/java/com/hlag/oversigt/sources/SqlGraphEventSource.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  20
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.util.Utils.java">core/src/main/java/com/hlag/oversigt/util/Utils.java</a>
                 </td>
                 <td>
@@ -1092,6 +1078,20 @@ under the License.
                 </td>
                 <td>
                   39
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.SqlGraphEventSource.java">core/src/main/java/com/hlag/oversigt/sources/SqlGraphEventSource.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  20
                 </td>
               </tr>
                           <tr>
@@ -1222,20 +1222,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.eventsource.Property.java">core/src/main/java/com/hlag/oversigt/core/eventsource/Property.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.storage.SqliteDialect.java">core/src/main/java/com/hlag/oversigt/storage/SqliteDialect.java</a>
                 </td>
                 <td>
@@ -1246,6 +1232,20 @@ under the License.
                 </td>
                 <td>
                   32
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.eventsource.Property.java">core/src/main/java/com/hlag/oversigt/core/eventsource/Property.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
                 </td>
               </tr>
                           <tr>
@@ -1432,20 +1432,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.exchange.ExchangeClientFactory.java">core/src/main/java/com/hlag/oversigt/connect/exchange/ExchangeClientFactory.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.security.MapAuthenticator.java">core/src/main/java/com/hlag/oversigt/security/MapAuthenticator.java</a>
                 </td>
                 <td>
@@ -1456,6 +1442,20 @@ under the License.
                 </td>
                 <td>
                   10
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.exchange.ExchangeClientFactory.java">core/src/main/java/com/hlag/oversigt/connect/exchange/ExchangeClientFactory.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
                 </td>
               </tr>
                           <tr>
@@ -1558,20 +1558,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.data.Birthday.java">core/src/main/java/com/hlag/oversigt/sources/data/Birthday.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  10
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.security.Authenticator.java">core/src/main/java/com/hlag/oversigt/security/Authenticator.java</a>
                 </td>
                 <td>
@@ -1582,6 +1568,20 @@ under the License.
                 </td>
                 <td>
                   12
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.sources.data.Birthday.java">core/src/main/java/com/hlag/oversigt/sources/data/Birthday.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  10
                 </td>
               </tr>
                           <tr>
@@ -2552,20 +2552,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.jira.UnlimitedJiraClient.java">core/src/main/java/com/hlag/oversigt/connect/jira/UnlimitedJiraClient.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  6
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.exchange.ExchangeClient.java">core/src/main/java/com/hlag/oversigt/connect/exchange/ExchangeClient.java</a>
                 </td>
                 <td>
@@ -2576,6 +2562,20 @@ under the License.
                 </td>
                 <td>
                   0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.connect.jira.UnlimitedJiraClient.java">core/src/main/java/com/hlag/oversigt/connect/jira/UnlimitedJiraClient.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  6
                 </td>
               </tr>
                           <tr>
@@ -2706,16 +2706,16 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.model.EventSourceInstance.java">core/src/main/java/com/hlag/oversigt/model/EventSourceInstance.java</a>
-                </td>
-                <td>
-                  2
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.security.OversigtIdentityManager.java">core/src/main/java/com/hlag/oversigt/security/OversigtIdentityManager.java</a>
                 </td>
                 <td>
                   0
                 </td>
                 <td>
-                  33
+                  0
+                </td>
+                <td>
+                  11
                 </td>
               </tr>
                           <tr>
@@ -2734,16 +2734,16 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.security.OversigtIdentityManager.java">core/src/main/java/com/hlag/oversigt/security/OversigtIdentityManager.java</a>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.model.EventSourceInstance.java">core/src/main/java/com/hlag/oversigt/model/EventSourceInstance.java</a>
+                </td>
+                <td>
+                  2
                 </td>
                 <td>
                   0
                 </td>
                 <td>
-                  0
-                </td>
-                <td>
-                  11
+                  33
                 </td>
               </tr>
                           <tr>
@@ -2776,20 +2776,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.properties.SerializablePropertyController.java">core/src/main/java/com/hlag/oversigt/properties/SerializablePropertyController.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  22
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.core.eventsource.EventSourceException.java">core/src/main/java/com/hlag/oversigt/core/eventsource/EventSourceException.java</a>
                 </td>
                 <td>
@@ -2800,6 +2786,20 @@ under the License.
                 </td>
                 <td>
                   2
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://Hapag-Lloyd.github.io/oversigt//checkstyle.html#core.src.main.java.com.hlag.oversigt.properties.SerializablePropertyController.java">core/src/main/java/com/hlag/oversigt/properties/SerializablePropertyController.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  22
                 </td>
               </tr>
                           <tr>
