@@ -1,4 +1,7 @@
-[![](https://jitpack.io/v/Hapag-Lloyd/oversigt.svg)](https://jitpack.io/#Hapag-Lloyd/oversigt)
+:warning: This project is not maintained any more. :warning: 
+
+:warning: We decided to close this project. The latest version can still be built using maven and contains some fixes that are not part of our 0.6 release. :warning:
+
 # Oversigt
 Oversigt is a configurable dashboard software.  
 It is able to serve several dashboards simultaneously and change the dashboards' configuration at runtime and without restarting the server.
